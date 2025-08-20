@@ -11,9 +11,30 @@
 // Import Routes
 
 import { Route as rootRoute } from './routes/__root'
+import { Route as FormsImport } from './routes/forms'
+import { Route as EventsImport } from './routes/events'
+import { Route as CalendarImport } from './routes/calendar'
 import { Route as IndexImport } from './routes/index'
 
 // Create/Update Routes
+
+const FormsRoute = FormsImport.update({
+  id: '/forms',
+  path: '/forms',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const EventsRoute = EventsImport.update({
+  id: '/events',
+  path: '/events',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const CalendarRoute = CalendarImport.update({
+  id: '/calendar',
+  path: '/calendar',
+  getParentRoute: () => rootRoute,
+} as any)
 
 const IndexRoute = IndexImport.update({
   id: '/',
@@ -32,6 +53,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexImport
       parentRoute: typeof rootRoute
     }
+    '/calendar': {
+      id: '/calendar'
+      path: '/calendar'
+      fullPath: '/calendar'
+      preLoaderRoute: typeof CalendarImport
+      parentRoute: typeof rootRoute
+    }
+    '/events': {
+      id: '/events'
+      path: '/events'
+      fullPath: '/events'
+      preLoaderRoute: typeof EventsImport
+      parentRoute: typeof rootRoute
+    }
+    '/forms': {
+      id: '/forms'
+      path: '/forms'
+      fullPath: '/forms'
+      preLoaderRoute: typeof FormsImport
+      parentRoute: typeof rootRoute
+    }
   }
 }
 
@@ -39,32 +81,47 @@ declare module '@tanstack/react-router' {
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/calendar': typeof CalendarRoute
+  '/events': typeof EventsRoute
+  '/forms': typeof FormsRoute
 }
 
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/calendar': typeof CalendarRoute
+  '/events': typeof EventsRoute
+  '/forms': typeof FormsRoute
 }
 
 export interface FileRoutesById {
   __root__: typeof rootRoute
   '/': typeof IndexRoute
+  '/calendar': typeof CalendarRoute
+  '/events': typeof EventsRoute
+  '/forms': typeof FormsRoute
 }
 
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/calendar' | '/events' | '/forms'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/calendar' | '/events' | '/forms'
+  id: '__root__' | '/' | '/calendar' | '/events' | '/forms'
   fileRoutesById: FileRoutesById
 }
 
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  CalendarRoute: typeof CalendarRoute
+  EventsRoute: typeof EventsRoute
+  FormsRoute: typeof FormsRoute
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  CalendarRoute: CalendarRoute,
+  EventsRoute: EventsRoute,
+  FormsRoute: FormsRoute,
 }
 
 export const routeTree = rootRoute
@@ -77,11 +134,23 @@ export const routeTree = rootRoute
     "__root__": {
       "filePath": "__root.tsx",
       "children": [
-        "/"
+        "/",
+        "/calendar",
+        "/events",
+        "/forms"
       ]
     },
     "/": {
       "filePath": "index.tsx"
+    },
+    "/calendar": {
+      "filePath": "calendar.tsx"
+    },
+    "/events": {
+      "filePath": "events.tsx"
+    },
+    "/forms": {
+      "filePath": "forms.tsx"
     }
   }
 }

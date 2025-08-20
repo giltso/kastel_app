@@ -73,7 +73,7 @@ function RootComponent() {
                         to="/"
                         className="btn btn-ghost normal-case text-xl"
                       >
-                        Fullstack Vibe Coding
+                        Kastel
                       </Link>
                     </div>
                     <div className="navbar-center hidden lg:flex">
@@ -88,6 +88,36 @@ function RootComponent() {
                         >
                           Home
                         </Link>
+                        <Link
+                          to="/events"
+                          className="btn btn-ghost"
+                          activeProps={{
+                            className: "btn btn-ghost btn-active",
+                          }}
+                          onClick={() => setIsSidebarOpen(false)}
+                        >
+                          Events
+                        </Link>
+                        <Link
+                          to="/calendar"
+                          className="btn btn-ghost"
+                          activeProps={{
+                            className: "btn btn-ghost btn-active",
+                          }}
+                          onClick={() => setIsSidebarOpen(false)}
+                        >
+                          Calendar
+                        </Link>
+                        <Link
+                          to="/forms"
+                          className="btn btn-ghost"
+                          activeProps={{
+                            className: "btn btn-ghost btn-active",
+                          }}
+                          onClick={() => setIsSidebarOpen(false)}
+                        >
+                          Forms
+                        </Link>
                       </nav>
                     </div>
                     <div className="navbar-end">
@@ -99,7 +129,7 @@ function RootComponent() {
                     <Outlet />
                   </main>
                   <footer className="footer footer-center p-4 text-base-content">
-                    <p>© {new Date().getFullYear()} Fullstack Vibe Coding</p>
+                    <p>© {new Date().getFullYear()} Kastel</p>
                   </footer>
                 </div>
                 {/* Sidebar content for mobile */}
@@ -125,6 +155,42 @@ function RootComponent() {
                             Home
                           </Link>
                         </li>
+                        <li>
+                          <Link
+                            to="/events"
+                            onClick={() => setIsSidebarOpen(false)}
+                            activeProps={{
+                              className: "active",
+                            }}
+                            className="flex items-center p-2"
+                          >
+                            Events
+                          </Link>
+                        </li>
+                        <li>
+                          <Link
+                            to="/calendar"
+                            onClick={() => setIsSidebarOpen(false)}
+                            activeProps={{
+                              className: "active",
+                            }}
+                            className="flex items-center p-2"
+                          >
+                            Calendar
+                          </Link>
+                        </li>
+                        <li>
+                          <Link
+                            to="/forms"
+                            onClick={() => setIsSidebarOpen(false)}
+                            activeProps={{
+                              className: "active",
+                            }}
+                            className="flex items-center p-2"
+                          >
+                            Forms
+                          </Link>
+                        </li>
                       </ul>
                     </div>
                     <div className="mt-auto py-4 border-t border-base-300 flex justify-center items-center">
@@ -138,7 +204,7 @@ function RootComponent() {
               <header className="navbar bg-base-100 shadow-sm border-b border-base-300">
                 <div className="container mx-auto flex justify-between w-full">
                   <div className="navbar-start">
-                    <h1 className="font-semibold">Fullstack Vibe Coding</h1>
+                    <h1 className="font-semibold">Kastel</h1>
                   </div>
                   <div className="navbar-end">
                     <SignInButton mode="modal">
@@ -158,7 +224,7 @@ function RootComponent() {
                 <Outlet />
               </main>
               <footer className="footer footer-center p-4 text-base-content">
-                <p>© {new Date().getFullYear()} Fullstack Vibe Coding</p>
+                <p>© {new Date().getFullYear()} Kastel</p>
               </footer>
             </Unauthenticated>
           </div>

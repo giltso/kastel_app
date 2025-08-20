@@ -21,3 +21,6 @@ CLAUDE.local.md
 *.njsproj
 *.sln
 *.sw?
+
+# Project documentation
+PROJECT_OVERVIEW.md

@@ -1,76 +1,72 @@
 import { SignInButton } from "@clerk/clerk-react";
-import { convexQuery } from "@convex-dev/react-query";
-import { useSuspenseQuery } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { Authenticated, Unauthenticated } from "convex/react";
-import { Zap } from "lucide-react";
-import { api } from "../../convex/_generated/api";
-
-const usersQueryOptions = convexQuery(api.users.listUsers, {});
+import { Calendar, FileText, Settings, Wrench } from "lucide-react";
 
 export const Route = createFileRoute("/")({
-  loader: async ({ context: { queryClient } }) =>
-    await queryClient.ensureQueryData(usersQueryOptions),
   component: HomePage,
 });
 
 function HomePage() {
   return (
     <div className="text-center">
-      <div className="not-prose flex justify-center mb-4">
-        <Zap className="w-16 h-16 text-primary" />
+      <div className="not-prose flex justify-center mb-6">
+        <Wrench className="w-20 h-20 text-primary" />
       </div>
-      <h1>Fullstack Vibe Coding</h1>
+      <h1>Welcome to Kastel</h1>
+      <p className="text-lg opacity-80">Your hardware shop management solution</p>
 
       <Unauthenticated>
-        <p>Sign in to see the list of users.</p>
-        <div className="not-prose mt-4">
-          <SignInButton mode="modal">
-            <button className="btn btn-primary btn-lg">Get Started</button>
-          </SignInButton>
+        <div className="mt-8">
+          <p className="mb-6">
+            Manage your work scheduling, tool rentals, customer orders, and forms all in one place.
+          </p>
+          <div className="not-prose mt-4">
+            <SignInButton mode="modal">
+              <button className="btn btn-primary btn-lg">Get Started</button>
+            </SignInButton>
+          </div>
         </div>
       </Unauthenticated>
 
       <Authenticated>
-        <UsersList />
+        <DashboardPreview />
       </Authenticated>
     </div>
   );
 }
 
-function UsersList() {
-  const { data: users } = useSuspenseQuery(usersQueryOptions);
-
+function DashboardPreview() {
   return (
-    <>
-      <h2>Users</h2>
-
-      {users.length === 0 ? (
-        <div className="not-prose">
-          <div className="p-8 bg-base-200 rounded-lg">
-            <p className="opacity-70">No users yet. You're the first!</p>
+    <div className="mt-8">
+      <h2>Welcome back!</h2>
+      <p className="mb-8">Access your tools and manage your hardware shop operations</p>
+      
+      <div className="not-prose grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+        <Link to="/events" className="card bg-base-200 shadow-sm hover:shadow-md transition-shadow">
+          <div className="card-body items-center text-center">
+            <Calendar className="w-12 h-12 text-primary mb-2" />
+            <h3 className="card-title">Events</h3>
+            <p>Create and manage work scheduling events</p>
           </div>
-        </div>
-      ) : (
-        <div className="not-prose overflow-x-auto">
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Joined</th>
-              </tr>
-            </thead>
-            <tbody>
-              {users.map((user) => (
-                <tr key={user._id}>
-                  <td>{user.name}</td>
-                  <td>{new Date(user._creationTime).toLocaleDateString()}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </>
+        </Link>
+
+        <Link to="/calendar" className="card bg-base-200 shadow-sm hover:shadow-md transition-shadow">
+          <div className="card-body items-center text-center">
+            <Settings className="w-12 h-12 text-primary mb-2" />
+            <h3 className="card-title">Calendar</h3>
+            <p>View and interact with scheduled events</p>
+          </div>
+        </Link>
+
+        <Link to="/forms" className="card bg-base-200 shadow-sm hover:shadow-md transition-shadow">
+          <div className="card-body items-center text-center">
+            <FileText className="w-12 h-12 text-primary mb-2" />
+            <h3 className="card-title">Forms</h3>
+            <p>Create and manage work forms</p>
+          </div>
+        </Link>
+      </div>
+    </div>
   );
 }
