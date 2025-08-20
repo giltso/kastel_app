@@ -1,8 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Authenticated } from "convex/react";
+import { convexQuery } from "@convex-dev/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { Calendar, ChevronLeft, ChevronRight, Filter, Plus } from "lucide-react";
+import { api } from "../../convex/_generated/api";
+
+const eventsQueryOptions = convexQuery(api.events.listEvents, {});
 
 export const Route = createFileRoute("/calendar")({
+  loader: async ({ context: { queryClient } }) =>
+    await queryClient.ensureQueryData(eventsQueryOptions),
   component: CalendarPage,
 });
 
