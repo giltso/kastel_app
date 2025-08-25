@@ -30,19 +30,19 @@ export const ensureUser = mutation({
         await ctx.db.patch(existingUser._id, { 
           name: clerkName,
           email: clerkEmail,
-          role: existingUser.role || "guest", // Default to guest if no role
+          role: existingUser.role || "tester", // Default to tester if no role (for easier testing)
         });
         return await ctx.db.get(existingUser._id);
       }
       return existingUser;
     }
 
-    // Create new user with default "guest" role
+    // Create new user with default "tester" role for easier testing
     const userId = await ctx.db.insert("users", {
       clerkId: identity.subject,
       name: identity.name ?? "Anonymous",
       email: identity.email,
-      role: "guest", // Default role for new users
+      role: "tester", // Default role for new users (tester for easier testing)
     });
 
     return await ctx.db.get(userId);

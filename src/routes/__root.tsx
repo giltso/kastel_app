@@ -25,6 +25,7 @@ import { Menu } from "lucide-react";
 import { useEffect, useState } from "react";
 import { api } from "../../convex/_generated/api";
 import { RoleSwitcher } from "@/components/RoleSwitcher";
+import { UserRoleDebug } from "@/components/UserRoleDebug";
 
 export const Route = createRootRouteWithContext<{
   queryClient: QueryClient;
@@ -122,6 +123,7 @@ function RootComponent() {
                       </nav>
                     </div>
                     <div className="navbar-end gap-2">
+                      <UserRoleDebug />
                       <RoleSwitcher />
                       <UserButton />
                     </div>
@@ -196,6 +198,7 @@ function RootComponent() {
                       </ul>
                     </div>
                     <div className="mt-auto py-4 border-t border-base-300 flex flex-col gap-2 items-center">
+                      <UserRoleDebug />
                       <RoleSwitcher />
                       <UserButton />
                     </div>
