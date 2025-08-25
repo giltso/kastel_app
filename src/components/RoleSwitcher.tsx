@@ -1,5 +1,5 @@
 import { useMutation } from "convex/react";
-import { api } from "@/convex/_generated/api";
+import { api } from "../../convex/_generated/api";
 import { useIsTester, usePermissions, type UserRole } from "@/hooks/usePermissions";
 import { Filter, UserIcon } from "lucide-react";
 
