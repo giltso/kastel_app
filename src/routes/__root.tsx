@@ -24,6 +24,7 @@ import { ConvexProviderWithClerk } from "convex/react-clerk";
 import { Menu } from "lucide-react";
 import { useEffect, useState } from "react";
 import { api } from "../../convex/_generated/api";
+import { RoleSwitcher } from "@/components/RoleSwitcher";
 
 export const Route = createRootRouteWithContext<{
   queryClient: QueryClient;
@@ -120,7 +121,8 @@ function RootComponent() {
                         </Link>
                       </nav>
                     </div>
-                    <div className="navbar-end">
+                    <div className="navbar-end gap-2">
+                      <RoleSwitcher />
                       <UserButton />
                     </div>
                   </header>
@@ -193,7 +195,8 @@ function RootComponent() {
                         </li>
                       </ul>
                     </div>
-                    <div className="mt-auto py-4 border-t border-base-300 flex justify-center items-center">
+                    <div className="mt-auto py-4 border-t border-base-300 flex flex-col gap-2 items-center">
+                      <RoleSwitcher />
                       <UserButton />
                     </div>
                   </div>
