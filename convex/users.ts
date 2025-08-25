@@ -22,10 +22,15 @@ export const ensureUser = mutation({
       const clerkName = identity.name ?? "Anonymous";
       const clerkEmail = identity.email ?? "";
       
-      if (existingUser.name !== clerkName || existingUser.email !== clerkEmail) {
+      const needsUpdate = existingUser.name !== clerkName || 
+                         existingUser.email !== clerkEmail ||
+                         !existingUser.role; // Add role if missing
+      
+      if (needsUpdate) {
         await ctx.db.patch(existingUser._id, { 
           name: clerkName,
-          email: clerkEmail 
+          email: clerkEmail,
+          role: existingUser.role || "guest", // Default to guest if no role
         });
         return await ctx.db.get(existingUser._id);
       }
@@ -36,7 +41,7 @@ export const ensureUser = mutation({
     const userId = await ctx.db.insert("users", {
       clerkId: identity.subject,
       name: identity.name ?? "Anonymous",
-      email: identity.email ?? "",
+      email: identity.email,
       role: "guest", // Default role for new users
     });
 
@@ -64,7 +69,7 @@ export const getCurrentUser = query({
     // For tester role, return the emulating role if set
     const effectiveRole = user.role === "tester" && user.emulatingRole 
       ? user.emulatingRole 
-      : user.role;
+      : (user.role || "guest");
 
     return {
       ...user,
@@ -104,7 +109,7 @@ export const updateUserRole = mutation({
     // Only managers and testers can update roles
     const effectiveRole = currentUser.role === "tester" && currentUser.emulatingRole 
       ? currentUser.emulatingRole 
-      : currentUser.role;
+      : (currentUser.role || "guest");
 
     if (effectiveRole !== "manager" && currentUser.role !== "tester") {
       throw new ConvexError("Only managers can update user roles");
@@ -183,7 +188,7 @@ export const listUsers = query({
     // Only managers can see all users
     const effectiveRole = currentUser.role === "tester" && currentUser.emulatingRole 
       ? currentUser.emulatingRole 
-      : currentUser.role;
+      : (currentUser.role || "guest");
 
     if (effectiveRole !== "manager" && currentUser.role !== "tester") {
       return [];
@@ -215,10 +220,10 @@ export const checkPermission = query({
 
     const effectiveRole = user.role === "tester" && user.emulatingRole 
       ? user.emulatingRole 
-      : user.role;
+      : (user.role || "guest");
 
     // Define permissions by role
-    const permissions = {
+    const permissions: Record<string, string[]> = {
       guest: [
         "view_public_services",
         "create_guest_request", 

@@ -7,14 +7,14 @@ export default defineSchema({
   users: defineTable({
     clerkId: v.string(),
     name: v.string(),
-    email: v.string(),
-    role: v.union(
+    email: v.optional(v.string()), // Made optional to handle existing data
+    role: v.optional(v.union(
       v.literal("tester"), 
       v.literal("guest"), 
       v.literal("customer"), 
       v.literal("worker"), 
       v.literal("manager")
-    ),
+    )),
     // For tester role - which role they're currently emulating
     emulatingRole: v.optional(v.union(
       v.literal("guest"), 

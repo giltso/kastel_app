@@ -31,7 +31,7 @@ export const createEvent = mutation({
     // Check if user can create events
     const effectiveRole = currentUser.role === "tester" && currentUser.emulatingRole 
       ? currentUser.emulatingRole 
-      : currentUser.role;
+      : (currentUser.role || "guest");
 
     if (!["worker", "manager", "tester"].includes(effectiveRole) && currentUser.role !== "tester") {
       throw new ConvexError("Only workers and managers can create events");
@@ -102,7 +102,7 @@ export const listEvents = query({
 
     const effectiveRole = currentUser.role === "tester" && currentUser.emulatingRole 
       ? currentUser.emulatingRole 
-      : currentUser.role;
+      : (currentUser.role || "guest");
 
     // Get events based on role
     let events;
@@ -174,7 +174,7 @@ export const getEventsByDateRange = query({
 
     const effectiveRole = currentUser.role === "tester" && currentUser.emulatingRole 
       ? currentUser.emulatingRole 
-      : currentUser.role;
+      : (currentUser.role || "guest");
 
     // Apply same filtering as listEvents but with date range
     const events = await ctx.db
@@ -225,7 +225,7 @@ export const getPendingEvents = query({
 
     const effectiveRole = currentUser.role === "tester" && currentUser.emulatingRole 
       ? currentUser.emulatingRole 
-      : currentUser.role;
+      : (currentUser.role || "guest");
 
     // Only managers can see pending events
     if (effectiveRole !== "manager" && currentUser.role !== "tester") {
@@ -275,7 +275,7 @@ export const approveEvent = mutation({
 
     const effectiveRole = currentUser.role === "tester" && currentUser.emulatingRole 
       ? currentUser.emulatingRole 
-      : currentUser.role;
+      : (currentUser.role || "guest");
 
     // Only managers can approve events
     if (effectiveRole !== "manager" && currentUser.role !== "tester") {
@@ -345,7 +345,7 @@ export const updateEventStatus = mutation({
 
     const effectiveRole = currentUser.role === "tester" && currentUser.emulatingRole 
       ? currentUser.emulatingRole 
-      : currentUser.role;
+      : (currentUser.role || "guest");
 
     // Check permissions - can update if:
     // - Manager (can update any event)
@@ -390,7 +390,7 @@ export const deleteEvent = mutation({
 
     const effectiveRole = currentUser.role === "tester" && currentUser.emulatingRole 
       ? currentUser.emulatingRole 
-      : currentUser.role;
+      : (currentUser.role || "guest");
 
     // Only managers can delete events
     if (effectiveRole !== "manager" && currentUser.role !== "tester") {

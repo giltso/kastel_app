@@ -5,22 +5,25 @@ export const seedDatabase = mutation({
   args: {},
   handler: async (ctx) => {
     // Create test users
-    const adminId = await ctx.db.insert("users", {
-      clerkId: "test_admin_123",
-      name: "John Smith",
-      role: "admin",
-    });
-
     const managerId = await ctx.db.insert("users", {
-      clerkId: "test_manager_456",
+      clerkId: "test_manager_123",
       name: "Sarah Johnson",
+      email: "sarah.johnson@kastel.com",
       role: "manager",
     });
 
-    const employeeId = await ctx.db.insert("users", {
-      clerkId: "test_employee_789",
-      name: "Mike Wilson",
-      role: "employee",
+    const workerId = await ctx.db.insert("users", {
+      clerkId: "test_worker_456",
+      name: "Mike Wilson", 
+      email: "mike.wilson@kastel.com",
+      role: "worker",
+    });
+
+    const testerId = await ctx.db.insert("users", {
+      clerkId: "test_tester_789",
+      name: "Alex Tester",
+      email: "alex.tester@kastel.com", 
+      role: "tester",
     });
 
     // Create test events
@@ -33,31 +36,32 @@ export const seedDatabase = mutation({
       startTime: now + oneDay,
       endTime: now + oneDay + (4 * 60 * 60 * 1000), // 4 hours
       type: "work",
-      assignedTo: employeeId,
-      createdBy: managerId,
-      status: "pending",
+      assignedTo: workerId,
+      createdBy: workerId,
+      status: "pending_approval",
     });
 
     await ctx.db.insert("events", {
-      title: "Team Meeting - Weekly Planning",
+      title: "Team Meeting - Weekly Planning", 
       description: "Weekly team meeting to discuss upcoming projects and assignments",
       startTime: now + (2 * oneDay),
       endTime: now + (2 * oneDay) + (60 * 60 * 1000), // 1 hour
       type: "meeting",
       assignedTo: undefined,
       createdBy: managerId,
-      status: "pending",
+      status: "approved",
+      approvedBy: managerId,
     });
 
     await ctx.db.insert("events", {
       title: "Equipment Maintenance",
-      description: "Regular maintenance check on power tools",
+      description: "Regular maintenance check on power tools", 
       startTime: now + (3 * oneDay),
       endTime: now + (3 * oneDay) + (3 * 60 * 60 * 1000), // 3 hours
       type: "maintenance",
-      assignedTo: employeeId,
-      createdBy: adminId,
-      status: "pending",
+      assignedTo: workerId,
+      createdBy: workerId,
+      status: "pending_approval",
     });
 
     await ctx.db.insert("events", {
@@ -66,9 +70,10 @@ export const seedDatabase = mutation({
       startTime: now + (4 * oneDay),
       endTime: now + (4 * oneDay) + (2 * 60 * 60 * 1000), // 2 hours
       type: "work",
-      assignedTo: employeeId,
+      assignedTo: workerId,
       createdBy: managerId,
       status: "completed",
+      approvedBy: managerId,
     });
 
     // Create test forms
@@ -76,7 +81,7 @@ export const seedDatabase = mutation({
       title: "Daily Work Hours Report",
       description: "Log your daily work hours and tasks completed",
       type: "work_hours",
-      createdBy: adminId,
+      createdBy: managerId,
       isActive: true,
       fields: [
         {
@@ -150,7 +155,7 @@ export const seedDatabase = mutation({
     // Create some test form submissions
     await ctx.db.insert("form_submissions", {
       formId: workHoursFormId,
-      submittedBy: employeeId,
+      submittedBy: workerId,
       data: {
         date: new Date().toISOString().split('T')[0],
         hours_worked: 8,
