@@ -55,6 +55,7 @@ interface CreateEventModalProps {
 export function CreateEventModal({ isOpen, onClose, prefilledData = {} }: CreateEventModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [isRecurring, setIsRecurring] = useState(false);
   const createEvent = useMutation(api.events.createEvent);
   const users = useQuery(api.users.listWorkers);
 
@@ -124,6 +125,7 @@ export function CreateEventModal({ isOpen, onClose, prefilledData = {} }: Create
   // Reset form when prefilled data changes
   useEffect(() => {
     if (isOpen) {
+      setIsRecurring(false);
       form.reset({
         title: "",
         description: "",
@@ -144,6 +146,7 @@ export function CreateEventModal({ isOpen, onClose, prefilledData = {} }: Create
     if (!isSubmitting) {
       form.reset();
       setSubmitSuccess(false);
+      setIsRecurring(false);
       onClose();
     }
   };
@@ -430,7 +433,10 @@ export function CreateEventModal({ isOpen, onClose, prefilledData = {} }: Create
                     type="checkbox"
                     name={field.name}
                     checked={field.state.value}
-                    onChange={(e) => field.handleChange(e.target.checked)}
+                    onChange={(e) => {
+                      field.handleChange(e.target.checked);
+                      setIsRecurring(e.target.checked);
+                    }}
                     className="checkbox checkbox-primary"
                   />
                   <span className="label-text flex items-center gap-2">
@@ -443,7 +449,7 @@ export function CreateEventModal({ isOpen, onClose, prefilledData = {} }: Create
           />
 
           {/* Recurring Options */}
-          {form.state.values.isRecurring && (
+          {isRecurring && (
             <div className="card bg-base-200 p-4">
               <h4 className="font-semibold mb-3">Repetition Settings</h4>
               
@@ -494,7 +500,7 @@ export function CreateEventModal({ isOpen, onClose, prefilledData = {} }: Create
                         </label>
                       ))}
                     </div>
-                    {form.state.values.isRecurring && field.state.value.length === 0 && (
+                    {isRecurring && field.state.value.length === 0 && (
                       <div className="label">
                         <span className="label-text-alt text-warning">
                           Please select at least one day for weekly repetition
