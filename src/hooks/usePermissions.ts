@@ -76,6 +76,7 @@ export function usePermissions() {
         "comment_on_tickets",
         "close_tickets",
         "manage_user_roles",
+        "access_worker_portal",
         "access_manager_portal"
       ],
       tester: [
