@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation } from "convex/react";
 import { useForm } from "@tanstack/react-form";
 import { z } from "zod";
@@ -43,9 +43,15 @@ const eventSchema = z.object({
 interface CreateEventModalProps {
   isOpen: boolean;
   onClose: () => void;
+  prefilledData?: {
+    startDate?: string;
+    endDate?: string;
+    startTime?: string;
+    endTime?: string;
+  };
 }
 
-export function CreateEventModal({ isOpen, onClose }: CreateEventModalProps) {
+export function CreateEventModal({ isOpen, onClose, prefilledData = {} }: CreateEventModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const createEvent = useMutation(api.events.createEvent);
@@ -54,10 +60,10 @@ export function CreateEventModal({ isOpen, onClose }: CreateEventModalProps) {
     defaultValues: {
       title: "",
       description: "",
-      startDate: "",
-      endDate: "",
-      startTime: "09:00",
-      endTime: "17:00",
+      startDate: prefilledData.startDate || "",
+      endDate: prefilledData.endDate || "",
+      startTime: prefilledData.startTime || "09:00",
+      endTime: prefilledData.endTime || "17:00",
       type: "work" as const,
       isRecurring: false,
       recurringType: "weekly" as const,
@@ -104,6 +110,24 @@ export function CreateEventModal({ isOpen, onClose }: CreateEventModalProps) {
       }
     },
   });
+
+  // Reset form when prefilled data changes
+  useEffect(() => {
+    if (isOpen) {
+      form.reset({
+        title: "",
+        description: "",
+        startDate: prefilledData.startDate || "",
+        endDate: prefilledData.endDate || "",
+        startTime: prefilledData.startTime || "09:00",
+        endTime: prefilledData.endTime || "17:00",
+        type: "work" as const,
+        isRecurring: false,
+        recurringType: "weekly" as const,
+        recurringDays: [] as string[],
+      });
+    }
+  }, [isOpen, prefilledData, form]);
 
   const handleClose = () => {
     if (!isSubmitting) {

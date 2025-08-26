@@ -23,6 +23,12 @@ function CalendarPage() {
   const [viewType, setViewType] = useState<ViewType>("month");
   const [currentDate, setCurrentDate] = useState(new Date());
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [prefilledEventData, setPrefilledEventData] = useState<{
+    startDate?: string;
+    endDate?: string;
+    startTime?: string;
+    endTime?: string;
+  }>({});
   const [editingEvent, setEditingEvent] = useState<(Doc<"events"> & {
     createdBy: Doc<"users"> | null;
     approvedBy: Doc<"users"> | null;
@@ -98,11 +104,20 @@ function CalendarPage() {
     setEditingEvent(event);
   };
 
-  const handleEmptySpaceClick = (_date: Date, _hour?: number) => {
+  const handleEmptySpaceClick = (date: Date, hour?: number) => {
     if (!isDragging) {
       // Set default values for new event based on clicked date/time
+      const dateString = date.toISOString().split('T')[0]; // YYYY-MM-DD format
+      const startTime = hour !== undefined ? `${String(hour).padStart(2, '0')}:00` : "09:00";
+      const endTime = hour !== undefined ? `${String(hour + 1).padStart(2, '0')}:00` : "17:00";
+      
+      setPrefilledEventData({
+        startDate: dateString,
+        endDate: dateString,
+        startTime: startTime,
+        endTime: endTime,
+      });
       setIsCreateModalOpen(true);
-      // TODO: Pass pre-filled date/time to modal
     }
   };
 
@@ -140,15 +155,15 @@ function CalendarPage() {
       // Calculate event details from drag selection
       let startDate = dragStart.date;
       let endDate = dragEnd.date;
-      let _startTime = "09:00";
-      let _endTime = "17:00";
+      let startTime = "09:00";
+      let endTime = "17:00";
 
       // For day/week views, use hour information
       if (dragStart.hour !== undefined && dragEnd.hour !== undefined) {
         const startHour = Math.min(dragStart.hour, dragEnd.hour);
         const endHour = Math.max(dragStart.hour, dragEnd.hour) + 1; // End hour is exclusive
-        _startTime = String(startHour).padStart(2, '0') + ":00";
-        _endTime = String(endHour).padStart(2, '0') + ":00";
+        startTime = String(startHour).padStart(2, '0') + ":00";
+        endTime = String(endHour).padStart(2, '0') + ":00";
       }
 
       // For month view, if dragging across dates
@@ -156,9 +171,14 @@ function CalendarPage() {
         [startDate, endDate] = [endDate, startDate];
       }
 
-      // Open modal with pre-filled data
+      // Set pre-filled data and open modal
+      setPrefilledEventData({
+        startDate: startDate.toISOString().split('T')[0],
+        endDate: endDate.toISOString().split('T')[0],
+        startTime: startTime,
+        endTime: endTime,
+      });
       setIsCreateModalOpen(true);
-      // We'll need to pass this data to the modal somehow
     }
 
     setIsDragging(false);
@@ -324,13 +344,24 @@ function CalendarPage() {
                 return (
                   <div
                     key={dayIndex}
-                    className="min-h-12 p-1 border border-base-300 rounded bg-base-100 hover:bg-base-200 cursor-pointer transition-colors relative"
+                    className={`
+                      min-h-12 p-1 border border-base-300 rounded bg-base-100 hover:bg-base-200 cursor-pointer transition-colors relative select-none
+                      ${isDragSelected(date, hour) ? 'bg-primary/20 border-primary' : ''}
+                    `}
+                    onClick={() => handleEmptySpaceClick(date, hour)}
+                    onMouseDown={() => handleDragStart(date, hour)}
+                    onMouseEnter={() => handleDragMove(date, hour)}
+                    onMouseUp={handleDragEnd}
                   >
                     {hourEvents.map((event) => (
                       <div
                         key={event._id}
-                        className={`absolute inset-1 text-xs p-1 rounded text-white ${getStatusColor(event.status)} truncate`}
+                        className={`absolute inset-1 text-xs p-1 rounded text-white ${getStatusColor(event.status)} truncate cursor-pointer hover:opacity-80`}
                         title={`${event.title} (${event.startTime} - ${event.endTime})`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEventClick(event);
+                        }}
                       >
                         {event.title}
                       </div>
@@ -366,12 +397,25 @@ function CalendarPage() {
               <div className="p-2 text-sm opacity-70 text-right">
                 {hour === 0 ? '12 AM' : hour < 12 ? `${hour} AM` : hour === 12 ? '12 PM' : `${hour - 12} PM`}
               </div>
-              <div className="min-h-12 p-2 border border-base-300 rounded bg-base-100 hover:bg-base-200 cursor-pointer transition-colors relative">
+              <div 
+                className={`
+                  min-h-12 p-2 border border-base-300 rounded bg-base-100 hover:bg-base-200 cursor-pointer transition-colors relative select-none
+                  ${isDragSelected(currentDate, hour) ? 'bg-primary/20 border-primary' : ''}
+                `}
+                onClick={() => handleEmptySpaceClick(currentDate, hour)}
+                onMouseDown={() => handleDragStart(currentDate, hour)}
+                onMouseEnter={() => handleDragMove(currentDate, hour)}
+                onMouseUp={handleDragEnd}
+              >
                 {hourEvents.map((event, eventIndex) => (
                   <div
                     key={event._id}
-                    className={`absolute inset-1 text-xs p-1 rounded text-white ${getStatusColor(event.status)} truncate`}
+                    className={`absolute inset-1 text-xs p-1 rounded text-white ${getStatusColor(event.status)} truncate cursor-pointer hover:opacity-80`}
                     title={`${event.title} (${event.startTime} - ${event.endTime})`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleEventClick(event);
+                    }}
                   >
                     {event.title}
                   </div>
@@ -399,7 +443,10 @@ function CalendarPage() {
             </button>
             <button 
               className="btn btn-primary"
-              onClick={() => setIsCreateModalOpen(true)}
+              onClick={() => {
+                setPrefilledEventData({});
+                setIsCreateModalOpen(true);
+              }}
             >
               <Plus className="w-4 h-4" />
               Create Event
@@ -477,7 +524,11 @@ function CalendarPage() {
         {/* Create Event Modal */}
         <CreateEventModal 
           isOpen={isCreateModalOpen} 
-          onClose={() => setIsCreateModalOpen(false)} 
+          onClose={() => {
+            setIsCreateModalOpen(false);
+            setPrefilledEventData({});
+          }}
+          prefilledData={prefilledEventData}
         />
         
         {/* Edit Event Modal */}
