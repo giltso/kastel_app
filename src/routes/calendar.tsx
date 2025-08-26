@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Authenticated, useMutation } from "convex/react";
 import { convexQuery } from "@convex-dev/react-query";
 import { useSuspenseQuery } from "@tanstack/react-query";
@@ -7,6 +7,7 @@ import { Calendar, ChevronLeft, ChevronRight, Filter, Plus, Target } from "lucid
 import { api } from "../../convex/_generated/api";
 import { CreateEventModal } from "@/components/CreateEventModal";
 import { EditEventModal } from "@/components/EditEventModal";
+import { usePermissions } from "@/hooks/usePermissions";
 import type { Doc } from "../../convex/_generated/dataModel";
 
 const eventsQueryOptions = convexQuery(api.events.listEvents, {});
@@ -20,6 +21,8 @@ export const Route = createFileRoute("/calendar")({
 type ViewType = "day" | "week" | "month";
 
 function CalendarPage() {
+  const { user, effectiveRole, hasPermission, isLoading } = usePermissions();
+  const navigate = useNavigate();
   const [viewType, setViewType] = useState<ViewType>("month");
   const [currentDate, setCurrentDate] = useState(new Date());
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -45,6 +48,27 @@ function CalendarPage() {
   const updateEvent = useMutation(api.events.updateEvent);
   const today = new Date();
   const currentMonth = currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+  // Check authorization and redirect if necessary
+  useEffect(() => {
+    if (!isLoading && !hasPermission("access_worker_portal")) {
+      void navigate({ to: "/unauthorized" });
+    }
+  }, [hasPermission, isLoading, navigate]);
+
+  // Show loading while checking permissions
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-96">
+        <div className="loading loading-spinner loading-lg"></div>
+      </div>
+    );
+  }
+
+  // Don't render content if user doesn't have permission (will be redirected)
+  if (!hasPermission("access_worker_portal")) {
+    return null;
+  }
 
   // Add global mouse up handler to end dragging
   useEffect(() => {
@@ -101,6 +125,11 @@ function CalendarPage() {
 
   const goToToday = () => {
     setCurrentDate(new Date());
+  };
+
+  const canEditEvent = (event: any) => {
+    return effectiveRole === "manager" || effectiveRole === "tester" || 
+           event.createdBy?._id === user?._id || event.assignedTo?._id === user?._id;
   };
 
   const getEventsForDate = (date: Date) => {
@@ -233,10 +262,13 @@ function CalendarPage() {
   };
 
   const handleEventClick = (event: any) => {
-    // Close create modal if open before opening edit modal
-    setIsCreateModalOpen(false);
-    setPrefilledEventData({});
-    setEditingEvent(event);
+    // Only allow editing if user has permission
+    if (canEditEvent(event)) {
+      // Close create modal if open before opening edit modal
+      setIsCreateModalOpen(false);
+      setPrefilledEventData({});
+      setEditingEvent(event);
+    }
   };
 
   const handleEmptySpaceClick = (date: Date, hour?: number) => {
@@ -349,6 +381,12 @@ function CalendarPage() {
 
   // Event drag handlers
   const handleEventDragStart = (event: any, e: React.DragEvent) => {
+    // Only allow dragging if user has permission to edit the event
+    if (!canEditEvent(event)) {
+      e.preventDefault();
+      return;
+    }
+    
     e.stopPropagation();
     setEventDragging(true);
     setDraggedEvent(event);
@@ -369,6 +407,12 @@ function CalendarPage() {
 
   // Resize handlers
   const handleResizeStart = (event: any, resizeType: 'start' | 'end', e: React.DragEvent) => {
+    // Only allow resizing if user has permission to edit the event
+    if (!canEditEvent(event)) {
+      e.preventDefault();
+      return;
+    }
+    
     e.stopPropagation();
     setResizing({ event, type: resizeType });
     e.dataTransfer.effectAllowed = 'move';
@@ -637,9 +681,9 @@ function CalendarPage() {
                         <div
                           key={event._id}
                           style={eventStyle}
-                          className={`text-xs p-1 rounded text-white ${getStatusColor(event.status)} truncate cursor-move hover:opacity-80 ${draggedEvent?._id === event._id ? 'opacity-50' : ''} relative group`}
+                          className={`text-xs p-1 rounded text-white ${getStatusColor(event.status)} truncate ${canEditEvent(event) ? 'cursor-move' : 'cursor-pointer'} hover:opacity-80 ${draggedEvent?._id === event._id ? 'opacity-50' : ''} relative group`}
                           title={`${event.title} (${event.startTime} - ${event.endTime})`}
-                          draggable
+                          draggable={canEditEvent(event)}
                           onDragStart={(e) => handleEventDragStart(event, e)}
                           onDragEnd={handleEventDragEnd}
                           onClick={(e) => {
@@ -647,23 +691,27 @@ function CalendarPage() {
                             handleEventClick(event);
                           }}
                         >
-                          {/* Start resize handle */}
-                          <div
-                            className="absolute top-0 left-0 right-0 h-1 cursor-ns-resize opacity-0 group-hover:opacity-100 bg-white/30 rounded-t"
-                            draggable
-                            onDragStart={(e) => handleResizeStart(event, 'start', e)}
-                            title="Drag to change start time"
-                          />
+                          {/* Start resize handle - only for users who can edit */}
+                          {canEditEvent(event) && (
+                            <div
+                              className="absolute top-0 left-0 right-0 h-1 cursor-ns-resize opacity-0 group-hover:opacity-100 bg-white/30 rounded-t"
+                              draggable
+                              onDragStart={(e) => handleResizeStart(event, 'start', e)}
+                              title="Drag to change start time"
+                            />
+                          )}
                           
                           {event.title}
                           
-                          {/* End resize handle */}
-                          <div
-                            className="absolute bottom-0 left-0 right-0 h-1 cursor-ns-resize opacity-0 group-hover:opacity-100 bg-white/30 rounded-b"
-                            draggable
-                            onDragStart={(e) => handleResizeStart(event, 'end', e)}
-                            title="Drag to change end time"
-                          />
+                          {/* End resize handle - only for users who can edit */}
+                          {canEditEvent(event) && (
+                            <div
+                              className="absolute bottom-0 left-0 right-0 h-1 cursor-ns-resize opacity-0 group-hover:opacity-100 bg-white/30 rounded-b"
+                              draggable
+                              onDragStart={(e) => handleResizeStart(event, 'end', e)}
+                              title="Drag to change end time"
+                            />
+                          )}
                         </div>
                       );
                     })}
@@ -729,9 +777,9 @@ function CalendarPage() {
                       <div
                         key={event._id}
                         style={eventStyle}
-                        className={`text-xs p-1 rounded text-white ${getStatusColor(event.status)} truncate cursor-move hover:opacity-80 ${draggedEvent?._id === event._id ? 'opacity-50' : ''} relative group`}
+                        className={`text-xs p-1 rounded text-white ${getStatusColor(event.status)} truncate ${canEditEvent(event) ? 'cursor-move' : 'cursor-pointer'} hover:opacity-80 ${draggedEvent?._id === event._id ? 'opacity-50' : ''} relative group`}
                         title={`${event.title} (${event.startTime} - ${event.endTime})`}
-                        draggable
+                        draggable={canEditEvent(event)}
                         onDragStart={(e) => handleEventDragStart(event, e)}
                         onDragEnd={handleEventDragEnd}
                         onClick={(e) => {
@@ -739,23 +787,27 @@ function CalendarPage() {
                           handleEventClick(event);
                         }}
                       >
-                        {/* Start resize handle */}
-                        <div
-                          className="absolute top-0 left-0 right-0 h-1 cursor-ns-resize opacity-0 group-hover:opacity-100 bg-white/30 rounded-t"
-                          draggable
-                          onDragStart={(e) => handleResizeStart(event, 'start', e)}
-                          title="Drag to change start time"
-                        />
+                        {/* Start resize handle - only for users who can edit */}
+                        {canEditEvent(event) && (
+                          <div
+                            className="absolute top-0 left-0 right-0 h-1 cursor-ns-resize opacity-0 group-hover:opacity-100 bg-white/30 rounded-t"
+                            draggable
+                            onDragStart={(e) => handleResizeStart(event, 'start', e)}
+                            title="Drag to change start time"
+                          />
+                        )}
                         
                         {event.title}
                         
-                        {/* End resize handle */}
-                        <div
-                          className="absolute bottom-0 left-0 right-0 h-1 cursor-ns-resize opacity-0 group-hover:opacity-100 bg-white/30 rounded-b"
-                          draggable
-                          onDragStart={(e) => handleResizeStart(event, 'end', e)}
-                          title="Drag to change end time"
-                        />
+                        {/* End resize handle - only for users who can edit */}
+                        {canEditEvent(event) && (
+                          <div
+                            className="absolute bottom-0 left-0 right-0 h-1 cursor-ns-resize opacity-0 group-hover:opacity-100 bg-white/30 rounded-b"
+                            draggable
+                            onDragStart={(e) => handleResizeStart(event, 'end', e)}
+                            title="Drag to change end time"
+                          />
+                        )}
                       </div>
                     );
                   })}

@@ -1,12 +1,13 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Authenticated, useMutation } from "convex/react";
 import { convexQuery } from "@convex-dev/react-query";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Calendar, Plus, CheckCircle, Circle, AlertCircle, Repeat, Search, Filter, Trash2, Edit, Eye, EyeOff, Check, X } from "lucide-react";
 import { api } from "../../convex/_generated/api";
 import { CreateEventModal } from "@/components/CreateEventModal";
 import { EditEventModal } from "@/components/EditEventModal";
+import { usePermissions, useCanApproveEvents } from "@/hooks/usePermissions";
 import type { Id, Doc } from "../../convex/_generated/dataModel";
 
 const eventsQueryOptions = convexQuery(api.events.listEvents, {});
@@ -18,6 +19,8 @@ export const Route = createFileRoute("/events")({
 });
 
 function EventsPage() {
+  const { hasPermission, isLoading } = usePermissions();
+  const navigate = useNavigate();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<(Doc<"events"> & {
     createdBy: Doc<"users"> | null;
@@ -29,6 +32,27 @@ function EventsPage() {
   const [filterType, setFilterType] = useState<string>("all");
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [showPastEvents, setShowPastEvents] = useState(false);
+
+  // Check authorization and redirect if necessary
+  useEffect(() => {
+    if (!isLoading && !hasPermission("access_worker_portal")) {
+      void navigate({ to: "/unauthorized" });
+    }
+  }, [hasPermission, isLoading, navigate]);
+
+  // Show loading while checking permissions
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-96">
+        <div className="loading loading-spinner loading-lg"></div>
+      </div>
+    );
+  }
+
+  // Don't render content if user doesn't have permission (will be redirected)
+  if (!hasPermission("access_worker_portal")) {
+    return null;
+  }
 
   return (
     <Authenticated>
@@ -169,6 +193,8 @@ interface EventsListProps {
 
 function EventsList({ searchTerm, filterType, filterStatus, showPastEvents, onTogglePastEvents, onEditEvent }: EventsListProps) {
   const { data: events } = useSuspenseQuery(eventsQueryOptions);
+  const { user, effectiveRole } = usePermissions();
+  const canApprove = useCanApproveEvents();
   const deleteEvent = useMutation(api.events.deleteEvent);
   const updateEventStatus = useMutation(api.events.updateEventStatus);
   const approveEvent = useMutation(api.events.approveEvent);
@@ -302,8 +328,9 @@ function EventsList({ searchTerm, filterType, filterStatus, showPastEvents, onTo
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2">
                           <div className="flex items-center gap-2">
-                            {/* Status toggle checkbox */}
-                            {["approved", "in_progress", "completed"].includes(event.status) && (
+                            {/* Status toggle checkbox - only for managers or event creators */}
+                            {["approved", "in_progress", "completed"].includes(event.status) && 
+                             (effectiveRole === "manager" || effectiveRole === "tester" || event.createdBy?._id === user?._id || event.assignedTo?._id === user?._id) && (
                               <button
                                 className="btn btn-circle btn-xs btn-ghost p-0"
                                 onClick={() => handleToggleEventStatus(event._id, event.status)}
@@ -356,8 +383,8 @@ function EventsList({ searchTerm, filterType, filterStatus, showPastEvents, onTo
                         </div>
                       </div>
                       <div className="flex gap-2">
-                        {/* Show approve/reject buttons for pending approval events */}
-                        {event.status === "pending_approval" && (
+                        {/* Show approve/reject buttons only to managers for pending events */}
+                        {event.status === "pending_approval" && canApprove && (
                           <>
                             <button 
                               className="btn btn-sm btn-success"
@@ -378,21 +405,27 @@ function EventsList({ searchTerm, filterType, filterStatus, showPastEvents, onTo
                           </>
                         )}
                         
-                        {/* Standard edit and delete buttons */}
-                        <button 
-                          className="btn btn-sm btn-ghost"
-                          onClick={() => onEditEvent(event)}
-                        >
-                          <Edit className="w-4 h-4" />
-                          Edit
-                        </button>
-                        <button 
-                          className="btn btn-sm btn-ghost text-error hover:bg-error hover:text-error-content"
-                          onClick={() => handleDeleteEvent(event._id)}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                          Delete
-                        </button>
+                        {/* Only show edit/delete if user is manager OR it's their own event */}
+                        {(effectiveRole === "manager" || effectiveRole === "tester" || event.createdBy?._id === user?._id) && (
+                          <>
+                            <button 
+                              className="btn btn-sm btn-ghost"
+                              onClick={() => onEditEvent(event)}
+                            >
+                              <Edit className="w-4 h-4" />
+                              Edit
+                            </button>
+                            {(effectiveRole === "manager" || effectiveRole === "tester") && (
+                              <button 
+                                className="btn btn-sm btn-ghost text-error hover:bg-error hover:text-error-content"
+                                onClick={() => handleDeleteEvent(event._id)}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                                Delete
+                              </button>
+                            )}
+                          </>
+                        )}
                       </div>
                     </div>
                   </div>

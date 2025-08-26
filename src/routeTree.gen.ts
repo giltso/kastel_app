@@ -11,12 +11,19 @@
 // Import Routes
 
 import { Route as rootRoute } from './routes/__root'
+import { Route as UnauthorizedImport } from './routes/unauthorized'
 import { Route as FormsImport } from './routes/forms'
 import { Route as EventsImport } from './routes/events'
 import { Route as CalendarImport } from './routes/calendar'
 import { Route as IndexImport } from './routes/index'
 
 // Create/Update Routes
+
+const UnauthorizedRoute = UnauthorizedImport.update({
+  id: '/unauthorized',
+  path: '/unauthorized',
+  getParentRoute: () => rootRoute,
+} as any)
 
 const FormsRoute = FormsImport.update({
   id: '/forms',
@@ -74,6 +81,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FormsImport
       parentRoute: typeof rootRoute
     }
+    '/unauthorized': {
+      id: '/unauthorized'
+      path: '/unauthorized'
+      fullPath: '/unauthorized'
+      preLoaderRoute: typeof UnauthorizedImport
+      parentRoute: typeof rootRoute
+    }
   }
 }
 
@@ -84,6 +98,7 @@ export interface FileRoutesByFullPath {
   '/calendar': typeof CalendarRoute
   '/events': typeof EventsRoute
   '/forms': typeof FormsRoute
+  '/unauthorized': typeof UnauthorizedRoute
 }
 
 export interface FileRoutesByTo {
@@ -91,6 +106,7 @@ export interface FileRoutesByTo {
   '/calendar': typeof CalendarRoute
   '/events': typeof EventsRoute
   '/forms': typeof FormsRoute
+  '/unauthorized': typeof UnauthorizedRoute
 }
 
 export interface FileRoutesById {
@@ -99,14 +115,15 @@ export interface FileRoutesById {
   '/calendar': typeof CalendarRoute
   '/events': typeof EventsRoute
   '/forms': typeof FormsRoute
+  '/unauthorized': typeof UnauthorizedRoute
 }
 
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/calendar' | '/events' | '/forms'
+  fullPaths: '/' | '/calendar' | '/events' | '/forms' | '/unauthorized'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/calendar' | '/events' | '/forms'
-  id: '__root__' | '/' | '/calendar' | '/events' | '/forms'
+  to: '/' | '/calendar' | '/events' | '/forms' | '/unauthorized'
+  id: '__root__' | '/' | '/calendar' | '/events' | '/forms' | '/unauthorized'
   fileRoutesById: FileRoutesById
 }
 
@@ -115,6 +132,7 @@ export interface RootRouteChildren {
   CalendarRoute: typeof CalendarRoute
   EventsRoute: typeof EventsRoute
   FormsRoute: typeof FormsRoute
+  UnauthorizedRoute: typeof UnauthorizedRoute
 }
 
 const rootRouteChildren: RootRouteChildren = {
@@ -122,6 +140,7 @@ const rootRouteChildren: RootRouteChildren = {
   CalendarRoute: CalendarRoute,
   EventsRoute: EventsRoute,
   FormsRoute: FormsRoute,
+  UnauthorizedRoute: UnauthorizedRoute,
 }
 
 export const routeTree = rootRoute
@@ -137,7 +156,8 @@ export const routeTree = rootRoute
         "/",
         "/calendar",
         "/events",
-        "/forms"
+        "/forms",
+        "/unauthorized"
       ]
     },
     "/": {
@@ -151,6 +171,9 @@ export const routeTree = rootRoute
     },
     "/forms": {
       "filePath": "forms.tsx"
+    },
+    "/unauthorized": {
+      "filePath": "unauthorized.tsx"
     }
   }
 }
