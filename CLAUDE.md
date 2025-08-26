@@ -11,6 +11,34 @@ Always follow the guidelines in this file, unless explicitly told otherwise by t
 - Environment variables: Client vars need `VITE_` prefix, Convex vars set in dashboard
 - Package manager: Always use `pnpm` and `pnpx`, NOT `npm` or `npx`
 
+## Event Management System
+
+This application includes a comprehensive role-based event management system:
+
+### Features Implemented
+- **Role-based Access Control**: Support for tester, guest, customer, worker, manager roles
+- **Event CRUD Operations**: Full create, read, update, delete functionality
+- **Approval Workflow**: Worker-created events require manager approval
+- **Participants System**: Multi-user event participation with participant search
+- **Calendar Integration**: Interactive calendar views (day/week/month) with click-to-create
+- **Search & Filtering**: Advanced search by title, description, participants, with status/type filters
+- **Event Status Management**: Complete lifecycle from pending → approved → in progress → completed
+- **Role Emulation**: Testing interface for switching between roles
+
+### Key Files
+- `convex/events.ts`: Backend event operations and role-based filtering
+- `convex/users.ts`: User management and role switching
+- `src/routes/events.tsx`: Events list page with approval UI
+- `src/routes/calendar.tsx`: Calendar views and interactions
+- `src/components/CreateEventModal.tsx`: Event creation interface
+- `src/components/EditEventModal.tsx`: Event editing with participants
+
+### Authentication & Permissions
+- Workers: Can create events (pending approval), edit own events, see assigned events
+- Managers: All worker permissions + approve/reject events, see all operationally relevant events
+- Guests/Customers: View approved events only
+- Role-based UI: Approval buttons only visible to managers for pending events
+
 ## Git Workflow
 
 - **Commit after each user request**: When completing what the user asked for, immediately commit: `git add -A && git commit -m "[action]: [what was accomplished]"`

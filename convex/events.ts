@@ -131,16 +131,16 @@ export const listEvents = query({
 
     // Get events based on role
     let events;
-    if (effectiveRole === "manager" || currentUser.role === "tester") {
-      // Managers see all events
-      events = await ctx.db.query("events").collect();
-    } else if (effectiveRole === "worker") {
-      // Workers see only their events (created, assigned, or participating in)
+    if (effectiveRole === "manager" || effectiveRole === "worker" || currentUser.role === "tester") {
+      // Managers and workers see their own events (created, assigned, or participating in)
+      // Plus for managers: events they need to approve
       const allEvents = await ctx.db.query("events").collect();
       events = allEvents.filter(event => 
         event.createdBy === currentUser._id ||
         event.assignedTo === currentUser._id ||
-        (event.participants && event.participants.includes(currentUser._id))
+        (event.participants && event.participants.includes(currentUser._id)) ||
+        // Managers also see events pending their approval
+        (effectiveRole === "manager" && event.status === "pending_approval")
       );
     } else {
       // Guests/customers see only approved public events
@@ -213,13 +213,14 @@ export const getEventsByDateRange = query({
 
     // Filter based on permissions
     let filteredEvents;
-    if (effectiveRole === "manager" || currentUser.role === "tester") {
-      filteredEvents = events;
-    } else if (effectiveRole === "worker") {
+    if (effectiveRole === "manager" || effectiveRole === "worker" || currentUser.role === "tester") {
+      // Managers and workers see their own events plus events pending approval (for managers)
       filteredEvents = events.filter(event => 
         event.createdBy === currentUser._id ||
         event.assignedTo === currentUser._id ||
-        (event.participants && event.participants.includes(currentUser._id))
+        (event.participants && event.participants.includes(currentUser._id)) ||
+        // Managers also see events pending their approval
+        (effectiveRole === "manager" && event.status === "pending_approval")
       );
     } else {
       filteredEvents = events.filter(event => event.status === "approved");

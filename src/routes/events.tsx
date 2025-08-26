@@ -3,7 +3,7 @@ import { Authenticated, useMutation } from "convex/react";
 import { convexQuery } from "@convex-dev/react-query";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { Calendar, Plus, CheckCircle, Circle, AlertCircle, Repeat, Search, Filter, Trash2, Edit, Eye, EyeOff } from "lucide-react";
+import { Calendar, Plus, CheckCircle, Circle, AlertCircle, Repeat, Search, Filter, Trash2, Edit, Eye, EyeOff, Check, X } from "lucide-react";
 import { api } from "../../convex/_generated/api";
 import { CreateEventModal } from "@/components/CreateEventModal";
 import { EditEventModal } from "@/components/EditEventModal";
@@ -171,6 +171,7 @@ function EventsList({ searchTerm, filterType, filterStatus, showPastEvents, onTo
   const { data: events } = useSuspenseQuery(eventsQueryOptions);
   const deleteEvent = useMutation(api.events.deleteEvent);
   const updateEventStatus = useMutation(api.events.updateEventStatus);
+  const approveEvent = useMutation(api.events.approveEvent);
 
   // Filter events based on search, filters, and date
   const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
@@ -223,6 +224,15 @@ function EventsList({ searchTerm, filterType, filterStatus, showPastEvents, onTo
     } catch (error) {
       alert("Failed to update event status. You may not have permission to update this event.");
       console.error("Status update failed:", error);
+    }
+  };
+
+  const handleApproveEvent = async (eventId: Id<"events">, approved: boolean) => {
+    try {
+      await approveEvent({ eventId, approved });
+    } catch (error) {
+      alert(`Failed to ${approved ? 'approve' : 'reject'} event. You may not have permission to approve events.`);
+      console.error("Approval failed:", error);
     }
   };
 
@@ -346,6 +356,29 @@ function EventsList({ searchTerm, filterType, filterStatus, showPastEvents, onTo
                         </div>
                       </div>
                       <div className="flex gap-2">
+                        {/* Show approve/reject buttons for pending approval events */}
+                        {event.status === "pending_approval" && (
+                          <>
+                            <button 
+                              className="btn btn-sm btn-success"
+                              onClick={() => handleApproveEvent(event._id, true)}
+                              title="Approve event"
+                            >
+                              <Check className="w-4 h-4" />
+                              Approve
+                            </button>
+                            <button 
+                              className="btn btn-sm btn-error"
+                              onClick={() => handleApproveEvent(event._id, false)}
+                              title="Reject event"
+                            >
+                              <X className="w-4 h-4" />
+                              Reject
+                            </button>
+                          </>
+                        )}
+                        
+                        {/* Standard edit and delete buttons */}
                         <button 
                           className="btn btn-sm btn-ghost"
                           onClick={() => onEditEvent(event)}
