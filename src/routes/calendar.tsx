@@ -481,7 +481,7 @@ function CalendarPage() {
   return (
     <Authenticated>
       <div className="max-w-7xl mx-auto">
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex justify-between items-center mb-4">
           <div>
             <h1 className="text-3xl font-bold">Calendar</h1>
             <p className="opacity-80">View and interact with scheduled events</p>
@@ -504,58 +504,60 @@ function CalendarPage() {
           </div>
         </div>
 
+        {/* Calendar Navigation */}
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-xl font-semibold">{currentMonth}</h2>
+          <div className="not-prose flex gap-4 items-center">
+            {/* View Toggle */}
+            <div className="join">
+              <button 
+                className={`join-item btn btn-sm ${viewType === "day" ? "btn-active" : "btn-ghost"}`}
+                onClick={() => setViewType("day")}
+              >
+                Day
+              </button>
+              <button 
+                className={`join-item btn btn-sm ${viewType === "week" ? "btn-active" : "btn-ghost"}`}
+                onClick={() => setViewType("week")}
+              >
+                Week
+              </button>
+              <button 
+                className={`join-item btn btn-sm ${viewType === "month" ? "btn-active" : "btn-ghost"}`}
+                onClick={() => setViewType("month")}
+              >
+                Month
+              </button>
+            </div>
+
+            {/* Navigation */}
+            <div className="flex gap-2">
+              <button 
+                className="btn btn-sm btn-ghost"
+                onClick={navigatePrevious}
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <button 
+                className="btn btn-sm btn-ghost"
+                onClick={goToToday}
+                title="Go to today"
+              >
+                <Target className="w-4 h-4" />
+                Today
+              </button>
+              <button 
+                className="btn btn-sm btn-ghost"
+                onClick={navigateNext}
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        </div>
+
         <div className="card bg-base-200 shadow-sm">
           <div className="card-body">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-semibold">{currentMonth}</h2>
-              <div className="not-prose flex gap-4 items-center">
-                {/* View Toggle */}
-                <div className="join">
-                  <button 
-                    className={`join-item btn btn-sm ${viewType === "day" ? "btn-active" : "btn-ghost"}`}
-                    onClick={() => setViewType("day")}
-                  >
-                    Day
-                  </button>
-                  <button 
-                    className={`join-item btn btn-sm ${viewType === "week" ? "btn-active" : "btn-ghost"}`}
-                    onClick={() => setViewType("week")}
-                  >
-                    Week
-                  </button>
-                  <button 
-                    className={`join-item btn btn-sm ${viewType === "month" ? "btn-active" : "btn-ghost"}`}
-                    onClick={() => setViewType("month")}
-                  >
-                    Month
-                  </button>
-                </div>
-
-                {/* Navigation */}
-                <div className="flex gap-2">
-                  <button 
-                    className="btn btn-sm btn-ghost"
-                    onClick={navigatePrevious}
-                  >
-                    <ChevronLeft className="w-4 h-4" />
-                  </button>
-                  <button 
-                    className="btn btn-sm btn-ghost"
-                    onClick={goToToday}
-                    title="Go to today"
-                  >
-                    <Target className="w-4 h-4" />
-                    Today
-                  </button>
-                  <button 
-                    className="btn btn-sm btn-ghost"
-                    onClick={navigateNext}
-                  >
-                    <ChevronRight className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-            </div>
 
             <div className="not-prose">
               {renderCalendarView()}
