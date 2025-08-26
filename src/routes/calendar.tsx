@@ -222,11 +222,17 @@ function CalendarPage() {
   };
 
   const handleEventClick = (event: any) => {
+    // Close create modal if open before opening edit modal
+    setIsCreateModalOpen(false);
+    setPrefilledEventData({});
     setEditingEvent(event);
   };
 
   const handleEmptySpaceClick = (date: Date, hour?: number) => {
     if (!isDragging) {
+      // Close edit modal if open before opening create modal
+      setEditingEvent(null);
+      
       // Set default values for new event based on clicked date/time
       const dateString = date.toISOString().split('T')[0]; // YYYY-MM-DD format
       const startTime = hour !== undefined ? `${String(hour).padStart(2, '0')}:00` : "09:00";
@@ -578,6 +584,8 @@ function CalendarPage() {
             <button 
               className="btn btn-primary"
               onClick={() => {
+                // Close edit modal if open before opening create modal
+                setEditingEvent(null);
                 setPrefilledEventData({});
                 setIsCreateModalOpen(true);
               }}
