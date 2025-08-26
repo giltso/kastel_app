@@ -850,36 +850,38 @@ function CalendarPage() {
 
         {/* Calendar Navigation */}
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-semibold">{currentMonth}</h2>
-          <div className="not-prose flex gap-4 items-center">
-            {/* View Toggle */}
-            <div className="join">
-              <button 
-                className={`join-item btn btn-sm ${viewType === "day" ? "btn-active" : "btn-ghost"}`}
-                onClick={() => setViewType("day")}
-              >
-                Day
-              </button>
-              <button 
-                className={`join-item btn btn-sm ${viewType === "week" ? "btn-active" : "btn-ghost"}`}
-                onClick={() => setViewType("week")}
-              >
-                Week
-              </button>
-              <button 
-                className={`join-item btn btn-sm ${viewType === "month" ? "btn-active" : "btn-ghost"}`}
-                onClick={() => setViewType("month")}
-              >
-                Month
-              </button>
+          <div className="flex items-center gap-4">
+            <h2 className="text-xl font-semibold">{currentMonth}</h2>
+            {/* View Toggle moved to left side */}
+            <div className="not-prose">
+              <div className="join">
+                <button 
+                  className={`join-item btn btn-sm ${viewType === "day" ? "btn-active" : "btn-ghost"}`}
+                  onClick={() => setViewType("day")}
+                >
+                  Day
+                </button>
+                <button 
+                  className={`join-item btn btn-sm ${viewType === "week" ? "btn-active" : "btn-ghost"}`}
+                  onClick={() => setViewType("week")}
+                >
+                  Week
+                </button>
+                <button 
+                  className={`join-item btn btn-sm ${viewType === "month" ? "btn-active" : "btn-ghost"}`}
+                  onClick={() => setViewType("month")}
+                >
+                  Month
+                </button>
+              </div>
             </div>
-
-            {/* Navigation */}
-            <div className="flex gap-2">
-              <button 
-                className="btn btn-sm btn-ghost"
-                onClick={navigatePrevious}
-              >
+          </div>
+          <div className="not-prose flex gap-2 items-center">
+            {/* Navigation buttons on right side */}
+            <button 
+              className="btn btn-sm btn-ghost"
+              onClick={navigatePrevious}
+            >
                 <ChevronLeft className="w-4 h-4" />
               </button>
               <button 
@@ -896,7 +898,6 @@ function CalendarPage() {
               >
                 <ChevronRight className="w-4 h-4" />
               </button>
-            </div>
           </div>
         </div>
 

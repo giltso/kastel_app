@@ -538,3 +538,37 @@ export const deleteEvent = mutation({
     return { success: true };
   },
 });
+
+// Development/testing function to clear all events
+export const deleteAllEvents = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new ConvexError("Unauthorized");
+    }
+
+    const currentUser = await ctx.db
+      .query("users")
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+    if (!currentUser) {
+      throw new ConvexError("User not found");
+    }
+    
+    // Only testers can use this function
+    if (currentUser.role !== "tester") {
+      throw new ConvexError("Only testers can delete all events");
+    }
+
+    // Get all events
+    const allEvents = await ctx.db.query("events").collect();
+    
+    // Delete them all
+    for (const event of allEvents) {
+      await ctx.db.delete(event._id);
+    }
+
+    return { success: true, deletedCount: allEvents.length };
+  },
+});
