@@ -26,6 +26,7 @@ import { useEffect, useState } from "react";
 import { api } from "../../convex/_generated/api";
 import { RoleSwitcher } from "@/components/RoleSwitcher";
 import { UserRoleDebug } from "@/components/UserRoleDebug";
+import { usePermissions } from "@/hooks/usePermissions";
 
 export const Route = createRootRouteWithContext<{
   queryClient: QueryClient;
@@ -33,6 +34,120 @@ export const Route = createRootRouteWithContext<{
 }>()({
   component: RootComponent,
 });
+
+function NavigationLinks({ onLinkClick }: { onLinkClick: () => void }) {
+  const { hasPermission } = usePermissions();
+  
+  return (
+    <>
+      <Link
+        to="/"
+        className="btn btn-ghost"
+        activeProps={{
+          className: "btn btn-ghost btn-active",
+        }}
+        onClick={onLinkClick}
+      >
+        Home
+      </Link>
+      {hasPermission("access_worker_portal") && (
+        <Link
+          to="/events"
+          className="btn btn-ghost"
+          activeProps={{
+            className: "btn btn-ghost btn-active",
+          }}
+          onClick={onLinkClick}
+        >
+          Events
+        </Link>
+      )}
+      {hasPermission("access_worker_portal") && (
+        <Link
+          to="/calendar"
+          className="btn btn-ghost"
+          activeProps={{
+            className: "btn btn-ghost btn-active",
+          }}
+          onClick={onLinkClick}
+        >
+          Calendar
+        </Link>
+      )}
+      <Link
+        to="/forms"
+        className="btn btn-ghost"
+        activeProps={{
+          className: "btn btn-ghost btn-active",
+        }}
+        onClick={onLinkClick}
+      >
+        Forms
+      </Link>
+    </>
+  );
+}
+
+function MobileNavigationLinks({ onLinkClick }: { onLinkClick: () => void }) {
+  const { hasPermission } = usePermissions();
+  
+  return (
+    <>
+      <li>
+        <Link
+          to="/"
+          onClick={onLinkClick}
+          activeProps={{
+            className: "active",
+          }}
+          className="flex items-center p-2"
+        >
+          Home
+        </Link>
+      </li>
+      {hasPermission("access_worker_portal") && (
+        <li>
+          <Link
+            to="/events"
+            onClick={onLinkClick}
+            activeProps={{
+              className: "active",
+            }}
+            className="flex items-center p-2"
+          >
+            Events
+          </Link>
+        </li>
+      )}
+      {hasPermission("access_worker_portal") && (
+        <li>
+          <Link
+            to="/calendar"
+            onClick={onLinkClick}
+            activeProps={{
+              className: "active",
+            }}
+            className="flex items-center p-2"
+          >
+            Calendar
+          </Link>
+        </li>
+      )}
+      <li>
+        <Link
+          to="/forms"
+          onClick={onLinkClick}
+          activeProps={{
+            className: "active",
+          }}
+          className="flex items-center p-2"
+        >
+          Forms
+        </Link>
+      </li>
+    </>
+  );
+}
 
 function RootComponent() {
   const { queryClient, convexClient: convex } = Route.useRouteContext();
@@ -80,46 +195,7 @@ function RootComponent() {
                     </div>
                     <div className="navbar-center hidden lg:flex">
                       <nav className="flex">
-                        <Link
-                          to="/"
-                          className="btn btn-ghost"
-                          activeProps={{
-                            className: "btn btn-ghost btn-active",
-                          }}
-                          onClick={() => setIsSidebarOpen(false)}
-                        >
-                          Home
-                        </Link>
-                        <Link
-                          to="/events"
-                          className="btn btn-ghost"
-                          activeProps={{
-                            className: "btn btn-ghost btn-active",
-                          }}
-                          onClick={() => setIsSidebarOpen(false)}
-                        >
-                          Events
-                        </Link>
-                        <Link
-                          to="/calendar"
-                          className="btn btn-ghost"
-                          activeProps={{
-                            className: "btn btn-ghost btn-active",
-                          }}
-                          onClick={() => setIsSidebarOpen(false)}
-                        >
-                          Calendar
-                        </Link>
-                        <Link
-                          to="/forms"
-                          className="btn btn-ghost"
-                          activeProps={{
-                            className: "btn btn-ghost btn-active",
-                          }}
-                          onClick={() => setIsSidebarOpen(false)}
-                        >
-                          Forms
-                        </Link>
+                        <NavigationLinks onLinkClick={() => setIsSidebarOpen(false)} />
                       </nav>
                     </div>
                     <div className="navbar-end gap-2">
@@ -147,54 +223,7 @@ function RootComponent() {
                     <div className="flex-1">
                       <div className="menu-title mb-4">Menu</div>
                       <ul className="space-y-2">
-                        <li>
-                          <Link
-                            to="/"
-                            onClick={() => setIsSidebarOpen(false)}
-                            activeProps={{
-                              className: "active",
-                            }}
-                            className="flex items-center p-2"
-                          >
-                            Home
-                          </Link>
-                        </li>
-                        <li>
-                          <Link
-                            to="/events"
-                            onClick={() => setIsSidebarOpen(false)}
-                            activeProps={{
-                              className: "active",
-                            }}
-                            className="flex items-center p-2"
-                          >
-                            Events
-                          </Link>
-                        </li>
-                        <li>
-                          <Link
-                            to="/calendar"
-                            onClick={() => setIsSidebarOpen(false)}
-                            activeProps={{
-                              className: "active",
-                            }}
-                            className="flex items-center p-2"
-                          >
-                            Calendar
-                          </Link>
-                        </li>
-                        <li>
-                          <Link
-                            to="/forms"
-                            onClick={() => setIsSidebarOpen(false)}
-                            activeProps={{
-                              className: "active",
-                            }}
-                            className="flex items-center p-2"
-                          >
-                            Forms
-                          </Link>
-                        </li>
+                        <MobileNavigationLinks onLinkClick={() => setIsSidebarOpen(false)} />
                       </ul>
                     </div>
                     <div className="mt-auto py-4 border-t border-base-300 flex flex-col gap-2 items-center">

@@ -1,9 +1,3 @@
 {
-  "project": "energetic-badger-805",
-  "prodUrl": "https://energetic-badger-805.convex.cloud",
-  "functions": "./convex/",
-  "generateCommonJSApi": false,
-  "node": {
-    "externalPackages": []
-  }
+  "functions": "./convex/"
 }

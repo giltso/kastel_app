@@ -18,11 +18,7 @@ export function UserRoleDebug() {
   };
 
   if (isLoading) {
-    return (
-      <div className="bg-info/20 text-info-content px-3 py-1 rounded-md text-sm">
-        Loading user...
-      </div>
-    );
+    return null; // Don't show loading state on main page
   }
 
   if (!user) {
@@ -41,21 +37,6 @@ export function UserRoleDebug() {
     );
   }
 
-  return (
-    <div className="flex items-center gap-2">
-      <div className="bg-primary/20 text-primary-content px-3 py-1 rounded-md text-sm">
-        Role: {user.effectiveRole || user.role || "undefined"}
-        {user.role === "tester" && user.emulatingRole && (
-          <span className="ml-2 opacity-70">(emulating {user.emulatingRole})</span>
-        )}
-      </div>
-      <button 
-        onClick={handleCreateUser}
-        className="btn btn-xs btn-secondary"
-        title="Refresh/Create User"
-      >
-        🔄
-      </button>
-    </div>
-  );
+  // For existing users, don't show any debug UI on main page
+  return null;
 }

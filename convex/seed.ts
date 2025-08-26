@@ -27,53 +27,68 @@ export const seedDatabase = mutation({
     });
 
     // Create test events
-    const now = Date.now();
-    const oneDay = 24 * 60 * 60 * 1000;
+    const today = new Date();
+    const tomorrow = new Date(today.getTime() + 24 * 60 * 60 * 1000);
+    const dayAfter = new Date(today.getTime() + 2 * 24 * 60 * 60 * 1000);
+    const dayAfterNext = new Date(today.getTime() + 3 * 24 * 60 * 60 * 1000);
+    const fourDaysLater = new Date(today.getTime() + 4 * 24 * 60 * 60 * 1000);
     
     await ctx.db.insert("events", {
       title: "Morning Shift - Tool Inventory",
       description: "Check and organize tool inventory in the morning",
-      startTime: now + oneDay,
-      endTime: now + oneDay + (4 * 60 * 60 * 1000), // 4 hours
+      startDate: tomorrow.toISOString().split('T')[0], // YYYY-MM-DD
+      endDate: tomorrow.toISOString().split('T')[0],
+      startTime: "09:00", // HH:MM
+      endTime: "13:00", // 4 hours later
       type: "work",
       assignedTo: workerId,
       createdBy: workerId,
       status: "pending_approval",
+      isRecurring: false,
     });
 
     await ctx.db.insert("events", {
       title: "Team Meeting - Weekly Planning", 
       description: "Weekly team meeting to discuss upcoming projects and assignments",
-      startTime: now + (2 * oneDay),
-      endTime: now + (2 * oneDay) + (60 * 60 * 1000), // 1 hour
+      startDate: dayAfter.toISOString().split('T')[0],
+      endDate: dayAfter.toISOString().split('T')[0],
+      startTime: "10:00",
+      endTime: "11:00", // 1 hour
       type: "meeting",
       assignedTo: undefined,
       createdBy: managerId,
       status: "approved",
       approvedBy: managerId,
+      isRecurring: false,
     });
 
     await ctx.db.insert("events", {
       title: "Equipment Maintenance",
       description: "Regular maintenance check on power tools", 
-      startTime: now + (3 * oneDay),
-      endTime: now + (3 * oneDay) + (3 * 60 * 60 * 1000), // 3 hours
+      startDate: dayAfterNext.toISOString().split('T')[0],
+      endDate: dayAfterNext.toISOString().split('T')[0],
+      startTime: "14:00",
+      endTime: "17:00", // 3 hours
       type: "maintenance",
       assignedTo: workerId,
       createdBy: workerId,
       status: "pending_approval",
+      isRecurring: false,
     });
 
     await ctx.db.insert("events", {
       title: "Customer Order Processing",
       description: "Process pending customer orders and prepare for pickup",
-      startTime: now + (4 * oneDay),
-      endTime: now + (4 * oneDay) + (2 * 60 * 60 * 1000), // 2 hours
+      startDate: fourDaysLater.toISOString().split('T')[0],
+      endDate: fourDaysLater.toISOString().split('T')[0],
+      startTime: "08:00",
+      endTime: "10:00", // 2 hours
       type: "work",
       assignedTo: workerId,
       createdBy: managerId,
       status: "completed",
       approvedBy: managerId,
+      isRecurring: false,
     });
 
     // Create test forms
@@ -153,6 +168,9 @@ export const seedDatabase = mutation({
     });
 
     // Create some test form submissions
+    const now = Date.now();
+    const oneDay = 24 * 60 * 60 * 1000;
+    
     await ctx.db.insert("form_submissions", {
       formId: workHoursFormId,
       submittedBy: workerId,

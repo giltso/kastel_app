@@ -45,18 +45,39 @@ export default defineSchema({
   events: defineTable({
     title: v.string(),
     description: v.optional(v.string()),
-    startTime: v.number(),
-    endTime: v.number(),
+    // Date and time fields for scheduled events
+    startDate: v.string(), // ISO date string (YYYY-MM-DD)
+    endDate: v.string(), // ISO date string (YYYY-MM-DD)
+    startTime: v.string(), // Time string (HH:MM)
+    endTime: v.string(), // Time string (HH:MM)
+    // Legacy fields for backward compatibility
+    startTime_legacy: v.optional(v.number()),
+    endTime_legacy: v.optional(v.number()),
+    // Event properties
     type: v.union(v.literal("work"), v.literal("meeting"), v.literal("maintenance"), v.literal("team")),
     status: v.union(v.literal("pending_approval"), v.literal("approved"), v.literal("in_progress"), v.literal("completed"), v.literal("cancelled")),
+    // Repetition settings
+    isRecurring: v.boolean(),
+    recurringType: v.optional(v.union(v.literal("weekly"))), // Currently only weekly, can expand later
+    recurringDays: v.optional(v.array(v.union(
+      v.literal("monday"),
+      v.literal("tuesday"), 
+      v.literal("wednesday"),
+      v.literal("thursday"),
+      v.literal("friday"),
+      v.literal("saturday"),
+      v.literal("sunday")
+    ))), // Days of the week for weekly repetition
+    // User references
     createdBy: v.id("users"), // Worker who created
     approvedBy: v.optional(v.id("users")), // Manager who approved
     assignedTo: v.optional(v.id("users")),
+    participants: v.optional(v.array(v.id("users"))), // Event participants (default includes creator)
   })
   .index("by_createdBy", ["createdBy"])
   .index("by_approvedBy", ["approvedBy"])
   .index("by_assignedTo", ["assignedTo"])
-  .index("by_startTime", ["startTime"])
+  .index("by_startDate", ["startDate"])
   .index("by_status", ["status"]),
 
   // Tickets: Problem resolution system  

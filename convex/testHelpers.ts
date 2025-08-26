@@ -50,27 +50,36 @@ export const createTestEvents = mutation({
 
     // Create a few test events
     const events = [];
+    const today = new Date();
+    const tomorrow = new Date(today.getTime() + 24 * 60 * 60 * 1000);
+    const dayAfter = new Date(today.getTime() + 2 * 24 * 60 * 60 * 1000);
 
     events.push(await ctx.db.insert("events", {
       title: "Tool Inventory Check",
       description: "Check and organize tool inventory",
-      startTime: now + oneDay,
-      endTime: now + oneDay + (4 * 60 * 60 * 1000),
+      startDate: tomorrow.toISOString().split('T')[0],
+      endDate: tomorrow.toISOString().split('T')[0],
+      startTime: "09:00",
+      endTime: "13:00", // 4 hours
       type: "work",
       status: "approved",
       createdBy: user._id,
       approvedBy: user._id,
+      isRecurring: false,
     }));
 
     events.push(await ctx.db.insert("events", {
       title: "Team Meeting",
       description: "Weekly team planning meeting",
-      startTime: now + (2 * oneDay),
-      endTime: now + (2 * oneDay) + (60 * 60 * 1000),
+      startDate: dayAfter.toISOString().split('T')[0],
+      endDate: dayAfter.toISOString().split('T')[0],
+      startTime: "10:00",
+      endTime: "11:00", // 1 hour
       type: "meeting",
       status: "approved",
       createdBy: user._id,
       approvedBy: user._id,
+      isRecurring: false,
     }));
 
     return { success: true, eventsCreated: events.length };

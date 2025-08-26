@@ -198,6 +198,51 @@ export const listUsers = query({
   },
 });
 
+// Get workers and managers for event participants
+export const listWorkers = query({
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      return [];
+    }
+
+    const currentUser = await ctx.db
+      .query("users")
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+
+    if (!currentUser) {
+      return [];
+    }
+
+    const effectiveRole = currentUser.role === "tester" && currentUser.emulatingRole 
+      ? currentUser.emulatingRole 
+      : (currentUser.role || "guest");
+
+    // Workers and managers can see workers and managers for event participation
+    if (["worker", "manager", "tester"].includes(effectiveRole) || currentUser.role === "tester") {
+      const workers = await ctx.db
+        .query("users")
+        .withIndex("by_role", (q) => q.eq("role", "worker"))
+        .collect();
+      
+      const managers = await ctx.db
+        .query("users")
+        .withIndex("by_role", (q) => q.eq("role", "manager"))
+        .collect();
+        
+      const testers = await ctx.db
+        .query("users")
+        .withIndex("by_role", (q) => q.eq("role", "tester"))
+        .collect();
+
+      return [...workers, ...managers, ...testers];
+    }
+
+    return [];
+  },
+});
+
 // Check if user has permission for a specific action
 export const checkPermission = query({
   args: {
