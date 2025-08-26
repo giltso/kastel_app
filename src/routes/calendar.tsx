@@ -100,6 +100,44 @@ function CalendarPage() {
     });
   };
 
+  // Calculate event positioning and size based on start/end times
+  const getEventStyle = (event: any, currentHour: number) => {
+    const [startHour, startMinute] = event.startTime.split(':').map(Number);
+    const [endHour, endMinute] = event.endTime.split(':').map(Number);
+    
+    // Calculate total duration in minutes
+    const startTotalMinutes = startHour * 60 + startMinute;
+    const endTotalMinutes = endHour * 60 + endMinute;
+    const durationMinutes = endTotalMinutes - startTotalMinutes;
+    
+    // Calculate position relative to the current hour slot (48px height)
+    const currentHourMinutes = currentHour * 60;
+    const offsetFromHour = Math.max(0, startTotalMinutes - currentHourMinutes);
+    const topPercent = (offsetFromHour / 60) * 100; // Percentage within the hour
+    
+    // Calculate height as percentage of total slots the event spans
+    const endHourSlot = Math.floor(endTotalMinutes / 60);
+    const startHourSlot = Math.floor(startTotalMinutes / 60);
+    const spanningHours = endHourSlot - startHourSlot + 1;
+    
+    // If this is not the starting hour, don't render the event
+    if (currentHour !== startHourSlot) {
+      return null;
+    }
+    
+    // Calculate the height - each hour slot is 48px (min-h-12)
+    const heightPx = Math.max(24, (durationMinutes / 60) * 48); // Minimum 24px height
+    
+    return {
+      top: `${topPercent}%`,
+      height: `${heightPx}px`,
+      left: '4px',
+      right: '4px',
+      position: 'absolute' as const,
+      zIndex: 10
+    };
+  };
+
   const handleEventClick = (event: any) => {
     setEditingEvent(event);
   };
@@ -335,10 +373,10 @@ function CalendarPage() {
               </div>
               {weekDates.map((date, dayIndex) => {
                 const dayEvents = getEventsForDate(date);
+                // Only show events that start in this hour
                 const hourEvents = dayEvents.filter(event => {
                   const startHour = parseInt(event.startTime.split(':')[0]);
-                  const endHour = parseInt(event.endTime.split(':')[0]);
-                  return hour >= startHour && hour < endHour;
+                  return hour === startHour;
                 });
 
                 return (
@@ -353,19 +391,25 @@ function CalendarPage() {
                     onMouseEnter={() => handleDragMove(date, hour)}
                     onMouseUp={handleDragEnd}
                   >
-                    {hourEvents.map((event) => (
-                      <div
-                        key={event._id}
-                        className={`absolute inset-1 text-xs p-1 rounded text-white ${getStatusColor(event.status)} truncate cursor-pointer hover:opacity-80`}
-                        title={`${event.title} (${event.startTime} - ${event.endTime})`}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleEventClick(event);
-                        }}
-                      >
-                        {event.title}
-                      </div>
-                    ))}
+                    {hourEvents.map((event) => {
+                      const eventStyle = getEventStyle(event, hour);
+                      if (!eventStyle) return null;
+                      
+                      return (
+                        <div
+                          key={event._id}
+                          style={eventStyle}
+                          className={`text-xs p-1 rounded text-white ${getStatusColor(event.status)} truncate cursor-pointer hover:opacity-80`}
+                          title={`${event.title} (${event.startTime} - ${event.endTime})`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEventClick(event);
+                          }}
+                        >
+                          {event.title}
+                        </div>
+                      );
+                    })}
                   </div>
                 );
               })}
@@ -386,10 +430,10 @@ function CalendarPage() {
         </div>
         
         {Array.from({ length: 24 }, (_, hour) => {
+          // Only show events that start in this hour
           const hourEvents = currentDateEvents.filter(event => {
             const startHour = parseInt(event.startTime.split(':')[0]);
-            const endHour = parseInt(event.endTime.split(':')[0]);
-            return hour >= startHour && hour < endHour;
+            return hour === startHour;
           });
 
           return (
@@ -407,19 +451,25 @@ function CalendarPage() {
                 onMouseEnter={() => handleDragMove(currentDate, hour)}
                 onMouseUp={handleDragEnd}
               >
-                {hourEvents.map((event, eventIndex) => (
-                  <div
-                    key={event._id}
-                    className={`absolute inset-1 text-xs p-1 rounded text-white ${getStatusColor(event.status)} truncate cursor-pointer hover:opacity-80`}
-                    title={`${event.title} (${event.startTime} - ${event.endTime})`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleEventClick(event);
-                    }}
-                  >
-                    {event.title}
-                  </div>
-                ))}
+                {hourEvents.map((event) => {
+                  const eventStyle = getEventStyle(event, hour);
+                  if (!eventStyle) return null;
+                  
+                  return (
+                    <div
+                      key={event._id}
+                      style={eventStyle}
+                      className={`text-xs p-1 rounded text-white ${getStatusColor(event.status)} truncate cursor-pointer hover:opacity-80`}
+                      title={`${event.title} (${event.startTime} - ${event.endTime})`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleEventClick(event);
+                      }}
+                    >
+                      {event.title}
+                    </div>
+                  );
+                })}
               </div>
             </div>
           );
