@@ -424,56 +424,58 @@ function CalendarPage() {
     const currentDateEvents = getEventsForDate(currentDate);
 
     return (
-      <div className="space-y-1">
+      <div className="max-w-4xl mx-auto">
         <div className="p-2 text-center font-medium mb-4">
           {currentDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
         </div>
         
-        {Array.from({ length: 24 }, (_, hour) => {
-          // Only show events that start in this hour
-          const hourEvents = currentDateEvents.filter(event => {
-            const startHour = parseInt(event.startTime.split(':')[0]);
-            return hour === startHour;
-          });
+        <div className="space-y-1">
+          {Array.from({ length: 24 }, (_, hour) => {
+            // Only show events that start in this hour
+            const hourEvents = currentDateEvents.filter(event => {
+              const startHour = parseInt(event.startTime.split(':')[0]);
+              return hour === startHour;
+            });
 
-          return (
-            <div key={hour} className="grid grid-cols-2 gap-2">
-              <div className="p-2 text-sm opacity-70 text-right">
-                {hour === 0 ? '12 AM' : hour < 12 ? `${hour} AM` : hour === 12 ? '12 PM' : `${hour - 12} PM`}
+            return (
+              <div key={hour} className="grid grid-cols-12 gap-2">
+                <div className="col-span-2 p-2 text-sm opacity-70 text-right">
+                  {hour === 0 ? '12 AM' : hour < 12 ? `${hour} AM` : hour === 12 ? '12 PM' : `${hour - 12} PM`}
+                </div>
+                <div 
+                  className={`
+                    col-span-10 min-h-12 p-2 border border-base-300 rounded bg-base-100 hover:bg-base-200 cursor-pointer transition-colors relative select-none
+                    ${isDragSelected(currentDate, hour) ? 'bg-primary/20 border-primary' : ''}
+                  `}
+                  onClick={() => handleEmptySpaceClick(currentDate, hour)}
+                  onMouseDown={() => handleDragStart(currentDate, hour)}
+                  onMouseEnter={() => handleDragMove(currentDate, hour)}
+                  onMouseUp={handleDragEnd}
+                >
+                  {hourEvents.map((event) => {
+                    const eventStyle = getEventStyle(event, hour);
+                    if (!eventStyle) return null;
+                    
+                    return (
+                      <div
+                        key={event._id}
+                        style={eventStyle}
+                        className={`text-xs p-1 rounded text-white ${getStatusColor(event.status)} truncate cursor-pointer hover:opacity-80`}
+                        title={`${event.title} (${event.startTime} - ${event.endTime})`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEventClick(event);
+                        }}
+                      >
+                        {event.title}
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
-              <div 
-                className={`
-                  min-h-12 p-2 border border-base-300 rounded bg-base-100 hover:bg-base-200 cursor-pointer transition-colors relative select-none
-                  ${isDragSelected(currentDate, hour) ? 'bg-primary/20 border-primary' : ''}
-                `}
-                onClick={() => handleEmptySpaceClick(currentDate, hour)}
-                onMouseDown={() => handleDragStart(currentDate, hour)}
-                onMouseEnter={() => handleDragMove(currentDate, hour)}
-                onMouseUp={handleDragEnd}
-              >
-                {hourEvents.map((event) => {
-                  const eventStyle = getEventStyle(event, hour);
-                  if (!eventStyle) return null;
-                  
-                  return (
-                    <div
-                      key={event._id}
-                      style={eventStyle}
-                      className={`text-xs p-1 rounded text-white ${getStatusColor(event.status)} truncate cursor-pointer hover:opacity-80`}
-                      title={`${event.title} (${event.startTime} - ${event.endTime})`}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleEventClick(event);
-                      }}
-                    >
-                      {event.title}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
     );
   };
