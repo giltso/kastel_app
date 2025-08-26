@@ -95,7 +95,7 @@ export function CreateEventModal({ isOpen, onClose, prefilledData = {} }: Create
             : undefined,
           assignedTo: undefined, // Optional field for user assignment
           participants: value.participants && value.participants.length > 0 
-            ? value.participants as Id<"users">[]
+            ? value.participants.map(id => id as Id<"users">)
             : undefined,
         };
 
