@@ -100,8 +100,93 @@ function CalendarPage() {
     });
   };
 
+  // Calculate concurrent events and their positioning
+  const getEventsWithPositioning = (events: any[], date: Date) => {
+    if (!events.length) return [];
+    
+    // Group events by their start time to detect concurrency
+    const eventGroups: Map<string, any[]> = new Map();
+    
+    events.forEach(event => {
+      const startKey = `${event.startTime}-${event.endTime}`;
+      if (!eventGroups.has(startKey)) {
+        eventGroups.set(startKey, []);
+      }
+      eventGroups.get(startKey)!.push(event);
+    });
+    
+    // Calculate positioning for each event
+    const positionedEvents = [];
+    let concurrentGroups: any[][] = [];
+    
+    // First pass: find overlapping groups
+    events.forEach(event => {
+      const [startHour, startMinute] = event.startTime.split(':').map(Number);
+      const [endHour, endMinute] = event.endTime.split(':').map(Number);
+      const startTotalMinutes = startHour * 60 + startMinute;
+      const endTotalMinutes = endHour * 60 + endMinute;
+      
+      // Find which group this event belongs to
+      let foundGroup = false;
+      for (const group of concurrentGroups) {
+        const hasOverlap = group.some(groupEvent => {
+          const [gStartHour, gStartMinute] = groupEvent.startTime.split(':').map(Number);
+          const [gEndHour, gEndMinute] = groupEvent.endTime.split(':').map(Number);
+          const gStartTotalMinutes = gStartHour * 60 + gStartMinute;
+          const gEndTotalMinutes = gEndHour * 60 + gEndMinute;
+          
+          // Check if events overlap
+          return (startTotalMinutes < gEndTotalMinutes) && (endTotalMinutes > gStartTotalMinutes);
+        });
+        
+        if (hasOverlap) {
+          group.push(event);
+          foundGroup = true;
+          break;
+        }
+      }
+      
+      if (!foundGroup) {
+        concurrentGroups.push([event]);
+      }
+    });
+    
+    // Second pass: calculate positions within each group
+    concurrentGroups.forEach(group => {
+      const groupSize = group.length;
+      group.forEach((event, index) => {
+        const [startHour, startMinute] = event.startTime.split(':').map(Number);
+        const [endHour, endMinute] = event.endTime.split(':').map(Number);
+        const startTotalMinutes = startHour * 60 + startMinute;
+        const endTotalMinutes = endHour * 60 + endMinute;
+        const durationMinutes = endTotalMinutes - startTotalMinutes;
+        const startHourSlot = Math.floor(startTotalMinutes / 60);
+        
+        // Calculate width and left position for concurrent events
+        const width = Math.floor(100 / groupSize);
+        const leftPercent = (index * width);
+        
+        const heightPx = Math.max(24, (durationMinutes / 60) * 48);
+        
+        positionedEvents.push({
+          ...event,
+          startHourSlot,
+          style: {
+            height: `${heightPx}px`,
+            left: `${leftPercent}%`,
+            width: `${width - 1}%`, // Small gap between concurrent events
+            position: 'absolute' as const,
+            zIndex: 10 + index
+          }
+        });
+      });
+    });
+    
+    return positionedEvents;
+  };
+
   // Calculate event positioning and size based on start/end times
-  const getEventStyle = (event: any, currentHour: number) => {
+  const getEventStyle = (event: any, currentHour: number, allEvents: any[], date: Date) => {
     const [startHour, startMinute] = event.startTime.split(':').map(Number);
     const [endHour, endMinute] = event.endTime.split(':').map(Number);
     
@@ -113,10 +198,8 @@ function CalendarPage() {
     // Calculate position relative to the current hour slot (48px height)
     const currentHourMinutes = currentHour * 60;
     const offsetFromHour = Math.max(0, startTotalMinutes - currentHourMinutes);
-    const topPercent = (offsetFromHour / 60) * 100; // Percentage within the hour
+    const topPercent = (offsetFromHour / 60) * 100;
     
-    // Calculate height as percentage of total slots the event spans
-    const endHourSlot = Math.floor(endTotalMinutes / 60);
     const startHourSlot = Math.floor(startTotalMinutes / 60);
     
     // If this is not the starting hour, don't render the event
@@ -124,16 +207,17 @@ function CalendarPage() {
       return null;
     }
     
-    // Calculate the height - each hour slot is 48px (min-h-12)
-    const heightPx = Math.max(24, (durationMinutes / 60) * 48); // Minimum 24px height
+    // Get positioned events for this date
+    const positionedEvents = getEventsWithPositioning(allEvents, date);
+    const positionedEvent = positionedEvents.find(pe => pe._id === event._id);
+    
+    if (!positionedEvent) {
+      return null;
+    }
     
     return {
+      ...positionedEvent.style,
       top: `${topPercent}%`,
-      height: `${heightPx}px`,
-      left: '4px',
-      right: '4px',
-      position: 'absolute' as const,
-      zIndex: 10
     };
   };
 
@@ -390,7 +474,7 @@ function CalendarPage() {
                     onMouseUp={handleDragEnd}
                   >
                     {hourEvents.map((event) => {
-                      const eventStyle = getEventStyle(event, hour);
+                      const eventStyle = getEventStyle(event, hour, dayEvents, date);
                       if (!eventStyle) return null;
                       
                       return (
@@ -451,7 +535,7 @@ function CalendarPage() {
                   onMouseUp={handleDragEnd}
                 >
                   {hourEvents.map((event) => {
-                    const eventStyle = getEventStyle(event, hour);
+                    const eventStyle = getEventStyle(event, hour, currentDateEvents, currentDate);
                     if (!eventStyle) return null;
                     
                     return (
