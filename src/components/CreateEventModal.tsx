@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
-import { useMutation } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { useForm } from "@tanstack/react-form";
 import { z } from "zod";
-import { X, Calendar, Clock, Repeat, CheckCircle } from "lucide-react";
+import { X, Calendar, Clock, Repeat, CheckCircle, Users } from "lucide-react";
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
 
@@ -21,6 +21,7 @@ const eventSchema = z.object({
     "monday", "tuesday", "wednesday", "thursday", 
     "friday", "saturday", "sunday"
   ])).optional(),
+  participants: z.array(z.string()).optional(),
 }).refine((data) => {
   // Check if end date/time is after start date/time
   const startDateTime = new Date(`${data.startDate}T${data.startTime}`);
@@ -55,6 +56,7 @@ export function CreateEventModal({ isOpen, onClose, prefilledData = {} }: Create
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const createEvent = useMutation(api.events.createEvent);
+  const users = useQuery(api.users.listWorkers);
 
   const form = useForm({
     defaultValues: {
@@ -68,6 +70,7 @@ export function CreateEventModal({ isOpen, onClose, prefilledData = {} }: Create
       isRecurring: false,
       recurringType: "weekly" as const,
       recurringDays: [] as string[],
+      participants: [] as string[],
     },
     // Validators will be handled in onSubmit to avoid type mismatches
     onSubmit: async ({ value }) => {
@@ -91,6 +94,9 @@ export function CreateEventModal({ isOpen, onClose, prefilledData = {} }: Create
             ? value.recurringDays as ("monday" | "tuesday" | "wednesday" | "thursday" | "friday" | "saturday" | "sunday")[]
             : undefined,
           assignedTo: undefined, // Optional field for user assignment
+          participants: value.participants && value.participants.length > 0 
+            ? value.participants as Id<"users">[]
+            : undefined,
         };
 
         await createEvent(eventData);
@@ -125,6 +131,7 @@ export function CreateEventModal({ isOpen, onClose, prefilledData = {} }: Create
         isRecurring: false,
         recurringType: "weekly" as const,
         recurringDays: [] as string[],
+        participants: [] as string[],
       });
     }
   }, [isOpen, prefilledData, form]);
@@ -371,6 +378,43 @@ export function CreateEventModal({ isOpen, onClose, prefilledData = {} }: Create
               )}
             />
           </div>
+
+          {/* Participants */}
+          {users && (
+            <form.Field
+              name="participants"
+              children={(field) => (
+                <div>
+                  <label className="label">
+                    <span className="label-text flex items-center gap-1">
+                      <Users className="w-4 h-4" />
+                      Participants
+                    </span>
+                  </label>
+                  <div className="grid grid-cols-2 gap-2 max-h-32 overflow-y-auto border border-base-300 rounded p-2">
+                    {users.map((user) => (
+                      <label key={user._id} className="cursor-pointer flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={field.state.value.includes(user._id)}
+                          onChange={(e) => {
+                            const current = field.state.value;
+                            if (e.target.checked) {
+                              field.handleChange([...current, user._id]);
+                            } else {
+                              field.handleChange(current.filter((id: string) => id !== user._id));
+                            }
+                          }}
+                          className="checkbox checkbox-primary checkbox-sm"
+                        />
+                        <span className="text-sm">{user.name}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
+            />
+          )}
 
           {/* Recurring Toggle */}
           <form.Field
