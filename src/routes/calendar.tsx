@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Authenticated } from "convex/react";
+import { Authenticated, useMutation } from "convex/react";
 import { convexQuery } from "@convex-dev/react-query";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
@@ -38,7 +38,10 @@ function CalendarPage() {
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState<{date: Date, hour?: number} | null>(null);
   const [dragEnd, setDragEnd] = useState<{date: Date, hour?: number} | null>(null);
+  const [draggedEvent, setDraggedEvent] = useState<any | null>(null);
+  const [eventDragging, setEventDragging] = useState(false);
   const { data: events } = useSuspenseQuery(eventsQueryOptions);
+  const updateEvent = useMutation(api.events.updateEvent);
   const today = new Date();
   const currentMonth = currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 
@@ -50,11 +53,15 @@ function CalendarPage() {
         setDragStart(null);
         setDragEnd(null);
       }
+      if (eventDragging) {
+        setEventDragging(false);
+        setDraggedEvent(null);
+      }
     };
 
     document.addEventListener('mouseup', handleGlobalMouseUp);
     return () => document.removeEventListener('mouseup', handleGlobalMouseUp);
-  }, [isDragging]);
+  }, [isDragging, eventDragging]);
 
   const navigatePrevious = () => {
     const newDate = new Date(currentDate);
@@ -336,6 +343,66 @@ function CalendarPage() {
     }
   };
 
+  // Event drag handlers
+  const handleEventDragStart = (event: any, e: React.DragEvent) => {
+    e.stopPropagation();
+    setEventDragging(true);
+    setDraggedEvent(event);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', event._id);
+  };
+
+  const handleEventDragOver = (date: Date, hour?: number) => {
+    if (eventDragging && draggedEvent) {
+      // Visual feedback can be added here
+    }
+  };
+
+  const handleEventDragEnd = () => {
+    setEventDragging(false);
+    setDraggedEvent(null);
+  };
+
+  const handleEventDrop = async (date: Date, hour?: number) => {
+    if (eventDragging && draggedEvent) {
+      try {
+        const dateString = date.toISOString().split('T')[0];
+        const startTime = hour !== undefined ? `${String(hour).padStart(2, '0')}:00` : draggedEvent.startTime;
+        
+        // Calculate duration of the original event
+        const [originalStartHour, originalStartMinute] = draggedEvent.startTime.split(':').map(Number);
+        const [originalEndHour, originalEndMinute] = draggedEvent.endTime.split(':').map(Number);
+        const durationMinutes = (originalEndHour * 60 + originalEndMinute) - (originalStartHour * 60 + originalStartMinute);
+        
+        // Calculate new end time based on duration
+        const newStartMinutes = (hour !== undefined ? hour * 60 : originalStartHour * 60 + originalStartMinute);
+        const newEndMinutes = newStartMinutes + durationMinutes;
+        const newEndHour = Math.floor(newEndMinutes / 60);
+        const newEndMinute = newEndMinutes % 60;
+        const endTime = `${String(newEndHour).padStart(2, '0')}:${String(newEndMinute).padStart(2, '0')}`;
+
+        // Update the event with new date and time
+        await updateEvent({
+          eventId: draggedEvent._id,
+          title: draggedEvent.title,
+          description: draggedEvent.description,
+          startDate: dateString,
+          endDate: dateString, // For now, keep it as a single day event
+          startTime: startTime,
+          endTime: endTime,
+          type: draggedEvent.type,
+          isRecurring: false, // Reset recurring when moved
+        });
+      } catch (error) {
+        console.error("Failed to move event:", error);
+        alert("Failed to move event. Please try again.");
+      }
+      
+      setEventDragging(false);
+      setDraggedEvent(null);
+    }
+  };
+
   const renderCalendarView = () => {
     switch (viewType) {
       case "day":
@@ -478,6 +545,14 @@ function CalendarPage() {
                     onMouseDown={() => handleDragStart(date, hour)}
                     onMouseEnter={() => handleDragMove(date, hour)}
                     onMouseUp={handleDragEnd}
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      handleEventDragOver(date, hour);
+                    }}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      handleEventDrop(date, hour);
+                    }}
                   >
                     {hourEvents.map((event) => {
                       const eventStyle = getEventStyle(event, hour, dayEvents, date);
@@ -487,8 +562,11 @@ function CalendarPage() {
                         <div
                           key={event._id}
                           style={eventStyle}
-                          className={`text-xs p-1 rounded text-white ${getStatusColor(event.status)} truncate cursor-pointer hover:opacity-80`}
+                          className={`text-xs p-1 rounded text-white ${getStatusColor(event.status)} truncate cursor-move hover:opacity-80 ${draggedEvent?._id === event._id ? 'opacity-50' : ''}`}
                           title={`${event.title} (${event.startTime} - ${event.endTime})`}
+                          draggable
+                          onDragStart={(e) => handleEventDragStart(event, e)}
+                          onDragEnd={handleEventDragEnd}
                           onClick={(e) => {
                             e.stopPropagation();
                             handleEventClick(event);
@@ -539,6 +617,14 @@ function CalendarPage() {
                   onMouseDown={() => handleDragStart(currentDate, hour)}
                   onMouseEnter={() => handleDragMove(currentDate, hour)}
                   onMouseUp={handleDragEnd}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    handleEventDragOver(currentDate, hour);
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    handleEventDrop(currentDate, hour);
+                  }}
                 >
                   {hourEvents.map((event) => {
                     const eventStyle = getEventStyle(event, hour, currentDateEvents, currentDate);
@@ -548,8 +634,11 @@ function CalendarPage() {
                       <div
                         key={event._id}
                         style={eventStyle}
-                        className={`text-xs p-1 rounded text-white ${getStatusColor(event.status)} truncate cursor-pointer hover:opacity-80`}
+                        className={`text-xs p-1 rounded text-white ${getStatusColor(event.status)} truncate cursor-move hover:opacity-80 ${draggedEvent?._id === event._id ? 'opacity-50' : ''}`}
                         title={`${event.title} (${event.startTime} - ${event.endTime})`}
+                        draggable
+                        onDragStart={(e) => handleEventDragStart(event, e)}
+                        onDragEnd={handleEventDragEnd}
                         onClick={(e) => {
                           e.stopPropagation();
                           handleEventClick(event);
