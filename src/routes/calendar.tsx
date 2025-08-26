@@ -118,7 +118,6 @@ function CalendarPage() {
     // Calculate height as percentage of total slots the event spans
     const endHourSlot = Math.floor(endTotalMinutes / 60);
     const startHourSlot = Math.floor(startTotalMinutes / 60);
-    const spanningHours = endHourSlot - startHourSlot + 1;
     
     // If this is not the starting hour, don't render the event
     if (currentHour !== startHourSlot) {
@@ -263,7 +262,6 @@ function CalendarPage() {
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth();
     const firstDayOfMonth = new Date(year, month, 1);
-    const _lastDayOfMonth = new Date(year, month + 1, 0);
     const startDate = new Date(firstDayOfMonth);
     startDate.setDate(startDate.getDate() - firstDayOfMonth.getDay());
     

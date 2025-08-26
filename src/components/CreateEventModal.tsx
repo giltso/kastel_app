@@ -283,7 +283,7 @@ export function CreateEventModal({ isOpen, onClose, prefilledData = {} }: Create
                   {!field.state.meta.isValid && (
                     <div className="label">
                       <span className="label-text-alt text-error">
-                        {field.state.meta.errors.map(e => e.message).join(", ")}
+                        {field.state.meta.errors.map(e => e?.message).join(", ")}
                       </span>
                     </div>
                   )}
@@ -309,7 +309,7 @@ export function CreateEventModal({ isOpen, onClose, prefilledData = {} }: Create
                   {!field.state.meta.isValid && (
                     <div className="label">
                       <span className="label-text-alt text-error">
-                        {field.state.meta.errors.map(e => e.message).join(", ")}
+                        {field.state.meta.errors.map(e => e?.message).join(", ")}
                       </span>
                     </div>
                   )}
@@ -341,7 +341,7 @@ export function CreateEventModal({ isOpen, onClose, prefilledData = {} }: Create
                   {!field.state.meta.isValid && (
                     <div className="label">
                       <span className="label-text-alt text-error">
-                        {field.state.meta.errors.map(e => e.message).join(", ")}
+                        {field.state.meta.errors.map(e => e?.message).join(", ")}
                       </span>
                     </div>
                   )}
@@ -370,7 +370,7 @@ export function CreateEventModal({ isOpen, onClose, prefilledData = {} }: Create
                   {!field.state.meta.isValid && (
                     <div className="label">
                       <span className="label-text-alt text-error">
-                        {field.state.meta.errors.map(e => e.message).join(", ")}
+                        {field.state.meta.errors.map(e => e?.message).join(", ")}
                       </span>
                     </div>
                   )}
