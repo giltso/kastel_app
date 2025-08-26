@@ -72,13 +72,12 @@ export function CreateEventModal({ isOpen, onClose, prefilledData = {} }: Create
       recurringDays: [] as string[],
       participants: [] as string[],
     },
-    // Validators will be handled in onSubmit to avoid type mismatches
+    validators: {
+      onChange: eventSchema,
+    },
     onSubmit: async ({ value }) => {
       setIsSubmitting(true);
       try {
-        // Validate the form data first
-        eventSchema.parse(value);
-        
         // Prepare the data for submission
         const eventData = {
           title: value.title,
@@ -110,7 +109,12 @@ export function CreateEventModal({ isOpen, onClose, prefilledData = {} }: Create
         }, 1500);
       } catch (error) {
         console.error("Failed to create event:", error);
-        alert("Failed to create event. Please check your input and try again.");
+        // Don't reset form on error, let user fix validation issues
+        if (error instanceof Error) {
+          alert(`Failed to create event: ${error.message}`);
+        } else {
+          alert("Failed to create event. Please check your input and try again.");
+        }
       } finally {
         setIsSubmitting(false);
       }
@@ -204,7 +208,7 @@ export function CreateEventModal({ isOpen, onClose, prefilledData = {} }: Create
                   value={field.state.value}
                   onBlur={field.handleBlur}
                   onChange={(e) => field.handleChange(e.target.value)}
-                  className="input input-bordered w-full"
+                  className={`input input-bordered w-full ${!field.state.meta.isValid && field.state.meta.isTouched ? 'input-error' : ''}`}
                   placeholder="Enter event title..."
                 />
                 {!field.state.meta.isValid && (
@@ -278,7 +282,7 @@ export function CreateEventModal({ isOpen, onClose, prefilledData = {} }: Create
                     value={field.state.value}
                     onBlur={field.handleBlur}
                     onChange={(e) => field.handleChange(e.target.value)}
-                    className="input input-bordered w-full"
+                    className={`input input-bordered w-full ${!field.state.meta.isValid && field.state.meta.isTouched ? 'input-error' : ''}`}
                   />
                   {!field.state.meta.isValid && (
                     <div className="label">
@@ -304,7 +308,7 @@ export function CreateEventModal({ isOpen, onClose, prefilledData = {} }: Create
                     value={field.state.value}
                     onBlur={field.handleBlur}
                     onChange={(e) => field.handleChange(e.target.value)}
-                    className="input input-bordered w-full"
+                    className={`input input-bordered w-full ${!field.state.meta.isValid && field.state.meta.isTouched ? 'input-error' : ''}`}
                   />
                   {!field.state.meta.isValid && (
                     <div className="label">
@@ -336,7 +340,7 @@ export function CreateEventModal({ isOpen, onClose, prefilledData = {} }: Create
                     value={field.state.value}
                     onBlur={field.handleBlur}
                     onChange={(e) => field.handleChange(e.target.value)}
-                    className="input input-bordered w-full"
+                    className={`input input-bordered w-full ${!field.state.meta.isValid && field.state.meta.isTouched ? 'input-error' : ''}`}
                   />
                   {!field.state.meta.isValid && (
                     <div className="label">
@@ -365,7 +369,7 @@ export function CreateEventModal({ isOpen, onClose, prefilledData = {} }: Create
                     value={field.state.value}
                     onBlur={field.handleBlur}
                     onChange={(e) => field.handleChange(e.target.value)}
-                    className="input input-bordered w-full"
+                    className={`input input-bordered w-full ${!field.state.meta.isValid && field.state.meta.isTouched ? 'input-error' : ''}`}
                   />
                   {!field.state.meta.isValid && (
                     <div className="label">
