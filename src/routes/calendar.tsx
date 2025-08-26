@@ -40,6 +40,7 @@ function CalendarPage() {
   const [dragEnd, setDragEnd] = useState<{date: Date, hour?: number} | null>(null);
   const [draggedEvent, setDraggedEvent] = useState<any | null>(null);
   const [eventDragging, setEventDragging] = useState(false);
+  const [resizing, setResizing] = useState<{event: any, type: 'start' | 'end'} | null>(null);
   const { data: events } = useSuspenseQuery(eventsQueryOptions);
   const updateEvent = useMutation(api.events.updateEvent);
   const today = new Date();
@@ -57,11 +58,14 @@ function CalendarPage() {
         setEventDragging(false);
         setDraggedEvent(null);
       }
+      if (resizing) {
+        setResizing(null);
+      }
     };
 
     document.addEventListener('mouseup', handleGlobalMouseUp);
     return () => document.removeEventListener('mouseup', handleGlobalMouseUp);
-  }, [isDragging, eventDragging]);
+  }, [isDragging, eventDragging, resizing]);
 
   const navigatePrevious = () => {
     const newDate = new Date(currentDate);
@@ -363,6 +367,73 @@ function CalendarPage() {
     setDraggedEvent(null);
   };
 
+  // Resize handlers
+  const handleResizeStart = (event: any, resizeType: 'start' | 'end', e: React.DragEvent) => {
+    e.stopPropagation();
+    setResizing({ event, type: resizeType });
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', `resize-${resizeType}-${event._id}`);
+  };
+
+  const handleResizeDrop = async (date: Date, hour?: number) => {
+    if (resizing) {
+      try {
+        const { event, type } = resizing;
+        const dateString = date.toISOString().split('T')[0];
+        const newHour = hour !== undefined ? hour : 9; // Default to 9 AM if no hour
+        
+        let newStartTime = event.startTime;
+        let newEndTime = event.endTime;
+        let newStartDate = event.startDate;
+        let newEndDate = event.endDate;
+
+        if (type === 'start') {
+          // Resizing start time
+          newStartTime = `${String(newHour).padStart(2, '0')}:00`;
+          newStartDate = dateString;
+          
+          // Validate that start is before end
+          const startDateTime = new Date(`${newStartDate}T${newStartTime}`);
+          const endDateTime = new Date(`${event.endDate}T${event.endTime}`);
+          if (startDateTime >= endDateTime) {
+            alert("Start time must be before end time");
+            return;
+          }
+        } else {
+          // Resizing end time  
+          newEndTime = `${String(newHour + 1).padStart(2, '0')}:00`; // End hour is exclusive
+          newEndDate = dateString;
+          
+          // Validate that end is after start
+          const startDateTime = new Date(`${event.startDate}T${event.startTime}`);
+          const endDateTime = new Date(`${newEndDate}T${newEndTime}`);
+          if (endDateTime <= startDateTime) {
+            alert("End time must be after start time");
+            return;
+          }
+        }
+
+        // Update the event
+        await updateEvent({
+          eventId: event._id,
+          title: event.title,
+          description: event.description,
+          startDate: newStartDate,
+          endDate: newEndDate,
+          startTime: newStartTime,
+          endTime: newEndTime,
+          type: event.type,
+          isRecurring: false, // Reset recurring when resized
+        });
+      } catch (error) {
+        console.error("Failed to resize event:", error);
+        alert("Failed to resize event. Please try again.");
+      }
+      
+      setResizing(null);
+    }
+  };
+
   const handleEventDrop = async (date: Date, hour?: number) => {
     if (eventDragging && draggedEvent) {
       try {
@@ -551,7 +622,11 @@ function CalendarPage() {
                     }}
                     onDrop={(e) => {
                       e.preventDefault();
-                      handleEventDrop(date, hour);
+                      if (resizing) {
+                        handleResizeDrop(date, hour);
+                      } else {
+                        handleEventDrop(date, hour);
+                      }
                     }}
                   >
                     {hourEvents.map((event) => {
@@ -562,7 +637,7 @@ function CalendarPage() {
                         <div
                           key={event._id}
                           style={eventStyle}
-                          className={`text-xs p-1 rounded text-white ${getStatusColor(event.status)} truncate cursor-move hover:opacity-80 ${draggedEvent?._id === event._id ? 'opacity-50' : ''}`}
+                          className={`text-xs p-1 rounded text-white ${getStatusColor(event.status)} truncate cursor-move hover:opacity-80 ${draggedEvent?._id === event._id ? 'opacity-50' : ''} relative group`}
                           title={`${event.title} (${event.startTime} - ${event.endTime})`}
                           draggable
                           onDragStart={(e) => handleEventDragStart(event, e)}
@@ -572,7 +647,23 @@ function CalendarPage() {
                             handleEventClick(event);
                           }}
                         >
+                          {/* Start resize handle */}
+                          <div
+                            className="absolute top-0 left-0 right-0 h-1 cursor-ns-resize opacity-0 group-hover:opacity-100 bg-white/30 rounded-t"
+                            draggable
+                            onDragStart={(e) => handleResizeStart(event, 'start', e)}
+                            title="Drag to change start time"
+                          />
+                          
                           {event.title}
+                          
+                          {/* End resize handle */}
+                          <div
+                            className="absolute bottom-0 left-0 right-0 h-1 cursor-ns-resize opacity-0 group-hover:opacity-100 bg-white/30 rounded-b"
+                            draggable
+                            onDragStart={(e) => handleResizeStart(event, 'end', e)}
+                            title="Drag to change end time"
+                          />
                         </div>
                       );
                     })}
@@ -623,7 +714,11 @@ function CalendarPage() {
                   }}
                   onDrop={(e) => {
                     e.preventDefault();
-                    handleEventDrop(currentDate, hour);
+                    if (resizing) {
+                      handleResizeDrop(currentDate, hour);
+                    } else {
+                      handleEventDrop(currentDate, hour);
+                    }
                   }}
                 >
                   {hourEvents.map((event) => {
@@ -634,7 +729,7 @@ function CalendarPage() {
                       <div
                         key={event._id}
                         style={eventStyle}
-                        className={`text-xs p-1 rounded text-white ${getStatusColor(event.status)} truncate cursor-move hover:opacity-80 ${draggedEvent?._id === event._id ? 'opacity-50' : ''}`}
+                        className={`text-xs p-1 rounded text-white ${getStatusColor(event.status)} truncate cursor-move hover:opacity-80 ${draggedEvent?._id === event._id ? 'opacity-50' : ''} relative group`}
                         title={`${event.title} (${event.startTime} - ${event.endTime})`}
                         draggable
                         onDragStart={(e) => handleEventDragStart(event, e)}
@@ -644,7 +739,23 @@ function CalendarPage() {
                           handleEventClick(event);
                         }}
                       >
+                        {/* Start resize handle */}
+                        <div
+                          className="absolute top-0 left-0 right-0 h-1 cursor-ns-resize opacity-0 group-hover:opacity-100 bg-white/30 rounded-t"
+                          draggable
+                          onDragStart={(e) => handleResizeStart(event, 'start', e)}
+                          title="Drag to change start time"
+                        />
+                        
                         {event.title}
+                        
+                        {/* End resize handle */}
+                        <div
+                          className="absolute bottom-0 left-0 right-0 h-1 cursor-ns-resize opacity-0 group-hover:opacity-100 bg-white/30 rounded-b"
+                          draggable
+                          onDragStart={(e) => handleResizeStart(event, 'end', e)}
+                          title="Drag to change end time"
+                        />
                       </div>
                     );
                   })}
