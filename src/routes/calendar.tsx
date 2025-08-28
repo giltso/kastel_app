@@ -156,6 +156,7 @@ function CalendarPage() {
   const [resizeStartPos, setResizeStartPos] = useState<{x: number, y: number} | null>(null);
   const [resizePreviewTime, setResizePreviewTime] = useState<string | null>(null);
   const [dragPreview, setDragPreview] = useState<{targetDate: Date, targetTime: string} | null>(null);
+  const [resizePreviewDate, setResizePreviewDate] = useState<{targetDate: Date, type: 'start' | 'end'} | null>(null);
   
   const { data: events } = useSuspenseQuery(eventsQueryOptions);
   const updateEvent = useMutation(api.events.updateEvent);
@@ -185,45 +186,90 @@ function CalendarPage() {
     }
   }, [hasPermission, isLoading, navigate]);
 
-  // Handle resize mouse events
+  // Handle resize mouse events with multi-day support
   useEffect(() => {
     let lastUpdateTime = 0;
     const throttleDelay = 100; // Throttle updates to every 100ms
     
     const handleMouseMove = (e: MouseEvent) => {
-      if (isResizing) {
+      if (isResizing && viewType === 'day') {
         e.preventDefault();
         
         const now = Date.now();
         if (now - lastUpdateTime < throttleDelay) return;
         lastUpdateTime = now;
         
-        // Find the calendar container to calculate relative position
-        const calendarContainer = document.querySelector('[data-calendar-container]');
-        if (!calendarContainer) return;
+        // Check for cross-day resize (similar to cross-day drag logic)
+        const calendarCard = document.querySelector('.card.bg-base-200');
+        if (!calendarCard) return;
         
-        const rect = calendarContainer.getBoundingClientRect();
-        const relativeY = e.clientY - rect.top;
+        const cardRect = calendarCard.getBoundingClientRect();
+        const relativeX = e.clientX - cardRect.left;
+        const cardWidth = cardRect.width;
+        const deadZone = 80;
         
-        // Account for any spacing between hour rows (space-y-1 = 4px gap)
-        const hourRowHeight = 48 + 4; // min-h-12 (48px) + gap (4px)
-        const hourIndex = Math.floor(relativeY / hourRowHeight);
-        const pixelsIntoHour = relativeY % hourRowHeight;
+        let targetDate = new Date(currentDate);
+        let isMultiDay = false;
         
-        // Calculate minutes based on position within the hour slot
-        const minutesIntoHour = Math.round((pixelsIntoHour / 48) * 60); // Use 48px for actual slot height
+        if (relativeX < deadZone && relativeX > 0) {
+          // Resizing to previous day
+          targetDate.setDate(targetDate.getDate() - 1);
+          isMultiDay = true;
+          setResizePreviewDate({ targetDate: new Date(targetDate), type: isResizing.type });
+        } else if (relativeX > cardWidth - deadZone && relativeX < cardWidth) {
+          // Resizing to next day  
+          targetDate.setDate(targetDate.getDate() + 1);
+          isMultiDay = true;
+          setResizePreviewDate({ targetDate: new Date(targetDate), type: isResizing.type });
+        } else {
+          // Normal resize within same day
+          setResizePreviewDate(null);
+          
+          // Find the calendar container to calculate relative position
+          const calendarContainer = document.querySelector('[data-calendar-container]');
+          if (!calendarContainer) return;
+          
+          const rect = calendarContainer.getBoundingClientRect();
+          const relativeY = e.clientY - rect.top;
+          
+          // Account for any spacing between hour rows (space-y-1 = 4px gap)
+          const hourRowHeight = 52;
+          const hourIndex = Math.floor(relativeY / hourRowHeight);
+          const pixelsIntoHour = relativeY % hourRowHeight;
+          
+          // Calculate minutes based on position within the hour slot
+          const minutesIntoHour = Math.round((pixelsIntoHour / 48) * 60);
+          
+          // Snap to 15-minute intervals
+          const snappedMinutes = Math.min(45, Math.max(0, Math.round(minutesIntoHour / 15) * 15));
+          const targetHour = Math.max(0, Math.min(23, hourIndex));
+          
+          const newTime = `${String(targetHour).padStart(2, '0')}:${String(snappedMinutes).padStart(2, '0')}`;
+          
+          // Show preview time and update if different from current
+          setResizePreviewTime(newTime);
+          const currentTime = isResizing.type === 'start' ? isResizing.event.startTime : isResizing.event.endTime;
+          if (newTime !== currentTime) {
+            void handleEventResizeToTime(isResizing.event, isResizing.type, newTime);
+          }
+        }
         
-        // Snap to 15-minute intervals
-        const snappedMinutes = Math.min(45, Math.max(0, Math.round(minutesIntoHour / 15) * 15));
-        const targetHour = Math.max(0, Math.min(23, hourIndex));
-        
-        const newTime = `${String(targetHour).padStart(2, '0')}:${String(snappedMinutes).padStart(2, '0')}`;
-        
-        // Show preview time and update if different from current
-        setResizePreviewTime(newTime);
-        const currentTime = isResizing.type === 'start' ? isResizing.event.startTime : isResizing.event.endTime;
-        if (newTime !== currentTime) {
-          void handleEventResizeToTime(isResizing.event, isResizing.type, newTime);
+        // Handle multi-day resize
+        if (isMultiDay) {
+          const calendarContainer = document.querySelector('[data-calendar-container]');
+          if (calendarContainer) {
+            const containerRect = calendarContainer.getBoundingClientRect();
+            const relativeY = Math.max(0, e.clientY - containerRect.top);
+            const hourRowHeight = 52;
+            const hourIndex = Math.max(0, Math.min(23, Math.floor(relativeY / hourRowHeight)));
+            const minutesIntoHour = Math.round(((relativeY % hourRowHeight) / hourRowHeight) * 60);
+            const snappedMinutes = Math.min(45, Math.max(0, Math.round(minutesIntoHour / 15) * 15));
+            const targetTime = `${String(hourIndex).padStart(2, '0')}:${String(snappedMinutes).padStart(2, '0')}`;
+            
+            // Update event with new date and time
+            const targetDateString = targetDate.toISOString().split('T')[0];
+            void handleEventResizeToTime(isResizing.event, isResizing.type, targetTime, targetDateString);
+          }
         }
       }
     };
@@ -233,6 +279,7 @@ function CalendarPage() {
         setIsResizing(null);
         setResizeStartPos(null);
         setResizePreviewTime(null);
+        setResizePreviewDate(null);
       }
     };
 
@@ -252,26 +299,32 @@ function CalendarPage() {
       document.body.style.cursor = '';
       document.body.style.userSelect = '';
     };
-  }, [isResizing]);
+  }, [isResizing, viewType, currentDate]);
 
   // Handle cross-day dragging (only in day view)
   useEffect(() => {
     const handleDragMove = (e: MouseEvent) => {
       if (activeEvent && !isResizing && viewType === 'day') {
-        const windowWidth = window.innerWidth;
-        const deadZone = 120; // 120px from edge for better UX
+        // Find the calendar card container
+        const calendarCard = document.querySelector('.card.bg-base-200');
+        if (!calendarCard) return;
         
-        if (e.clientX < deadZone) {
-          // Dragging to previous day
+        const cardRect = calendarCard.getBoundingClientRect();
+        const relativeX = e.clientX - cardRect.left;
+        const cardWidth = cardRect.width;
+        const deadZone = 80; // 80px from card edges
+        
+        if (relativeX < deadZone && relativeX > 0) {
+          // Dragging to previous day (left side of calendar)
           const prevDate = new Date(currentDate);
           prevDate.setDate(prevDate.getDate() - 1);
           
-          // Calculate time based on Y position
+          // Calculate time based on Y position within calendar
           const calendarContainer = document.querySelector('[data-calendar-container]');
           if (calendarContainer) {
-            const rect = calendarContainer.getBoundingClientRect();
-            const relativeY = Math.max(0, e.clientY - rect.top);
-            const hourRowHeight = 52; // Approximate height including gaps
+            const containerRect = calendarContainer.getBoundingClientRect();
+            const relativeY = Math.max(0, e.clientY - containerRect.top);
+            const hourRowHeight = 52;
             const hourIndex = Math.max(0, Math.min(23, Math.floor(relativeY / hourRowHeight)));
             const minutesIntoHour = Math.round(((relativeY % hourRowHeight) / hourRowHeight) * 60);
             const snappedMinutes = Math.min(45, Math.max(0, Math.round(minutesIntoHour / 15) * 15));
@@ -279,16 +332,16 @@ function CalendarPage() {
             
             setDragPreview({ targetDate: prevDate, targetTime });
           }
-        } else if (e.clientX > windowWidth - deadZone) {
-          // Dragging to next day
+        } else if (relativeX > cardWidth - deadZone && relativeX < cardWidth) {
+          // Dragging to next day (right side of calendar)
           const nextDate = new Date(currentDate);
           nextDate.setDate(nextDate.getDate() + 1);
           
-          // Calculate time based on Y position
+          // Calculate time based on Y position within calendar
           const calendarContainer = document.querySelector('[data-calendar-container]');
           if (calendarContainer) {
-            const rect = calendarContainer.getBoundingClientRect();
-            const relativeY = Math.max(0, e.clientY - rect.top);
+            const containerRect = calendarContainer.getBoundingClientRect();
+            const relativeY = Math.max(0, e.clientY - containerRect.top);
             const hourRowHeight = 52;
             const hourIndex = Math.max(0, Math.min(23, Math.floor(relativeY / hourRowHeight)));
             const minutesIntoHour = Math.round(((relativeY % hourRowHeight) / hourRowHeight) * 60);
@@ -596,49 +649,73 @@ function CalendarPage() {
     }
   };
 
-  const handleEventResizeToTime = async (event: any, resizeType: 'start' | 'end', newTime: string) => {
+  const handleEventResizeToTime = async (event: any, resizeType: 'start' | 'end', newTime: string, newDate?: string) => {
     try {
-      const [startHour, startMinute] = event.startTime.split(':').map(Number);
-      const [endHour, endMinute] = event.endTime.split(':').map(Number);
-      const [newHour, newMinute] = newTime.split(':').map(Number);
-      
-      const currentStartMinutes = startHour * 60 + startMinute;
-      const currentEndMinutes = endHour * 60 + endMinute;
-      const newTimeMinutes = newHour * 60 + newMinute;
-      
       let newStartTime = event.startTime;
       let newEndTime = event.endTime;
+      let newStartDate = event.startDate;
+      let newEndDate = event.endDate;
       
       if (resizeType === 'start') {
-        // Ensure new start time is before end time (with minimum 15 minutes duration)
-        if (newTimeMinutes < currentEndMinutes - 15) {
-          newStartTime = newTime;
+        newStartTime = newTime;
+        if (newDate) {
+          newStartDate = newDate;
+          // If start date becomes after end date, adjust end date
+          if (new Date(newDate) > new Date(event.endDate)) {
+            newEndDate = newDate;
+          }
+        } else {
+          // Same day resize - ensure start is before end
+          const [startHour, startMinute] = newTime.split(':').map(Number);
+          const [endHour, endMinute] = event.endTime.split(':').map(Number);
+          const startMinutes = startHour * 60 + startMinute;
+          const endMinutes = endHour * 60 + endMinute;
+          
+          if (startMinutes >= endMinutes - 15) {
+            return; // Don't allow invalid times
+          }
         }
       } else {
-        // Ensure new end time is after start time (with minimum 15 minutes duration)
-        if (newTimeMinutes > currentStartMinutes + 15) {
-          newEndTime = newTime;
+        newEndTime = newTime;
+        if (newDate) {
+          newEndDate = newDate;
+          // If end date becomes before start date, adjust start date
+          if (new Date(newDate) < new Date(event.startDate)) {
+            newStartDate = newDate;
+          }
+        } else {
+          // Same day resize - ensure end is after start
+          const [startHour, startMinute] = event.startTime.split(':').map(Number);
+          const [endHour, endMinute] = newTime.split(':').map(Number);
+          const startMinutes = startHour * 60 + startMinute;
+          const endMinutes = endHour * 60 + endMinute;
+          
+          if (endMinutes <= startMinutes + 15) {
+            return; // Don't allow invalid times
+          }
         }
       }
       
-      // Only update if the time actually changed
-      if (newStartTime !== event.startTime || newEndTime !== event.endTime) {
+      // Only update if something actually changed
+      if (newStartTime !== event.startTime || newEndTime !== event.endTime || 
+          newStartDate !== event.startDate || newEndDate !== event.endDate) {
         await updateEvent({
           eventId: event._id,
           title: event.title,
           description: event.description,
-          startDate: event.startDate,
-          endDate: event.endDate,
+          startDate: newStartDate,
+          endDate: newEndDate,
           startTime: newStartTime,
           endTime: newEndTime,
           type: event.type,
-          isRecurring: event.isRecurring,
+          isRecurring: newStartDate !== newEndDate ? false : event.isRecurring, // Multi-day events can't recur
         });
       }
     } catch (error) {
       console.error("Failed to resize event:", error);
     }
   };
+
 
   const renderCalendarView = () => {
     switch (viewType) {
@@ -1072,45 +1149,62 @@ function CalendarPage() {
           onDragEnd={handleDragEnd}
           modifiers={[restrictToWindowEdges]}
         >
-          {/* Cross-day drag zones - only show in day view */}
-          {activeEvent && !isResizing && viewType === 'day' && (
-            <>
-              <div className={`fixed left-0 top-0 w-28 h-full bg-gradient-to-r from-primary/30 to-primary/10 border-r-4 border-primary/60 transition-all duration-200 z-50 backdrop-blur-sm ${
-                dragPreview?.targetDate.getTime() === new Date(currentDate.getTime() - 24*60*60*1000).getTime() ? 'opacity-100 shadow-xl' : 'opacity-70'
-              }`}>
-                <div className="flex flex-col items-center justify-center h-full text-primary-content font-medium">
-                  <ChevronLeft className="w-10 h-10 mb-3" />
-                  <div className="text-sm text-center px-2 font-semibold">
-                    Previous Day
-                  </div>
-                  {dragPreview?.targetDate.getTime() === new Date(currentDate.getTime() - 24*60*60*1000).getTime() && (
-                    <div className="text-xs mt-3 text-center px-2 bg-primary/20 rounded-lg py-2">
-                      <div className="font-medium">{dragPreview.targetDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</div>
-                      <div className="text-lg font-bold">{dragPreview.targetTime}</div>
-                    </div>
-                  )}
-                </div>
-              </div>
-              <div className={`fixed right-0 top-0 w-28 h-full bg-gradient-to-l from-primary/30 to-primary/10 border-l-4 border-primary/60 transition-all duration-200 z-50 backdrop-blur-sm ${
-                dragPreview?.targetDate.getTime() === new Date(currentDate.getTime() + 24*60*60*1000).getTime() ? 'opacity-100 shadow-xl' : 'opacity-70'
-              }`}>
-                <div className="flex flex-col items-center justify-center h-full text-primary-content font-medium">
-                  <ChevronRight className="w-10 h-10 mb-3" />
-                  <div className="text-sm text-center px-2 font-semibold">
-                    Next Day
-                  </div>
-                  {dragPreview?.targetDate.getTime() === new Date(currentDate.getTime() + 24*60*60*1000).getTime() && (
-                    <div className="text-xs mt-3 text-center px-2 bg-primary/20 rounded-lg py-2">
-                      <div className="font-medium">{dragPreview.targetDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</div>
-                      <div className="text-lg font-bold">{dragPreview.targetTime}</div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </>
-          )}
           
-          <div className="card bg-base-200 shadow-sm">
+          <div className="card bg-base-200 shadow-sm relative">
+            {/* Cross-day drag/resize zones - positioned relative to calendar card */}
+            {((activeEvent && !isResizing) || (isResizing && resizePreviewDate)) && viewType === 'day' && (
+              <div className="absolute inset-0 pointer-events-none z-10">
+                <div className={`absolute left-0 top-0 w-20 h-full bg-gradient-to-r from-primary/30 to-primary/10 border-r-2 border-primary/60 transition-all duration-200 backdrop-blur-sm ${
+                  (dragPreview?.targetDate.getTime() === new Date(currentDate.getTime() - 24*60*60*1000).getTime() || 
+                   resizePreviewDate?.targetDate.getTime() === new Date(currentDate.getTime() - 24*60*60*1000).getTime()) 
+                   ? 'opacity-100 shadow-lg' : 'opacity-60'
+                }`}>
+                  <div className="flex flex-col items-center justify-center h-full text-primary font-medium px-1">
+                    <ChevronLeft className="w-6 h-6 mb-2" />
+                    <div className="text-xs text-center font-semibold">
+                      {isResizing ? (resizePreviewDate?.type === 'start' ? 'Start' : 'End') : 'Move'}
+                    </div>
+                    <div className="text-xs text-center font-semibold">
+                      Prev Day
+                    </div>
+                    {(dragPreview?.targetDate.getTime() === new Date(currentDate.getTime() - 24*60*60*1000).getTime() || 
+                      resizePreviewDate?.targetDate.getTime() === new Date(currentDate.getTime() - 24*60*60*1000).getTime()) && (
+                      <div className="text-xs mt-2 text-center bg-primary/20 rounded px-1 py-1">
+                        <div className="font-medium text-xs">
+                          {(dragPreview?.targetDate || resizePreviewDate?.targetDate)?.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric' })}
+                        </div>
+                        <div className="font-bold text-xs">{dragPreview?.targetTime || resizePreviewTime}</div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div className={`absolute right-0 top-0 w-20 h-full bg-gradient-to-l from-primary/30 to-primary/10 border-l-2 border-primary/60 transition-all duration-200 backdrop-blur-sm ${
+                  (dragPreview?.targetDate.getTime() === new Date(currentDate.getTime() + 24*60*60*1000).getTime() || 
+                   resizePreviewDate?.targetDate.getTime() === new Date(currentDate.getTime() + 24*60*60*1000).getTime()) 
+                   ? 'opacity-100 shadow-lg' : 'opacity-60'
+                }`}>
+                  <div className="flex flex-col items-center justify-center h-full text-primary font-medium px-1">
+                    <ChevronRight className="w-6 h-6 mb-2" />
+                    <div className="text-xs text-center font-semibold">
+                      {isResizing ? (resizePreviewDate?.type === 'start' ? 'Start' : 'End') : 'Move'}
+                    </div>
+                    <div className="text-xs text-center font-semibold">
+                      Next Day
+                    </div>
+                    {(dragPreview?.targetDate.getTime() === new Date(currentDate.getTime() + 24*60*60*1000).getTime() || 
+                      resizePreviewDate?.targetDate.getTime() === new Date(currentDate.getTime() + 24*60*60*1000).getTime()) && (
+                      <div className="text-xs mt-2 text-center bg-primary/20 rounded px-1 py-1">
+                        <div className="font-medium text-xs">
+                          {(dragPreview?.targetDate || resizePreviewDate?.targetDate)?.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric' })}
+                        </div>
+                        <div className="font-bold text-xs">{dragPreview?.targetTime || resizePreviewTime}</div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+            
             <div className="card-body">
 
               <div className="not-prose">
