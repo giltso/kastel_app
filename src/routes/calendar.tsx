@@ -155,6 +155,7 @@ function CalendarPage() {
   const [isResizing, setIsResizing] = useState<{event: any, type: 'start' | 'end'} | null>(null);
   const [resizeStartPos, setResizeStartPos] = useState<{x: number, y: number} | null>(null);
   const [resizePreviewTime, setResizePreviewTime] = useState<string | null>(null);
+  const [dragPreview, setDragPreview] = useState<{targetDate: Date, targetTime: string} | null>(null);
   
   const { data: events } = useSuspenseQuery(eventsQueryOptions);
   const updateEvent = useMutation(api.events.updateEvent);
@@ -253,6 +254,63 @@ function CalendarPage() {
     };
   }, [isResizing]);
 
+  // Handle cross-day dragging (only in day view)
+  useEffect(() => {
+    const handleDragMove = (e: MouseEvent) => {
+      if (activeEvent && !isResizing && viewType === 'day') {
+        const windowWidth = window.innerWidth;
+        const deadZone = 120; // 120px from edge for better UX
+        
+        if (e.clientX < deadZone) {
+          // Dragging to previous day
+          const prevDate = new Date(currentDate);
+          prevDate.setDate(prevDate.getDate() - 1);
+          
+          // Calculate time based on Y position
+          const calendarContainer = document.querySelector('[data-calendar-container]');
+          if (calendarContainer) {
+            const rect = calendarContainer.getBoundingClientRect();
+            const relativeY = Math.max(0, e.clientY - rect.top);
+            const hourRowHeight = 52; // Approximate height including gaps
+            const hourIndex = Math.max(0, Math.min(23, Math.floor(relativeY / hourRowHeight)));
+            const minutesIntoHour = Math.round(((relativeY % hourRowHeight) / hourRowHeight) * 60);
+            const snappedMinutes = Math.min(45, Math.max(0, Math.round(minutesIntoHour / 15) * 15));
+            const targetTime = `${String(hourIndex).padStart(2, '0')}:${String(snappedMinutes).padStart(2, '0')}`;
+            
+            setDragPreview({ targetDate: prevDate, targetTime });
+          }
+        } else if (e.clientX > windowWidth - deadZone) {
+          // Dragging to next day
+          const nextDate = new Date(currentDate);
+          nextDate.setDate(nextDate.getDate() + 1);
+          
+          // Calculate time based on Y position
+          const calendarContainer = document.querySelector('[data-calendar-container]');
+          if (calendarContainer) {
+            const rect = calendarContainer.getBoundingClientRect();
+            const relativeY = Math.max(0, e.clientY - rect.top);
+            const hourRowHeight = 52;
+            const hourIndex = Math.max(0, Math.min(23, Math.floor(relativeY / hourRowHeight)));
+            const minutesIntoHour = Math.round(((relativeY % hourRowHeight) / hourRowHeight) * 60);
+            const snappedMinutes = Math.min(45, Math.max(0, Math.round(minutesIntoHour / 15) * 15));
+            const targetTime = `${String(hourIndex).padStart(2, '0')}:${String(snappedMinutes).padStart(2, '0')}`;
+            
+            setDragPreview({ targetDate: nextDate, targetTime });
+          }
+        } else {
+          setDragPreview(null);
+        }
+      }
+    };
+
+    if (activeEvent && !isResizing && viewType === 'day') {
+      document.addEventListener('mousemove', handleDragMove);
+      return () => {
+        document.removeEventListener('mousemove', handleDragMove);
+      };
+    }
+  }, [activeEvent, isResizing, currentDate, viewType]);
+
   // @dnd-kit drag handlers
   const handleDragStart = (event: any) => {
     const { active } = event;
@@ -269,9 +327,18 @@ function CalendarPage() {
       if (dropTarget?.date) {
         void handleEventDrop(dropTarget.date, dropTarget.hour, draggedEvent);
       }
+    } else if (dragPreview && active.data.current) {
+      // Handle cross-day drag
+      void handleEventDrop(dragPreview.targetDate, undefined, active.data.current, dragPreview.targetTime);
+      
+      // Navigate to the target date if it's different from current date
+      if (dragPreview.targetDate.toDateString() !== currentDate.toDateString()) {
+        setCurrentDate(new Date(dragPreview.targetDate));
+      }
     }
     
     setActiveEvent(null);
+    setDragPreview(null);
   };
 
   const navigatePrevious = () => {
@@ -492,11 +559,11 @@ function CalendarPage() {
   };
 
 
-  const handleEventDrop = async (date: Date, hour?: number, draggedEvent?: any) => {
+  const handleEventDrop = async (date: Date, hour?: number, draggedEvent?: any, customTime?: string) => {
     if (draggedEvent) {
       try {
         const dateString = date.toISOString().split('T')[0];
-        const startTime = hour !== undefined ? `${String(hour).padStart(2, '0')}:00` : draggedEvent.startTime;
+        const startTime = customTime || (hour !== undefined ? `${String(hour).padStart(2, '0')}:00` : draggedEvent.startTime);
         
         // Calculate duration of the original event
         const [originalStartHour, originalStartMinute] = draggedEvent.startTime.split(':').map(Number);
@@ -1005,6 +1072,44 @@ function CalendarPage() {
           onDragEnd={handleDragEnd}
           modifiers={[restrictToWindowEdges]}
         >
+          {/* Cross-day drag zones - only show in day view */}
+          {activeEvent && !isResizing && viewType === 'day' && (
+            <>
+              <div className={`fixed left-0 top-0 w-28 h-full bg-gradient-to-r from-primary/30 to-primary/10 border-r-4 border-primary/60 transition-all duration-200 z-50 backdrop-blur-sm ${
+                dragPreview?.targetDate.getTime() === new Date(currentDate.getTime() - 24*60*60*1000).getTime() ? 'opacity-100 shadow-xl' : 'opacity-70'
+              }`}>
+                <div className="flex flex-col items-center justify-center h-full text-primary-content font-medium">
+                  <ChevronLeft className="w-10 h-10 mb-3" />
+                  <div className="text-sm text-center px-2 font-semibold">
+                    Previous Day
+                  </div>
+                  {dragPreview?.targetDate.getTime() === new Date(currentDate.getTime() - 24*60*60*1000).getTime() && (
+                    <div className="text-xs mt-3 text-center px-2 bg-primary/20 rounded-lg py-2">
+                      <div className="font-medium">{dragPreview.targetDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</div>
+                      <div className="text-lg font-bold">{dragPreview.targetTime}</div>
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div className={`fixed right-0 top-0 w-28 h-full bg-gradient-to-l from-primary/30 to-primary/10 border-l-4 border-primary/60 transition-all duration-200 z-50 backdrop-blur-sm ${
+                dragPreview?.targetDate.getTime() === new Date(currentDate.getTime() + 24*60*60*1000).getTime() ? 'opacity-100 shadow-xl' : 'opacity-70'
+              }`}>
+                <div className="flex flex-col items-center justify-center h-full text-primary-content font-medium">
+                  <ChevronRight className="w-10 h-10 mb-3" />
+                  <div className="text-sm text-center px-2 font-semibold">
+                    Next Day
+                  </div>
+                  {dragPreview?.targetDate.getTime() === new Date(currentDate.getTime() + 24*60*60*1000).getTime() && (
+                    <div className="text-xs mt-3 text-center px-2 bg-primary/20 rounded-lg py-2">
+                      <div className="font-medium">{dragPreview.targetDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</div>
+                      <div className="text-lg font-bold">{dragPreview.targetTime}</div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </>
+          )}
+          
           <div className="card bg-base-200 shadow-sm">
             <div className="card-body">
 
