@@ -15,6 +15,7 @@ import { Route as UnauthorizedImport } from './routes/unauthorized'
 import { Route as ToolsImport } from './routes/tools'
 import { Route as FormsImport } from './routes/forms'
 import { Route as EventsImport } from './routes/events'
+import { Route as CoursesImport } from './routes/courses'
 import { Route as CalendarImport } from './routes/calendar'
 import { Route as IndexImport } from './routes/index'
 
@@ -41,6 +42,12 @@ const FormsRoute = FormsImport.update({
 const EventsRoute = EventsImport.update({
   id: '/events',
   path: '/events',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const CoursesRoute = CoursesImport.update({
+  id: '/courses',
+  path: '/courses',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -72,6 +79,13 @@ declare module '@tanstack/react-router' {
       path: '/calendar'
       fullPath: '/calendar'
       preLoaderRoute: typeof CalendarImport
+      parentRoute: typeof rootRoute
+    }
+    '/courses': {
+      id: '/courses'
+      path: '/courses'
+      fullPath: '/courses'
+      preLoaderRoute: typeof CoursesImport
       parentRoute: typeof rootRoute
     }
     '/events': {
@@ -110,6 +124,7 @@ declare module '@tanstack/react-router' {
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/calendar': typeof CalendarRoute
+  '/courses': typeof CoursesRoute
   '/events': typeof EventsRoute
   '/forms': typeof FormsRoute
   '/tools': typeof ToolsRoute
@@ -119,6 +134,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/calendar': typeof CalendarRoute
+  '/courses': typeof CoursesRoute
   '/events': typeof EventsRoute
   '/forms': typeof FormsRoute
   '/tools': typeof ToolsRoute
@@ -129,6 +145,7 @@ export interface FileRoutesById {
   __root__: typeof rootRoute
   '/': typeof IndexRoute
   '/calendar': typeof CalendarRoute
+  '/courses': typeof CoursesRoute
   '/events': typeof EventsRoute
   '/forms': typeof FormsRoute
   '/tools': typeof ToolsRoute
@@ -140,16 +157,25 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/calendar'
+    | '/courses'
     | '/events'
     | '/forms'
     | '/tools'
     | '/unauthorized'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/calendar' | '/events' | '/forms' | '/tools' | '/unauthorized'
+  to:
+    | '/'
+    | '/calendar'
+    | '/courses'
+    | '/events'
+    | '/forms'
+    | '/tools'
+    | '/unauthorized'
   id:
     | '__root__'
     | '/'
     | '/calendar'
+    | '/courses'
     | '/events'
     | '/forms'
     | '/tools'
@@ -160,6 +186,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   CalendarRoute: typeof CalendarRoute
+  CoursesRoute: typeof CoursesRoute
   EventsRoute: typeof EventsRoute
   FormsRoute: typeof FormsRoute
   ToolsRoute: typeof ToolsRoute
@@ -169,6 +196,7 @@ export interface RootRouteChildren {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CalendarRoute: CalendarRoute,
+  CoursesRoute: CoursesRoute,
   EventsRoute: EventsRoute,
   FormsRoute: FormsRoute,
   ToolsRoute: ToolsRoute,
@@ -187,6 +215,7 @@ export const routeTree = rootRoute
       "children": [
         "/",
         "/calendar",
+        "/courses",
         "/events",
         "/forms",
         "/tools",
@@ -198,6 +227,9 @@ export const routeTree = rootRoute
     },
     "/calendar": {
       "filePath": "calendar.tsx"
+    },
+    "/courses": {
+      "filePath": "courses.tsx"
     },
     "/events": {
       "filePath": "events.tsx"
