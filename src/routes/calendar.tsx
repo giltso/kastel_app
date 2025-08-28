@@ -36,12 +36,14 @@ export const Route = createFileRoute("/calendar")({
 type ViewType = "day" | "week" | "month";
 
 // Draggable Event Component with Resize Handles
-function DraggableEvent({ event, style, canEdit, onClick, className }: {
+function DraggableEvent({ event, style, canEdit, onClick, className, setIsResizing, setResizeStartPos }: {
   event: any;
   style?: React.CSSProperties;
   canEdit: boolean;
   onClick: (e: React.MouseEvent) => void;
   className: string;
+  setIsResizing: (resizing: {event: any, type: 'start' | 'end'} | null) => void;
+  setResizeStartPos: (pos: {x: number, y: number} | null) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
     id: event._id,
@@ -57,35 +59,33 @@ function DraggableEvent({ event, style, canEdit, onClick, className }: {
 
   const handleResizeStart = (e: React.MouseEvent, type: 'start' | 'end') => {
     e.stopPropagation();
+    e.preventDefault();
     setIsResizing({ event, type });
     setResizeStartPos({ x: e.clientX, y: e.clientY });
-  };
-
-  const handleResizeEnd = () => {
-    setIsResizing(null);
-    setResizeStartPos(null);
   };
 
   return (
     <div
       ref={setNodeRef}
       style={{ ...style, ...dragStyle }}
-      className={`${className} ${canEdit ? 'cursor-grab active:cursor-grabbing hover:shadow-md' : 'cursor-pointer'} relative group transition-shadow`}
+      className={`${className} ${canEdit ? 'hover:shadow-lg' : ''} relative group transition-all duration-200 border border-transparent hover:border-white/20`}
       title={`${event.title} (${event.startTime} - ${event.endTime})`}
       onClick={onClick}
-      {...listeners}
-      {...attributes}
+      {...(canEdit ? listeners : {})}
+      {...(canEdit ? attributes : {})}
     >
       {/* Top resize handle */}
       {canEdit && (
         <div
-          className="absolute top-0 left-0 right-0 h-1 cursor-n-resize opacity-0 group-hover:opacity-100 bg-white/30 transition-opacity"
+          className="absolute -top-1 left-0 right-0 h-2 opacity-0 group-hover:opacity-100 transition-opacity z-10"
+          style={{ cursor: 'ns-resize' }}
           onMouseDown={(e) => handleResizeStart(e, 'start')}
-          onMouseUp={handleResizeEnd}
-        />
+        >
+          <div className="h-0.5 bg-white/40 rounded-full mx-2 mt-0.5"></div>
+        </div>
       )}
       
-      <div className="px-1 py-0.5 text-xs leading-tight">
+      <div className={`px-2 py-1 text-xs leading-tight font-medium ${canEdit ? 'cursor-move' : 'cursor-pointer'}`}>
         {event.title}
         {event.startDate !== event.endDate && (
           <span className="ml-1 opacity-70">...</span>
@@ -95,10 +95,12 @@ function DraggableEvent({ event, style, canEdit, onClick, className }: {
       {/* Bottom resize handle */}
       {canEdit && (
         <div
-          className="absolute bottom-0 left-0 right-0 h-1 cursor-s-resize opacity-0 group-hover:opacity-100 bg-white/30 transition-opacity"
+          className="absolute -bottom-1 left-0 right-0 h-2 opacity-0 group-hover:opacity-100 transition-opacity z-10"
+          style={{ cursor: 'ns-resize' }}
           onMouseDown={(e) => handleResizeStart(e, 'end')}
-          onMouseUp={handleResizeEnd}
-        />
+        >
+          <div className="h-0.5 bg-white/40 rounded-full mx-2 mb-0.5"></div>
+        </div>
       )}
     </div>
   );
@@ -185,12 +187,13 @@ function CalendarPage() {
     const handleMouseMove = (e: MouseEvent) => {
       if (isResizing && resizeStartPos) {
         e.preventDefault();
-        // Calculate time change based on mouse movement
+        // Calculate time change based on mouse movement (more sensitive)
         const deltaY = e.clientY - resizeStartPos.y;
-        const hoursChange = Math.round(deltaY / 48); // 48px per hour
+        const minutesChange = Math.round(deltaY / 2); // 2px per minute for finer control
         
-        if (Math.abs(hoursChange) >= 1) {
-          handleEventResize(isResizing.event, isResizing.type, hoursChange);
+        if (Math.abs(minutesChange) >= 15) { // Snap to 15-minute intervals
+          const hoursChange = minutesChange / 60;
+          void handleEventResize(isResizing.event, isResizing.type, hoursChange);
           setResizeStartPos({ x: e.clientX, y: e.clientY });
         }
       }
@@ -204,9 +207,9 @@ function CalendarPage() {
     };
 
     if (isResizing) {
-      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mousemove', handleMouseMove, { passive: false });
       document.addEventListener('mouseup', handleMouseUp);
-      document.body.style.cursor = isResizing.type === 'start' ? 'n-resize' : 's-resize';
+      document.body.style.cursor = 'ns-resize';
       document.body.style.userSelect = 'none';
     } else {
       document.body.style.cursor = '';
@@ -502,26 +505,26 @@ function CalendarPage() {
       const [startHour, startMinute] = event.startTime.split(':').map(Number);
       const [endHour, endMinute] = event.endTime.split(':').map(Number);
       
-      let newStartTime = event.startTime;
-      let newEndTime = event.endTime;
+      let newStartMinutes = startHour * 60 + startMinute;
+      let newEndMinutes = endHour * 60 + endMinute;
       
       if (resizeType === 'start') {
-        const newStartHour = Math.max(0, Math.min(23, startHour + hoursChange));
-        newStartTime = `${String(newStartHour).padStart(2, '0')}:${String(startMinute).padStart(2, '0')}`;
-        
-        // Ensure start time is before end time
-        if (newStartHour >= endHour) {
-          newStartTime = `${String(endHour - 1).padStart(2, '0')}:${String(startMinute).padStart(2, '0')}`;
-        }
+        newStartMinutes += hoursChange * 60;
+        // Clamp to valid range and ensure it's before end time
+        newStartMinutes = Math.max(0, Math.min(newStartMinutes, newEndMinutes - 15));
       } else {
-        const newEndHour = Math.max(0, Math.min(23, endHour + hoursChange));
-        newEndTime = `${String(newEndHour).padStart(2, '0')}:${String(endMinute).padStart(2, '0')}`;
-        
-        // Ensure end time is after start time
-        if (newEndHour <= startHour) {
-          newEndTime = `${String(startHour + 1).padStart(2, '0')}:${String(endMinute).padStart(2, '0')}`;
-        }
+        newEndMinutes += hoursChange * 60;
+        // Clamp to valid range and ensure it's after start time
+        newEndMinutes = Math.max(newStartMinutes + 15, Math.min(1439, newEndMinutes)); // 1439 = 23:59
       }
+      
+      const newStartHour = Math.floor(newStartMinutes / 60);
+      const newStartMin = newStartMinutes % 60;
+      const newEndHour = Math.floor(newEndMinutes / 60);
+      const newEndMin = newEndMinutes % 60;
+      
+      const newStartTime = `${String(newStartHour).padStart(2, '0')}:${String(newStartMin).padStart(2, '0')}`;
+      const newEndTime = `${String(newEndHour).padStart(2, '0')}:${String(newEndMin).padStart(2, '0')}`;
       
       await updateEvent({
         eventId: event._id,
@@ -536,7 +539,6 @@ function CalendarPage() {
       });
     } catch (error) {
       console.error("Failed to resize event:", error);
-      alert("Failed to resize event. Please try again.");
     }
   };
 
@@ -608,6 +610,8 @@ function CalendarPage() {
                         handleEventClick(event);
                       }}
                       className={`text-xs p-1 rounded text-white ${getStatusColor(event.status)} truncate hover:opacity-80`}
+                      setIsResizing={setIsResizing}
+                      setResizeStartPos={setResizeStartPos}
                     />
                   ))}
                   {dayEvents.length > 3 && (
@@ -687,6 +691,8 @@ function CalendarPage() {
                             handleEventClick(event);
                           }}
                           className={`text-xs p-1 rounded text-white ${getStatusColor(event.status)} truncate hover:opacity-80`}
+                          setIsResizing={setIsResizing}
+                          setResizeStartPos={setResizeStartPos}
                         />
                       );
                     })}
@@ -753,6 +759,8 @@ function CalendarPage() {
                               handleEventClick(event);
                             }}
                             className={`text-xs p-1 rounded text-white ${getStatusColor(event.status)} truncate hover:opacity-80`}
+                            setIsResizing={setIsResizing}
+                            setResizeStartPos={setResizeStartPos}
                           />
                         );
                       })}
@@ -984,7 +992,7 @@ function CalendarPage() {
 
           <DragOverlay>
             {activeEvent ? (
-              <div className={`text-xs p-1 rounded text-white ${getStatusColor(activeEvent.status)} opacity-90 shadow-lg border border-white/20 cursor-grabbing`}>
+              <div className={`text-xs px-3 py-2 rounded-lg text-white ${getStatusColor(activeEvent.status)} opacity-95 shadow-2xl border border-white/30 backdrop-blur-sm font-medium`}>
                 {activeEvent.title}
               </div>
             ) : null}
