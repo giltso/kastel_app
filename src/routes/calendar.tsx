@@ -36,7 +36,7 @@ export const Route = createFileRoute("/calendar")({
 type ViewType = "day" | "week" | "month";
 
 // Draggable Event Component with Resize Handles
-function DraggableEvent({ event, style, canEdit, onClick, className, setIsResizing, setResizeStartPos }: {
+function DraggableEvent({ event, style, canEdit, onClick, className, setIsResizing, setResizeStartPos, isCurrentlyResizing }: {
   event: any;
   style?: React.CSSProperties;
   canEdit: boolean;
@@ -44,6 +44,7 @@ function DraggableEvent({ event, style, canEdit, onClick, className, setIsResizi
   className: string;
   setIsResizing: (resizing: {event: any, type: 'start' | 'end'} | null) => void;
   setResizeStartPos: (pos: {x: number, y: number} | null) => void;
+  isCurrentlyResizing?: boolean;
 }) {
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
     id: event._id,
@@ -68,7 +69,7 @@ function DraggableEvent({ event, style, canEdit, onClick, className, setIsResizi
     <div
       ref={setNodeRef}
       style={{ ...style, ...dragStyle }}
-      className={`${className} ${canEdit ? 'hover:shadow-lg' : ''} relative group transition-all duration-200 border border-transparent hover:border-white/20`}
+      className={`${className} ${canEdit ? 'hover:shadow-lg' : ''} ${isCurrentlyResizing ? 'ring-2 ring-white/40 shadow-xl' : ''} relative group transition-all duration-200 border border-transparent hover:border-white/20`}
       title={`${event.title} (${event.startTime} - ${event.endTime})`}
       onClick={onClick}
       {...(canEdit ? listeners : {})}
@@ -153,6 +154,7 @@ function CalendarPage() {
   const [activeEvent, setActiveEvent] = useState<any | null>(null);
   const [isResizing, setIsResizing] = useState<{event: any, type: 'start' | 'end'} | null>(null);
   const [resizeStartPos, setResizeStartPos] = useState<{x: number, y: number} | null>(null);
+  const [resizePreviewTime, setResizePreviewTime] = useState<string | null>(null);
   
   const { data: events } = useSuspenseQuery(eventsQueryOptions);
   const updateEvent = useMutation(api.events.updateEvent);
@@ -184,17 +186,43 @@ function CalendarPage() {
 
   // Handle resize mouse events
   useEffect(() => {
+    let lastUpdateTime = 0;
+    const throttleDelay = 100; // Throttle updates to every 100ms
+    
     const handleMouseMove = (e: MouseEvent) => {
-      if (isResizing && resizeStartPos) {
+      if (isResizing) {
         e.preventDefault();
-        // Calculate time change based on mouse movement (more sensitive)
-        const deltaY = e.clientY - resizeStartPos.y;
-        const minutesChange = Math.round(deltaY / 2); // 2px per minute for finer control
         
-        if (Math.abs(minutesChange) >= 15) { // Snap to 15-minute intervals
-          const hoursChange = minutesChange / 60;
-          void handleEventResize(isResizing.event, isResizing.type, hoursChange);
-          setResizeStartPos({ x: e.clientX, y: e.clientY });
+        const now = Date.now();
+        if (now - lastUpdateTime < throttleDelay) return;
+        lastUpdateTime = now;
+        
+        // Find the calendar container to calculate relative position
+        const calendarContainer = document.querySelector('[data-calendar-container]');
+        if (!calendarContainer) return;
+        
+        const rect = calendarContainer.getBoundingClientRect();
+        const relativeY = e.clientY - rect.top;
+        
+        // Account for any spacing between hour rows (space-y-1 = 4px gap)
+        const hourRowHeight = 48 + 4; // min-h-12 (48px) + gap (4px)
+        const hourIndex = Math.floor(relativeY / hourRowHeight);
+        const pixelsIntoHour = relativeY % hourRowHeight;
+        
+        // Calculate minutes based on position within the hour slot
+        const minutesIntoHour = Math.round((pixelsIntoHour / 48) * 60); // Use 48px for actual slot height
+        
+        // Snap to 15-minute intervals
+        const snappedMinutes = Math.min(45, Math.max(0, Math.round(minutesIntoHour / 15) * 15));
+        const targetHour = Math.max(0, Math.min(23, hourIndex));
+        
+        const newTime = `${String(targetHour).padStart(2, '0')}:${String(snappedMinutes).padStart(2, '0')}`;
+        
+        // Show preview time and update if different from current
+        setResizePreviewTime(newTime);
+        const currentTime = isResizing.type === 'start' ? isResizing.event.startTime : isResizing.event.endTime;
+        if (newTime !== currentTime) {
+          void handleEventResizeToTime(isResizing.event, isResizing.type, newTime);
         }
       }
     };
@@ -203,6 +231,7 @@ function CalendarPage() {
       if (isResizing) {
         setIsResizing(null);
         setResizeStartPos(null);
+        setResizePreviewTime(null);
       }
     };
 
@@ -222,7 +251,7 @@ function CalendarPage() {
       document.body.style.cursor = '';
       document.body.style.userSelect = '';
     };
-  }, [isResizing, resizeStartPos]);
+  }, [isResizing]);
 
   // @dnd-kit drag handlers
   const handleDragStart = (event: any) => {
@@ -500,43 +529,45 @@ function CalendarPage() {
     }
   };
 
-  const handleEventResize = async (event: any, resizeType: 'start' | 'end', hoursChange: number) => {
+  const handleEventResizeToTime = async (event: any, resizeType: 'start' | 'end', newTime: string) => {
     try {
       const [startHour, startMinute] = event.startTime.split(':').map(Number);
       const [endHour, endMinute] = event.endTime.split(':').map(Number);
+      const [newHour, newMinute] = newTime.split(':').map(Number);
       
-      let newStartMinutes = startHour * 60 + startMinute;
-      let newEndMinutes = endHour * 60 + endMinute;
+      const currentStartMinutes = startHour * 60 + startMinute;
+      const currentEndMinutes = endHour * 60 + endMinute;
+      const newTimeMinutes = newHour * 60 + newMinute;
+      
+      let newStartTime = event.startTime;
+      let newEndTime = event.endTime;
       
       if (resizeType === 'start') {
-        newStartMinutes += hoursChange * 60;
-        // Clamp to valid range and ensure it's before end time
-        newStartMinutes = Math.max(0, Math.min(newStartMinutes, newEndMinutes - 15));
+        // Ensure new start time is before end time (with minimum 15 minutes duration)
+        if (newTimeMinutes < currentEndMinutes - 15) {
+          newStartTime = newTime;
+        }
       } else {
-        newEndMinutes += hoursChange * 60;
-        // Clamp to valid range and ensure it's after start time
-        newEndMinutes = Math.max(newStartMinutes + 15, Math.min(1439, newEndMinutes)); // 1439 = 23:59
+        // Ensure new end time is after start time (with minimum 15 minutes duration)
+        if (newTimeMinutes > currentStartMinutes + 15) {
+          newEndTime = newTime;
+        }
       }
       
-      const newStartHour = Math.floor(newStartMinutes / 60);
-      const newStartMin = newStartMinutes % 60;
-      const newEndHour = Math.floor(newEndMinutes / 60);
-      const newEndMin = newEndMinutes % 60;
-      
-      const newStartTime = `${String(newStartHour).padStart(2, '0')}:${String(newStartMin).padStart(2, '0')}`;
-      const newEndTime = `${String(newEndHour).padStart(2, '0')}:${String(newEndMin).padStart(2, '0')}`;
-      
-      await updateEvent({
-        eventId: event._id,
-        title: event.title,
-        description: event.description,
-        startDate: event.startDate,
-        endDate: event.endDate,
-        startTime: newStartTime,
-        endTime: newEndTime,
-        type: event.type,
-        isRecurring: event.isRecurring,
-      });
+      // Only update if the time actually changed
+      if (newStartTime !== event.startTime || newEndTime !== event.endTime) {
+        await updateEvent({
+          eventId: event._id,
+          title: event.title,
+          description: event.description,
+          startDate: event.startDate,
+          endDate: event.endDate,
+          startTime: newStartTime,
+          endTime: newEndTime,
+          type: event.type,
+          isRecurring: event.isRecurring,
+        });
+      }
     } catch (error) {
       console.error("Failed to resize event:", error);
     }
@@ -612,6 +643,7 @@ function CalendarPage() {
                       className={`text-xs p-1 rounded text-white ${getStatusColor(event.status)} truncate hover:opacity-80`}
                       setIsResizing={setIsResizing}
                       setResizeStartPos={setResizeStartPos}
+                      isCurrentlyResizing={isResizing?.event._id === event._id}
                     />
                   ))}
                   {dayEvents.length > 3 && (
@@ -654,7 +686,7 @@ function CalendarPage() {
           ))}
         </div>
 
-        <div className="space-y-1">
+        <div className="space-y-1" data-calendar-container>
           {Array.from({ length: 24 }, (_, hour) => (
             <div key={hour} className="grid grid-cols-8 gap-2">
               <div className="p-2 text-sm opacity-70 text-right">
@@ -725,7 +757,7 @@ function CalendarPage() {
         <div className="grid grid-cols-12 gap-6">
           {/* Calendar Column */}
           <div className="col-span-8">
-            <div className="space-y-1">
+            <div className="space-y-1" data-calendar-container>
               {Array.from({ length: 24 }, (_, hour) => {
                 // Only show events that start in this hour
                 const hourEvents = currentDateEvents.filter(event => {
