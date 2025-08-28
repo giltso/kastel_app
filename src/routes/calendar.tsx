@@ -4,6 +4,21 @@ import { convexQuery } from "@convex-dev/react-query";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import { Calendar, ChevronLeft, ChevronRight, Filter, Plus, Target } from "lucide-react";
+import {
+  DndContext,
+  closestCenter,
+  MouseSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+  DragOverlay,
+  useDraggable,
+  useDroppable,
+} from '@dnd-kit/core';
+import {
+  restrictToWindowEdges,
+  restrictToFirstScrollableAncestor,
+} from '@dnd-kit/modifiers';
 import { api } from "../../convex/_generated/api";
 import { CreateEventModal } from "@/components/CreateEventModal";
 import { EditEventModal } from "@/components/EditEventModal";
@@ -19,6 +34,68 @@ export const Route = createFileRoute("/calendar")({
 });
 
 type ViewType = "day" | "week" | "month";
+
+// Draggable Event Component
+function DraggableEvent({ event, style, canEdit, onClick, className }: {
+  event: any;
+  style?: React.CSSProperties;
+  canEdit: boolean;
+  onClick: (e: React.MouseEvent) => void;
+  className: string;
+}) {
+  const { attributes, listeners, setNodeRef, transform } = useDraggable({
+    id: event._id,
+    data: event,
+    disabled: !canEdit,
+  });
+
+  const dragStyle = transform
+    ? {
+        transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
+      }
+    : undefined;
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={{ ...style, ...dragStyle }}
+      className={`${className} ${canEdit ? 'cursor-move' : 'cursor-pointer'}`}
+      title={`${event.title} (${event.startTime} - ${event.endTime})`}
+      onClick={onClick}
+      {...listeners}
+      {...attributes}
+    >
+      {event.title}
+      {event.startDate !== event.endDate && (
+        <span className="ml-1 opacity-70">...</span>
+      )}
+    </div>
+  );
+}
+
+// Droppable Time Slot Component
+function DroppableTimeSlot({ date, hour, className, onClick, children }: {
+  date: Date;
+  hour?: number;
+  className: string;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  const { isOver, setNodeRef } = useDroppable({
+    id: `${date.toISOString()}-${hour ?? 'allday'}`,
+    data: { date, hour },
+  });
+
+  return (
+    <div
+      ref={setNodeRef}
+      className={`${className} ${isOver ? 'bg-primary/10 border-primary' : ''}`}
+      onClick={onClick}
+    >
+      {children}
+    </div>
+  );
+}
 
 function CalendarPage() {
   const { user, effectiveRole, hasPermission, isLoading } = usePermissions();
@@ -38,16 +115,31 @@ function CalendarPage() {
     assignedTo: Doc<"users"> | null;
     participants: Doc<"users">[];
   }) | null>(null);
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragStart, setDragStart] = useState<{date: Date, hour?: number} | null>(null);
-  const [dragEnd, setDragEnd] = useState<{date: Date, hour?: number} | null>(null);
-  const [draggedEvent, setDraggedEvent] = useState<any | null>(null);
-  const [eventDragging, setEventDragging] = useState(false);
-  const [resizing, setResizing] = useState<{event: any, type: 'start' | 'end'} | null>(null);
+  
+  // @dnd-kit state management
+  const [activeEvent, setActiveEvent] = useState<any | null>(null);
+  const [isResizing, setIsResizing] = useState<{event: any, type: 'start' | 'end'} | null>(null);
+  
   const { data: events } = useSuspenseQuery(eventsQueryOptions);
   const updateEvent = useMutation(api.events.updateEvent);
   const today = new Date();
   const currentMonth = currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+  // @dnd-kit sensors
+  const mouseSensor = useSensor(MouseSensor, {
+    activationConstraint: {
+      distance: 8, // 8px of movement required to start drag
+    },
+  });
+  
+  const touchSensor = useSensor(TouchSensor, {
+    activationConstraint: {
+      delay: 100,
+      tolerance: 8,
+    },
+  });
+  
+  const sensors = useSensors(mouseSensor, touchSensor);
 
   // Check authorization and redirect if necessary
   useEffect(() => {
@@ -56,40 +148,26 @@ function CalendarPage() {
     }
   }, [hasPermission, isLoading, navigate]);
 
-  // Show loading while checking permissions
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-96">
-        <div className="loading loading-spinner loading-lg"></div>
-      </div>
-    );
-  }
+  // @dnd-kit drag handlers
+  const handleDragStart = (event: any) => {
+    const { active } = event;
+    setActiveEvent(active.data.current);
+  };
 
-  // Don't render content if user doesn't have permission (will be redirected)
-  if (!hasPermission("access_worker_portal")) {
-    return null;
-  }
-
-  // Add global mouse up handler to end dragging
-  useEffect(() => {
-    const handleGlobalMouseUp = () => {
-      if (isDragging) {
-        setIsDragging(false);
-        setDragStart(null);
-        setDragEnd(null);
+  const handleDragEnd = (event: any) => {
+    const { active, over } = event;
+    
+    if (over && active.data.current) {
+      const draggedEvent = active.data.current;
+      const dropTarget = over.data.current;
+      
+      if (dropTarget?.date) {
+        void handleEventDrop(dropTarget.date, dropTarget.hour, draggedEvent);
       }
-      if (eventDragging) {
-        setEventDragging(false);
-        setDraggedEvent(null);
-      }
-      if (resizing) {
-        setResizing(null);
-      }
-    };
-
-    document.addEventListener('mouseup', handleGlobalMouseUp);
-    return () => document.removeEventListener('mouseup', handleGlobalMouseUp);
-  }, [isDragging, eventDragging, resizing]);
+    }
+    
+    setActiveEvent(null);
+  };
 
   const navigatePrevious = () => {
     const newDate = new Date(currentDate);
@@ -271,25 +349,6 @@ function CalendarPage() {
     }
   };
 
-  const handleEmptySpaceClick = (date: Date, hour?: number) => {
-    if (!isDragging) {
-      // Close edit modal if open before opening create modal
-      setEditingEvent(null);
-      
-      // Set default values for new event based on clicked date/time
-      const dateString = date.toISOString().split('T')[0]; // YYYY-MM-DD format
-      const startTime = hour !== undefined ? `${String(hour).padStart(2, '0')}:00` : "09:00";
-      const endTime = hour !== undefined ? `${String(hour + 1).padStart(2, '0')}:00` : "17:00";
-      
-      setPrefilledEventData({
-        startDate: dateString,
-        endDate: dateString,
-        startTime: startTime,
-        endTime: endTime,
-      });
-      setIsCreateModalOpen(true);
-    }
-  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -308,178 +367,28 @@ function CalendarPage() {
     }
   };
 
-  const handleDragStart = (date: Date, hour?: number) => {
-    setIsDragging(true);
-    setDragStart({ date, hour });
-    setDragEnd({ date, hour });
-  };
-
-  const handleDragMove = (date: Date, hour?: number) => {
-    if (isDragging) {
-      setDragEnd({ date, hour });
-    }
-  };
-
-  const handleDragEnd = () => {
-    if (isDragging && dragStart && dragEnd) {
-      // Calculate event details from drag selection
-      let startDate = dragStart.date;
-      let endDate = dragEnd.date;
-      let startTime = "09:00";
-      let endTime = "17:00";
-
-      // For day/week views, use hour information
-      if (dragStart.hour !== undefined && dragEnd.hour !== undefined) {
-        const startHour = Math.min(dragStart.hour, dragEnd.hour);
-        const endHour = Math.max(dragStart.hour, dragEnd.hour) + 1; // End hour is exclusive
-        startTime = String(startHour).padStart(2, '0') + ":00";
-        endTime = String(endHour).padStart(2, '0') + ":00";
-      }
-
-      // For month view, if dragging across dates
-      if (startDate > endDate) {
-        [startDate, endDate] = [endDate, startDate];
-      }
-
-      // Set pre-filled data and open modal
-      setPrefilledEventData({
-        startDate: startDate.toISOString().split('T')[0],
-        endDate: endDate.toISOString().split('T')[0],
-        startTime: startTime,
-        endTime: endTime,
-      });
-      setIsCreateModalOpen(true);
-    }
-
-    setIsDragging(false);
-    setDragStart(null);
-    setDragEnd(null);
-  };
-
-  const isDragSelected = (date: Date, hour?: number) => {
-    if (!isDragging || !dragStart || !dragEnd) return false;
-
-    if (hour !== undefined && dragStart.hour !== undefined && dragEnd.hour !== undefined) {
-      // For time-based views (day/week)
-      const startHour = Math.min(dragStart.hour, dragEnd.hour);
-      const endHour = Math.max(dragStart.hour, dragEnd.hour);
-      
-      const dateMatches = date.toDateString() === dragStart.date.toDateString() ||
-                         date.toDateString() === dragEnd.date.toDateString() ||
-                         (date.getTime() >= Math.min(dragStart.date.getTime(), dragEnd.date.getTime()) && 
-                          date.getTime() <= Math.max(dragStart.date.getTime(), dragEnd.date.getTime()));
-      
-      return dateMatches && hour >= startHour && hour <= endHour;
-    } else {
-      // For month view
-      const startDate = dragStart.date;
-      const endDate = dragEnd.date;
-      return date.getTime() >= Math.min(startDate.getTime(), endDate.getTime()) && 
-             date.getTime() <= Math.max(startDate.getTime(), endDate.getTime());
-    }
-  };
-
-  // Event drag handlers
-  const handleEventDragStart = (event: any, e: React.DragEvent) => {
-    // Only allow dragging if user has permission to edit the event
-    if (!canEditEvent(event)) {
-      e.preventDefault();
-      return;
-    }
+  // Empty space click handler for creating new events
+  const handleEmptySpaceClick = (date: Date, hour?: number) => {
+    // Close edit modal if open before opening create modal
+    setEditingEvent(null);
     
-    e.stopPropagation();
-    setEventDragging(true);
-    setDraggedEvent(event);
-    e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/plain', event._id);
-  };
-
-  const handleEventDragOver = (date: Date, hour?: number) => {
-    if (eventDragging && draggedEvent) {
-      // Visual feedback can be added here
-    }
-  };
-
-  const handleEventDragEnd = () => {
-    setEventDragging(false);
-    setDraggedEvent(null);
-  };
-
-  // Resize handlers
-  const handleResizeStart = (event: any, resizeType: 'start' | 'end', e: React.DragEvent) => {
-    // Only allow resizing if user has permission to edit the event
-    if (!canEditEvent(event)) {
-      e.preventDefault();
-      return;
-    }
+    // Set default values for new event based on clicked date/time
+    const dateString = date.toISOString().split('T')[0]; // YYYY-MM-DD format
+    const startTime = hour !== undefined ? `${String(hour).padStart(2, '0')}:00` : "09:00";
+    const endTime = hour !== undefined ? `${String(hour + 1).padStart(2, '0')}:00` : "17:00";
     
-    e.stopPropagation();
-    setResizing({ event, type: resizeType });
-    e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/plain', `resize-${resizeType}-${event._id}`);
+    setPrefilledEventData({
+      startDate: dateString,
+      endDate: dateString,
+      startTime: startTime,
+      endTime: endTime,
+    });
+    setIsCreateModalOpen(true);
   };
 
-  const handleResizeDrop = async (date: Date, hour?: number) => {
-    if (resizing) {
-      try {
-        const { event, type } = resizing;
-        const dateString = date.toISOString().split('T')[0];
-        const newHour = hour !== undefined ? hour : 9; // Default to 9 AM if no hour
-        
-        let newStartTime = event.startTime;
-        let newEndTime = event.endTime;
-        let newStartDate = event.startDate;
-        let newEndDate = event.endDate;
 
-        if (type === 'start') {
-          // Resizing start time
-          newStartTime = `${String(newHour).padStart(2, '0')}:00`;
-          newStartDate = dateString;
-          
-          // Validate that start is before end
-          const startDateTime = new Date(`${newStartDate}T${newStartTime}`);
-          const endDateTime = new Date(`${event.endDate}T${event.endTime}`);
-          if (startDateTime >= endDateTime) {
-            alert("Start time must be before end time");
-            return;
-          }
-        } else {
-          // Resizing end time  
-          newEndTime = `${String(newHour + 1).padStart(2, '0')}:00`; // End hour is exclusive
-          newEndDate = dateString;
-          
-          // Validate that end is after start
-          const startDateTime = new Date(`${event.startDate}T${event.startTime}`);
-          const endDateTime = new Date(`${newEndDate}T${newEndTime}`);
-          if (endDateTime <= startDateTime) {
-            alert("End time must be after start time");
-            return;
-          }
-        }
-
-        // Update the event
-        await updateEvent({
-          eventId: event._id,
-          title: event.title,
-          description: event.description,
-          startDate: newStartDate,
-          endDate: newEndDate,
-          startTime: newStartTime,
-          endTime: newEndTime,
-          type: event.type,
-          isRecurring: false, // Reset recurring when resized
-        });
-      } catch (error) {
-        console.error("Failed to resize event:", error);
-        alert("Failed to resize event. Please try again.");
-      }
-      
-      setResizing(null);
-    }
-  };
-
-  const handleEventDrop = async (date: Date, hour?: number) => {
-    if (eventDragging && draggedEvent) {
+  const handleEventDrop = async (date: Date, hour?: number, draggedEvent?: any) => {
+    if (draggedEvent) {
       try {
         const dateString = date.toISOString().split('T')[0];
         const startTime = hour !== undefined ? `${String(hour).padStart(2, '0')}:00` : draggedEvent.startTime;
@@ -512,9 +421,6 @@ function CalendarPage() {
         console.error("Failed to move event:", error);
         alert("Failed to move event. Please try again.");
       }
-      
-      setEventDragging(false);
-      setDraggedEvent(null);
     }
   };
 
@@ -561,39 +467,32 @@ function CalendarPage() {
             const dayEvents = getEventsForDate(date);
           
             return (
-              <div
+              <DroppableTimeSlot
                 key={i}
+                date={date}
                 className={`
                   min-h-24 p-2 border border-base-300 rounded
                   ${isCurrentMonth ? 'bg-base-100' : 'bg-base-300 opacity-50'}
                   ${isToday ? 'ring-2 ring-primary' : ''}
-                  ${isDragSelected(date) ? 'bg-primary/20 border-primary' : ''}
                   hover:bg-base-200 cursor-pointer transition-colors select-none
                 `}
                 onClick={() => handleEmptySpaceClick(date)}
-                onMouseDown={() => handleDragStart(date)}
-                onMouseEnter={() => handleDragMove(date)}
-                onMouseUp={handleDragEnd}
               >
                 <div className="text-sm font-medium mb-1">
                   {date.getDate()}
                 </div>
                 <div className="space-y-1">
                   {dayEvents.slice(0, 3).map((event) => (
-                    <div
+                    <DraggableEvent
                       key={event._id}
-                      className={`text-xs p-1 rounded text-white ${getStatusColor(event.status)} truncate cursor-pointer hover:opacity-80`}
-                      title={`${event.title} (${event.startTime} - ${event.endTime})`}
+                      event={event}
+                      canEdit={canEditEvent(event)}
                       onClick={(e) => {
                         e.stopPropagation();
                         handleEventClick(event);
                       }}
-                    >
-                      {event.title}
-                      {event.startDate !== event.endDate && (
-                        <span className="ml-1 opacity-70">...</span>
-                      )}
-                    </div>
+                      className={`text-xs p-1 rounded text-white ${getStatusColor(event.status)} truncate hover:opacity-80`}
+                    />
                   ))}
                   {dayEvents.length > 3 && (
                     <div className="text-xs opacity-60">
@@ -601,7 +500,7 @@ function CalendarPage() {
                     </div>
                   )}
                 </div>
-              </div>
+              </DroppableTimeSlot>
             );
           })}
         </div>
@@ -650,72 +549,32 @@ function CalendarPage() {
                 });
 
                 return (
-                  <div
+                  <DroppableTimeSlot
                     key={dayIndex}
-                    className={`
-                      min-h-12 p-1 border border-base-300 rounded bg-base-100 hover:bg-base-200 cursor-pointer transition-colors relative select-none
-                      ${isDragSelected(date, hour) ? 'bg-primary/20 border-primary' : ''}
-                    `}
+                    date={date}
+                    hour={hour}
+                    className="min-h-12 p-1 border border-base-300 rounded bg-base-100 hover:bg-base-200 cursor-pointer transition-colors relative select-none"
                     onClick={() => handleEmptySpaceClick(date, hour)}
-                    onMouseDown={() => handleDragStart(date, hour)}
-                    onMouseEnter={() => handleDragMove(date, hour)}
-                    onMouseUp={handleDragEnd}
-                    onDragOver={(e) => {
-                      e.preventDefault();
-                      handleEventDragOver(date, hour);
-                    }}
-                    onDrop={(e) => {
-                      e.preventDefault();
-                      if (resizing) {
-                        handleResizeDrop(date, hour);
-                      } else {
-                        handleEventDrop(date, hour);
-                      }
-                    }}
                   >
                     {hourEvents.map((event) => {
                       const eventStyle = getEventStyle(event, hour, dayEvents, date);
                       if (!eventStyle) return null;
                       
                       return (
-                        <div
+                        <DraggableEvent
                           key={event._id}
+                          event={event}
                           style={eventStyle}
-                          className={`text-xs p-1 rounded text-white ${getStatusColor(event.status)} truncate ${canEditEvent(event) ? 'cursor-move' : 'cursor-pointer'} hover:opacity-80 ${draggedEvent?._id === event._id ? 'opacity-50' : ''} relative group`}
-                          title={`${event.title} (${event.startTime} - ${event.endTime})`}
-                          draggable={canEditEvent(event)}
-                          onDragStart={(e) => handleEventDragStart(event, e)}
-                          onDragEnd={handleEventDragEnd}
+                          canEdit={canEditEvent(event)}
                           onClick={(e) => {
                             e.stopPropagation();
                             handleEventClick(event);
                           }}
-                        >
-                          {/* Start resize handle - only for users who can edit */}
-                          {canEditEvent(event) && (
-                            <div
-                              className="absolute top-0 left-0 right-0 h-1 cursor-ns-resize opacity-0 group-hover:opacity-100 bg-white/30 rounded-t"
-                              draggable
-                              onDragStart={(e) => handleResizeStart(event, 'start', e)}
-                              title="Drag to change start time"
-                            />
-                          )}
-                          
-                          {event.title}
-                          
-                          {/* End resize handle - only for users who can edit */}
-                          {canEditEvent(event) && (
-                            <div
-                              className="absolute bottom-0 left-0 right-0 h-1 cursor-ns-resize opacity-0 group-hover:opacity-100 bg-white/30 rounded-b"
-                              draggable
-                              onDragStart={(e) => handleResizeStart(event, 'end', e)}
-                              title="Drag to change end time"
-                            />
-                          )}
-                        </div>
+                          className={`text-xs p-1 rounded text-white ${getStatusColor(event.status)} truncate hover:opacity-80`}
+                        />
                       );
                     })}
-                  </div>
+                  </DroppableTimeSlot>
                 );
               })}
             </div>
@@ -747,71 +606,31 @@ function CalendarPage() {
                 <div className="col-span-2 p-2 text-sm opacity-70 text-right">
                   {hour === 0 ? '12 AM' : hour < 12 ? `${hour} AM` : hour === 12 ? '12 PM' : `${hour - 12} PM`}
                 </div>
-                <div 
-                  className={`
-                    col-span-10 min-h-12 p-2 border border-base-300 rounded bg-base-100 hover:bg-base-200 cursor-pointer transition-colors relative select-none
-                    ${isDragSelected(currentDate, hour) ? 'bg-primary/20 border-primary' : ''}
-                  `}
+                <DroppableTimeSlot
+                  date={currentDate}
+                  hour={hour}
+                  className="col-span-10 min-h-12 p-2 border border-base-300 rounded bg-base-100 hover:bg-base-200 cursor-pointer transition-colors relative select-none"
                   onClick={() => handleEmptySpaceClick(currentDate, hour)}
-                  onMouseDown={() => handleDragStart(currentDate, hour)}
-                  onMouseEnter={() => handleDragMove(currentDate, hour)}
-                  onMouseUp={handleDragEnd}
-                  onDragOver={(e) => {
-                    e.preventDefault();
-                    handleEventDragOver(currentDate, hour);
-                  }}
-                  onDrop={(e) => {
-                    e.preventDefault();
-                    if (resizing) {
-                      handleResizeDrop(currentDate, hour);
-                    } else {
-                      handleEventDrop(currentDate, hour);
-                    }
-                  }}
                 >
                   {hourEvents.map((event) => {
                     const eventStyle = getEventStyle(event, hour, currentDateEvents, currentDate);
                     if (!eventStyle) return null;
                     
                     return (
-                      <div
+                      <DraggableEvent
                         key={event._id}
+                        event={event}
                         style={eventStyle}
-                        className={`text-xs p-1 rounded text-white ${getStatusColor(event.status)} truncate ${canEditEvent(event) ? 'cursor-move' : 'cursor-pointer'} hover:opacity-80 ${draggedEvent?._id === event._id ? 'opacity-50' : ''} relative group`}
-                        title={`${event.title} (${event.startTime} - ${event.endTime})`}
-                        draggable={canEditEvent(event)}
-                        onDragStart={(e) => handleEventDragStart(event, e)}
-                        onDragEnd={handleEventDragEnd}
+                        canEdit={canEditEvent(event)}
                         onClick={(e) => {
                           e.stopPropagation();
                           handleEventClick(event);
                         }}
-                      >
-                        {/* Start resize handle - only for users who can edit */}
-                        {canEditEvent(event) && (
-                          <div
-                            className="absolute top-0 left-0 right-0 h-1 cursor-ns-resize opacity-0 group-hover:opacity-100 bg-white/30 rounded-t"
-                            draggable
-                            onDragStart={(e) => handleResizeStart(event, 'start', e)}
-                            title="Drag to change start time"
-                          />
-                        )}
-                        
-                        {event.title}
-                        
-                        {/* End resize handle - only for users who can edit */}
-                        {canEditEvent(event) && (
-                          <div
-                            className="absolute bottom-0 left-0 right-0 h-1 cursor-ns-resize opacity-0 group-hover:opacity-100 bg-white/30 rounded-b"
-                            draggable
-                            onDragStart={(e) => handleResizeStart(event, 'end', e)}
-                            title="Drag to change end time"
-                          />
-                        )}
-                      </div>
+                        className={`text-xs p-1 rounded text-white ${getStatusColor(event.status)} truncate hover:opacity-80`}
+                      />
                     );
                   })}
-                </div>
+                </DroppableTimeSlot>
               </div>
             );
           })}
@@ -822,7 +641,16 @@ function CalendarPage() {
 
   return (
     <Authenticated>
-      <div className="max-w-7xl mx-auto">
+      {isLoading ? (
+        <div className="flex items-center justify-center min-h-96">
+          <div className="loading loading-spinner loading-lg"></div>
+        </div>
+      ) : !hasPermission("access_worker_portal") ? (
+        <div className="flex items-center justify-center min-h-96">
+          <div className="loading loading-spinner loading-lg"></div>
+        </div>
+      ) : (
+        <div className="max-w-7xl mx-auto">
         <div className="flex justify-between items-center mb-4">
           <div>
             <h1 className="text-3xl font-bold">Calendar</h1>
@@ -901,42 +729,59 @@ function CalendarPage() {
           </div>
         </div>
 
-        <div className="card bg-base-200 shadow-sm">
-          <div className="card-body">
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+          modifiers={[restrictToWindowEdges]}
+        >
+          <div className="card bg-base-200 shadow-sm">
+            <div className="card-body">
 
-            <div className="not-prose">
-              {renderCalendarView()}
-            </div>
-
-            {events.length === 0 && (
-              <div className="mt-6 p-4 bg-base-100 rounded-lg text-center opacity-70">
-                <Calendar className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                <p>No events scheduled yet.</p>
-                <p className="text-sm">Events you create will appear on the calendar.</p>
+              <div className="not-prose">
+                {renderCalendarView()}
               </div>
-            )}
-          </div>
-        </div>
 
-        {/* Create Event Modal */}
-        <CreateEventModal 
-          isOpen={isCreateModalOpen} 
-          onClose={() => {
-            setIsCreateModalOpen(false);
-            setPrefilledEventData({});
-          }}
-          prefilledData={prefilledEventData}
-        />
-        
-        {/* Edit Event Modal */}
-        {editingEvent && (
-          <EditEventModal 
-            isOpen={!!editingEvent} 
-            onClose={() => setEditingEvent(null)} 
-            event={editingEvent}
+              {events.length === 0 && (
+                <div className="mt-6 p-4 bg-base-100 rounded-lg text-center opacity-70">
+                  <Calendar className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                  <p>No events scheduled yet.</p>
+                  <p className="text-sm">Events you create will appear on the calendar.</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <DragOverlay>
+            {activeEvent ? (
+              <div className={`text-xs p-1 rounded text-white ${getStatusColor(activeEvent.status)} opacity-80`}>
+                {activeEvent.title}
+              </div>
+            ) : null}
+          </DragOverlay>
+        </DndContext>
+
+          {/* Create Event Modal */}
+          <CreateEventModal 
+            isOpen={isCreateModalOpen} 
+            onClose={() => {
+              setIsCreateModalOpen(false);
+              setPrefilledEventData({});
+            }}
+            prefilledData={prefilledEventData}
           />
-        )}
-      </div>
+          
+          {/* Edit Event Modal */}
+          {editingEvent && (
+            <EditEventModal 
+              isOpen={!!editingEvent} 
+              onClose={() => setEditingEvent(null)} 
+              event={editingEvent}
+            />
+          )}
+        </div>
+      )}
     </Authenticated>
   );
 }

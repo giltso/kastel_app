@@ -145,4 +145,87 @@ export default defineSchema({
   })
   .index("by_formId", ["formId"])
   .index("by_submittedBy", ["submittedBy"]),
+
+  // Tools: Inventory management for rental system
+  tools: defineTable({
+    name: v.string(),
+    description: v.optional(v.string()),
+    category: v.string(), // drill, saw, hammer, etc.
+    brand: v.optional(v.string()),
+    model: v.optional(v.string()),
+    serialNumber: v.optional(v.string()),
+    condition: v.union(v.literal("excellent"), v.literal("good"), v.literal("fair"), v.literal("needs_repair")),
+    rentalPricePerDay: v.number(), // 0 for free tools
+    isAvailable: v.boolean(),
+    location: v.optional(v.string()), // where in the shop
+    addedBy: v.id("users"), // worker who added the tool
+    notes: v.optional(v.string()),
+  })
+  .index("by_category", ["category"])
+  .index("by_isAvailable", ["isAvailable"])
+  .index("by_addedBy", ["addedBy"]),
+
+  // Tool Rentals: Track who has what tools and when
+  tool_rentals: defineTable({
+    toolId: v.id("tools"),
+    renterUserId: v.id("users"), // customer or worker renting
+    rentalStartDate: v.string(), // ISO date string
+    rentalEndDate: v.string(), // Expected return date
+    actualReturnDate: v.optional(v.string()), // When actually returned
+    dailyRate: v.number(), // Rate at time of rental
+    totalCost: v.number(), // calculated cost
+    status: v.union(v.literal("pending"), v.literal("approved"), v.literal("active"), v.literal("returned"), v.literal("overdue"), v.literal("cancelled")),
+    approvedBy: v.optional(v.id("users")), // worker who approved
+    createdBy: v.id("users"), // who created the rental request
+    notes: v.optional(v.string()),
+    eventId: v.optional(v.id("events")), // linked calendar event
+  })
+  .index("by_toolId", ["toolId"])
+  .index("by_renterUserId", ["renterUserId"])
+  .index("by_status", ["status"])
+  .index("by_approvedBy", ["approvedBy"])
+  .index("by_rentalStartDate", ["rentalStartDate"]),
+
+  // Courses: Educational offerings
+  courses: defineTable({
+    title: v.string(),
+    description: v.string(),
+    syllabus: v.array(v.string()), // list of topics covered
+    instructorId: v.id("users"), // staff member organizing
+    assistantIds: v.optional(v.array(v.id("users"))), // workers involved
+    startDate: v.string(), // ISO date string
+    endDate: v.string(),
+    startTime: v.string(), // HH:MM
+    endTime: v.string(),
+    maxParticipants: v.number(),
+    currentParticipants: v.number(),
+    skillLevel: v.union(v.literal("beginner"), v.literal("intermediate"), v.literal("advanced")),
+    category: v.string(), // plumbing, electrical, carpentry, etc.
+    price: v.number(), // course fee
+    location: v.string(), // where in the shop/classroom
+    isActive: v.boolean(), // can people still sign up
+    materials: v.optional(v.array(v.string())), // what materials are provided/needed
+    eventId: v.optional(v.id("events")), // linked calendar event
+    createdBy: v.id("users"),
+  })
+  .index("by_instructorId", ["instructorId"])
+  .index("by_startDate", ["startDate"])
+  .index("by_skillLevel", ["skillLevel"])
+  .index("by_category", ["category"])
+  .index("by_isActive", ["isActive"]),
+
+  // Course Enrollments: Track who signed up for what courses
+  course_enrollments: defineTable({
+    courseId: v.id("courses"),
+    studentId: v.id("users"), // customer enrolling
+    enrollmentDate: v.string(), // when they signed up
+    status: v.union(v.literal("pending"), v.literal("approved"), v.literal("confirmed"), v.literal("completed"), v.literal("cancelled"), v.literal("no_show")),
+    approvedBy: v.optional(v.id("users")), // staff member who approved
+    paymentStatus: v.union(v.literal("pending"), v.literal("paid"), v.literal("refunded")),
+    notes: v.optional(v.string()),
+  })
+  .index("by_courseId", ["courseId"])
+  .index("by_studentId", ["studentId"])
+  .index("by_status", ["status"])
+  .index("by_approvedBy", ["approvedBy"]),
 });

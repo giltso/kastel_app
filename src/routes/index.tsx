@@ -1,7 +1,7 @@
 import { SignInButton } from "@clerk/clerk-react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Authenticated, Unauthenticated } from "convex/react";
-import { Calendar, FileText, Settings, Wrench } from "lucide-react";
+import { Calendar, FileText, Settings, Wrench, Hammer, GraduationCap } from "lucide-react";
 
 export const Route = createFileRoute("/")({
   component: HomePage,
@@ -42,7 +42,7 @@ function DashboardPreview() {
       <h2>Welcome back!</h2>
       <p className="mb-8">Access your tools and manage your hardware shop operations</p>
       
-      <div className="not-prose grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+      <div className="not-prose grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
         <Link to="/events" className="card bg-base-200 shadow-sm hover:shadow-md transition-shadow">
           <div className="card-body items-center text-center">
             <Calendar className="w-12 h-12 text-primary mb-2" />
@@ -56,6 +56,22 @@ function DashboardPreview() {
             <Settings className="w-12 h-12 text-primary mb-2" />
             <h3 className="card-title">Calendar</h3>
             <p>View and interact with scheduled events</p>
+          </div>
+        </Link>
+
+        <Link to="/tools" className="card bg-base-200 shadow-sm hover:shadow-md transition-shadow">
+          <div className="card-body items-center text-center">
+            <Hammer className="w-12 h-12 text-primary mb-2" />
+            <h3 className="card-title">Tool Rental</h3>
+            <p>Manage tool inventory and rentals</p>
+          </div>
+        </Link>
+
+        <Link to="/courses" className="card bg-base-200 shadow-sm hover:shadow-md transition-shadow">
+          <div className="card-body items-center text-center">
+            <GraduationCap className="w-12 h-12 text-primary mb-2" />
+            <h3 className="card-title">Courses</h3>
+            <p>Educational courses and training</p>
           </div>
         </Link>
 

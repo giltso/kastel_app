@@ -13,14 +13,18 @@ Always follow the guidelines in this file, unless explicitly told otherwise by t
 
 ## Event Management System
 
-This application includes a comprehensive role-based event management system:
+This application includes a comprehensive role-based event management system with advanced calendar interactions:
 
 ### Features Implemented
 - **Role-based Access Control**: Support for tester, guest, customer, worker, manager roles
 - **Event CRUD Operations**: Full create, read, update, delete functionality
 - **Approval Workflow**: Worker-created events require manager approval
 - **Participants System**: Multi-user event participation with participant search
-- **Calendar Integration**: Interactive calendar views (day/week/month) with click-to-create
+- **Interactive Calendar**: Calendar views (day/week/month) with click-to-create functionality
+- **Drag & Drop System**: Complete drag-and-drop support for moving and resizing events
+- **Recurring Events**: Support for recurring events with proper UI state management
+- **Concurrent Events Display**: Side-by-side display for overlapping events in calendar views
+- **Edge Dragging**: Event resizing functionality via edge dragging
 - **Search & Filtering**: Advanced search by title, description, participants, with status/type filters
 - **Event Status Management**: Complete lifecycle from pending → approved → in progress → completed
 - **Role Emulation**: Testing interface for switching between roles

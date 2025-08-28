@@ -75,6 +75,26 @@ function NavigationLinks({ onLinkClick }: { onLinkClick: () => void }) {
         </Link>
       )}
       <Link
+        to="/tools"
+        className="btn btn-ghost"
+        activeProps={{
+          className: "btn btn-ghost btn-active",
+        }}
+        onClick={onLinkClick}
+      >
+        Tool Rental
+      </Link>
+      <Link
+        to="/courses"
+        className="btn btn-ghost"
+        activeProps={{
+          className: "btn btn-ghost btn-active",
+        }}
+        onClick={onLinkClick}
+      >
+        Courses
+      </Link>
+      <Link
         to="/forms"
         className="btn btn-ghost"
         activeProps={{
@@ -133,6 +153,30 @@ function MobileNavigationLinks({ onLinkClick }: { onLinkClick: () => void }) {
           </Link>
         </li>
       )}
+      <li>
+        <Link
+          to="/tools"
+          onClick={onLinkClick}
+          activeProps={{
+            className: "active",
+          }}
+          className="flex items-center p-2"
+        >
+          Tool Rental
+        </Link>
+      </li>
+      <li>
+        <Link
+          to="/courses"
+          onClick={onLinkClick}
+          activeProps={{
+            className: "active",
+          }}
+          className="flex items-center p-2"
+        >
+          Courses
+        </Link>
+      </li>
       <li>
         <Link
           to="/forms"
