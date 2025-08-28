@@ -35,7 +35,7 @@ export const Route = createFileRoute("/calendar")({
 
 type ViewType = "day" | "week" | "month";
 
-// Draggable Event Component
+// Draggable Event Component with Resize Handles
 function DraggableEvent({ event, style, canEdit, onClick, className }: {
   event: any;
   style?: React.CSSProperties;
@@ -55,19 +55,50 @@ function DraggableEvent({ event, style, canEdit, onClick, className }: {
       }
     : undefined;
 
+  const handleResizeStart = (e: React.MouseEvent, type: 'start' | 'end') => {
+    e.stopPropagation();
+    setIsResizing({ event, type });
+    setResizeStartPos({ x: e.clientX, y: e.clientY });
+  };
+
+  const handleResizeEnd = () => {
+    setIsResizing(null);
+    setResizeStartPos(null);
+  };
+
   return (
     <div
       ref={setNodeRef}
       style={{ ...style, ...dragStyle }}
-      className={`${className} ${canEdit ? 'cursor-move' : 'cursor-pointer'}`}
+      className={`${className} ${canEdit ? 'cursor-grab active:cursor-grabbing hover:shadow-md' : 'cursor-pointer'} relative group transition-shadow`}
       title={`${event.title} (${event.startTime} - ${event.endTime})`}
       onClick={onClick}
       {...listeners}
       {...attributes}
     >
-      {event.title}
-      {event.startDate !== event.endDate && (
-        <span className="ml-1 opacity-70">...</span>
+      {/* Top resize handle */}
+      {canEdit && (
+        <div
+          className="absolute top-0 left-0 right-0 h-1 cursor-n-resize opacity-0 group-hover:opacity-100 bg-white/30 transition-opacity"
+          onMouseDown={(e) => handleResizeStart(e, 'start')}
+          onMouseUp={handleResizeEnd}
+        />
+      )}
+      
+      <div className="px-1 py-0.5 text-xs leading-tight">
+        {event.title}
+        {event.startDate !== event.endDate && (
+          <span className="ml-1 opacity-70">...</span>
+        )}
+      </div>
+      
+      {/* Bottom resize handle */}
+      {canEdit && (
+        <div
+          className="absolute bottom-0 left-0 right-0 h-1 cursor-s-resize opacity-0 group-hover:opacity-100 bg-white/30 transition-opacity"
+          onMouseDown={(e) => handleResizeStart(e, 'end')}
+          onMouseUp={handleResizeEnd}
+        />
       )}
     </div>
   );
@@ -119,6 +150,7 @@ function CalendarPage() {
   // @dnd-kit state management
   const [activeEvent, setActiveEvent] = useState<any | null>(null);
   const [isResizing, setIsResizing] = useState<{event: any, type: 'start' | 'end'} | null>(null);
+  const [resizeStartPos, setResizeStartPos] = useState<{x: number, y: number} | null>(null);
   
   const { data: events } = useSuspenseQuery(eventsQueryOptions);
   const updateEvent = useMutation(api.events.updateEvent);
@@ -147,6 +179,47 @@ function CalendarPage() {
       void navigate({ to: "/unauthorized" });
     }
   }, [hasPermission, isLoading, navigate]);
+
+  // Handle resize mouse events
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (isResizing && resizeStartPos) {
+        e.preventDefault();
+        // Calculate time change based on mouse movement
+        const deltaY = e.clientY - resizeStartPos.y;
+        const hoursChange = Math.round(deltaY / 48); // 48px per hour
+        
+        if (Math.abs(hoursChange) >= 1) {
+          handleEventResize(isResizing.event, isResizing.type, hoursChange);
+          setResizeStartPos({ x: e.clientX, y: e.clientY });
+        }
+      }
+    };
+
+    const handleMouseUp = () => {
+      if (isResizing) {
+        setIsResizing(null);
+        setResizeStartPos(null);
+      }
+    };
+
+    if (isResizing) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = isResizing.type === 'start' ? 'n-resize' : 's-resize';
+      document.body.style.userSelect = 'none';
+    } else {
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    }
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+  }, [isResizing, resizeStartPos]);
 
   // @dnd-kit drag handlers
   const handleDragStart = (event: any) => {
@@ -424,6 +497,49 @@ function CalendarPage() {
     }
   };
 
+  const handleEventResize = async (event: any, resizeType: 'start' | 'end', hoursChange: number) => {
+    try {
+      const [startHour, startMinute] = event.startTime.split(':').map(Number);
+      const [endHour, endMinute] = event.endTime.split(':').map(Number);
+      
+      let newStartTime = event.startTime;
+      let newEndTime = event.endTime;
+      
+      if (resizeType === 'start') {
+        const newStartHour = Math.max(0, Math.min(23, startHour + hoursChange));
+        newStartTime = `${String(newStartHour).padStart(2, '0')}:${String(startMinute).padStart(2, '0')}`;
+        
+        // Ensure start time is before end time
+        if (newStartHour >= endHour) {
+          newStartTime = `${String(endHour - 1).padStart(2, '0')}:${String(startMinute).padStart(2, '0')}`;
+        }
+      } else {
+        const newEndHour = Math.max(0, Math.min(23, endHour + hoursChange));
+        newEndTime = `${String(newEndHour).padStart(2, '0')}:${String(endMinute).padStart(2, '0')}`;
+        
+        // Ensure end time is after start time
+        if (newEndHour <= startHour) {
+          newEndTime = `${String(startHour + 1).padStart(2, '0')}:${String(endMinute).padStart(2, '0')}`;
+        }
+      }
+      
+      await updateEvent({
+        eventId: event._id,
+        title: event.title,
+        description: event.description,
+        startDate: event.startDate,
+        endDate: event.endDate,
+        startTime: newStartTime,
+        endTime: newEndTime,
+        type: event.type,
+        isRecurring: event.isRecurring,
+      });
+    } catch (error) {
+      console.error("Failed to resize event:", error);
+      alert("Failed to resize event. Please try again.");
+    }
+  };
+
   const renderCalendarView = () => {
     switch (viewType) {
       case "day":
@@ -519,7 +635,7 @@ function CalendarPage() {
     });
 
     return (
-      <>
+      <div className="max-w-6xl mx-auto">
         <div className="grid grid-cols-8 gap-2 mb-4">
           <div className="p-2"></div> {/* Time column header */}
           {weekDates.map((date, i) => (
@@ -580,60 +696,170 @@ function CalendarPage() {
             </div>
           ))}
         </div>
-      </>
+      </div>
     );
   };
 
   const renderDayView = () => {
     const currentDateEvents = getEventsForDate(currentDate);
+    
+    // Sort events by start time for the sidebar
+    const sortedEvents = [...currentDateEvents].sort((a, b) => {
+      const aTime = parseInt(a.startTime.replace(':', ''));
+      const bTime = parseInt(b.startTime.replace(':', ''));
+      return aTime - bTime;
+    });
 
     return (
-      <div className="max-w-4xl mx-auto">
-        <div className="p-2 text-center font-medium mb-4">
+      <div className="max-w-7xl mx-auto">
+        <div className="p-2 text-center font-medium mb-6">
           {currentDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
         </div>
         
-        <div className="space-y-1">
-          {Array.from({ length: 24 }, (_, hour) => {
-            // Only show events that start in this hour
-            const hourEvents = currentDateEvents.filter(event => {
-              const startHour = parseInt(event.startTime.split(':')[0]);
-              return hour === startHour;
-            });
+        <div className="grid grid-cols-12 gap-6">
+          {/* Calendar Column */}
+          <div className="col-span-8">
+            <div className="space-y-1">
+              {Array.from({ length: 24 }, (_, hour) => {
+                // Only show events that start in this hour
+                const hourEvents = currentDateEvents.filter(event => {
+                  const startHour = parseInt(event.startTime.split(':')[0]);
+                  return hour === startHour;
+                });
 
-            return (
-              <div key={hour} className="grid grid-cols-12 gap-2">
-                <div className="col-span-2 p-2 text-sm opacity-70 text-right">
-                  {hour === 0 ? '12 AM' : hour < 12 ? `${hour} AM` : hour === 12 ? '12 PM' : `${hour - 12} PM`}
+                return (
+                  <div key={hour} className="grid grid-cols-12 gap-2">
+                    <div className="col-span-2 p-2 text-sm opacity-70 text-right">
+                      {hour === 0 ? '12 AM' : hour < 12 ? `${hour} AM` : hour === 12 ? '12 PM' : `${hour - 12} PM`}
+                    </div>
+                    <DroppableTimeSlot
+                      date={currentDate}
+                      hour={hour}
+                      className="col-span-10 min-h-12 p-2 border border-base-300 rounded bg-base-100 hover:bg-base-200 cursor-pointer transition-colors relative select-none"
+                      onClick={() => handleEmptySpaceClick(currentDate, hour)}
+                    >
+                      {hourEvents.map((event) => {
+                        const eventStyle = getEventStyle(event, hour, currentDateEvents, currentDate);
+                        if (!eventStyle) return null;
+                        
+                        return (
+                          <DraggableEvent
+                            key={event._id}
+                            event={event}
+                            style={eventStyle}
+                            canEdit={canEditEvent(event)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEventClick(event);
+                            }}
+                            className={`text-xs p-1 rounded text-white ${getStatusColor(event.status)} truncate hover:opacity-80`}
+                          />
+                        );
+                      })}
+                    </DroppableTimeSlot>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+          
+          {/* Events Sidebar */}
+          <div className="col-span-4">
+            <div className="sticky top-4">
+              <div className="card bg-base-200 shadow-sm">
+                <div className="card-body">
+                  <h3 className="card-title text-lg flex items-center gap-2">
+                    <Calendar className="w-5 h-5" />
+                    Today's Events
+                    <div className="badge badge-primary badge-sm">{sortedEvents.length}</div>
+                  </h3>
+                  
+                  {sortedEvents.length === 0 ? (
+                    <div className="text-center py-8 opacity-60">
+                      <Calendar className="w-8 h-8 mx-auto mb-2 opacity-40" />
+                      <p className="text-sm">No events scheduled</p>
+                      <p className="text-xs">Click on the calendar to create one</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3 max-h-96 overflow-y-auto">
+                      {sortedEvents.map((event) => (
+                        <div 
+                          key={event._id}
+                          className="card bg-base-100 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                          onClick={() => handleEventClick(event)}
+                        >
+                          <div className="card-body p-4">
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <h4 className="font-semibold text-sm leading-tight">{event.title}</h4>
+                                <div className="text-xs opacity-70 mt-1">
+                                  {event.startTime} - {event.endTime}
+                                </div>
+                                {event.description && (
+                                  <p className="text-xs opacity-60 mt-2 line-clamp-2">
+                                    {event.description}
+                                  </p>
+                                )}
+                              </div>
+                              <div className="flex flex-col items-end gap-1">
+                                <div className={`badge badge-xs ${getStatusColor(event.status).replace('bg-', 'badge-')}`}>
+                                  {event.status.replace('_', ' ')}
+                                </div>
+                                <div className="badge badge-xs badge-outline">
+                                  {event.type}
+                                </div>
+                              </div>
+                            </div>
+                            
+                            {event.participants && event.participants.length > 0 && (
+                              <div className="flex items-center gap-1 mt-2">
+                                <div className="text-xs opacity-50">Participants:</div>
+                                <div className="flex -space-x-1">
+                                  {event.participants.slice(0, 3).map((participant: any) => (
+                                    <div 
+                                      key={participant._id} 
+                                      className="w-4 h-4 rounded-full bg-primary text-primary-content text-xs flex items-center justify-center border border-base-100"
+                                      title={participant.name}
+                                    >
+                                      {participant.name?.charAt(0).toUpperCase()}
+                                    </div>
+                                  ))}
+                                  {event.participants.length > 3 && (
+                                    <div className="w-4 h-4 rounded-full bg-base-300 text-xs flex items-center justify-center border border-base-100">
+                                      +{event.participants.length - 3}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  
+                  <div className="card-actions justify-end mt-4">
+                    <button 
+                      className="btn btn-sm btn-primary"
+                      onClick={() => {
+                        setEditingEvent(null);
+                        setPrefilledEventData({
+                          startDate: currentDate.toISOString().split('T')[0],
+                          endDate: currentDate.toISOString().split('T')[0],
+                          startTime: "09:00",
+                          endTime: "17:00",
+                        });
+                        setIsCreateModalOpen(true);
+                      }}
+                    >
+                      <Plus className="w-3 h-3" />
+                      New Event
+                    </button>
+                  </div>
                 </div>
-                <DroppableTimeSlot
-                  date={currentDate}
-                  hour={hour}
-                  className="col-span-10 min-h-12 p-2 border border-base-300 rounded bg-base-100 hover:bg-base-200 cursor-pointer transition-colors relative select-none"
-                  onClick={() => handleEmptySpaceClick(currentDate, hour)}
-                >
-                  {hourEvents.map((event) => {
-                    const eventStyle = getEventStyle(event, hour, currentDateEvents, currentDate);
-                    if (!eventStyle) return null;
-                    
-                    return (
-                      <DraggableEvent
-                        key={event._id}
-                        event={event}
-                        style={eventStyle}
-                        canEdit={canEditEvent(event)}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleEventClick(event);
-                        }}
-                        className={`text-xs p-1 rounded text-white ${getStatusColor(event.status)} truncate hover:opacity-80`}
-                      />
-                    );
-                  })}
-                </DroppableTimeSlot>
               </div>
-            );
-          })}
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -677,55 +903,58 @@ function CalendarPage() {
         </div>
 
         {/* Calendar Navigation */}
-        <div className="flex justify-between items-center mb-6">
-          <div className="flex items-center gap-4">
-            <h2 className="text-xl font-semibold">{currentMonth}</h2>
-            {/* View Toggle moved to left side */}
-            <div className="not-prose">
-              <div className="join">
-                <button 
-                  className={`join-item btn btn-sm ${viewType === "day" ? "btn-active" : "btn-ghost"}`}
-                  onClick={() => setViewType("day")}
-                >
-                  Day
-                </button>
-                <button 
-                  className={`join-item btn btn-sm ${viewType === "week" ? "btn-active" : "btn-ghost"}`}
-                  onClick={() => setViewType("week")}
-                >
-                  Week
-                </button>
-                <button 
-                  className={`join-item btn btn-sm ${viewType === "month" ? "btn-active" : "btn-ghost"}`}
-                  onClick={() => setViewType("month")}
-                >
-                  Month
-                </button>
-              </div>
+        <div className="grid grid-cols-3 items-center mb-6 gap-4">
+          {/* View Toggle - Left */}
+          <div className="not-prose justify-self-start">
+            <div className="join">
+              <button 
+                className={`join-item btn btn-sm ${viewType === "day" ? "btn-active" : "btn-ghost"}`}
+                onClick={() => setViewType("day")}
+              >
+                Day
+              </button>
+              <button 
+                className={`join-item btn btn-sm ${viewType === "week" ? "btn-active" : "btn-ghost"}`}
+                onClick={() => setViewType("week")}
+              >
+                Week
+              </button>
+              <button 
+                className={`join-item btn btn-sm ${viewType === "month" ? "btn-active" : "btn-ghost"}`}
+                onClick={() => setViewType("month")}
+              >
+                Month
+              </button>
             </div>
           </div>
-          <div className="not-prose flex gap-2 items-center">
-            {/* Navigation buttons on right side */}
+          
+          {/* Title - Center */}
+          <div className="justify-self-center">
+            <h2 className="text-2xl font-bold text-center leading-tight">{currentMonth}</h2>
+          </div>
+          
+          {/* Navigation - Right */}
+          <div className="not-prose flex gap-2 items-center justify-self-end">
             <button 
               className="btn btn-sm btn-ghost"
               onClick={navigatePrevious}
             >
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-              <button 
-                className="btn btn-sm btn-ghost"
-                onClick={goToToday}
-                title="Go to today"
-              >
-                <Target className="w-4 h-4" />
-                Today
-              </button>
-              <button 
-                className="btn btn-sm btn-ghost"
-                onClick={navigateNext}
-              >
-                <ChevronRight className="w-4 h-4" />
-              </button>
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <button 
+              className="btn btn-sm btn-ghost"
+              onClick={goToToday}
+              title="Go to today"
+            >
+              <Target className="w-4 h-4" />
+              Today
+            </button>
+            <button 
+              className="btn btn-sm btn-ghost"
+              onClick={navigateNext}
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
           </div>
         </div>
 
@@ -755,7 +984,7 @@ function CalendarPage() {
 
           <DragOverlay>
             {activeEvent ? (
-              <div className={`text-xs p-1 rounded text-white ${getStatusColor(activeEvent.status)} opacity-80`}>
+              <div className={`text-xs p-1 rounded text-white ${getStatusColor(activeEvent.status)} opacity-90 shadow-lg border border-white/20 cursor-grabbing`}>
                 {activeEvent.title}
               </div>
             ) : null}
