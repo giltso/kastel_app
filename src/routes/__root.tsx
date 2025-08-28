@@ -25,6 +25,7 @@ import { Menu } from "lucide-react";
 import { useEffect, useState } from "react";
 import { api } from "../../convex/_generated/api";
 import { RoleSwitcher } from "@/components/RoleSwitcher";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { UserRoleDebug } from "@/components/UserRoleDebug";
 import { usePermissions } from "@/hooks/usePermissions";
 
@@ -244,6 +245,7 @@ function RootComponent() {
                     </div>
                     <div className="navbar-end gap-2">
                       <UserRoleDebug />
+                      <ThemeToggle />
                       <RoleSwitcher />
                       <UserButton />
                     </div>
@@ -272,6 +274,7 @@ function RootComponent() {
                     </div>
                     <div className="mt-auto py-4 border-t border-base-300 flex flex-col gap-2 items-center">
                       <UserRoleDebug />
+                      <ThemeToggle />
                       <RoleSwitcher />
                       <UserButton />
                     </div>
