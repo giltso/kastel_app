@@ -54,7 +54,7 @@ export default defineSchema({
     startTime_legacy: v.optional(v.number()),
     endTime_legacy: v.optional(v.number()),
     // Event properties
-    type: v.union(v.literal("work"), v.literal("meeting"), v.literal("maintenance"), v.literal("team")),
+    type: v.union(v.literal("work"), v.literal("meeting"), v.literal("maintenance"), v.literal("team"), v.literal("educational")),
     status: v.union(v.literal("pending_approval"), v.literal("approved"), v.literal("in_progress"), v.literal("completed"), v.literal("cancelled")),
     // Repetition settings
     isRecurring: v.boolean(),

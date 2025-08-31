@@ -32,6 +32,8 @@ function EventsPage() {
   const [filterType, setFilterType] = useState<string>("all");
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [showPastEvents, setShowPastEvents] = useState(false);
+  const [bulkMode, setBulkMode] = useState(false);
+  const [selectedEvents, setSelectedEvents] = useState<string[]>([]);
 
   // Check authorization and redirect if necessary
   useEffect(() => {
@@ -110,6 +112,7 @@ function EventsPage() {
                     <option value="meeting">Meeting</option>
                     <option value="maintenance">Maintenance</option>
                     <option value="team">Team</option>
+                    <option value="educational">Educational</option>
                   </select>
                 </div>
                 <div>
@@ -133,16 +136,24 @@ function EventsPage() {
                   <label className="label">
                     <span className="label-text">Actions</span>
                   </label>
-                  <button
-                    className="btn btn-ghost w-full"
-                    onClick={() => {
-                      setSearchTerm("");
-                      setFilterType("all");
-                      setFilterStatus("all");
-                    }}
-                  >
-                    Clear Filters
-                  </button>
+                  <div className="space-y-2">
+                    <button
+                      className="btn btn-ghost btn-sm w-full"
+                      onClick={() => {
+                        setSearchTerm("");
+                        setFilterType("all");
+                        setFilterStatus("all");
+                      }}
+                    >
+                      Clear Filters
+                    </button>
+                    <button
+                      className="btn btn-outline btn-sm w-full"
+                      onClick={() => setBulkMode(!bulkMode)}
+                    >
+                      {bulkMode ? 'Exit' : 'Bulk Actions'}
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -155,6 +166,17 @@ function EventsPage() {
             showPastEvents={showPastEvents}
             onTogglePastEvents={() => setShowPastEvents(!showPastEvents)}
             onEditEvent={setEditingEvent}
+            bulkMode={bulkMode}
+            selectedEvents={selectedEvents}
+            onToggleEventSelection={(eventId) => {
+              setSelectedEvents(prev => 
+                prev.includes(eventId) 
+                  ? prev.filter(id => id !== eventId)
+                  : [...prev, eventId]
+              );
+            }}
+            onSelectAllEvents={(eventIds) => setSelectedEvents(eventIds)}
+            onClearSelection={() => setSelectedEvents([])}
           />
         </div>
 
@@ -189,9 +211,14 @@ interface EventsListProps {
     assignedTo: Doc<"users"> | null;
     participants: Doc<"users">[];
   }) => void;
+  bulkMode: boolean;
+  selectedEvents: string[];
+  onToggleEventSelection: (eventId: string) => void;
+  onSelectAllEvents: (eventIds: string[]) => void;
+  onClearSelection: () => void;
 }
 
-function EventsList({ searchTerm, filterType, filterStatus, showPastEvents, onTogglePastEvents, onEditEvent }: EventsListProps) {
+function EventsList({ searchTerm, filterType, filterStatus, showPastEvents, onTogglePastEvents, onEditEvent, bulkMode, selectedEvents, onToggleEventSelection, onSelectAllEvents, onClearSelection }: EventsListProps) {
   const { data: events } = useSuspenseQuery(eventsQueryOptions);
   const { user, effectiveRole } = usePermissions();
   const canApprove = useCanApproveEvents();
@@ -275,6 +302,34 @@ function EventsList({ searchTerm, filterType, filterStatus, showPastEvents, onTo
     }
   };
 
+  const handleBulkApprove = async () => {
+    if (confirm(`Are you sure you want to approve ${selectedEvents.length} selected events?`)) {
+      try {
+        for (const eventId of selectedEvents) {
+          await approveEvent({ eventId: eventId as Id<"events"> });
+        }
+        onClearSelection();
+      } catch (error) {
+        alert("Failed to approve some events. You may not have permission.");
+        console.error("Bulk approve failed:", error);
+      }
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (confirm(`Are you sure you want to delete ${selectedEvents.length} selected events? This action cannot be undone.`)) {
+      try {
+        for (const eventId of selectedEvents) {
+          await deleteEvent({ eventId: eventId as Id<"events"> });
+        }
+        onClearSelection();
+      } catch (error) {
+        alert("Failed to delete some events. You may not have permission.");
+        console.error("Bulk delete failed:", error);
+      }
+    }
+  };
+
   const getTypeColor = (type: string) => {
     switch (type) {
       case "work":
@@ -303,6 +358,48 @@ function EventsList({ searchTerm, filterType, filterStatus, showPastEvents, onTo
             </button>
           </div>
         </div>
+        
+        {/* Bulk Actions UI */}
+        {bulkMode && (
+          <div className="mb-4 p-3 bg-base-100 rounded-lg border">
+            <div className="flex flex-wrap items-center gap-2 mb-2">
+              <span className="text-sm font-medium">
+                {selectedEvents.length} event{selectedEvents.length !== 1 ? 's' : ''} selected
+              </span>
+              <button 
+                className="btn btn-xs btn-ghost"
+                onClick={() => onSelectAllEvents(filteredEvents.map(e => e._id))}
+              >
+                Select All ({filteredEvents.length})
+              </button>
+              <button 
+                className="btn btn-xs btn-ghost"
+                onClick={onClearSelection}
+              >
+                Clear All
+              </button>
+            </div>
+            {selectedEvents.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {canApprove && (
+                  <button 
+                    className="btn btn-xs btn-success"
+                    onClick={() => handleBulkApprove()}
+                  >
+                    Approve Selected ({selectedEvents.length})
+                  </button>
+                )}
+                <button 
+                  className="btn btn-xs btn-error"
+                  onClick={() => handleBulkDelete()}
+                >
+                  Delete Selected ({selectedEvents.length})
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+        
         <div className="not-prose">
           {filteredEvents.length === 0 ? (
             <div className="p-8 text-center opacity-70">
@@ -325,7 +422,17 @@ function EventsList({ searchTerm, filterType, filterStatus, showPastEvents, onTo
                 <div key={event._id} className="card bg-base-100 shadow-sm">
                   <div className="card-body p-4">
                     <div className="flex items-start justify-between">
-                      <div className="flex-1">
+                      <div className="flex items-start gap-3 flex-1">
+                        {/* Bulk selection checkbox */}
+                        {bulkMode && (
+                          <input
+                            type="checkbox"
+                            className="checkbox checkbox-primary mt-1"
+                            checked={selectedEvents.includes(event._id)}
+                            onChange={() => onToggleEventSelection(event._id)}
+                          />
+                        )}
+                        <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2">
                           <div className="flex items-center gap-2">
                             {/* Status toggle checkbox - only for managers or event creators */}

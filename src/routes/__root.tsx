@@ -53,18 +53,6 @@ function NavigationLinks({ onLinkClick }: { onLinkClick: () => void }) {
       </Link>
       {hasPermission("access_worker_portal") && (
         <Link
-          to="/events"
-          className="btn btn-ghost"
-          activeProps={{
-            className: "btn btn-ghost btn-active",
-          }}
-          onClick={onLinkClick}
-        >
-          Events
-        </Link>
-      )}
-      {hasPermission("access_worker_portal") && (
-        <Link
           to="/calendar"
           className="btn btn-ghost"
           activeProps={{
@@ -73,6 +61,18 @@ function NavigationLinks({ onLinkClick }: { onLinkClick: () => void }) {
           onClick={onLinkClick}
         >
           Calendar
+        </Link>
+      )}
+      {hasPermission("access_worker_portal") && (
+        <Link
+          to="/events"
+          className="btn btn-ghost"
+          activeProps={{
+            className: "btn btn-ghost btn-active",
+          }}
+          onClick={onLinkClick}
+        >
+          Events
         </Link>
       )}
       <Link
@@ -221,9 +221,9 @@ function RootComponent() {
                   checked={isSidebarOpen}
                   onChange={toggleSidebar}
                 />
-                <div className="drawer-content container mx-auto flex flex-col h-full">
+                <div className="drawer-content flex flex-col h-full">
                   {/* Navbar */}
-                  <header className="navbar bg-base-100 shadow-sm border-b border-base-300">
+                  <header className="navbar bg-base-100 shadow-sm border-b border-base-300 px-4">
                     <div className="navbar-start">
                       <label
                         htmlFor="drawer-toggle"
@@ -284,7 +284,7 @@ function RootComponent() {
             </Authenticated>
             <Unauthenticated>
               <header className="navbar bg-base-100 shadow-sm border-b border-base-300">
-                <div className="container mx-auto flex justify-between w-full">
+                <div className="flex justify-between w-full px-4">
                   <div className="navbar-start">
                     <h1 className="font-semibold">Kastel</h1>
                   </div>

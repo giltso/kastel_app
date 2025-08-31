@@ -14,7 +14,7 @@ const eventSchema = z.object({
   endDate: z.string().min(1, "End date is required"), 
   startTime: z.string().min(1, "Start time is required"),
   endTime: z.string().min(1, "End time is required"),
-  type: z.enum(["work", "meeting", "maintenance", "team"]),
+  type: z.enum(["work", "meeting", "maintenance", "team", "educational"]),
   isRecurring: z.boolean(),
   recurringType: z.enum(["weekly"]).optional(),
   recurringDays: z.array(z.enum([
@@ -267,6 +267,7 @@ export function EditEventModal({ isOpen, onClose, event }: EditEventModalProps) 
                   <option value="meeting">Meeting</option>
                   <option value="maintenance">Maintenance</option>
                   <option value="team">Team</option>
+                  <option value="educational">Educational</option>
                 </select>
               </div>
             )}

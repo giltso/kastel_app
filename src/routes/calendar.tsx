@@ -1087,7 +1087,7 @@ function CalendarPage() {
         </div>
 
         {/* Calendar Navigation */}
-        <div className="grid grid-cols-3 items-center mb-6 gap-4">
+        <div className="grid grid-cols-3 items-center mb-2 gap-4">
           {/* View Toggle - Left */}
           <div className="not-prose justify-self-start">
             <div className="join">
