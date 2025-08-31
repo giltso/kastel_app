@@ -536,6 +536,7 @@ function EventsList({ searchTerm, filterType, filterStatus, showPastEvents, onTo
                       </div>
                     </div>
                   </div>
+                  </div>
                 </div>
               ))}
             </div>

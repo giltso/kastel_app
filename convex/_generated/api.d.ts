@@ -20,6 +20,7 @@ import type * as demo from "../demo.js";
 import type * as events from "../events.js";
 import type * as forms from "../forms.js";
 import type * as seed from "../seed.js";
+import type * as suggestions from "../suggestions.js";
 import type * as testHelpers from "../testHelpers.js";
 import type * as tools from "../tools.js";
 import type * as users from "../users.js";
@@ -40,6 +41,7 @@ declare const fullApi: ApiFromModules<{
   events: typeof events;
   forms: typeof forms;
   seed: typeof seed;
+  suggestions: typeof suggestions;
   testHelpers: typeof testHelpers;
   tools: typeof tools;
   users: typeof users;

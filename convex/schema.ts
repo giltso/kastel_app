@@ -228,4 +228,26 @@ export default defineSchema({
   .index("by_studentId", ["studentId"])
   .index("by_status", ["status"])
   .index("by_approvedBy", ["approvedBy"]),
+
+  // Suggestions: User feedback and improvement suggestions
+  suggestions: defineTable({
+    createdBy: v.id("users"), // user who made the suggestion
+    location: v.string(), // URL where suggestion was made
+    pageContext: v.string(), // description of what user was seeing
+    problem: v.string(), // what is wrong / problem description
+    solution: v.string(), // suggested solution
+    status: v.union(v.literal("pending"), v.literal("reviewed"), v.literal("implemented"), v.literal("rejected")),
+    // For grouping similar suggestions
+    similarityHash: v.optional(v.string()), // hash for detecting similar content
+    relatedSuggestions: v.optional(v.array(v.id("suggestions"))), // array of related suggestion IDs
+    // Admin/developer fields
+    reviewedBy: v.optional(v.id("users")), // developer who reviewed
+    reviewNotes: v.optional(v.string()), // internal notes from review
+    implementationDate: v.optional(v.string()), // when implemented (if applicable)
+  })
+  .index("by_createdBy", ["createdBy"])
+  .index("by_status", ["status"])
+  .index("by_location", ["location"])
+  .index("by_similarityHash", ["similarityHash"])
+  .index("by_reviewedBy", ["reviewedBy"]),
 });

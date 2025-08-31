@@ -27,6 +27,7 @@ import { api } from "../../convex/_generated/api";
 import { RoleSwitcher } from "@/components/RoleSwitcher";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { UserRoleDebug } from "@/components/UserRoleDebug";
+import { SuggestionBoxTrigger } from "@/components/SuggestionBoxTrigger";
 import { usePermissions } from "@/hooks/usePermissions";
 
 export const Route = createRootRouteWithContext<{
@@ -245,6 +246,7 @@ function RootComponent() {
                     </div>
                     <div className="navbar-end gap-2">
                       <UserRoleDebug />
+                      <SuggestionBoxTrigger />
                       <ThemeToggle />
                       <RoleSwitcher />
                       <UserButton />
