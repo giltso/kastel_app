@@ -13,6 +13,7 @@
 import { Route as rootRoute } from './routes/__root'
 import { Route as UnauthorizedImport } from './routes/unauthorized'
 import { Route as ToolsImport } from './routes/tools'
+import { Route as SuggestionsImport } from './routes/suggestions'
 import { Route as FormsImport } from './routes/forms'
 import { Route as EventsImport } from './routes/events'
 import { Route as CoursesImport } from './routes/courses'
@@ -30,6 +31,12 @@ const UnauthorizedRoute = UnauthorizedImport.update({
 const ToolsRoute = ToolsImport.update({
   id: '/tools',
   path: '/tools',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const SuggestionsRoute = SuggestionsImport.update({
+  id: '/suggestions',
+  path: '/suggestions',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -102,6 +109,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FormsImport
       parentRoute: typeof rootRoute
     }
+    '/suggestions': {
+      id: '/suggestions'
+      path: '/suggestions'
+      fullPath: '/suggestions'
+      preLoaderRoute: typeof SuggestionsImport
+      parentRoute: typeof rootRoute
+    }
     '/tools': {
       id: '/tools'
       path: '/tools'
@@ -127,6 +141,7 @@ export interface FileRoutesByFullPath {
   '/courses': typeof CoursesRoute
   '/events': typeof EventsRoute
   '/forms': typeof FormsRoute
+  '/suggestions': typeof SuggestionsRoute
   '/tools': typeof ToolsRoute
   '/unauthorized': typeof UnauthorizedRoute
 }
@@ -137,6 +152,7 @@ export interface FileRoutesByTo {
   '/courses': typeof CoursesRoute
   '/events': typeof EventsRoute
   '/forms': typeof FormsRoute
+  '/suggestions': typeof SuggestionsRoute
   '/tools': typeof ToolsRoute
   '/unauthorized': typeof UnauthorizedRoute
 }
@@ -148,6 +164,7 @@ export interface FileRoutesById {
   '/courses': typeof CoursesRoute
   '/events': typeof EventsRoute
   '/forms': typeof FormsRoute
+  '/suggestions': typeof SuggestionsRoute
   '/tools': typeof ToolsRoute
   '/unauthorized': typeof UnauthorizedRoute
 }
@@ -160,6 +177,7 @@ export interface FileRouteTypes {
     | '/courses'
     | '/events'
     | '/forms'
+    | '/suggestions'
     | '/tools'
     | '/unauthorized'
   fileRoutesByTo: FileRoutesByTo
@@ -169,6 +187,7 @@ export interface FileRouteTypes {
     | '/courses'
     | '/events'
     | '/forms'
+    | '/suggestions'
     | '/tools'
     | '/unauthorized'
   id:
@@ -178,6 +197,7 @@ export interface FileRouteTypes {
     | '/courses'
     | '/events'
     | '/forms'
+    | '/suggestions'
     | '/tools'
     | '/unauthorized'
   fileRoutesById: FileRoutesById
@@ -189,6 +209,7 @@ export interface RootRouteChildren {
   CoursesRoute: typeof CoursesRoute
   EventsRoute: typeof EventsRoute
   FormsRoute: typeof FormsRoute
+  SuggestionsRoute: typeof SuggestionsRoute
   ToolsRoute: typeof ToolsRoute
   UnauthorizedRoute: typeof UnauthorizedRoute
 }
@@ -199,6 +220,7 @@ const rootRouteChildren: RootRouteChildren = {
   CoursesRoute: CoursesRoute,
   EventsRoute: EventsRoute,
   FormsRoute: FormsRoute,
+  SuggestionsRoute: SuggestionsRoute,
   ToolsRoute: ToolsRoute,
   UnauthorizedRoute: UnauthorizedRoute,
 }
@@ -218,6 +240,7 @@ export const routeTree = rootRoute
         "/courses",
         "/events",
         "/forms",
+        "/suggestions",
         "/tools",
         "/unauthorized"
       ]
@@ -236,6 +259,9 @@ export const routeTree = rootRoute
     },
     "/forms": {
       "filePath": "forms.tsx"
+    },
+    "/suggestions": {
+      "filePath": "suggestions.tsx"
     },
     "/tools": {
       "filePath": "tools.tsx"
