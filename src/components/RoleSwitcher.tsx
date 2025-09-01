@@ -15,6 +15,7 @@ export function RoleSwitcher() {
     { value: "customer", label: "Customer", description: "External customer" },
     { value: "worker", label: "Worker", description: "Operational staff" },
     { value: "manager", label: "Manager", description: "Full permissions" },
+    { value: "pro", label: "Professional", description: "Service provider with profile" },
   ];
 
   const handleRoleSwitch = (role: UserRole | null) => {
@@ -69,7 +70,8 @@ export function RoleSwitcher() {
                 <span className="text-xs">
                   {role.value === "guest" ? "👤" : 
                    role.value === "customer" ? "🏪" :
-                   role.value === "worker" ? "🔧" : "👔"}
+                   role.value === "worker" ? "🔧" : 
+                   role.value === "manager" ? "👔" : "🏆"}
                 </span>
                 <div className="text-left">
                   <div className="text-xs font-medium">{role.label}</div>

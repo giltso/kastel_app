@@ -107,6 +107,18 @@ function NavigationLinks({ onLinkClick }: { onLinkClick: () => void }) {
       >
         Forms
       </Link>
+      {hasPermission("access_pro_help") && (
+        <Link
+          to="/pro-help"
+          className="btn btn-ghost"
+          activeProps={{
+            className: "btn btn-ghost btn-active",
+          }}
+          onClick={onLinkClick}
+        >
+          Pro Help
+        </Link>
+      )}
       <Link
         to="/suggestions"
         className="btn btn-ghost"

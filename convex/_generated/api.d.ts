@@ -19,6 +19,7 @@ import type * as debug from "../debug.js";
 import type * as demo from "../demo.js";
 import type * as events from "../events.js";
 import type * as forms from "../forms.js";
+import type * as proProfiles from "../proProfiles.js";
 import type * as seed from "../seed.js";
 import type * as suggestions from "../suggestions.js";
 import type * as testHelpers from "../testHelpers.js";
@@ -40,6 +41,7 @@ declare const fullApi: ApiFromModules<{
   demo: typeof demo;
   events: typeof events;
   forms: typeof forms;
+  proProfiles: typeof proProfiles;
   seed: typeof seed;
   suggestions: typeof suggestions;
   testHelpers: typeof testHelpers;

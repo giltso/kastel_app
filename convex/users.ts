@@ -137,7 +137,8 @@ export const switchEmulatingRole = mutation({
       v.literal("guest"), 
       v.literal("customer"), 
       v.literal("worker"), 
-      v.literal("manager")
+      v.literal("manager"),
+      v.literal("pro")
     )),
   },
   handler: async (ctx, args) => {

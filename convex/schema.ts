@@ -13,16 +13,36 @@ export default defineSchema({
       v.literal("guest"), 
       v.literal("customer"), 
       v.literal("worker"), 
-      v.literal("manager")
+      v.literal("manager"),
+      v.literal("pro")
     )),
     // For dev role - which role they're currently emulating
     emulatingRole: v.optional(v.union(
       v.literal("guest"), 
       v.literal("customer"), 
       v.literal("worker"), 
-      v.literal("manager")
+      v.literal("manager"),
+      v.literal("pro")
     )),
   }).index("by_clerkId", ["clerkId"]).index("by_role", ["role"]),
+
+  // Professional profiles for users with 'pro' role
+  pro_profiles: defineTable({
+    userId: v.id("users"),
+    title: v.string(), // e.g., "Master Carpenter", "Plumbing Expert"
+    description: v.string(), // Bio/description of services
+    specialties: v.array(v.string()), // e.g., ["Carpentry", "Electrical", "Plumbing"]
+    experience: v.optional(v.string()), // Years of experience
+    contactPhone: v.optional(v.string()),
+    contactEmail: v.optional(v.string()),
+    hourlyRate: v.optional(v.number()),
+    availability: v.optional(v.string()), // e.g., "Weekdays 9-5", "Flexible"
+    certifications: v.optional(v.array(v.string())), // Professional certifications
+    portfolioImages: v.optional(v.array(v.id("_storage"))), // Image file IDs
+    isActive: v.boolean(), // Can be toggled on/off
+  })
+  .index("by_userId", ["userId"])
+  .index("by_isActive", ["isActive"]),
 
   // Requests: Service-oriented items
   requests: defineTable({

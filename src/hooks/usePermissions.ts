@@ -1,7 +1,7 @@
 import { useConvexAuth, useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 
-export type UserRole = "dev" | "guest" | "customer" | "worker" | "manager";
+export type UserRole = "dev" | "guest" | "customer" | "worker" | "manager" | "pro";
 
 export type Permission = 
   | "view_public_services"
@@ -21,7 +21,11 @@ export type Permission =
   | "manage_user_roles"
   | "access_worker_portal"
   | "access_manager_portal"
-  | "emulate_roles";
+  | "emulate_roles"
+  | "create_pro_profile"
+  | "edit_pro_profile"
+  | "access_pro_help"
+  | "create_courses";
 
 export function useCurrentUser() {
   const { isAuthenticated } = useConvexAuth();
@@ -45,14 +49,16 @@ export function usePermissions() {
       guest: [
         "view_public_services",
         "create_guest_request", 
-        "track_own_requests"
+        "track_own_requests",
+        "access_pro_help"
       ],
       customer: [
         "view_public_services",
         "create_guest_request",
         "create_customer_request",
         "track_own_requests", 
-        "access_customer_portal"
+        "access_customer_portal",
+        "access_pro_help"
       ],
       worker: [
         "view_public_services",
@@ -61,7 +67,8 @@ export function usePermissions() {
         "create_event_draft",
         "create_ticket",
         "comment_on_tickets",
-        "access_worker_portal"
+        "access_worker_portal",
+        "access_pro_help"
       ],
       manager: [
         "view_public_services", 
@@ -77,7 +84,19 @@ export function usePermissions() {
         "close_tickets",
         "manage_user_roles",
         "access_worker_portal",
-        "access_manager_portal"
+        "access_manager_portal",
+        "access_pro_help"
+      ],
+      pro: [
+        "view_public_services",
+        "create_guest_request",
+        "create_customer_request",
+        "track_own_requests",
+        "access_customer_portal",
+        "create_pro_profile",
+        "edit_pro_profile",
+        "access_pro_help",
+        "create_courses"
       ],
       dev: [
         // Dev has all permissions for development and testing
@@ -98,7 +117,11 @@ export function usePermissions() {
         "close_tickets",
         "manage_user_roles", 
         "access_manager_portal",
-        "emulate_roles"
+        "emulate_roles",
+        "create_pro_profile",
+        "edit_pro_profile",
+        "access_pro_help",
+        "create_courses"
       ]
     };
 

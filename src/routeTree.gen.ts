@@ -14,6 +14,7 @@ import { Route as rootRoute } from './routes/__root'
 import { Route as UnauthorizedImport } from './routes/unauthorized'
 import { Route as ToolsImport } from './routes/tools'
 import { Route as SuggestionsImport } from './routes/suggestions'
+import { Route as ProHelpImport } from './routes/pro-help'
 import { Route as FormsImport } from './routes/forms'
 import { Route as EventsImport } from './routes/events'
 import { Route as CoursesImport } from './routes/courses'
@@ -37,6 +38,12 @@ const ToolsRoute = ToolsImport.update({
 const SuggestionsRoute = SuggestionsImport.update({
   id: '/suggestions',
   path: '/suggestions',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const ProHelpRoute = ProHelpImport.update({
+  id: '/pro-help',
+  path: '/pro-help',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -109,6 +116,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FormsImport
       parentRoute: typeof rootRoute
     }
+    '/pro-help': {
+      id: '/pro-help'
+      path: '/pro-help'
+      fullPath: '/pro-help'
+      preLoaderRoute: typeof ProHelpImport
+      parentRoute: typeof rootRoute
+    }
     '/suggestions': {
       id: '/suggestions'
       path: '/suggestions'
@@ -141,6 +155,7 @@ export interface FileRoutesByFullPath {
   '/courses': typeof CoursesRoute
   '/events': typeof EventsRoute
   '/forms': typeof FormsRoute
+  '/pro-help': typeof ProHelpRoute
   '/suggestions': typeof SuggestionsRoute
   '/tools': typeof ToolsRoute
   '/unauthorized': typeof UnauthorizedRoute
@@ -152,6 +167,7 @@ export interface FileRoutesByTo {
   '/courses': typeof CoursesRoute
   '/events': typeof EventsRoute
   '/forms': typeof FormsRoute
+  '/pro-help': typeof ProHelpRoute
   '/suggestions': typeof SuggestionsRoute
   '/tools': typeof ToolsRoute
   '/unauthorized': typeof UnauthorizedRoute
@@ -164,6 +180,7 @@ export interface FileRoutesById {
   '/courses': typeof CoursesRoute
   '/events': typeof EventsRoute
   '/forms': typeof FormsRoute
+  '/pro-help': typeof ProHelpRoute
   '/suggestions': typeof SuggestionsRoute
   '/tools': typeof ToolsRoute
   '/unauthorized': typeof UnauthorizedRoute
@@ -177,6 +194,7 @@ export interface FileRouteTypes {
     | '/courses'
     | '/events'
     | '/forms'
+    | '/pro-help'
     | '/suggestions'
     | '/tools'
     | '/unauthorized'
@@ -187,6 +205,7 @@ export interface FileRouteTypes {
     | '/courses'
     | '/events'
     | '/forms'
+    | '/pro-help'
     | '/suggestions'
     | '/tools'
     | '/unauthorized'
@@ -197,6 +216,7 @@ export interface FileRouteTypes {
     | '/courses'
     | '/events'
     | '/forms'
+    | '/pro-help'
     | '/suggestions'
     | '/tools'
     | '/unauthorized'
@@ -209,6 +229,7 @@ export interface RootRouteChildren {
   CoursesRoute: typeof CoursesRoute
   EventsRoute: typeof EventsRoute
   FormsRoute: typeof FormsRoute
+  ProHelpRoute: typeof ProHelpRoute
   SuggestionsRoute: typeof SuggestionsRoute
   ToolsRoute: typeof ToolsRoute
   UnauthorizedRoute: typeof UnauthorizedRoute
@@ -220,6 +241,7 @@ const rootRouteChildren: RootRouteChildren = {
   CoursesRoute: CoursesRoute,
   EventsRoute: EventsRoute,
   FormsRoute: FormsRoute,
+  ProHelpRoute: ProHelpRoute,
   SuggestionsRoute: SuggestionsRoute,
   ToolsRoute: ToolsRoute,
   UnauthorizedRoute: UnauthorizedRoute,
@@ -240,6 +262,7 @@ export const routeTree = rootRoute
         "/courses",
         "/events",
         "/forms",
+        "/pro-help",
         "/suggestions",
         "/tools",
         "/unauthorized"
@@ -259,6 +282,9 @@ export const routeTree = rootRoute
     },
     "/forms": {
       "filePath": "forms.tsx"
+    },
+    "/pro-help": {
+      "filePath": "pro-help.tsx"
     },
     "/suggestions": {
       "filePath": "suggestions.tsx"
