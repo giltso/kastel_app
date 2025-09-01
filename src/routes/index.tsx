@@ -1,6 +1,7 @@
 import { SignInButton } from "@clerk/clerk-react";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { Authenticated, Unauthenticated } from "convex/react";
+import { usePermissions } from "@/hooks/usePermissions";
 import { 
   Calendar, 
   FileText, 
@@ -25,19 +26,19 @@ export const Route = createFileRoute("/")({
 function HomePage() {
   return (
     <div>
-      {/* Hero Section */}
-      <div className="hero bg-gradient-to-br from-primary/10 to-accent/10 py-20">
-        <div className="hero-content text-center">
-          <div className="max-w-4xl">
-            <div className="not-prose flex justify-center mb-6">
-              <Wrench className="w-20 h-20 text-primary" />
-            </div>
-            <h1 className="text-5xl font-bold">Welcome to Kastel Hardware</h1>
-            <p className="text-xl opacity-80 py-6">
-              Your trusted partner for tools, education, and professional services
-            </p>
-            
-            <Unauthenticated>
+      <Unauthenticated>
+        {/* Hero Section */}
+        <div className="hero bg-gradient-to-br from-primary/10 to-accent/10 py-20">
+          <div className="hero-content text-center">
+            <div className="max-w-4xl">
+              <div className="not-prose flex justify-center mb-6">
+                <Wrench className="w-20 h-20 text-primary" />
+              </div>
+              <h1 className="text-5xl font-bold">Welcome to Kastel Hardware</h1>
+              <p className="text-xl opacity-80 py-6">
+                Your trusted partner for tools, education, and professional services
+              </p>
+              
               <div className="not-prose">
                 <SignInButton mode="modal">
                   <button className="btn btn-primary btn-lg gap-2">
@@ -45,21 +46,44 @@ function HomePage() {
                   </button>
                 </SignInButton>
               </div>
-            </Unauthenticated>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Main Content */}
-      <div className="container mx-auto px-4 py-12">
-        <Unauthenticated>
+        {/* Main Content */}
+        <div className="container mx-auto px-4 py-12">
           <PublicHomePage />
-        </Unauthenticated>
-        
-        <Authenticated>
-          <AuthenticatedHomePage />
-        </Authenticated>
+        </div>
+      </Unauthenticated>
+      
+      <Authenticated>
+        <OperationalUserRedirect />
+      </Authenticated>
+    </div>
+  );
+}
+
+function OperationalUserRedirect() {
+  const { hasPermission, isLoading } = usePermissions();
+  
+  // Show loading while permissions are being checked
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="loading loading-spinner loading-lg"></div>
       </div>
+    );
+  }
+  
+  // If user has worker portal access (worker, manager, dev), redirect to Calendar
+  if (hasPermission("access_worker_portal")) {
+    return <Navigate to="/calendar" replace />;
+  }
+  
+  // For customers/guests, show the guest homepage content
+  return (
+    <div className="container mx-auto px-4 py-12">
+      <PublicHomePage />
     </div>
   );
 }
@@ -246,54 +270,3 @@ function PublicHomePage() {
   );
 }
 
-// Authenticated Home Page for Internal Users
-function AuthenticatedHomePage() {
-  return (
-    <div className="mt-8">
-      <h2>Welcome back!</h2>
-      <p className="mb-8">Access your tools and manage your hardware shop operations</p>
-      
-      <div className="not-prose grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
-        <Link to="/events" className="card bg-base-200 shadow-sm hover:shadow-md transition-shadow">
-          <div className="card-body items-center text-center">
-            <Calendar className="w-12 h-12 text-primary mb-2" />
-            <h3 className="card-title">Events</h3>
-            <p>Create and manage work scheduling events</p>
-          </div>
-        </Link>
-
-        <Link to="/calendar" className="card bg-base-200 shadow-sm hover:shadow-md transition-shadow">
-          <div className="card-body items-center text-center">
-            <Settings className="w-12 h-12 text-primary mb-2" />
-            <h3 className="card-title">Calendar</h3>
-            <p>View and interact with scheduled events</p>
-          </div>
-        </Link>
-
-        <Link to="/tools" className="card bg-base-200 shadow-sm hover:shadow-md transition-shadow">
-          <div className="card-body items-center text-center">
-            <Hammer className="w-12 h-12 text-primary mb-2" />
-            <h3 className="card-title">Tool Rental</h3>
-            <p>Manage tool inventory and rentals</p>
-          </div>
-        </Link>
-
-        <Link to="/courses" className="card bg-base-200 shadow-sm hover:shadow-md transition-shadow">
-          <div className="card-body items-center text-center">
-            <GraduationCap className="w-12 h-12 text-primary mb-2" />
-            <h3 className="card-title">Courses</h3>
-            <p>Educational courses and training</p>
-          </div>
-        </Link>
-
-        <Link to="/forms" className="card bg-base-200 shadow-sm hover:shadow-md transition-shadow">
-          <div className="card-body items-center text-center">
-            <FileText className="w-12 h-12 text-primary mb-2" />
-            <h3 className="card-title">Forms</h3>
-            <p>Create and manage work forms</p>
-          </div>
-        </Link>
-      </div>
-    </div>
-  );
-}
