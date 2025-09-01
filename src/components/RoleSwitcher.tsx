@@ -92,12 +92,7 @@ export function RoleSwitcher() {
               onClick={handleProToggle}
             >
               <Tag className="w-4 h-4" />
-              <div className="text-left">
-                <div className="text-xs font-medium">Pro Tag</div>
-                <div className="text-xs opacity-70">
-                  {user.proTag ? "Professional services enabled" : "Enable professional services"}
-                </div>
-              </div>
+              <span className="text-xs">Enable pro</span>
             </button>
           </div>
         </div>
