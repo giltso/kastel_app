@@ -23,9 +23,9 @@ async function getCurrentUser(ctx: any) {
   return user;
 }
 
-// Get effective role (considering tester emulation)
+// Get effective role (considering dev emulation)
 function getEffectiveRole(user: Doc<"users">) {
-  if (user.role === "tester" && user.emulatingRole) {
+  if (user.role === "dev" && user.emulatingRole) {
     return user.emulatingRole;
   }
   return user.role || "guest";

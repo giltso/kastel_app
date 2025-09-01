@@ -1,7 +1,7 @@
 import { mutation } from "./_generated/server";
 import { ConvexError } from "convex/values";
 
-// Helper function to make current user a tester (for development only)
+// Helper function to make current user a dev (for development only)
 export const makeCurrentUserTester = mutation({
   args: {},
   handler: async (ctx) => {
@@ -20,10 +20,10 @@ export const makeCurrentUserTester = mutation({
     }
 
     await ctx.db.patch(user._id, {
-      role: "tester",
+      role: "dev",
     });
 
-    return { success: true, userId: user._id, newRole: "tester" };
+    return { success: true, userId: user._id, newRole: "dev" };
   },
 });
 

@@ -48,7 +48,7 @@ export const createSuggestion = mutation({
   },
 });
 
-// Get all suggestions (developer/admin only access)
+// Get suggestions (accessible to dev role and suggestion creators)
 export const getSuggestions = query({
   args: {
     status: v.optional(v.union(v.literal("pending"), v.literal("reviewed"), v.literal("implemented"), v.literal("rejected"))),
@@ -70,13 +70,11 @@ export const getSuggestions = query({
       throw new ConvexError("User not found");
     }
 
-    // Only tester role (developers) can access suggestions
-    if (currentUser.role !== "tester") {
-      throw new ConvexError("Access denied: Developer access required");
-    }
+    const isDev = currentUser.role === "dev";
+    const userId = currentUser._id;
 
-    // Build query with optional status filter
-    const suggestions = args.status 
+    // Get all suggestions first
+    const allSuggestions = args.status 
       ? await ctx.db
           .query("suggestions")
           .withIndex("by_status", (q) => q.eq("status", args.status!))
@@ -86,6 +84,13 @@ export const getSuggestions = query({
           .query("suggestions")
           .order("desc")
           .take(args.limit || 100);
+
+    // Filter suggestions based on access rights:
+    // - Dev can see all suggestions
+    // - Non-dev users can only see suggestions they created
+    const suggestions = isDev 
+      ? allSuggestions 
+      : allSuggestions.filter(suggestion => suggestion.createdBy === userId);
 
     // Enrich with user information
     const enrichedSuggestions = await Promise.all(
@@ -136,8 +141,8 @@ export const updateSuggestionStatus = mutation({
       throw new ConvexError("User not found");
     }
 
-    // Only tester role (developers) can update suggestions
-    if (currentUser.role !== "tester") {
+    // Only dev role can update suggestions
+    if (currentUser.role !== "dev") {
       throw new ConvexError("Access denied: Developer access required");
     }
 
@@ -172,7 +177,7 @@ export const getSuggestionsGrouped = query({
       .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
       .unique();
 
-    if (!currentUser || currentUser.role !== "tester") {
+    if (!currentUser || currentUser.role !== "dev") {
       throw new ConvexError("Access denied: Developer access required");
     }
 

@@ -43,11 +43,11 @@ export const createEvent = mutation({
     }
 
     // Check if user can create events
-    const effectiveRole = currentUser.role === "tester" && currentUser.emulatingRole 
+    const effectiveRole = currentUser.role === "dev" && currentUser.emulatingRole 
       ? currentUser.emulatingRole 
       : (currentUser.role || "guest");
 
-    if (!["worker", "manager", "tester"].includes(effectiveRole) && currentUser.role !== "tester") {
+    if (!["worker", "manager", "dev"].includes(effectiveRole) && currentUser.role !== "dev") {
       throw new ConvexError("Only workers and managers can create events");
     }
 
@@ -125,13 +125,13 @@ export const listEvents = query({
       return [];
     }
 
-    const effectiveRole = currentUser.role === "tester" && currentUser.emulatingRole 
+    const effectiveRole = currentUser.role === "dev" && currentUser.emulatingRole 
       ? currentUser.emulatingRole 
       : (currentUser.role || "guest");
 
     // Get events based on role
     let events;
-    if (effectiveRole === "manager" || effectiveRole === "worker" || currentUser.role === "tester") {
+    if (effectiveRole === "manager" || effectiveRole === "worker" || currentUser.role === "dev") {
       // Managers and workers see their own events (created, assigned, or participating in)
       // Plus for managers: events they need to approve
       const allEvents = await ctx.db.query("events").collect();
@@ -195,7 +195,7 @@ export const getEventsByDateRange = query({
       return [];
     }
 
-    const effectiveRole = currentUser.role === "tester" && currentUser.emulatingRole 
+    const effectiveRole = currentUser.role === "dev" && currentUser.emulatingRole 
       ? currentUser.emulatingRole 
       : (currentUser.role || "guest");
 
@@ -213,7 +213,7 @@ export const getEventsByDateRange = query({
 
     // Filter based on permissions
     let filteredEvents;
-    if (effectiveRole === "manager" || effectiveRole === "worker" || currentUser.role === "tester") {
+    if (effectiveRole === "manager" || effectiveRole === "worker" || currentUser.role === "dev") {
       // Managers and workers see their own events plus events pending approval (for managers)
       filteredEvents = events.filter(event => 
         event.createdBy === currentUser._id ||
@@ -247,12 +247,12 @@ export const getPendingEvents = query({
       return [];
     }
 
-    const effectiveRole = currentUser.role === "tester" && currentUser.emulatingRole 
+    const effectiveRole = currentUser.role === "dev" && currentUser.emulatingRole 
       ? currentUser.emulatingRole 
       : (currentUser.role || "guest");
 
     // Only managers can see pending events
-    if (effectiveRole !== "manager" && currentUser.role !== "tester") {
+    if (effectiveRole !== "manager" && currentUser.role !== "dev") {
       return [];
     }
 
@@ -297,12 +297,12 @@ export const approveEvent = mutation({
       throw new ConvexError("User not found");
     }
 
-    const effectiveRole = currentUser.role === "tester" && currentUser.emulatingRole 
+    const effectiveRole = currentUser.role === "dev" && currentUser.emulatingRole 
       ? currentUser.emulatingRole 
       : (currentUser.role || "guest");
 
     // Only managers can approve events
-    if (effectiveRole !== "manager" && currentUser.role !== "tester") {
+    if (effectiveRole !== "manager" && currentUser.role !== "dev") {
       throw new ConvexError("Only managers can approve events");
     }
 
@@ -367,7 +367,7 @@ export const updateEventStatus = mutation({
       throw new ConvexError("Event not found");
     }
 
-    const effectiveRole = currentUser.role === "tester" && currentUser.emulatingRole 
+    const effectiveRole = currentUser.role === "dev" && currentUser.emulatingRole 
       ? currentUser.emulatingRole 
       : (currentUser.role || "guest");
 
@@ -376,7 +376,7 @@ export const updateEventStatus = mutation({
     // - Event creator 
     // - Assigned to the event
     const canUpdate = effectiveRole === "manager" || 
-                     currentUser.role === "tester" ||
+                     currentUser.role === "dev" ||
                      event.createdBy === currentUser._id ||
                      event.assignedTo === currentUser._id;
 
@@ -437,7 +437,7 @@ export const updateEvent = mutation({
       throw new ConvexError("Event not found");
     }
 
-    const effectiveRole = currentUser.role === "tester" && currentUser.emulatingRole 
+    const effectiveRole = currentUser.role === "dev" && currentUser.emulatingRole 
       ? currentUser.emulatingRole 
       : (currentUser.role || "guest");
 
@@ -445,7 +445,7 @@ export const updateEvent = mutation({
     // - Manager (can edit any event)
     // - Event creator (workers can edit their own events)
     const canEdit = effectiveRole === "manager" || 
-                   currentUser.role === "tester" ||
+                   currentUser.role === "dev" ||
                    event.createdBy === currentUser._id;
 
     if (!canEdit) {
@@ -524,12 +524,12 @@ export const deleteEvent = mutation({
       throw new ConvexError("User not found");
     }
 
-    const effectiveRole = currentUser.role === "tester" && currentUser.emulatingRole 
+    const effectiveRole = currentUser.role === "dev" && currentUser.emulatingRole 
       ? currentUser.emulatingRole 
       : (currentUser.role || "guest");
 
     // Only managers can delete events
-    if (effectiveRole !== "manager" && currentUser.role !== "tester") {
+    if (effectiveRole !== "manager" && currentUser.role !== "dev") {
       throw new ConvexError("Only managers can delete events");
     }
 
@@ -556,9 +556,9 @@ export const deleteAllEvents = mutation({
       throw new ConvexError("User not found");
     }
     
-    // Only testers can use this function
-    if (currentUser.role !== "tester") {
-      throw new ConvexError("Only testers can delete all events");
+    // Only devs can use this function
+    if (currentUser.role !== "dev") {
+      throw new ConvexError("Only devs can delete all events");
     }
 
     // Get all events

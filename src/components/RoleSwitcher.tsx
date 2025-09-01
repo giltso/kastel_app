@@ -1,14 +1,14 @@
 import { useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
-import { useIsTester, usePermissions, type UserRole } from "@/hooks/usePermissions";
+import { useIsDev, usePermissions, type UserRole } from "@/hooks/usePermissions";
 import { Filter, UserIcon } from "lucide-react";
 
 export function RoleSwitcher() {
-  const isTester = useIsTester();
+  const isDev = useIsDev();
   const { user, effectiveRole } = usePermissions();
   const switchRole = useMutation(api.users.switchEmulatingRole);
 
-  if (!isTester || !user) return null;
+  if (!isDev || !user) return null;
 
   const roles: Array<{ value: UserRole; label: string; description: string }> = [
     { value: "guest", label: "Guest", description: "Default new user role" },
@@ -51,7 +51,7 @@ export function RoleSwitcher() {
             >
               <span className="text-xs">🧪</span>
               <div className="text-left">
-                <div className="text-xs font-medium">Tester (Real Role)</div>
+                <div className="text-xs font-medium">Dev (Real Role)</div>
                 <div className="text-xs opacity-70">All permissions</div>
               </div>
             </button>

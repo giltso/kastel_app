@@ -19,11 +19,11 @@ export const seedDatabase = mutation({
       role: "worker",
     });
 
-    const testerId = await ctx.db.insert("users", {
-      clerkId: "test_tester_789",
-      name: "Alex Tester",
-      email: "alex.tester@kastel.com", 
-      role: "tester",
+    const devId = await ctx.db.insert("users", {
+      clerkId: "test_dev_789",
+      name: "Alex Dev",
+      email: "alex.dev@kastel.com", 
+      role: "dev",
     });
 
     // Create test events

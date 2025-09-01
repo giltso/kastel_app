@@ -369,3 +369,10 @@ this app is suppossed to be a tool made to serve a mom and pop hardwere shop. th
 1. **Suggestion Box** - Immediate feedback collection for continuous improvement
 2. **Staff Profiles** - Foundation for enhanced home page integration
 3. **Home Page** - Professional public-facing interface completion
+
+
+this is where we stopped after runnig out of resources: 
+
+ Great! Now the migration function is there. However, since it's an internal mutation, I
+  need to run it differently. Let me use the admin approach to clear and recreate the
+  database 

@@ -431,7 +431,7 @@ function CalendarPage() {
   };
 
   const canEditEvent = (event: any) => {
-    return effectiveRole === "manager" || effectiveRole === "tester" || 
+    return effectiveRole === "manager" || effectiveRole === "dev" || 
            event.createdBy?._id === user?._id || event.assignedTo?._id === user?._id;
   };
 

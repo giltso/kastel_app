@@ -30,19 +30,19 @@ export const ensureUser = mutation({
         await ctx.db.patch(existingUser._id, { 
           name: clerkName,
           email: clerkEmail,
-          role: existingUser.role || "tester", // Default to tester if no role (for easier testing)
+          role: existingUser.role || "dev", // Default to dev if no role (for easier testing)
         });
         return await ctx.db.get(existingUser._id);
       }
       return existingUser;
     }
 
-    // Create new user with default "tester" role for easier testing
+    // Create new user with default "dev" role for easier testing
     const userId = await ctx.db.insert("users", {
       clerkId: identity.subject,
       name: identity.name ?? "Anonymous",
       email: identity.email,
-      role: "tester", // Default role for new users (tester for easier testing)
+      role: "dev", // Default role for new users (dev for easier testing)
     });
 
     return await ctx.db.get(userId);
@@ -66,8 +66,8 @@ export const getCurrentUser = query({
       return null;
     }
 
-    // For tester role, return the emulating role if set
-    const effectiveRole = user.role === "tester" && user.emulatingRole 
+    // For dev role, return the emulating role if set
+    const effectiveRole = user.role === "dev" && user.emulatingRole 
       ? user.emulatingRole 
       : (user.role || "guest");
 
@@ -78,7 +78,7 @@ export const getCurrentUser = query({
   },
 });
 
-// Update user role (managers and testers only)
+// Update user role (managers and devs only)
 export const updateUserRole = mutation({
   args: {
     userId: v.id("users"),
@@ -87,7 +87,7 @@ export const updateUserRole = mutation({
       v.literal("customer"), 
       v.literal("worker"), 
       v.literal("manager"),
-      v.literal("tester")
+      v.literal("dev")
     ),
   },
   handler: async (ctx, args) => {
@@ -106,12 +106,12 @@ export const updateUserRole = mutation({
       throw new ConvexError("User not found");
     }
 
-    // Only managers and testers can update roles
-    const effectiveRole = currentUser.role === "tester" && currentUser.emulatingRole 
+    // Only managers and devs can update roles
+    const effectiveRole = currentUser.role === "dev" && currentUser.emulatingRole 
       ? currentUser.emulatingRole 
       : (currentUser.role || "guest");
 
-    if (effectiveRole !== "manager" && currentUser.role !== "tester") {
+    if (effectiveRole !== "manager" && currentUser.role !== "dev") {
       throw new ConvexError("Only managers can update user roles");
     }
 
@@ -130,7 +130,7 @@ export const updateUserRole = mutation({
   },
 });
 
-// For tester role: switch emulating role
+// For dev role: switch emulating role
 export const switchEmulatingRole = mutation({
   args: {
     emulatingRole: v.optional(v.union(
@@ -155,9 +155,9 @@ export const switchEmulatingRole = mutation({
       throw new ConvexError("User not found");
     }
 
-    // Only tester role can switch emulating role
-    if (user.role !== "tester") {
-      throw new ConvexError("Only tester role can emulate other roles");
+    // Only dev role can switch emulating role
+    if (user.role !== "dev") {
+      throw new ConvexError("Only dev role can emulate other roles");
     }
 
     await ctx.db.patch(user._id, {
@@ -186,11 +186,11 @@ export const listUsers = query({
     }
 
     // Only managers can see all users
-    const effectiveRole = currentUser.role === "tester" && currentUser.emulatingRole 
+    const effectiveRole = currentUser.role === "dev" && currentUser.emulatingRole 
       ? currentUser.emulatingRole 
       : (currentUser.role || "guest");
 
-    if (effectiveRole !== "manager" && currentUser.role !== "tester") {
+    if (effectiveRole !== "manager" && currentUser.role !== "dev") {
       return [];
     }
 
@@ -215,12 +215,12 @@ export const listWorkers = query({
       return [];
     }
 
-    const effectiveRole = currentUser.role === "tester" && currentUser.emulatingRole 
+    const effectiveRole = currentUser.role === "dev" && currentUser.emulatingRole 
       ? currentUser.emulatingRole 
       : (currentUser.role || "guest");
 
     // Workers and managers can see workers and managers for event participation
-    if (["worker", "manager", "tester"].includes(effectiveRole) || currentUser.role === "tester") {
+    if (["worker", "manager", "dev"].includes(effectiveRole) || currentUser.role === "dev") {
       const workers = await ctx.db
         .query("users")
         .withIndex("by_role", (q) => q.eq("role", "worker"))
@@ -231,12 +231,12 @@ export const listWorkers = query({
         .withIndex("by_role", (q) => q.eq("role", "manager"))
         .collect();
         
-      const testers = await ctx.db
+      const devs = await ctx.db
         .query("users")
-        .withIndex("by_role", (q) => q.eq("role", "tester"))
+        .withIndex("by_role", (q) => q.eq("role", "dev"))
         .collect();
 
-      return [...workers, ...managers, ...testers];
+      return [...workers, ...managers, ...devs];
     }
 
     return [];
@@ -263,7 +263,7 @@ export const checkPermission = query({
       return false;
     }
 
-    const effectiveRole = user.role === "tester" && user.emulatingRole 
+    const effectiveRole = user.role === "dev" && user.emulatingRole 
       ? user.emulatingRole 
       : (user.role || "guest");
 
@@ -305,8 +305,8 @@ export const checkPermission = query({
         "manage_user_roles",
         "access_manager_portal"
       ],
-      tester: [
-        // Tester has all permissions for testing
+      dev: [
+        // Dev has all permissions for testing
         "view_public_services",
         "create_guest_request",
         "create_customer_request", 

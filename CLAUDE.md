@@ -16,7 +16,7 @@ Always follow the guidelines in this file, unless explicitly told otherwise by t
 This application includes a comprehensive role-based event management system with advanced calendar interactions:
 
 ### Features Implemented
-- **Role-based Access Control**: Support for tester, guest, customer, worker, manager roles
+- **Role-based Access Control**: Support for dev, guest, customer, worker, manager roles
 - **Event CRUD Operations**: Full create, read, update, delete functionality
 - **Approval Workflow**: Worker-created events require manager approval
 - **Participants System**: Multi-user event participation with participant search

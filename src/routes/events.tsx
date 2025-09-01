@@ -437,7 +437,7 @@ function EventsList({ searchTerm, filterType, filterStatus, showPastEvents, onTo
                           <div className="flex items-center gap-2">
                             {/* Status toggle checkbox - only for managers or event creators */}
                             {["approved", "in_progress", "completed"].includes(event.status) && 
-                             (effectiveRole === "manager" || effectiveRole === "tester" || event.createdBy?._id === user?._id || event.assignedTo?._id === user?._id) && (
+                             (effectiveRole === "manager" || effectiveRole === "dev" || event.createdBy?._id === user?._id || event.assignedTo?._id === user?._id) && (
                               <button
                                 className="btn btn-circle btn-xs btn-ghost p-0"
                                 onClick={() => handleToggleEventStatus(event._id, event.status)}
@@ -513,7 +513,7 @@ function EventsList({ searchTerm, filterType, filterStatus, showPastEvents, onTo
                         )}
                         
                         {/* Only show edit/delete if user is manager OR it's their own event */}
-                        {(effectiveRole === "manager" || effectiveRole === "tester" || event.createdBy?._id === user?._id) && (
+                        {(effectiveRole === "manager" || effectiveRole === "dev" || event.createdBy?._id === user?._id) && (
                           <>
                             <button 
                               className="btn btn-sm btn-ghost"
@@ -522,7 +522,7 @@ function EventsList({ searchTerm, filterType, filterStatus, showPastEvents, onTo
                               <Edit className="w-4 h-4" />
                               Edit
                             </button>
-                            {(effectiveRole === "manager" || effectiveRole === "tester") && (
+                            {(effectiveRole === "manager" || effectiveRole === "dev") && (
                               <button 
                                 className="btn btn-sm btn-ghost text-error hover:bg-error hover:text-error-content"
                                 onClick={() => handleDeleteEvent(event._id)}

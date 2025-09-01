@@ -1,7 +1,7 @@
 import { mutation } from "./_generated/server";
 import { ConvexError } from "convex/values";
 
-// Helper function to make the current authenticated user a tester
+// Helper function to make the current authenticated user a dev
 export const makeCurrentUserTester = mutation({
   args: {},
   handler: async (ctx) => {
@@ -35,7 +35,7 @@ export const makeCurrentUserTester = mutation({
         clerkId: identity.subject,
         name: identity.name ?? "Anonymous",
         email: identity.email,
-        role: "tester",
+        role: "dev",
       });
 
       const newUser = await ctx.db.get(newUserId);
@@ -53,9 +53,9 @@ export const makeCurrentUserTester = mutation({
       };
     }
 
-    // Update existing user to tester role
+    // Update existing user to dev role
     await ctx.db.patch(user._id, {
-      role: "tester",
+      role: "dev",
     });
 
     const updatedUser = await ctx.db.get(user._id);

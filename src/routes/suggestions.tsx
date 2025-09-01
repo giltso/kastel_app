@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
+import { useIsDev } from "@/hooks/usePermissions";
 
 export const Route = createFileRoute("/suggestions")({
   component: SuggestionsPage,
@@ -32,6 +33,7 @@ function SuggestionsPage() {
   const [statusFilter, setStatusFilter] = useState<SuggestionStatus | "all">("all");
   const [sortBy, setSortBy] = useState<"newest" | "oldest" | "status">("newest");
   const convex = useConvex();
+  const isDev = useIsDev();
 
   // Get suggestions data
   const suggestionsQuery = convexQuery(api.suggestions.getSuggestions, {});
@@ -113,16 +115,21 @@ function SuggestionsPage() {
         <div>
           <h1 className="text-3xl font-bold flex items-center gap-3">
             <MessageSquare className="w-8 h-8 text-primary" />
-            Suggestions Dashboard
+            {isDev ? "Suggestions Dashboard" : "My Suggestions"}
           </h1>
           <p className="text-base-content/70 mt-2">
-            Review and manage user suggestions and feedback
+            {isDev 
+              ? "Review and manage user suggestions and feedback" 
+              : "View and track your submitted suggestions"
+            }
           </p>
         </div>
         
         <div className="stats shadow">
           <div className="stat">
-            <div className="stat-title">Total Suggestions</div>
+            <div className="stat-title">
+              {isDev ? "Total Suggestions" : "My Suggestions"}
+            </div>
             <div className="stat-value text-2xl">{suggestions.length}</div>
           </div>
         </div>
@@ -198,8 +205,8 @@ function SuggestionsPage() {
                     </div>
                   </div>
                   
-                  {/* Quick Actions */}
-                  {suggestion.status === "pending" && (
+                  {/* Quick Actions - Only for dev users */}
+                  {isDev && suggestion.status === "pending" && (
                     <div className="dropdown dropdown-end">
                       <div tabIndex={0} role="button" className="btn btn-sm btn-ghost">
                         Actions

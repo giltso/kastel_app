@@ -9,13 +9,13 @@ export default defineSchema({
     name: v.string(),
     email: v.optional(v.string()), // Made optional to handle existing data
     role: v.optional(v.union(
-      v.literal("tester"), 
+      v.literal("dev"), 
       v.literal("guest"), 
       v.literal("customer"), 
       v.literal("worker"), 
       v.literal("manager")
     )),
-    // For tester role - which role they're currently emulating
+    // For dev role - which role they're currently emulating
     emulatingRole: v.optional(v.union(
       v.literal("guest"), 
       v.literal("customer"), 

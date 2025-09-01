@@ -1,4 +1,4 @@
-import { query, mutation } from "./_generated/server";
+import { query, mutation, internalMutation } from "./_generated/server";
 
 // Debug function to check what's in the users table
 export const checkUsers = query({
@@ -25,6 +25,28 @@ export const checkUsers = query({
         users: []
       };
     }
+  },
+});
+
+// Migration function to update all tester roles to dev roles (legacy cleanup)
+export const migrateUsersFromTesterToDev = mutation({
+  handler: async (ctx) => {
+    const users = await ctx.db.query("users").collect();
+    let updatedCount = 0;
+    
+    for (const user of users) {
+      // @ts-ignore - Legacy cleanup: checking for old "tester" role that may exist in data
+      if (user.role === "tester") {
+        await ctx.db.patch(user._id, { role: "dev" });
+        updatedCount++;
+      }
+    }
+    
+    return {
+      message: `Successfully migrated ${updatedCount} users from tester to dev role`,
+      totalUsers: users.length,
+      updatedCount,
+    };
   },
 });
 
@@ -76,7 +98,7 @@ export const createTestUser = mutation({
         clerkId: identity.subject,
         name: identity.name ?? "Anonymous",
         email: identity.email,
-        role: "tester", // Make new users testers for easier testing
+        role: "dev", // Make new users devs for easier testing
       });
 
       const newUser = await ctx.db.get(userId);

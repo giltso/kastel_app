@@ -28,7 +28,7 @@ import { RoleSwitcher } from "@/components/RoleSwitcher";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { UserRoleDebug } from "@/components/UserRoleDebug";
 import { SuggestionBoxTrigger } from "@/components/SuggestionBoxTrigger";
-import { usePermissions, useIsTester } from "@/hooks/usePermissions";
+import { usePermissions, useIsDev } from "@/hooks/usePermissions";
 
 export const Route = createRootRouteWithContext<{
   queryClient: QueryClient;
@@ -39,7 +39,7 @@ export const Route = createRootRouteWithContext<{
 
 function NavigationLinks({ onLinkClick }: { onLinkClick: () => void }) {
   const { hasPermission } = usePermissions();
-  const isTester = useIsTester();
+  const isDev = useIsDev();
   
   return (
     <>
@@ -107,25 +107,23 @@ function NavigationLinks({ onLinkClick }: { onLinkClick: () => void }) {
       >
         Forms
       </Link>
-      {isTester && (
-        <Link
-          to="/suggestions"
-          className="btn btn-ghost"
-          activeProps={{
-            className: "btn btn-ghost btn-active",
-          }}
-          onClick={onLinkClick}
-        >
-          Suggestions
-        </Link>
-      )}
+      <Link
+        to="/suggestions"
+        className="btn btn-ghost"
+        activeProps={{
+          className: "btn btn-ghost btn-active",
+        }}
+        onClick={onLinkClick}
+      >
+        Suggestions
+      </Link>
     </>
   );
 }
 
 function MobileNavigationLinks({ onLinkClick }: { onLinkClick: () => void }) {
   const { hasPermission } = usePermissions();
-  const isTester = useIsTester();
+  const isDev = useIsDev();
   
   return (
     <>
@@ -205,20 +203,18 @@ function MobileNavigationLinks({ onLinkClick }: { onLinkClick: () => void }) {
           Forms
         </Link>
       </li>
-      {isTester && (
-        <li>
-          <Link
-            to="/suggestions"
-            onClick={onLinkClick}
-            activeProps={{
-              className: "active",
-            }}
-            className="flex items-center p-2"
-          >
-            Suggestions
-          </Link>
-        </li>
-      )}
+      <li>
+        <Link
+          to="/suggestions"
+          onClick={onLinkClick}
+          activeProps={{
+            className: "active",
+          }}
+          className="flex items-center p-2"
+        >
+          Suggestions
+        </Link>
+      </li>
     </>
   );
 }

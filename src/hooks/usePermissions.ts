@@ -1,7 +1,7 @@
 import { useConvexAuth, useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 
-export type UserRole = "tester" | "guest" | "customer" | "worker" | "manager";
+export type UserRole = "dev" | "guest" | "customer" | "worker" | "manager";
 
 export type Permission = 
   | "view_public_services"
@@ -79,8 +79,8 @@ export function usePermissions() {
         "access_worker_portal",
         "access_manager_portal"
       ],
-      tester: [
-        // Tester has all permissions for testing
+      dev: [
+        // Dev has all permissions for development and testing
         "view_public_services",
         "create_guest_request",
         "create_customer_request", 
@@ -114,7 +114,7 @@ export function usePermissions() {
     hasPermission: checkPermission,
     role: user?.role as UserRole | undefined,
     effectiveRole: user?.effectiveRole as UserRole | undefined,
-    canEmulateRoles: user?.role === "tester",
+    canEmulateRoles: user?.role === "dev",
   };
 }
 
@@ -144,7 +144,7 @@ export function useIsWorker() {
   return effectiveRole === "worker" || effectiveRole === "manager";
 }
 
-export function useIsTester() {
+export function useIsDev() {
   const { role } = usePermissions();
-  return role === "tester";
+  return role === "dev";
 }
