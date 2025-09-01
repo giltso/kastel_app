@@ -22,7 +22,7 @@ export const Route = createFileRoute("/pro-help")({
 });
 
 function ProHelpPage() {
-  const { hasPermission, effectiveRole } = usePermissions();
+  const { hasPermission, user } = usePermissions();
 
   if (!hasPermission("access_pro_help")) {
     return (
@@ -35,7 +35,7 @@ function ProHelpPage() {
     );
   }
 
-  const isPro = effectiveRole === "pro";
+  const isPro = user?.proTag;
 
   return (
     <div className="space-y-8">
@@ -187,30 +187,6 @@ function ProDashboard() {
         onClose={() => setModalOpen(false)} 
         mode={modalMode} 
       />
-
-      {/* Course Creation Section - If pro has course permissions */}
-      {hasPermission("create_courses") && (
-        <div className="card bg-base-100 shadow-lg">
-          <div className="card-body">
-            <h3 className="card-title">
-              <Award className="w-6 h-6 text-primary" />
-              Course Management
-            </h3>
-            <p className="opacity-70 mb-4">
-              As a professional, you can create and manage educational courses
-            </p>
-            <div className="card-actions">
-              <button className="btn btn-outline btn-sm gap-2">
-                <Plus className="w-4 h-4" />
-                Create Course
-              </button>
-              <button className="btn btn-ghost btn-sm">
-                View My Courses
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

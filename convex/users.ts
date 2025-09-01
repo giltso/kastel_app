@@ -137,8 +137,7 @@ export const switchEmulatingRole = mutation({
       v.literal("guest"), 
       v.literal("customer"), 
       v.literal("worker"), 
-      v.literal("manager"),
-      v.literal("pro")
+      v.literal("manager")
     )),
   },
   handler: async (ctx, args) => {
@@ -163,6 +162,39 @@ export const switchEmulatingRole = mutation({
 
     await ctx.db.patch(user._id, {
       emulatingRole: args.emulatingRole,
+    });
+
+    return { success: true };
+  },
+});
+
+// For dev role: toggle pro tag on current user
+export const toggleProTag = mutation({
+  args: {
+    proTag: v.boolean(),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new ConvexError("Not authenticated");
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+
+    if (!user) {
+      throw new ConvexError("User not found");
+    }
+
+    // Only dev users can toggle pro tags (for testing)
+    if (user.role !== "dev") {
+      throw new ConvexError("Only dev users can toggle pro tags");
+    }
+
+    await ctx.db.patch(user._id, {
+      proTag: args.proTag,
     });
 
     return { success: true };

@@ -1,7 +1,7 @@
 import { useConvexAuth, useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 
-export type UserRole = "dev" | "guest" | "customer" | "worker" | "manager" | "pro";
+export type UserRole = "dev" | "guest" | "customer" | "worker" | "manager";
 
 export type Permission = 
   | "view_public_services"
@@ -87,17 +87,6 @@ export function usePermissions() {
         "access_manager_portal",
         "access_pro_help"
       ],
-      pro: [
-        "view_public_services",
-        "create_guest_request",
-        "create_customer_request",
-        "track_own_requests",
-        "access_customer_portal",
-        "create_pro_profile",
-        "edit_pro_profile",
-        "access_pro_help",
-        "create_courses"
-      ],
       dev: [
         // Dev has all permissions for development and testing
         "view_public_services",
@@ -118,15 +107,22 @@ export function usePermissions() {
         "manage_user_roles", 
         "access_manager_portal",
         "emulate_roles",
-        "create_pro_profile",
-        "edit_pro_profile",
-        "access_pro_help",
-        "create_courses"
+        "access_pro_help"
       ]
     };
 
     const effectiveRole = user.effectiveRole || user.role;
-    return permissions[effectiveRole as UserRole]?.includes(permission) || false;
+    let hasPermission = permissions[effectiveRole as UserRole]?.includes(permission) || false;
+
+    // Check for pro-specific permissions if user has proTag
+    if (user.proTag) {
+      const proPermissions = ["create_pro_profile", "edit_pro_profile", "create_courses"];
+      if (proPermissions.includes(permission)) {
+        hasPermission = true;
+      }
+    }
+
+    return hasPermission;
   };
 
   return {

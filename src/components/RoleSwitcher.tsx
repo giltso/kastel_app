@@ -1,12 +1,13 @@
 import { useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { useIsDev, usePermissions, type UserRole } from "@/hooks/usePermissions";
-import { Filter, UserIcon } from "lucide-react";
+import { Filter, UserIcon, Tag } from "lucide-react";
 
 export function RoleSwitcher() {
   const isDev = useIsDev();
   const { user, effectiveRole } = usePermissions();
   const switchRole = useMutation(api.users.switchEmulatingRole);
+  const toggleProTag = useMutation(api.users.toggleProTag);
 
   if (!isDev || !user) return null;
 
@@ -15,11 +16,14 @@ export function RoleSwitcher() {
     { value: "customer", label: "Customer", description: "External customer" },
     { value: "worker", label: "Worker", description: "Operational staff" },
     { value: "manager", label: "Manager", description: "Full permissions" },
-    { value: "pro", label: "Professional", description: "Service provider with profile" },
   ];
 
   const handleRoleSwitch = (role: UserRole | null) => {
     void switchRole({ emulatingRole: role || undefined });
+  };
+
+  const handleProToggle = () => {
+    void toggleProTag({ proTag: !user.proTag });
   };
 
   return (
@@ -70,8 +74,7 @@ export function RoleSwitcher() {
                 <span className="text-xs">
                   {role.value === "guest" ? "👤" : 
                    role.value === "customer" ? "🏪" :
-                   role.value === "worker" ? "🔧" : 
-                   role.value === "manager" ? "👔" : "🏆"}
+                   role.value === "worker" ? "🔧" : "👔"}
                 </span>
                 <div className="text-left">
                   <div className="text-xs font-medium">{role.label}</div>
@@ -79,6 +82,23 @@ export function RoleSwitcher() {
                 </div>
               </button>
             ))}
+
+            {/* Pro Tag Toggle */}
+            <div className="divider divider-horizontal text-xs opacity-50">Tags</div>
+            <button
+              className={`btn btn-sm w-full justify-start gap-2 ${
+                user.proTag ? "btn-secondary" : "btn-outline"
+              }`}
+              onClick={handleProToggle}
+            >
+              <Tag className="w-4 h-4" />
+              <div className="text-left">
+                <div className="text-xs font-medium">Pro Tag</div>
+                <div className="text-xs opacity-70">
+                  {user.proTag ? "Professional services enabled" : "Enable professional services"}
+                </div>
+              </div>
+            </button>
           </div>
         </div>
       </div>

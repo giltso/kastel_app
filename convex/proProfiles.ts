@@ -21,9 +21,9 @@ export const createProProfile = mutation({
       throw new Error("Not authenticated");
     }
 
-    // Check if user has permission to create pro profile
-    if (user.role !== "pro" && user.role !== "dev") {
-      throw new Error("Only pro users can create professional profiles");
+    // Check if user has permission to create pro profile (has proTag or is dev)
+    if (!user.proTag && user.role !== "dev") {
+      throw new Error("Only users with pro tag can create professional profiles");
     }
 
     // Check if user already has a profile

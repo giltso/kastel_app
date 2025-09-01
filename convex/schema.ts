@@ -13,17 +13,17 @@ export default defineSchema({
       v.literal("guest"), 
       v.literal("customer"), 
       v.literal("worker"), 
-      v.literal("manager"),
-      v.literal("pro")
+      v.literal("manager")
     )),
     // For dev role - which role they're currently emulating
     emulatingRole: v.optional(v.union(
       v.literal("guest"), 
       v.literal("customer"), 
       v.literal("worker"), 
-      v.literal("manager"),
-      v.literal("pro")
+      v.literal("manager")
     )),
+    // Pro tag - can be applied to any user role
+    proTag: v.optional(v.boolean()),
   }).index("by_clerkId", ["clerkId"]).index("by_role", ["role"]),
 
   // Professional profiles for users with 'pro' role
