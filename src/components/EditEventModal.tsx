@@ -70,7 +70,7 @@ export function EditEventModal({ isOpen, onClose, event }: EditEventModalProps) 
       isRecurring: event.isRecurring,
       recurringType: event.recurringType as "weekly" | undefined,
       recurringDays: event.recurringDays || [],
-      participants: event.participants?.map(p => p._id as string) || [],
+      participants: event.participants?.map(p => String(p._id)) || [],
     },
     // Validators will be handled in onSubmit to avoid type mismatches
     onSubmit: async ({ value }) => {
@@ -216,10 +216,10 @@ export function EditEventModal({ isOpen, onClose, event }: EditEventModalProps) 
                   className="input input-bordered w-full"
                   placeholder="Enter event title..."
                 />
-                {!field.state.meta.isValid && (
+                {!field.state.meta.isValid && field.state.meta.errors && (
                   <div className="label">
                     <span className="label-text-alt text-error">
-                      {field.state.meta.errors.map(e => e?.message).join(", ")}
+                      {field.state.meta.errors.map((e: any) => e?.message).filter(Boolean).join(", ")}
                     </span>
                   </div>
                 )}
@@ -293,7 +293,7 @@ export function EditEventModal({ isOpen, onClose, event }: EditEventModalProps) 
                   {!field.state.meta.isValid && (
                     <div className="label">
                       <span className="label-text-alt text-error">
-                        {field.state.meta.errors?.map(e => e?.message).join(", ")}
+                        {field.state.meta.errors?.map((e: any) => e?.message).filter(Boolean).join(", ")}
                       </span>
                     </div>
                   )}
@@ -319,7 +319,7 @@ export function EditEventModal({ isOpen, onClose, event }: EditEventModalProps) 
                   {!field.state.meta.isValid && (
                     <div className="label">
                       <span className="label-text-alt text-error">
-                        {field.state.meta.errors?.map(e => e?.message).join(", ")}
+                        {field.state.meta.errors?.map((e: any) => e?.message).filter(Boolean).join(", ")}
                       </span>
                     </div>
                   )}
@@ -351,7 +351,7 @@ export function EditEventModal({ isOpen, onClose, event }: EditEventModalProps) 
                   {!field.state.meta.isValid && (
                     <div className="label">
                       <span className="label-text-alt text-error">
-                        {field.state.meta.errors?.map(e => e?.message).join(", ")}
+                        {field.state.meta.errors?.map((e: any) => e?.message).filter(Boolean).join(", ")}
                       </span>
                     </div>
                   )}
@@ -380,7 +380,7 @@ export function EditEventModal({ isOpen, onClose, event }: EditEventModalProps) 
                   {!field.state.meta.isValid && (
                     <div className="label">
                       <span className="label-text-alt text-error">
-                        {field.state.meta.errors?.map(e => e?.message).join(", ")}
+                        {field.state.meta.errors?.map((e: any) => e?.message).filter(Boolean).join(", ")}
                       </span>
                     </div>
                   )}
@@ -406,13 +406,13 @@ export function EditEventModal({ isOpen, onClose, event }: EditEventModalProps) 
                       <label key={user._id} className="cursor-pointer flex items-center gap-2">
                         <input
                           type="checkbox"
-                          checked={field.state.value.includes(user._id)}
+                          checked={field.state.value.includes(String(user._id))}
                           onChange={(e) => {
                             const current = field.state.value;
                             if (e.target.checked) {
-                              field.handleChange([...current, user._id]);
+                              field.handleChange([...current, String(user._id)]);
                             } else {
-                              field.handleChange(current.filter((id: string) => id !== user._id));
+                              field.handleChange(current.filter((id: string) => id !== String(user._id)));
                             }
                           }}
                           className="checkbox checkbox-primary checkbox-sm"
@@ -485,13 +485,13 @@ export function EditEventModal({ isOpen, onClose, event }: EditEventModalProps) 
                         <label key={day.value} className="cursor-pointer">
                           <input
                             type="checkbox"
-                            checked={field.state.value.includes(day.value)}
+                            checked={field.state.value.includes(day.value as any)}
                             onChange={(e) => {
                               const current = field.state.value;
                               if (e.target.checked) {
-                                field.handleChange([...current, day.value]);
+                                field.handleChange([...current, day.value as any]);
                               } else {
-                                field.handleChange(current.filter((d: string) => d !== day.value));
+                                field.handleChange(current.filter((d: string) => d !== day.value as any));
                               }
                             }}
                             className="checkbox checkbox-primary checkbox-sm"

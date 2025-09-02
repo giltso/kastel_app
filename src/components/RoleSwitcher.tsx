@@ -19,7 +19,9 @@ export function RoleSwitcher() {
   ];
 
   const handleRoleSwitch = (role: UserRole | null) => {
-    void switchRole({ emulatingRole: role || undefined });
+    // Only allow non-dev roles for emulation
+    const emulatingRole = role && role !== 'dev' ? role as "guest" | "customer" | "worker" | "manager" : undefined;
+    void switchRole({ emulatingRole });
   };
 
   const handleProToggle = () => {

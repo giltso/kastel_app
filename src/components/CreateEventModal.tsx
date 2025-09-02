@@ -209,10 +209,10 @@ export function CreateEventModal({ isOpen, onClose, prefilledData = {} }: Create
                   className={`input input-bordered w-full ${!field.state.meta.isValid && field.state.meta.isTouched ? 'input-error' : ''}`}
                   placeholder="Enter event title..."
                 />
-                {!field.state.meta.isValid && (
+                {!field.state.meta.isValid && field.state.meta.errors && (
                   <div className="label">
                     <span className="label-text-alt text-error">
-                      {field.state.meta.errors?.map(e => e?.message).join(", ")}
+                      {field.state.meta.errors.map((e: any) => e?.message).filter(Boolean).join(", ")}
                     </span>
                   </div>
                 )}

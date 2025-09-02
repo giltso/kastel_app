@@ -519,7 +519,7 @@ function EventsList({ searchTerm, filterType, filterStatus, showPastEvents, onTo
                               className="btn btn-sm btn-ghost"
                               onClick={() => onEditEvent({
                                 ...event,
-                                approvedBy: event.approvedBy?._id || null
+                                approvedBy: event.approvedBy || null
                               })}
                             >
                               <Edit className="w-4 h-4" />
