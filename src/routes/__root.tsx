@@ -77,6 +77,18 @@ function NavigationLinks({ onLinkClick }: { onLinkClick: () => void }) {
           Events
         </Link>
       )}
+      {hasPermission("access_worker_portal") && (
+        <Link
+          to="/shifts"
+          className="btn btn-ghost"
+          activeProps={{
+            className: "btn btn-ghost btn-active",
+          }}
+          onClick={onLinkClick}
+        >
+          Shifts
+        </Link>
+      )}
       <Link
         to="/tools"
         className="btn btn-ghost"
@@ -176,6 +188,20 @@ function MobileNavigationLinks({ onLinkClick }: { onLinkClick: () => void }) {
             className="flex items-center p-2"
           >
             Calendar
+          </Link>
+        </li>
+      )}
+      {hasPermission("access_worker_portal") && (
+        <li>
+          <Link
+            to="/shifts"
+            onClick={onLinkClick}
+            activeProps={{
+              className: "active",
+            }}
+            className="flex items-center p-2"
+          >
+            Shifts
           </Link>
         </li>
       )}

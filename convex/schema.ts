@@ -270,4 +270,107 @@ export default defineSchema({
   .index("by_location", ["location"])
   .index("by_similarityHash", ["similarityHash"])
   .index("by_reviewedBy", ["reviewedBy"]),
+
+  // Shifts: Special recurring events for daily operations
+  shifts: defineTable({
+    name: v.string(), // e.g., "Morning Shift", "Evening Shift"
+    description: v.optional(v.string()),
+    startTime: v.string(), // HH:MM format
+    endTime: v.string(), // HH:MM format
+    // Recurring pattern
+    recurringDays: v.array(v.union(
+      v.literal("monday"),
+      v.literal("tuesday"), 
+      v.literal("wednesday"),
+      v.literal("thursday"),
+      v.literal("friday"),
+      v.literal("saturday"),
+      v.literal("sunday")
+    )), // Which days this shift runs
+    // Capacity management
+    requiredWorkers: v.number(), // Target number of workers
+    maxWorkers: v.optional(v.number()), // Optional maximum (defaults to requiredWorkers + 2)
+    // Metadata
+    isActive: v.boolean(), // Can be enabled/disabled
+    createdBy: v.id("users"), // Manager who created
+    color: v.optional(v.string()), // Hex color for calendar display
+  })
+  .index("by_createdBy", ["createdBy"])
+  .index("by_isActive", ["isActive"]),
+
+  // Shift Assignments: Who is assigned to specific shift instances
+  shift_assignments: defineTable({
+    shiftId: v.id("shifts"),
+    workerId: v.id("users"),
+    date: v.string(), // ISO date string (YYYY-MM-DD) for the specific day
+    // Assignment method
+    assignmentType: v.union(
+      v.literal("manager_assigned"), // Assigned by manager
+      v.literal("self_signed") // Worker signed themselves up
+    ),
+    assignedBy: v.id("users"), // Manager who assigned or worker who self-assigned
+    // Status
+    status: v.union(
+      v.literal("assigned"), 
+      v.literal("confirmed"), 
+      v.literal("completed"),
+      v.literal("no_show"),
+      v.literal("cancelled")
+    ),
+    // Optional notes
+    notes: v.optional(v.string()),
+  })
+  .index("by_shiftId", ["shiftId"])
+  .index("by_workerId", ["workerId"])
+  .index("by_date", ["date"])
+  .index("by_shift_date", ["shiftId", "date"])
+  .index("by_worker_date", ["workerId", "date"]),
+
+  // Shift Swaps: Worker-to-worker shift exchanges
+  shift_swaps: defineTable({
+    // The two assignments being swapped
+    assignment1Id: v.id("shift_assignments"),
+    assignment2Id: v.id("shift_assignments"),
+    // Workers involved
+    worker1Id: v.id("users"),
+    worker2Id: v.id("users"),
+    // Swap details
+    initiatedBy: v.id("users"), // Who requested the swap
+    status: v.union(
+      v.literal("pending"), // Waiting for other worker to accept
+      v.literal("approved"), // Both workers agreed
+      v.literal("rejected"), // Other worker declined
+      v.literal("cancelled") // Initiator cancelled
+    ),
+    reason: v.optional(v.string()), // Why they want to swap
+    // Notifications sent
+    notificationSent: v.boolean(),
+  })
+  .index("by_worker1", ["worker1Id"])
+  .index("by_worker2", ["worker2Id"])
+  .index("by_assignment1", ["assignment1Id"])
+  .index("by_assignment2", ["assignment2Id"])
+  .index("by_status", ["status"]),
+
+  // Golden Time Requests: Pro workers can leave overpopulated shifts
+  golden_time_requests: defineTable({
+    shiftAssignmentId: v.id("shift_assignments"),
+    requestedBy: v.id("users"), // Pro worker making the request
+    date: v.string(), // ISO date string for the specific day
+    reason: v.string(), // What personal project they want to work on
+    status: v.union(
+      v.literal("pending"), // Waiting for manager approval
+      v.literal("approved"), // Manager approved
+      v.literal("rejected"), // Manager denied
+      v.literal("cancelled") // Worker cancelled
+    ),
+    reviewedBy: v.optional(v.id("users")), // Manager who reviewed
+    reviewNotes: v.optional(v.string()), // Manager's notes
+    // Automatic validation
+    shiftOverpopulated: v.boolean(), // Was shift actually overpopulated when requested
+  })
+  .index("by_requestedBy", ["requestedBy"])
+  .index("by_date", ["date"])
+  .index("by_status", ["status"])
+  .index("by_reviewedBy", ["reviewedBy"]),
 });

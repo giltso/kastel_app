@@ -22,6 +22,7 @@ import type * as forms from "../forms.js";
 import type * as migrations from "../migrations.js";
 import type * as proProfiles from "../proProfiles.js";
 import type * as seed from "../seed.js";
+import type * as shifts from "../shifts.js";
 import type * as suggestions from "../suggestions.js";
 import type * as testHelpers from "../testHelpers.js";
 import type * as tools from "../tools.js";
@@ -45,6 +46,7 @@ declare const fullApi: ApiFromModules<{
   migrations: typeof migrations;
   proProfiles: typeof proProfiles;
   seed: typeof seed;
+  shifts: typeof shifts;
   suggestions: typeof suggestions;
   testHelpers: typeof testHelpers;
   tools: typeof tools;
