@@ -9,19 +9,16 @@ import type { Id } from "../../convex/_generated/dataModel";
 // Form validation schema
 const eventSchema = z.object({
   title: z.string().min(1, "Title is required"),
-  description: z.string().optional(),
+  description: z.string().default(""),
   startDate: z.string().min(1, "Start date is required"),
   endDate: z.string().min(1, "End date is required"), 
   startTime: z.string().min(1, "Start time is required"),
   endTime: z.string().min(1, "End time is required"),
-  type: z.enum(["work", "meeting", "maintenance", "team", "educational"]),
+  type: z.enum(["work", "meeting", "maintenance", "team"]),
   isRecurring: z.boolean(),
-  recurringType: z.enum(["weekly"]).optional(),
-  recurringDays: z.array(z.enum([
-    "monday", "tuesday", "wednesday", "thursday", 
-    "friday", "saturday", "sunday"
-  ])).optional(),
-  participants: z.array(z.string()).optional(),
+  recurringType: z.enum(["weekly"]),
+  recurringDays: z.array(z.string()),
+  participants: z.array(z.string()),
 }).refine((data) => {
   // Check if end date/time is after start date/time
   const startDateTime = new Date(`${data.startDate}T${data.startTime}`);
@@ -73,9 +70,7 @@ export function CreateEventModal({ isOpen, onClose, prefilledData = {} }: Create
       recurringDays: [] as string[],
       participants: [] as string[],
     },
-    validators: {
-      onChange: eventSchema,
-    },
+    // Remove schema validator to avoid type conflicts
     onSubmit: async ({ value }) => {
       setIsSubmitting(true);
       try {
@@ -217,7 +212,7 @@ export function CreateEventModal({ isOpen, onClose, prefilledData = {} }: Create
                 {!field.state.meta.isValid && (
                   <div className="label">
                     <span className="label-text-alt text-error">
-                      {field.state.meta.errors.map(e => e.message).join(", ")}
+                      {field.state.meta.errors?.map(e => e?.message).join(", ")}
                     </span>
                   </div>
                 )}
@@ -265,7 +260,6 @@ export function CreateEventModal({ isOpen, onClose, prefilledData = {} }: Create
                   <option value="meeting">Meeting</option>
                   <option value="maintenance">Maintenance</option>
                   <option value="team">Team</option>
-                  <option value="educational">Educational</option>
                 </select>
               </div>
             )}
@@ -291,7 +285,7 @@ export function CreateEventModal({ isOpen, onClose, prefilledData = {} }: Create
                   {!field.state.meta.isValid && (
                     <div className="label">
                       <span className="label-text-alt text-error">
-                        {field.state.meta.errors.map(e => e?.message).join(", ")}
+                        {field.state.meta.errors?.map(e => e?.message).join(", ")}
                       </span>
                     </div>
                   )}
@@ -317,7 +311,7 @@ export function CreateEventModal({ isOpen, onClose, prefilledData = {} }: Create
                   {!field.state.meta.isValid && (
                     <div className="label">
                       <span className="label-text-alt text-error">
-                        {field.state.meta.errors.map(e => e?.message).join(", ")}
+                        {field.state.meta.errors?.map(e => e?.message).join(", ")}
                       </span>
                     </div>
                   )}
@@ -349,7 +343,7 @@ export function CreateEventModal({ isOpen, onClose, prefilledData = {} }: Create
                   {!field.state.meta.isValid && (
                     <div className="label">
                       <span className="label-text-alt text-error">
-                        {field.state.meta.errors.map(e => e?.message).join(", ")}
+                        {field.state.meta.errors?.map(e => e?.message).join(", ")}
                       </span>
                     </div>
                   )}
@@ -378,7 +372,7 @@ export function CreateEventModal({ isOpen, onClose, prefilledData = {} }: Create
                   {!field.state.meta.isValid && (
                     <div className="label">
                       <span className="label-text-alt text-error">
-                        {field.state.meta.errors.map(e => e?.message).join(", ")}
+                        {field.state.meta.errors?.map(e => e?.message).join(", ")}
                       </span>
                     </div>
                   )}

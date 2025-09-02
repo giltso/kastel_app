@@ -306,7 +306,7 @@ function EventsList({ searchTerm, filterType, filterStatus, showPastEvents, onTo
     if (confirm(`Are you sure you want to approve ${selectedEvents.length} selected events?`)) {
       try {
         for (const eventId of selectedEvents) {
-          await approveEvent({ eventId: eventId as Id<"events"> });
+          await approveEvent({ eventId: eventId as Id<"events">, approved: true });
         }
         onClearSelection();
       } catch (error) {
@@ -517,7 +517,10 @@ function EventsList({ searchTerm, filterType, filterStatus, showPastEvents, onTo
                           <>
                             <button 
                               className="btn btn-sm btn-ghost"
-                              onClick={() => onEditEvent(event)}
+                              onClick={() => onEditEvent({
+                                ...event,
+                                approvedBy: event.approvedBy?._id || null
+                              })}
                             >
                               <Edit className="w-4 h-4" />
                               Edit

@@ -102,7 +102,7 @@ function ProDashboard() {
                   <h3 className="text-xl font-bold">{myProfile.title}</h3>
                   <p className="text-sm opacity-70 mb-2">{myProfile.user?.name}</p>
                   <div className="flex flex-wrap gap-2 mb-3">
-                    {myProfile.specialties.map((specialty, index) => (
+                    {myProfile.specialties.map((specialty: string, index: number) => (
                       <span key={index} className="badge badge-primary badge-sm">
                         {specialty}
                       </span>
@@ -152,7 +152,7 @@ function ProDashboard() {
                 <div className="mt-4">
                   <h4 className="font-medium mb-2">Certifications:</h4>
                   <div className="flex flex-wrap gap-2">
-                    {myProfile.certifications.map((cert, index) => (
+                    {myProfile.certifications.map((cert: string, index: number) => (
                       <span key={index} className="badge badge-outline badge-sm">
                         {cert}
                       </span>

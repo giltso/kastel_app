@@ -459,7 +459,7 @@ function CalendarPage() {
     });
     
     // Calculate positioning for each event
-    const positionedEvents = [];
+    const positionedEvents: any[] = [];
     let concurrentGroups: any[][] = [];
     
     // First pass: find overlapping groups

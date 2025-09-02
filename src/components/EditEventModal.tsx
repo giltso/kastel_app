@@ -14,7 +14,7 @@ const eventSchema = z.object({
   endDate: z.string().min(1, "End date is required"), 
   startTime: z.string().min(1, "Start time is required"),
   endTime: z.string().min(1, "End time is required"),
-  type: z.enum(["work", "meeting", "maintenance", "team", "educational"]),
+  type: z.enum(["work", "meeting", "maintenance", "team"]),
   isRecurring: z.boolean(),
   recurringType: z.enum(["weekly"]).optional(),
   recurringDays: z.array(z.enum([
@@ -66,7 +66,7 @@ export function EditEventModal({ isOpen, onClose, event }: EditEventModalProps) 
       endDate: event.endDate,
       startTime: event.startTime,
       endTime: event.endTime,
-      type: event.type as "work" | "meeting" | "maintenance" | "team",
+      type: event.type,
       isRecurring: event.isRecurring,
       recurringType: event.recurringType as "weekly" | undefined,
       recurringDays: event.recurringDays || [],
@@ -85,14 +85,14 @@ export function EditEventModal({ isOpen, onClose, event }: EditEventModalProps) 
           endDate: value.endDate !== event.endDate ? value.endDate : undefined,
           startTime: value.startTime !== event.startTime ? value.startTime : undefined,
           endTime: value.endTime !== event.endTime ? value.endTime : undefined,
-          type: value.type !== event.type ? value.type : undefined,
+          type: value.type !== event.type && value.type !== 'educational' ? value.type : undefined,
           isRecurring: value.isRecurring !== event.isRecurring ? value.isRecurring : undefined,
           recurringType: value.isRecurring && value.recurringType ? value.recurringType : undefined,
           recurringDays: value.isRecurring && value.recurringDays && value.recurringDays.length > 0 
             ? value.recurringDays
             : undefined,
           participants: value.participants && value.participants.length > 0 
-            ? value.participants as Id<"users">[]
+            ? value.participants.map(id => id as Id<"users">)
             : undefined,
         };
 
@@ -219,7 +219,7 @@ export function EditEventModal({ isOpen, onClose, event }: EditEventModalProps) 
                 {!field.state.meta.isValid && (
                   <div className="label">
                     <span className="label-text-alt text-error">
-                      {field.state.meta.errors.map(e => e.message).join(", ")}
+                      {field.state.meta.errors.map(e => e?.message).join(", ")}
                     </span>
                   </div>
                 )}
@@ -293,7 +293,7 @@ export function EditEventModal({ isOpen, onClose, event }: EditEventModalProps) 
                   {!field.state.meta.isValid && (
                     <div className="label">
                       <span className="label-text-alt text-error">
-                        {field.state.meta.errors?.map(e => e.message).join(", ")}
+                        {field.state.meta.errors?.map(e => e?.message).join(", ")}
                       </span>
                     </div>
                   )}
@@ -319,7 +319,7 @@ export function EditEventModal({ isOpen, onClose, event }: EditEventModalProps) 
                   {!field.state.meta.isValid && (
                     <div className="label">
                       <span className="label-text-alt text-error">
-                        {field.state.meta.errors?.map(e => e.message).join(", ")}
+                        {field.state.meta.errors?.map(e => e?.message).join(", ")}
                       </span>
                     </div>
                   )}
@@ -351,7 +351,7 @@ export function EditEventModal({ isOpen, onClose, event }: EditEventModalProps) 
                   {!field.state.meta.isValid && (
                     <div className="label">
                       <span className="label-text-alt text-error">
-                        {field.state.meta.errors?.map(e => e.message).join(", ")}
+                        {field.state.meta.errors?.map(e => e?.message).join(", ")}
                       </span>
                     </div>
                   )}
@@ -380,7 +380,7 @@ export function EditEventModal({ isOpen, onClose, event }: EditEventModalProps) 
                   {!field.state.meta.isValid && (
                     <div className="label">
                       <span className="label-text-alt text-error">
-                        {field.state.meta.errors?.map(e => e.message).join(", ")}
+                        {field.state.meta.errors?.map(e => e?.message).join(", ")}
                       </span>
                     </div>
                   )}

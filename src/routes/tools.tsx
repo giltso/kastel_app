@@ -21,7 +21,7 @@ export const Route = createFileRoute("/tools")({
 });
 
 function ToolsPage() {
-  const { hasPermission, userRole } = usePermissions();
+  const { hasPermission, effectiveRole } = usePermissions();
   const isOperational = hasPermission("access_worker_portal");
   
   return (

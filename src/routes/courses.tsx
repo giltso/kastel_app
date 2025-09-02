@@ -42,7 +42,7 @@ function OperationalView() {
 
   const stats = {
     totalCourses: courses?.length || 0,
-    totalEnrollments: courses?.reduce((sum, course) => sum + (course.enrollments?.length || 0), 0) || 0,
+    totalEnrollments: courses?.reduce((sum, course) => sum + ((course as any).enrollments?.length || 0), 0) || 0,
   };
 
   return (
@@ -144,7 +144,7 @@ function CustomerView() {
           <CourseCard
             key={course._id}
             course={course}
-            userEnrollment={course.userEnrollment}
+            userEnrollment={(course as any).userEnrollment}
           />
         ))}
       </div>

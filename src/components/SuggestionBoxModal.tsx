@@ -153,7 +153,7 @@ export function SuggestionBoxModal({
                   {!field.state.meta.isValid && (
                     <label className="label">
                       <span className="label-text-alt text-error">
-                        {field.state.meta.errors.map(e => e.message).join(", ")}
+                        {field.state.meta.errors.map(e => e?.message).join(", ")}
                       </span>
                     </label>
                   )}
@@ -185,7 +185,7 @@ export function SuggestionBoxModal({
                   {!field.state.meta.isValid && (
                     <label className="label">
                       <span className="label-text-alt text-error">
-                        {field.state.meta.errors.map(e => e.message).join(", ")}
+                        {field.state.meta.errors.map(e => e?.message).join(", ")}
                       </span>
                     </label>
                   )}
