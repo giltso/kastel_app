@@ -98,7 +98,10 @@ export const createTestUser = mutation({
         clerkId: identity.subject,
         name: identity.name ?? "Anonymous",
         email: identity.email,
-        role: "dev", // Make new users devs for easier testing
+        role: "dev", // Legacy: Make new users devs for easier testing
+        baseRole: "guest", // NEW: Dev gets full access via legacy role
+        tags: [],
+        preferredInterface: "staff",
       });
 
       const newUser = await ctx.db.get(userId);

@@ -44,7 +44,12 @@ export function usePermissions() {
   const checkPermission = (permission: Permission): boolean => {
     if (!isAuthenticated || !user) return false;
 
-    // Define permissions by role (same as backend)
+    // Use backend-calculated permissions if available (recommended)
+    if (user.permissions && user.permissions.includes(permission)) {
+      return true;
+    }
+
+    // Fallback: calculate permissions client-side for backward compatibility
     const permissions: Record<UserRole, Permission[]> = {
       guest: [
         "view_public_services",
@@ -114,8 +119,8 @@ export function usePermissions() {
     const effectiveRole = user.effectiveRole || user.role;
     let hasPermission = permissions[effectiveRole as UserRole]?.includes(permission) || false;
 
-    // Check for pro-specific permissions if user has proTag
-    if (user.proTag) {
+    // Check for pro-specific permissions if user has proTag or hasProAccess
+    if (user.proTag || user.hasProAccess) {
       const proPermissions = ["create_pro_profile", "edit_pro_profile", "create_courses"];
       if (proPermissions.includes(permission)) {
         hasPermission = true;

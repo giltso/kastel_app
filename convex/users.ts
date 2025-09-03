@@ -180,7 +180,7 @@ export const getCurrentUser = query({
 });
 
 // Helper function to determine interface from hierarchical role + tags
-function determineInterfaceFromRole(baseRole: string, tags: string[]): string {
+function determineInterfaceFromRole(baseRole: string, tags: string[]): "guest" | "customer" | "staff" {
   if (baseRole === "worker" || tags.includes("manager")) {
     return "staff";
   }
@@ -266,7 +266,7 @@ function calculateUserPermissions(baseRole: string, tags: string[]): string[] {
 }
 
 // NEW: Update user base role and tags (hierarchical system)
-export const updateUserRole = mutation({
+export const updateUserHierarchicalRole = mutation({
   args: {
     userId: v.id("users"),
     baseRole: v.union(

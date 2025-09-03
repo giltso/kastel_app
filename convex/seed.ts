@@ -9,21 +9,30 @@ export const seedDatabase = mutation({
       clerkId: "test_manager_123",
       name: "Sarah Johnson",
       email: "sarah.johnson@kastel.com",
-      role: "manager",
+      role: "manager", // Legacy
+      baseRole: "worker", // NEW: Manager is worker + manager tag
+      tags: ["manager"],
+      preferredInterface: "staff",
     });
 
     const workerId = await ctx.db.insert("users", {
       clerkId: "test_worker_456",
       name: "Mike Wilson", 
       email: "mike.wilson@kastel.com",
-      role: "worker",
+      role: "worker", // Legacy
+      baseRole: "worker", // NEW
+      tags: [],
+      preferredInterface: "staff",
     });
 
     const devId = await ctx.db.insert("users", {
       clerkId: "test_dev_789",
       name: "Alex Dev",
       email: "alex.dev@kastel.com", 
-      role: "dev",
+      role: "dev", // Legacy
+      baseRole: "guest", // NEW: Dev gets full access via legacy role
+      tags: [],
+      preferredInterface: "staff",
     });
 
     // Create test events

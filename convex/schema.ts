@@ -10,11 +10,11 @@ export default defineSchema({
     email: v.optional(v.string()), // Made optional to handle existing data
     
     // NEW: Base roles (hierarchical - each builds on previous)
-    baseRole: v.union(
+    baseRole: v.optional(v.union(
       v.literal("guest"),    // Can view public services, make basic requests
       v.literal("customer"), // Guest + access customer portal, paid services
       v.literal("worker")    // Customer + handle requests, create events, access staff tools
-    ),
+    )),
     
     // Permission tags that enhance the base role
     tags: v.optional(v.array(v.union(

@@ -15,7 +15,7 @@ export function RoleSwitcher() {
     { value: "guest", label: "Guest", description: "Default new user role" },
     { value: "customer", label: "Customer", description: "External customer" },
     { value: "worker", label: "Worker", description: "Operational staff" },
-    { value: "manager", label: "Manager", description: "Full permissions" },
+    { value: "manager", label: "Manager", description: "Worker + Manager permissions" },
   ];
 
   const handleRoleSwitch = (role: UserRole | null) => {
@@ -25,7 +25,7 @@ export function RoleSwitcher() {
   };
 
   const handleProToggle = () => {
-    void toggleProTag({ proTag: !user.proTag });
+    void toggleProTag({ proTag: !user.proTag || !user.hasProAccess });
   };
 
   return (
@@ -89,12 +89,14 @@ export function RoleSwitcher() {
             <div className="divider divider-horizontal text-xs opacity-50">Tags</div>
             <button
               className={`btn btn-sm w-full justify-start gap-2 ${
-                user.proTag ? "btn-secondary" : "btn-outline"
+                user.proTag || user.hasProAccess ? "btn-secondary" : "btn-outline"
               }`}
               onClick={handleProToggle}
             >
               <Tag className="w-4 h-4" />
-              <span className="text-xs">Enable pro</span>
+              <span className="text-xs">
+                {user.proTag || user.hasProAccess ? "Disable pro" : "Enable pro"}
+              </span>
             </button>
           </div>
         </div>
