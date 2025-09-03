@@ -25,11 +25,11 @@ import { EditEventModal } from "@/components/EditEventModal";
 import { usePermissions } from "@/hooks/usePermissions";
 import type { Doc } from "../../convex/_generated/dataModel";
 
-const eventsQueryOptions = convexQuery(api.events.listEvents, {});
+const calendarQueryOptions = convexQuery(api.events.listCalendarItems, {});
 
 export const Route = createFileRoute("/calendar")({
   loader: async ({ context: { queryClient } }) =>
-    await queryClient.ensureQueryData(eventsQueryOptions),
+    await queryClient.ensureQueryData(calendarQueryOptions),
   component: CalendarPage,
 });
 
@@ -158,7 +158,8 @@ function CalendarPage() {
   const [dragPreview, setDragPreview] = useState<{targetDate: Date, targetTime: string} | null>(null);
   const [resizePreviewDate, setResizePreviewDate] = useState<{targetDate: Date, type: 'start' | 'end'} | null>(null);
   
-  const { data: events } = useSuspenseQuery(eventsQueryOptions);
+  const { data: queryResult } = useSuspenseQuery(calendarQueryOptions);
+  const calendarItems = queryResult?.calendarItems || [];
   const updateEvent = useMutation(api.events.updateEvent);
   const today = new Date();
   const currentMonth = currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
@@ -430,108 +431,114 @@ function CalendarPage() {
     setCurrentDate(new Date());
   };
 
-  const canEditEvent = (event: any) => {
+  const canEditItem = (item: any) => {
+    if (item.type === 'shift') {
+      // For shifts, only managers can edit the shift definition itself
+      // Workers can sign up/assign themselves (handled separately)
+      return effectiveRole === "manager" || effectiveRole === "dev";
+    }
+    // For events, original logic applies
     return effectiveRole === "manager" || effectiveRole === "dev" || 
-           event.createdBy?._id === user?._id || event.assignedTo?._id === user?._id;
+           item.createdBy?._id === user?._id || item.assignedTo?._id === user?._id;
   };
 
-  const getEventsForDate = (date: Date) => {
+  const getItemsForDate = (date: Date) => {
     const dateString = date.toISOString().split('T')[0]; // YYYY-MM-DD format
-    return events.filter(event => {
-      // Check if event spans this date (start <= date <= end)
-      return event.startDate <= dateString && event.endDate >= dateString;
+    return calendarItems.filter(item => {
+      // Check if item spans this date (start <= date <= end)
+      return item.startDate <= dateString && item.endDate >= dateString;
     });
   };
 
-  // Calculate concurrent events and their positioning
-  const getEventsWithPositioning = (events: any[], date: Date) => {
-    if (!events.length) return [];
+  // Calculate concurrent items and their positioning
+  const getItemsWithPositioning = (items: any[], date: Date) => {
+    if (!items.length) return [];
     
-    // Group events by their start time to detect concurrency
-    const eventGroups: Map<string, any[]> = new Map();
+    // Group items by their start time to detect concurrency
+    const itemGroups: Map<string, any[]> = new Map();
     
-    events.forEach(event => {
-      const startKey = `${event.startTime}-${event.endTime}`;
-      if (!eventGroups.has(startKey)) {
-        eventGroups.set(startKey, []);
+    items.forEach(item => {
+      const startKey = `${item.startTime}-${item.endTime}`;
+      if (!itemGroups.has(startKey)) {
+        itemGroups.set(startKey, []);
       }
-      eventGroups.get(startKey)!.push(event);
+      itemGroups.get(startKey)!.push(item);
     });
     
-    // Calculate positioning for each event
-    const positionedEvents: any[] = [];
+    // Calculate positioning for each item
+    const positionedItems: any[] = [];
     let concurrentGroups: any[][] = [];
     
     // First pass: find overlapping groups
-    events.forEach(event => {
-      const [startHour, startMinute] = event.startTime.split(':').map(Number);
-      const [endHour, endMinute] = event.endTime.split(':').map(Number);
+    items.forEach(item => {
+      const [startHour, startMinute] = item.startTime.split(':').map(Number);
+      const [endHour, endMinute] = item.endTime.split(':').map(Number);
       const startTotalMinutes = startHour * 60 + startMinute;
       const endTotalMinutes = endHour * 60 + endMinute;
       
-      // Find which group this event belongs to
+      // Find which group this item belongs to
       let foundGroup = false;
       for (const group of concurrentGroups) {
-        const hasOverlap = group.some(groupEvent => {
-          const [gStartHour, gStartMinute] = groupEvent.startTime.split(':').map(Number);
-          const [gEndHour, gEndMinute] = groupEvent.endTime.split(':').map(Number);
+        const hasOverlap = group.some(groupItem => {
+          const [gStartHour, gStartMinute] = groupItem.startTime.split(':').map(Number);
+          const [gEndHour, gEndMinute] = groupItem.endTime.split(':').map(Number);
           const gStartTotalMinutes = gStartHour * 60 + gStartMinute;
           const gEndTotalMinutes = gEndHour * 60 + gEndMinute;
           
-          // Check if events overlap
+          // Check if items overlap
           return (startTotalMinutes < gEndTotalMinutes) && (endTotalMinutes > gStartTotalMinutes);
         });
         
         if (hasOverlap) {
-          group.push(event);
+          group.push(item);
           foundGroup = true;
           break;
         }
       }
       
       if (!foundGroup) {
-        concurrentGroups.push([event]);
+        concurrentGroups.push([item]);
       }
     });
     
     // Second pass: calculate positions within each group
     concurrentGroups.forEach(group => {
       const groupSize = group.length;
-      group.forEach((event, index) => {
-        const [startHour, startMinute] = event.startTime.split(':').map(Number);
-        const [endHour, endMinute] = event.endTime.split(':').map(Number);
+      group.forEach((item, index) => {
+        const [startHour, startMinute] = item.startTime.split(':').map(Number);
+        const [endHour, endMinute] = item.endTime.split(':').map(Number);
         const startTotalMinutes = startHour * 60 + startMinute;
         const endTotalMinutes = endHour * 60 + endMinute;
         const durationMinutes = endTotalMinutes - startTotalMinutes;
         const startHourSlot = Math.floor(startTotalMinutes / 60);
         
-        // Calculate width and left position for concurrent events
+        // Calculate width and left position for concurrent items
         const width = Math.floor(100 / groupSize);
         const leftPercent = (index * width);
         
         const heightPx = Math.max(24, (durationMinutes / 60) * 48);
         
-        positionedEvents.push({
-          ...event,
+        positionedItems.push({
+          ...item,
           startHourSlot,
           style: {
             height: `${heightPx}px`,
             left: `${leftPercent}%`,
-            width: `${width - 1}%`, // Small gap between concurrent events
+            width: `${width - 1}%`, // Small gap between concurrent items
             position: 'absolute' as const,
-            zIndex: 10 + index
+            zIndex: item.type === 'shift' ? 5 + index : 10 + index // Shifts lower z-index
           }
         });
       });
     });
     
-    return positionedEvents;
+    return positionedItems;
   };
 
-  // Calculate event positioning and size based on start/end times
-  const getEventStyle = (event: any, currentHour: number, allEvents: any[], date: Date) => {
-    const [startHour, startMinute] = event.startTime.split(':').map(Number);
-    const [endHour, endMinute] = event.endTime.split(':').map(Number);
+  // Calculate item positioning and size based on start/end times
+  const getItemStyle = (item: any, currentHour: number, allItems: any[], date: Date) => {
+    const [startHour, startMinute] = item.startTime.split(':').map(Number);
+    const [endHour, endMinute] = item.endTime.split(':').map(Number);
     
     // Calculate total duration in minutes
     const startTotalMinutes = startHour * 60 + startMinute;
@@ -545,32 +552,40 @@ function CalendarPage() {
     
     const startHourSlot = Math.floor(startTotalMinutes / 60);
     
-    // If this is not the starting hour, don't render the event
+    // If this is not the starting hour, don't render the item
     if (currentHour !== startHourSlot) {
       return null;
     }
     
-    // Get positioned events for this date
-    const positionedEvents = getEventsWithPositioning(allEvents, date);
-    const positionedEvent = positionedEvents.find(pe => pe._id === event._id);
+    // Get positioned items for this date
+    const positionedItems = getItemsWithPositioning(allItems, date);
+    const positionedItem = positionedItems.find(pi => pi._id === item._id);
     
-    if (!positionedEvent) {
+    if (!positionedItem) {
       return null;
     }
     
     return {
-      ...positionedEvent.style,
+      ...positionedItem.style,
       top: `${topPercent}%`,
     };
   };
 
-  const handleEventClick = (event: any) => {
-    // Only allow editing if user has permission
-    if (canEditEvent(event)) {
+  const handleItemClick = (item: any) => {
+    if (item.type === 'shift') {
+      // For shifts, we'll handle assignment/viewing differently
+      // For now, just log - this will be enhanced with assignment modal
+      console.log('Clicked shift:', item);
+      // TODO: Open shift assignment modal or navigate to shifts page
+      return;
+    }
+    
+    // For events, only allow editing if user has permission
+    if (canEditItem(item)) {
       // Close create modal if open before opening edit modal
       setIsCreateModalOpen(false);
       setPrefilledEventData({});
-      setEditingEvent(event);
+      setEditingEvent(item);
     }
   };
 
@@ -590,6 +605,19 @@ function CalendarPage() {
       default:
         return "bg-neutral";
     }
+  };
+
+  const getItemColor = (item: any) => {
+    if (item.type === 'shift') {
+      // Shift-specific styling with semi-transparent background
+      if (item.status === 'bad') return "bg-error/40 border-error/60";
+      if (item.status === 'close') return "bg-warning/40 border-warning/60";
+      if (item.status === 'good') return "bg-success/40 border-success/60";
+      if (item.status === 'warning') return "bg-info/40 border-info/60";
+      return "bg-neutral/40 border-neutral/60";
+    }
+    // For events, use the regular status color
+    return getStatusColor(item.status);
   };
 
   // Empty space click handler for creating new events
@@ -757,7 +785,7 @@ function CalendarPage() {
           {days.slice(0, 35).map((date, i) => {
             const isCurrentMonth = date.getMonth() === month;
             const isToday = date.toDateString() === today.toDateString();
-            const dayEvents = getEventsForDate(date);
+            const dayItems = getItemsForDate(date);
           
             return (
               <DroppableTimeSlot
@@ -775,24 +803,24 @@ function CalendarPage() {
                   {date.getDate()}
                 </div>
                 <div className="space-y-1">
-                  {dayEvents.slice(0, 3).map((event) => (
+                  {dayItems.slice(0, 3).map((item) => (
                     <DraggableEvent
-                      key={event._id}
-                      event={event}
-                      canEdit={canEditEvent(event)}
+                      key={item._id}
+                      event={item}
+                      canEdit={canEditItem(item)}
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleEventClick(event);
+                        handleItemClick(item);
                       }}
-                      className={`text-xs p-1 rounded text-white ${getStatusColor(event.status)} truncate hover:opacity-80`}
+                      className={`text-xs p-1 rounded ${item.type === 'shift' ? 'text-neutral-content border' : 'text-white'} ${getItemColor(item)} truncate hover:opacity-80`}
                       setIsResizing={setIsResizing}
                       setResizeStartPos={setResizeStartPos}
-                      isCurrentlyResizing={isResizing?.event._id === event._id}
+                      isCurrentlyResizing={isResizing?.event._id === item._id}
                     />
                   ))}
-                  {dayEvents.length > 3 && (
+                  {dayItems.length > 3 && (
                     <div className="text-xs opacity-60">
-                      +{dayEvents.length - 3} more
+                      +{dayItems.length - 3} more
                     </div>
                   )}
                 </div>
@@ -837,10 +865,10 @@ function CalendarPage() {
                 {hour === 0 ? '12 AM' : hour < 12 ? `${hour} AM` : hour === 12 ? '12 PM' : `${hour - 12} PM`}
               </div>
               {weekDates.map((date, dayIndex) => {
-                const dayEvents = getEventsForDate(date);
-                // Only show events that start in this hour
-                const hourEvents = dayEvents.filter(event => {
-                  const startHour = parseInt(event.startTime.split(':')[0]);
+                const dayItems = getItemsForDate(date);
+                // Only show items that start in this hour
+                const hourItems = dayItems.filter(item => {
+                  const startHour = parseInt(item.startTime.split(':')[0]);
                   return hour === startHour;
                 });
 
@@ -852,21 +880,21 @@ function CalendarPage() {
                     className="min-h-12 p-1 border border-base-300 rounded bg-base-100 hover:bg-base-200 cursor-pointer transition-colors relative select-none"
                     onClick={() => handleEmptySpaceClick(date, hour)}
                   >
-                    {hourEvents.map((event) => {
-                      const eventStyle = getEventStyle(event, hour, dayEvents, date);
-                      if (!eventStyle) return null;
+                    {hourItems.map((item) => {
+                      const itemStyle = getItemStyle(item, hour, dayItems, date);
+                      if (!itemStyle) return null;
                       
                       return (
                         <DraggableEvent
-                          key={event._id}
-                          event={event}
-                          style={eventStyle}
-                          canEdit={canEditEvent(event)}
+                          key={item._id}
+                          event={item}
+                          style={itemStyle}
+                          canEdit={canEditItem(item)}
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleEventClick(event);
+                            handleItemClick(item);
                           }}
-                          className={`text-xs p-1 rounded text-white ${getStatusColor(event.status)} truncate hover:opacity-80`}
+                          className={`text-xs p-1 rounded ${item.type === 'shift' ? 'text-neutral-content border' : 'text-white'} ${getItemColor(item)} truncate hover:opacity-80`}
                           setIsResizing={setIsResizing}
                           setResizeStartPos={setResizeStartPos}
                         />
@@ -883,10 +911,10 @@ function CalendarPage() {
   };
 
   const renderDayView = () => {
-    const currentDateEvents = getEventsForDate(currentDate);
+    const currentDateItems = getItemsForDate(currentDate);
     
-    // Sort events by start time for the sidebar
-    const sortedEvents = [...currentDateEvents].sort((a, b) => {
+    // Sort items by start time for the sidebar
+    const sortedItems = [...currentDateItems].sort((a, b) => {
       const aTime = parseInt(a.startTime.replace(':', ''));
       const bTime = parseInt(b.startTime.replace(':', ''));
       return aTime - bTime;
@@ -903,9 +931,9 @@ function CalendarPage() {
           <div className="col-span-8">
             <div className="space-y-1" data-calendar-container>
               {Array.from({ length: 24 }, (_, hour) => {
-                // Only show events that start in this hour
-                const hourEvents = currentDateEvents.filter(event => {
-                  const startHour = parseInt(event.startTime.split(':')[0]);
+                // Only show items that start in this hour
+                const hourItems = currentDateItems.filter(item => {
+                  const startHour = parseInt(item.startTime.split(':')[0]);
                   return hour === startHour;
                 });
 
@@ -920,21 +948,21 @@ function CalendarPage() {
                       className="col-span-10 min-h-12 p-2 border border-base-300 rounded bg-base-100 hover:bg-base-200 cursor-pointer transition-colors relative select-none"
                       onClick={() => handleEmptySpaceClick(currentDate, hour)}
                     >
-                      {hourEvents.map((event) => {
-                        const eventStyle = getEventStyle(event, hour, currentDateEvents, currentDate);
-                        if (!eventStyle) return null;
+                      {hourItems.map((item) => {
+                        const itemStyle = getItemStyle(item, hour, currentDateItems, currentDate);
+                        if (!itemStyle) return null;
                         
                         return (
                           <DraggableEvent
-                            key={event._id}
-                            event={event}
-                            style={eventStyle}
-                            canEdit={canEditEvent(event)}
+                            key={item._id}
+                            event={item}
+                            style={itemStyle}
+                            canEdit={canEditItem(item)}
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleEventClick(event);
+                              handleItemClick(item);
                             }}
-                            className={`text-xs p-1 rounded text-white ${getStatusColor(event.status)} truncate hover:opacity-80`}
+                            className={`text-xs p-1 rounded ${item.type === 'shift' ? 'text-neutral-content border' : 'text-white'} ${getItemColor(item)} truncate hover:opacity-80`}
                             setIsResizing={setIsResizing}
                             setResizeStartPos={setResizeStartPos}
                           />
@@ -947,59 +975,75 @@ function CalendarPage() {
             </div>
           </div>
           
-          {/* Events Sidebar */}
+          {/* Events & Shifts Sidebar */}
           <div className="col-span-4">
             <div className="sticky top-4">
               <div className="card bg-base-200 shadow-sm">
                 <div className="card-body">
                   <h3 className="card-title text-lg flex items-center gap-2">
                     <Calendar className="w-5 h-5" />
-                    Today's Events
-                    <div className="badge badge-primary badge-sm">{sortedEvents.length}</div>
+                    Today's Schedule
+                    <div className="badge badge-primary badge-sm">{sortedItems.length}</div>
                   </h3>
                   
-                  {sortedEvents.length === 0 ? (
+                  {sortedItems.length === 0 ? (
                     <div className="text-center py-8 opacity-60">
                       <Calendar className="w-8 h-8 mx-auto mb-2 opacity-40" />
-                      <p className="text-sm">No events scheduled</p>
+                      <p className="text-sm">No items scheduled</p>
                       <p className="text-xs">Click on the calendar to create one</p>
                     </div>
                   ) : (
                     <div className="space-y-3 max-h-96 overflow-y-auto">
-                      {sortedEvents.map((event) => (
+                      {sortedItems.map((item) => (
                         <div 
-                          key={event._id}
-                          className="card bg-base-100 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
-                          onClick={() => handleEventClick(event)}
+                          key={item._id}
+                          className={`card shadow-sm hover:shadow-md transition-shadow cursor-pointer ${item.type === 'shift' ? 'bg-base-100/60 border' : 'bg-base-100'}`}
+                          onClick={() => handleItemClick(item)}
                         >
                           <div className="card-body p-4">
                             <div className="flex items-start justify-between">
                               <div className="flex-1">
-                                <h4 className="font-semibold text-sm leading-tight">{event.title}</h4>
+                                <h4 className="font-semibold text-sm leading-tight">{item.title}</h4>
                                 <div className="text-xs opacity-70 mt-1">
-                                  {event.startTime} - {event.endTime}
+                                  {item.startTime} - {item.endTime}
                                 </div>
-                                {event.description && (
+                                {item.description && (
                                   <p className="text-xs opacity-60 mt-2 line-clamp-2">
-                                    {event.description}
+                                    {item.description}
+                                  </p>
+                                )}
+                                {item.type === 'shift' && item.currentWorkers !== undefined && (
+                                  <p className="text-xs opacity-60 mt-1">
+                                    Workers: {item.currentWorkers}/{item.requiredWorkers}
                                   </p>
                                 )}
                               </div>
                               <div className="flex flex-col items-end gap-1">
-                                <div className={`badge badge-xs ${getStatusColor(event.status).replace('bg-', 'badge-')}`}>
-                                  {event.status.replace('_', ' ')}
-                                </div>
+                                {item.type === 'shift' ? (
+                                  <div className={`badge badge-xs ${
+                                    item.status === 'bad' ? 'badge-error' :
+                                    item.status === 'close' ? 'badge-warning' :
+                                    item.status === 'good' ? 'badge-success' :
+                                    'badge-info'
+                                  }`}>
+                                    {item.status}
+                                  </div>
+                                ) : (
+                                  <div className={`badge badge-xs ${getStatusColor(item.status).replace('bg-', 'badge-')}`}>
+                                    {item.status.replace('_', ' ')}
+                                  </div>
+                                )}
                                 <div className="badge badge-xs badge-outline">
-                                  {event.type}
+                                  {item.type}
                                 </div>
                               </div>
                             </div>
                             
-                            {event.participants && event.participants.length > 0 && (
+                            {item.participants && item.participants.length > 0 && (
                               <div className="flex items-center gap-1 mt-2">
                                 <div className="text-xs opacity-50">Participants:</div>
                                 <div className="flex -space-x-1">
-                                  {event.participants.slice(0, 3).map((participant: any) => (
+                                  {item.participants.slice(0, 3).map((participant: any) => (
                                     <div 
                                       key={participant._id} 
                                       className="w-4 h-4 rounded-full bg-primary text-primary-content text-xs flex items-center justify-center border border-base-100"
@@ -1008,9 +1052,9 @@ function CalendarPage() {
                                       {participant.name?.charAt(0).toUpperCase()}
                                     </div>
                                   ))}
-                                  {event.participants.length > 3 && (
+                                  {item.participants.length > 3 && (
                                     <div className="w-4 h-4 rounded-full bg-base-300 text-xs flex items-center justify-center border border-base-100">
-                                      +{event.participants.length - 3}
+                                      +{item.participants.length - 3}
                                     </div>
                                   )}
                                 </div>
@@ -1211,11 +1255,11 @@ function CalendarPage() {
                 {renderCalendarView()}
               </div>
 
-              {events.length === 0 && (
+              {calendarItems.length === 0 && (
                 <div className="mt-6 p-4 bg-base-100 rounded-lg text-center opacity-70">
                   <Calendar className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                  <p>No events scheduled yet.</p>
-                  <p className="text-sm">Events you create will appear on the calendar.</p>
+                  <p>No events or shifts scheduled yet.</p>
+                  <p className="text-sm">Events and shifts will appear on the calendar.</p>
                 </div>
               )}
             </div>

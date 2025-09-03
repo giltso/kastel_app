@@ -157,7 +157,7 @@ export const listEvents = query({
         const approvedBy = event.approvedBy ? await ctx.db.get(event.approvedBy) : null;
         const assignedTo = event.assignedTo ? await ctx.db.get(event.assignedTo) : null;
         const participants = event.participants ? 
-          await Promise.all(event.participants.map(id => ctx.db.get(id))) : 
+          await Promise.all(event.participants.map((id: any) => ctx.db.get(id))) : 
           [];
 
         return {
@@ -570,5 +570,196 @@ export const deleteAllEvents = mutation({
     }
 
     return { success: true, deletedCount: allEvents.length };
+  },
+});
+
+// Helper function to generate shift instances for a date range
+function generateShiftInstances(shift: any, startDate: Date, endDate: Date) {
+  const instances = [];
+  const current = new Date(startDate);
+  current.setHours(0, 0, 0, 0);
+  
+  while (current <= endDate) {
+    const dayName = current.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
+    
+    if (shift.recurringDays.includes(dayName)) {
+      instances.push({
+        _id: `shift_${shift._id}_${current.toISOString().split('T')[0]}`,
+        type: 'shift' as const,
+        shiftId: shift._id,
+        title: shift.name,
+        description: shift.description,
+        startDate: current.toISOString().split('T')[0],
+        endDate: current.toISOString().split('T')[0],
+        startTime: shift.startTime,
+        endTime: shift.endTime,
+        color: shift.color,
+        requiredWorkers: shift.requiredWorkers,
+        maxWorkers: shift.maxWorkers,
+        isActive: shift.isActive,
+        createdBy: shift.createdBy,
+        // Additional shift-specific data
+        date: current.toISOString().split('T')[0],
+        originalShift: shift,
+      });
+    }
+    
+    current.setDate(current.getDate() + 1);
+  }
+  
+  return instances;
+}
+
+// Unified query for calendar that includes both events and shift instances
+export const listCalendarItems = query({
+  args: {
+    startDate: v.optional(v.string()), // Optional date range filtering
+    endDate: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      return { events: [], shifts: [], calendarItems: [] };
+    }
+
+    const currentUser = await ctx.db
+      .query("users")
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+
+    if (!currentUser) {
+      return { events: [], shifts: [], calendarItems: [] };
+    }
+
+    const effectiveRole = currentUser.role === "dev" && currentUser.emulatingRole 
+      ? currentUser.emulatingRole 
+      : (currentUser.role || "guest");
+
+    // Set default date range (current month if not specified)
+    const now = new Date();
+    const defaultStart = args.startDate || new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+    const defaultEnd = args.endDate || new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
+
+    const startDateObj = new Date(defaultStart);
+    const endDateObj = new Date(defaultEnd);
+
+    // Get events (same logic as existing listEvents)
+    let events: any[] = [];
+    if (effectiveRole === "manager" || effectiveRole === "worker" || currentUser.role === "dev") {
+      const allEvents = await ctx.db.query("events").collect();
+      events = allEvents.filter(event => 
+        event.createdBy === currentUser._id ||
+        event.assignedTo === currentUser._id ||
+        (event.participants && event.participants.includes(currentUser._id)) ||
+        (effectiveRole === "manager" && event.status === "pending_approval")
+      );
+    } else {
+      events = await ctx.db
+        .query("events")
+        .withIndex("by_status", (q) => q.eq("status", "approved"))
+        .collect();
+    }
+
+    // Filter events by date range if specified
+    if (args.startDate && args.endDate) {
+      events = events.filter(event => 
+        event.startDate >= args.startDate! && event.endDate <= args.endDate!
+      );
+    }
+
+    // Get active shifts (only for workers/managers)
+    let shifts: any[] = [];
+    let shiftInstances: any[] = [];
+    let shiftAssignments: any[] = [];
+    
+    if (effectiveRole === "manager" || effectiveRole === "worker" || currentUser.role === "dev") {
+      shifts = await ctx.db
+        .query("shifts")
+        .withIndex("by_isActive", (q) => q.eq("isActive", true))
+        .collect();
+
+      // Generate shift instances for the date range
+      for (const shift of shifts) {
+        const instances = generateShiftInstances(shift, startDateObj, endDateObj);
+        shiftInstances.push(...instances);
+      }
+
+      // Get shift assignments for the date range
+      shiftAssignments = await ctx.db
+        .query("shift_assignments")
+        .withIndex("by_date")
+        .filter((q) => 
+          q.and(
+            q.gte(q.field("date"), defaultStart),
+            q.lte(q.field("date"), defaultEnd)
+          )
+        )
+        .collect();
+    }
+
+    // Enrich events with user data (same as existing)
+    const enrichedEvents = await Promise.all(
+      events.map(async (event) => {
+        const createdBy = await ctx.db.get(event.createdBy);
+        const approvedBy = event.approvedBy ? await ctx.db.get(event.approvedBy) : null;
+        const assignedTo = event.assignedTo ? await ctx.db.get(event.assignedTo) : null;
+        const participants = event.participants ? 
+          await Promise.all(event.participants.map((id: any) => ctx.db.get(id))) : 
+          [];
+
+        return {
+          ...event,
+          type: 'event' as const,
+          createdBy,
+          approvedBy,
+          assignedTo,
+          participants: participants.filter(Boolean),
+        };
+      })
+    );
+
+    // Enrich shift instances with assignment data
+    const enrichedShiftInstances = await Promise.all(
+      shiftInstances.map(async (instance) => {
+        const assignmentsForThisShift = shiftAssignments.filter(assignment => 
+          assignment.shiftId === instance.shiftId && 
+          assignment.date === instance.date &&
+          assignment.status !== "cancelled"
+        );
+
+        const assignedWorkers = await Promise.all(
+          assignmentsForThisShift.map(async (assignment) => {
+            const worker = await ctx.db.get(assignment.workerId);
+            return { ...assignment, worker };
+          })
+        );
+
+        const currentWorkers = assignedWorkers.length;
+        const status = currentWorkers <= instance.requiredWorkers - 2 ? "bad" : 
+                     currentWorkers === instance.requiredWorkers - 1 ? "close" :
+                     currentWorkers === instance.requiredWorkers ? "good" : "warning";
+
+        return {
+          ...instance,
+          assignments: assignedWorkers,
+          currentWorkers,
+          status,
+          spotsAvailable: Math.max(0, instance.requiredWorkers - currentWorkers),
+          isOverpopulated: currentWorkers > instance.requiredWorkers,
+        };
+      })
+    );
+
+    // Combine all calendar items
+    const calendarItems = [
+      ...enrichedEvents,
+      ...enrichedShiftInstances,
+    ];
+
+    return {
+      events: enrichedEvents,
+      shifts: enrichedShiftInstances, 
+      calendarItems,
+    };
   },
 });
