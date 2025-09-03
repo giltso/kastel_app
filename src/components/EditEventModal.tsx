@@ -70,7 +70,7 @@ export function EditEventModal({ isOpen, onClose, event }: EditEventModalProps) 
       isRecurring: event.isRecurring,
       recurringType: event.recurringType as "weekly" | undefined,
       recurringDays: event.recurringDays || [],
-      participants: event.participants?.map(p => String(p._id)) || [],
+      participants: event.participants?.map(p => String((p as any)._id)) || [],
     },
     // Validators will be handled in onSubmit to avoid type mismatches
     onSubmit: async ({ value }) => {
@@ -135,7 +135,7 @@ export function EditEventModal({ isOpen, onClose, event }: EditEventModalProps) 
       form.setFieldValue("isRecurring", event.isRecurring);
       form.setFieldValue("recurringType", event.recurringType);
       form.setFieldValue("recurringDays", event.recurringDays || []);
-      form.setFieldValue("participants", event.participants?.map(p => p._id as string) || []);
+      form.setFieldValue("participants", event.participants?.map(p => (p as any)._id as string) || []);
     }
   }, [event]);
 

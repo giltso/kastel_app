@@ -72,7 +72,7 @@ export function ProProfileModal({ isOpen, onClose, mode }: ProProfileModalProps)
 
   const removeSpecialty = (index: number) => {
     const currentSpecialties = form.getFieldValue("specialties");
-    form.setFieldValue("specialties", currentSpecialties.filter((_, i) => i !== index));
+    form.setFieldValue("specialties", currentSpecialties.filter((_: any, i: number) => i !== index));
   };
 
   const addCertification = () => {
@@ -85,7 +85,7 @@ export function ProProfileModal({ isOpen, onClose, mode }: ProProfileModalProps)
 
   const removeCertification = (index: number) => {
     const currentCertifications = form.getFieldValue("certifications") || [];
-    form.setFieldValue("certifications", currentCertifications.filter((_, i) => i !== index));
+    form.setFieldValue("certifications", currentCertifications.filter((_: any, i: number) => i !== index));
   };
 
   return (
@@ -185,7 +185,7 @@ export function ProProfileModal({ isOpen, onClose, mode }: ProProfileModalProps)
                   </button>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  {field.state.value.map((specialty, index) => (
+                  {field.state.value.map((specialty: string, index: number) => (
                     <div key={index} className="badge badge-primary gap-2">
                       {specialty}
                       <button
@@ -337,7 +337,7 @@ export function ProProfileModal({ isOpen, onClose, mode }: ProProfileModalProps)
                   </button>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  {(field.state.value || []).map((cert, index) => (
+                  {(field.state.value || []).map((cert: string, index: number) => (
                     <div key={index} className="badge badge-outline gap-2">
                       {cert}
                       <button

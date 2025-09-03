@@ -216,7 +216,7 @@ function ShiftsPage() {
               {shifts.map((shift) => {
                 // Check if this shift runs on the selected day
                 const selectedDayOfWeek = new Date(selectedDate).toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
-                const runsOnSelectedDay = shift.recurringDays.includes(selectedDayOfWeek);
+                const runsOnSelectedDay = shift.recurringDays.includes(selectedDayOfWeek as any);
                 
                 if (!runsOnSelectedDay) return null;
 

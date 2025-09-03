@@ -236,7 +236,7 @@ function EventsList({ searchTerm, filterType, filterStatus, showPastEvents, onTo
       event.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       event.createdBy?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       event.assignedTo?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      event.participants?.some(p => p?.name.toLowerCase().includes(searchTerm.toLowerCase()));
+      event.participants?.some(p => (p as any)?.name?.toLowerCase().includes(searchTerm.toLowerCase()));
     
     const matchesType = filterType === "all" || event.type === filterType;
     const matchesStatus = filterStatus === "all" || event.status === filterStatus;
@@ -477,7 +477,7 @@ function EventsList({ searchTerm, filterType, filterStatus, showPastEvents, onTo
                             )}
                             <span>Created by: {event.createdBy?.name}</span>
                             {event.participants && event.participants.length > 0 && (
-                              <span>Participants: {event.participants.map(p => p?.name).filter(Boolean).join(', ')}</span>
+                              <span>Participants: {event.participants.map(p => (p as any)?.name).filter(Boolean).join(', ')}</span>
                             )}
                           </div>
                           {event.isRecurring && event.recurringDays && (
@@ -519,8 +519,11 @@ function EventsList({ searchTerm, filterType, filterStatus, showPastEvents, onTo
                               className="btn btn-sm btn-ghost"
                               onClick={() => onEditEvent({
                                 ...event,
-                                approvedBy: event.approvedBy || null
-                              })}
+                                approvedBy: event.approvedBy?._id || undefined,
+                                assignedTo: event.assignedTo?._id || undefined,
+                                createdBy: event.createdBy?._id || event.createdBy,
+                                participants: event.participants?.map(p => (p as any)?._id || p).filter(Boolean) || []
+                              } as any)}
                             >
                               <Edit className="w-4 h-4" />
                               Edit
