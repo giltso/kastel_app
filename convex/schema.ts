@@ -8,6 +8,31 @@ export default defineSchema({
     clerkId: v.string(),
     name: v.string(),
     email: v.optional(v.string()), // Made optional to handle existing data
+    
+    // NEW: Base roles (hierarchical - each builds on previous)
+    baseRole: v.union(
+      v.literal("guest"),    // Can view public services, make basic requests
+      v.literal("customer"), // Guest + access customer portal, paid services
+      v.literal("worker")    // Customer + handle requests, create events, access staff tools
+    ),
+    
+    // Permission tags that enhance the base role
+    tags: v.optional(v.array(v.union(
+      v.literal("manager"),    // Worker + approve events, manage users, see all operations
+      v.literal("pro"),        // Advanced worker capabilities (golden time, etc.)
+      v.literal("instructor"), // Can create and manage courses
+      v.literal("lead"),       // Team coordination and mentoring
+      v.literal("specialist")  // Domain expertise recognition
+    ))),
+    
+    // Interface preference (auto-determined from role + tags, but can be overridden)
+    preferredInterface: v.optional(v.union(
+      v.literal("staff"),    // Calendar-centric for workers (with/without manager tag)
+      v.literal("customer"), // Service-focused for customers
+      v.literal("guest")     // Public interface for guests
+    )),
+    
+    // LEGACY: Keep for backward compatibility during transition
     role: v.optional(v.union(
       v.literal("dev"), 
       v.literal("guest"), 
@@ -15,6 +40,7 @@ export default defineSchema({
       v.literal("worker"), 
       v.literal("manager")
     )),
+    
     // For dev role - which role they're currently emulating
     emulatingRole: v.optional(v.union(
       v.literal("guest"), 
@@ -22,7 +48,8 @@ export default defineSchema({
       v.literal("worker"), 
       v.literal("manager")
     )),
-    // Pro tag - can be applied to any user role
+    
+    // LEGACY: Pro tag - can be applied to any user role (migrate to tags array)
     proTag: v.optional(v.boolean()),
   }).index("by_clerkId", ["clerkId"]).index("by_role", ["role"]),
 

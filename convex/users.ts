@@ -24,13 +24,43 @@ export const ensureUser = mutation({
       
       const needsUpdate = existingUser.name !== clerkName || 
                          existingUser.email !== clerkEmail ||
-                         !existingUser.role; // Add role if missing
+                         !existingUser.role ||
+                         !existingUser.baseRole; // Add baseRole if missing
       
       if (needsUpdate) {
+        // Initialize new hierarchical role system if missing
+        let baseRole = existingUser.baseRole;
+        let tags = existingUser.tags || [];
+        
+        if (!baseRole) {
+          // Map legacy role to new hierarchical system
+          const legacyRole = existingUser.role || "dev";
+          if (legacyRole === "manager") {
+            baseRole = "worker";
+            if (!tags.includes("manager")) tags.push("manager");
+          } else if (legacyRole === "worker") {
+            baseRole = "worker";
+          } else if (legacyRole === "customer") {
+            baseRole = "customer";
+          } else {
+            baseRole = "guest"; // dev maps to guest base with full interface access
+          }
+          
+          // Migrate proTag to tags array
+          if (existingUser.proTag && !tags.includes("pro")) {
+            tags.push("pro");
+          }
+        }
+        
+        const preferredInterface = existingUser.preferredInterface || determineInterfaceFromRole(baseRole, tags);
+        
         await ctx.db.patch(existingUser._id, { 
           name: clerkName,
           email: clerkEmail,
-          role: existingUser.role || "dev", // Default to dev if no role (for easier testing)
+          role: existingUser.role || "dev", // Keep legacy for compatibility
+          baseRole, // Initialize new hierarchical system
+          tags,
+          preferredInterface,
         });
         return await ctx.db.get(existingUser._id);
       }
@@ -42,14 +72,17 @@ export const ensureUser = mutation({
       clerkId: identity.subject,
       name: identity.name ?? "Anonymous",
       email: identity.email,
-      role: "dev", // Default role for new users (dev for easier testing)
+      role: "dev", // Legacy: Default role for new users (dev for easier testing)
+      baseRole: "guest", // NEW: Dev users start with guest base but get full access via legacy role
+      tags: [], // NEW: No tags by default
+      preferredInterface: "staff", // NEW: Dev users see staff interface by default
     });
 
     return await ctx.db.get(userId);
   },
 });
 
-// Get current user's profile and effective role
+// Get current user's profile and effective role/permissions
 export const getCurrentUser = query({
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -66,15 +99,379 @@ export const getCurrentUser = query({
       return null;
     }
 
-    // For dev role, return the emulating role if set
-    const effectiveRole = user.role === "dev" && user.emulatingRole 
-      ? user.emulatingRole 
-      : (user.role || "guest");
+    // NEW: Calculate effective role and permissions from hierarchical system
+    let baseRole = "guest";
+    let effectiveTags: string[] = [];
+    let preferredInterface = "guest";
+
+    // Handle new hierarchical role system if available
+    if (user.baseRole) {
+      baseRole = user.baseRole;
+      effectiveTags = user.tags || [];
+      preferredInterface = user.preferredInterface || determineInterfaceFromRole(baseRole, effectiveTags);
+    } else {
+      // LEGACY: Handle old single role system
+      const legacyRole = user.role === "dev" && user.emulatingRole 
+        ? user.emulatingRole 
+        : (user.role || "guest");
+      
+      // Map legacy roles to new hierarchical system
+      if (legacyRole === "manager") {
+        baseRole = "worker";
+        effectiveTags = ["manager"];
+      } else if (legacyRole === "worker") {
+        baseRole = "worker";
+        effectiveTags = [];
+      } else if (legacyRole === "customer") {
+        baseRole = "customer";
+        effectiveTags = [];
+      } else {
+        baseRole = "guest";
+        effectiveTags = [];
+      }
+      
+      // Migrate proTag to new tags system
+      if (user.proTag && !effectiveTags.includes("pro")) {
+        effectiveTags.push("pro");
+      }
+      
+      // Determine interface from legacy role
+      preferredInterface = (baseRole === "worker" || effectiveTags.includes("manager"))
+        ? "staff" 
+        : baseRole === "customer" 
+          ? "customer" 
+          : "guest";
+    }
+
+    // Calculate permission flags based on hierarchical roles
+    const hasGuestAccess = true; // Everyone has guest access
+    const hasCustomerAccess = baseRole === "customer" || baseRole === "worker";
+    const hasWorkerAccess = baseRole === "worker";
+    const hasManagerAccess = hasWorkerAccess && effectiveTags.includes("manager");
+    const hasProAccess = hasWorkerAccess && effectiveTags.includes("pro");
+    const hasInstructorAccess = hasWorkerAccess && effectiveTags.includes("instructor");
+    const hasLeadAccess = hasWorkerAccess && effectiveTags.includes("lead");
 
     return {
       ...user,
-      effectiveRole,
+      // NEW: Hierarchical role information
+      baseRole,
+      effectiveTags,
+      preferredInterface,
+      // Access level flags
+      hasGuestAccess,
+      hasCustomerAccess, 
+      hasWorkerAccess,
+      hasManagerAccess,
+      hasProAccess,
+      hasInstructorAccess,
+      hasLeadAccess,
+      // LEGACY: Keep for backward compatibility
+      effectiveRole: hasManagerAccess ? "manager" : baseRole,
+      hasWorkerRole: hasWorkerAccess,
+      hasManagerRole: hasManagerAccess,
+      hasCustomerRole: hasCustomerAccess,
+      hasGuestRole: hasGuestAccess,
+      hasProTag: hasProAccess,
+      // Permission context
+      permissions: calculateUserPermissions(baseRole, effectiveTags),
     };
+  },
+});
+
+// Helper function to determine interface from hierarchical role + tags
+function determineInterfaceFromRole(baseRole: string, tags: string[]): string {
+  if (baseRole === "worker" || tags.includes("manager")) {
+    return "staff";
+  }
+  if (baseRole === "customer") {
+    return "customer";  
+  }
+  return "guest";
+}
+
+// Helper function to calculate permissions based on hierarchical role + tags
+function calculateUserPermissions(baseRole: string, tags: string[]): string[] {
+  const permissions = new Set<string>();
+  
+  // Base permissions for all users (guest level)
+  permissions.add("view_public_services");
+  permissions.add("create_guest_request");
+  permissions.add("track_own_requests");
+  
+  // Customer permissions (builds on guest)
+  if (baseRole === "customer" || baseRole === "worker") {
+    permissions.add("create_customer_request");
+    permissions.add("access_customer_portal");
+  }
+  
+  // Worker permissions (builds on customer)
+  if (baseRole === "worker") {
+    permissions.add("handle_requests");
+    permissions.add("create_event_draft");
+    permissions.add("create_ticket");
+    permissions.add("comment_on_tickets");
+    permissions.add("access_worker_portal");
+    permissions.add("access_staff_interface");
+    permissions.add("view_shifts");
+    permissions.add("self_assign_shifts");
+    permissions.add("request_shift_swaps");
+  }
+  
+  // Manager tag permissions (requires worker base + manager tag)
+  if (baseRole === "worker" && tags.includes("manager")) {
+    permissions.add("approve_requests");
+    permissions.add("assign_workers");
+    permissions.add("approve_events");
+    permissions.add("manage_events");
+    permissions.add("close_tickets");
+    permissions.add("manage_user_roles");
+    permissions.add("access_manager_portal");
+    permissions.add("embedded_approvals"); // Can see embedded approvals in calendar
+    permissions.add("view_all_events"); // See all operational events
+    permissions.add("manage_shifts");
+    permissions.add("approve_shift_swaps");
+  }
+  
+  // Pro tag permissions (requires worker base + pro tag)
+  if (baseRole === "worker" && tags.includes("pro")) {
+    permissions.add("golden_time_requests");
+    permissions.add("advanced_scheduling");
+    permissions.add("mentor_workers");
+    permissions.add("priority_shift_selection");
+  }
+  
+  // Instructor tag permissions (requires worker base + instructor tag)
+  if (baseRole === "worker" && tags.includes("instructor")) {
+    permissions.add("create_courses");
+    permissions.add("manage_courses");
+    permissions.add("assign_course_assistants");
+  }
+  
+  // Lead tag permissions (requires worker base + lead tag)
+  if (baseRole === "worker" && tags.includes("lead")) {
+    permissions.add("team_coordination");
+    permissions.add("worker_mentoring");
+    permissions.add("shift_planning");
+  }
+  
+  // Specialist tag permissions (requires worker base + specialist tag)
+  if (baseRole === "worker" && tags.includes("specialist")) {
+    permissions.add("advanced_tool_access");
+    permissions.add("equipment_maintenance");
+    permissions.add("quality_assurance");
+  }
+  
+  return Array.from(permissions);
+}
+
+// NEW: Update user base role and tags (hierarchical system)
+export const updateUserRole = mutation({
+  args: {
+    userId: v.id("users"),
+    baseRole: v.union(
+      v.literal("guest"), 
+      v.literal("customer"), 
+      v.literal("worker")
+    ),
+    tags: v.optional(v.array(v.union(
+      v.literal("manager"),
+      v.literal("pro"),
+      v.literal("instructor"), 
+      v.literal("lead"),
+      v.literal("specialist")
+    ))),
+    preferredInterface: v.optional(v.union(
+      v.literal("staff"),
+      v.literal("customer"),
+      v.literal("guest")
+    )),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new ConvexError("Not authenticated");
+    }
+
+    // Get current user
+    const currentUser = await ctx.db
+      .query("users")
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+
+    if (!currentUser) {
+      throw new ConvexError("User not found");
+    }
+
+    // Check if user has permission to update roles
+    const currentUserData = await ctx.runQuery("users:getCurrentUser" as any);
+    if (!currentUserData?.permissions?.includes("manage_user_roles") && currentUser.role !== "dev") {
+      throw new ConvexError("Only managers can update user roles");
+    }
+
+    // Validate tag combinations (manager tag requires worker base)
+    const tags = args.tags || [];
+    if (tags.includes("manager") && args.baseRole !== "worker") {
+      throw new ConvexError("Manager tag requires worker base role");
+    }
+    if (tags.includes("pro") && args.baseRole !== "worker") {
+      throw new ConvexError("Pro tag requires worker base role");
+    }
+    if (tags.includes("instructor") && args.baseRole !== "worker") {
+      throw new ConvexError("Instructor tag requires worker base role");
+    }
+
+    // Get target user
+    const targetUser = await ctx.db.get(args.userId);
+    if (!targetUser) {
+      throw new ConvexError("Target user not found");
+    }
+
+    // Update the base role and tags
+    await ctx.db.patch(args.userId, {
+      baseRole: args.baseRole,
+      tags: tags,
+      preferredInterface: args.preferredInterface || determineInterfaceFromRole(args.baseRole, tags),
+    });
+
+    return { success: true };
+  },
+});
+
+// NEW: Add tag to user (for incremental tag management)
+export const addUserTag = mutation({
+  args: {
+    userId: v.id("users"),
+    tag: v.union(v.literal("manager"), v.literal("pro"), v.literal("instructor"), v.literal("lead"), v.literal("specialist")),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new ConvexError("Not authenticated");
+    }
+
+    const currentUser = await ctx.db
+      .query("users")
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+
+    if (!currentUser) {
+      throw new ConvexError("User not found");
+    }
+
+    // Check permissions
+    const currentUserData = await ctx.runQuery("users:getCurrentUser" as any);
+    if (!currentUserData?.permissions?.includes("manage_user_roles") && currentUser.role !== "dev") {
+      throw new ConvexError("Only managers can modify user roles");
+    }
+
+    const targetUser = await ctx.db.get(args.userId);
+    if (!targetUser) {
+      throw new ConvexError("Target user not found");
+    }
+
+    // Validate tag can be added (worker-only tags require worker base)
+    if (["manager", "pro", "instructor", "lead", "specialist"].includes(args.tag) && 
+        (!targetUser.baseRole || targetUser.baseRole !== "worker")) {
+      throw new ConvexError(`${args.tag} tag requires worker base role`);
+    }
+
+    // Add tag if not already present
+    const currentTags = targetUser.tags || [];
+    if (!currentTags.includes(args.tag)) {
+      const newTags = [...currentTags, args.tag];
+      await ctx.db.patch(args.userId, {
+        tags: newTags,
+        preferredInterface: targetUser.preferredInterface || determineInterfaceFromRole(targetUser.baseRole || "guest", newTags),
+      });
+    }
+
+    return { success: true };
+  },
+});
+
+// NEW: Remove tag from user
+export const removeUserTag = mutation({
+  args: {
+    userId: v.id("users"),
+    tag: v.union(v.literal("manager"), v.literal("pro"), v.literal("instructor"), v.literal("lead"), v.literal("specialist")),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new ConvexError("Not authenticated");
+    }
+
+    const currentUser = await ctx.db
+      .query("users")
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+
+    if (!currentUser) {
+      throw new ConvexError("User not found");
+    }
+
+    // Check permissions
+    const currentUserData = await ctx.runQuery("users:getCurrentUser" as any);
+    if (!currentUserData?.permissions?.includes("manage_user_roles") && currentUser.role !== "dev") {
+      throw new ConvexError("Only managers can modify user roles");
+    }
+
+    const targetUser = await ctx.db.get(args.userId);
+    if (!targetUser) {
+      throw new ConvexError("Target user not found");
+    }
+
+    // Remove tag
+    const currentTags = targetUser.tags || [];
+    const newTags = currentTags.filter(t => t !== args.tag);
+
+    await ctx.db.patch(args.userId, {
+      tags: newTags,
+      preferredInterface: targetUser.preferredInterface || determineInterfaceFromRole(targetUser.baseRole || "guest", newTags),
+    });
+
+    return { success: true };
+  },
+});
+
+// NEW: Update user tags
+export const updateUserTags = mutation({
+  args: {
+    userId: v.id("users"),
+    tags: v.array(v.union(v.literal("pro"), v.literal("instructor"), v.literal("lead"), v.literal("specialist"))),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new ConvexError("Not authenticated");
+    }
+
+    const currentUser = await ctx.db
+      .query("users")
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+
+    if (!currentUser) {
+      throw new ConvexError("User not found");
+    }
+
+    // Check permissions
+    const currentUserData = await ctx.runQuery("users:getCurrentUser" as any);
+    if (!currentUserData?.permissions?.includes("manage_user_roles") && currentUser.role !== "dev") {
+      throw new ConvexError("Only managers can update user tags");
+    }
+
+    const targetUser = await ctx.db.get(args.userId);
+    if (!targetUser) {
+      throw new ConvexError("Target user not found");
+    }
+
+    await ctx.db.patch(args.userId, {
+      tags: args.tags,
+    });
+
+    return { success: true };
   },
 });
 
