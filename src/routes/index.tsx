@@ -38,11 +38,14 @@ function HomePage() {
               <p className="text-xl opacity-80 py-6">
                 Your trusted partner for tools, education, and professional services
               </p>
+              <p className="text-lg opacity-70 pb-6">
+                Sign in for instant tool bookings, course enrollment, and personalized project support
+              </p>
               
               <div className="not-prose">
                 <SignInButton mode="modal">
                   <button className="btn btn-primary btn-lg gap-2">
-                    Get Started <ArrowRight className="w-5 h-5" />
+                    Get Started - Free Account <ArrowRight className="w-5 h-5" />
                   </button>
                 </SignInButton>
               </div>
@@ -143,6 +146,57 @@ function PublicHomePage() {
               </div>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* Sign-in Benefits Section */}
+      <section className="bg-gradient-to-r from-primary/5 to-secondary/5 rounded-xl p-8">
+        <div className="text-center mb-8">
+          <h2 className="text-3xl font-bold mb-4">Unlock More with Your Account</h2>
+          <p className="text-lg opacity-80">Sign in to access exclusive features and personalized services</p>
+        </div>
+        
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div className="text-center p-4">
+            <div className="not-prose bg-primary/10 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+              <Hammer className="w-8 h-8 text-primary" />
+            </div>
+            <h4 className="font-bold mb-2">Book Tools Instantly</h4>
+            <p className="text-sm opacity-70">Reserve equipment online and track your rentals</p>
+          </div>
+          
+          <div className="text-center p-4">
+            <div className="not-prose bg-secondary/10 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+              <GraduationCap className="w-8 h-8 text-secondary" />
+            </div>
+            <h4 className="font-bold mb-2">Join Training Courses</h4>
+            <p className="text-sm opacity-70">Enroll in professional training and certification programs</p>
+          </div>
+          
+          <div className="text-center p-4">
+            <div className="not-prose bg-accent/10 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+              <FileText className="w-8 h-8 text-accent" />
+            </div>
+            <h4 className="font-bold mb-2">Access Work Forms</h4>
+            <p className="text-sm opacity-70">Submit project requests and track their progress</p>
+          </div>
+          
+          <div className="text-center p-4">
+            <div className="not-prose bg-success/10 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+              <Star className="w-8 h-8 text-success" />
+            </div>
+            <h4 className="font-bold mb-2">Personalized Experience</h4>
+            <p className="text-sm opacity-70">Get recommendations based on your project needs</p>
+          </div>
+        </div>
+        
+        <div className="text-center not-prose">
+          <SignInButton mode="modal">
+            <button className="btn btn-primary btn-lg gap-2">
+              <ArrowRight className="w-5 h-5" />
+              Sign In Now - It's Free
+            </button>
+          </SignInButton>
         </div>
       </section>
 

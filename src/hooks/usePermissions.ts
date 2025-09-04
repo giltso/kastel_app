@@ -54,16 +54,14 @@ export function usePermissions() {
       guest: [
         "view_public_services",
         "create_guest_request", 
-        "track_own_requests",
-        "access_pro_help"
+        "track_own_requests"
       ],
       customer: [
         "view_public_services",
         "create_guest_request",
         "create_customer_request",
         "track_own_requests", 
-        "access_customer_portal",
-        "access_pro_help"
+        "access_customer_portal"
       ],
       worker: [
         "view_public_services",

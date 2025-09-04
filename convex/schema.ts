@@ -41,7 +41,21 @@ export default defineSchema({
       v.literal("manager")
     )),
     
-    // For dev role - which role they're currently emulating
+    // For dev role - which role they're currently emulating (NEW hierarchical system)
+    emulatingBaseRole: v.optional(v.union(
+      v.literal("guest"), 
+      v.literal("customer"), 
+      v.literal("worker")
+    )),
+    emulatingTags: v.optional(v.array(v.union(
+      v.literal("manager"),
+      v.literal("pro"),
+      v.literal("instructor"),
+      v.literal("lead"),
+      v.literal("specialist")
+    ))),
+    
+    // LEGACY: For dev role - which role they're currently emulating (old system)
     emulatingRole: v.optional(v.union(
       v.literal("guest"), 
       v.literal("customer"), 

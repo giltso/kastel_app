@@ -11,25 +11,35 @@ export const Route = createFileRoute("/courses")({
 });
 
 function CoursesPage() {
-  const { hasPermission } = usePermissions();
+  const { hasPermission, effectiveRole } = usePermissions();
   const isOperational = hasPermission("access_worker_portal");
+  const isCustomer = hasPermission("access_customer_portal");
+  const isGuest = effectiveRole === "guest";
+
+  let description, ViewComponent;
+  
+  if (isOperational) {
+    description = "Manage educational courses and training programs";
+    ViewComponent = OperationalView;
+  } else if (isCustomer) {
+    description = "Browse available courses and manage your enrollments";
+    ViewComponent = CustomerView;
+  } else {
+    description = "Discover our educational courses and training programs";
+    ViewComponent = GuestView;
+  }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-3">
+    <div className="max-w-7xl mx-auto space-y-6">
+      <div className="flex items-center justify-center text-center gap-3">
         <GraduationCap className="w-8 h-8 text-primary" />
         <div>
           <h1 className="text-3xl font-bold">Courses</h1>
-          <p className="text-lg opacity-80">
-            {isOperational 
-              ? "Manage educational courses and training programs"
-              : "Browse available courses and manage your enrollments"
-            }
-          </p>
+          <p className="text-lg opacity-80">{description}</p>
         </div>
       </div>
 
-      {isOperational ? <OperationalView /> : <CustomerView />}
+      <ViewComponent />
     </div>
   );
 }
@@ -47,7 +57,7 @@ function OperationalView() {
 
   return (
     <div className="not-prose space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col lg:flex-row justify-between items-center gap-4">
         <button
           onClick={() => setIsAddCourseModalOpen(true)}
           className="btn btn-primary"
@@ -75,7 +85,7 @@ function OperationalView() {
         </div>
       </div>
 
-      <div className="flex gap-2">
+      <div className="flex justify-center gap-2">
         <button
           onClick={() => setActiveTab("courses")}
           className={`btn ${activeTab === "courses" ? "btn-active" : ""}`}
@@ -121,22 +131,24 @@ function CustomerView() {
 
   return (
     <div className="not-prose space-y-6">
-      <div className="tabs tabs-boxed">
-        <button
-          onClick={() => setSelectedCategory("all")}
-          className={`tab ${selectedCategory === "all" ? "tab-active" : ""}`}
-        >
-          All Courses
-        </button>
-        {categories.map(category => (
+      <div className="flex justify-center">
+        <div className="tabs tabs-boxed">
           <button
-            key={category}
-            onClick={() => setSelectedCategory(category)}
-            className={`tab ${selectedCategory === category ? "tab-active" : ""}`}
+            onClick={() => setSelectedCategory("all")}
+            className={`tab ${selectedCategory === "all" ? "tab-active" : ""}`}
           >
-            {category}
+            All Courses
           </button>
-        ))}
+          {categories.map(category => (
+            <button
+              key={category}
+              onClick={() => setSelectedCategory(category)}
+              className={`tab ${selectedCategory === category ? "tab-active" : ""}`}
+            >
+              {category}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -187,6 +199,109 @@ function CustomerView() {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+function GuestView() {
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  
+  const courses = useQuery(api.courses.listCourses);
+  
+  const categories = Array.from(
+    new Set(courses?.map(course => course.category) || [])
+  );
+  const filteredCourses = courses?.filter(course => 
+    selectedCategory === "all" || course.category === selectedCategory
+  );
+
+  return (
+    <div className="not-prose space-y-6">
+      {/* Call-to-action banner for guests */}
+      <div className="alert alert-info">
+        <div className="flex items-center gap-3">
+          <BookOpen className="w-6 h-6" />
+          <div>
+            <h3 className="font-bold">Ready to learn?</h3>
+            <p className="text-sm">Sign in to enroll in courses and start learning.</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex justify-center">
+        <div className="tabs tabs-boxed">
+          <button
+            onClick={() => setSelectedCategory("all")}
+            className={`tab ${selectedCategory === "all" ? "tab-active" : ""}`}
+          >
+            All Courses
+          </button>
+          {categories.map(category => (
+            <button
+              key={category}
+              onClick={() => setSelectedCategory(category)}
+              className={`tab ${selectedCategory === category ? "tab-active" : ""}`}
+            >
+              {category}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {filteredCourses?.map(course => (
+          <GuestCourseCard key={course._id} course={course} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function GuestCourseCard({ course }: { course: any }) {
+  return (
+    <div className="card bg-base-200 shadow-sm">
+      <div className="card-body">
+        <h3 className="card-title">{course.title}</h3>
+        <p className="text-sm opacity-70 line-clamp-3">{course.description}</p>
+        
+        <div className="flex flex-wrap gap-2 text-sm opacity-60">
+          <div className="flex items-center gap-1">
+            <Calendar className="w-4 h-4" />
+            {course.startDate}
+          </div>
+          <div className="flex items-center gap-1">
+            <Clock className="w-4 h-4" />
+            {course.startTime}
+          </div>
+          <div className="flex items-center gap-1">
+            <MapPin className="w-4 h-4" />
+            {course.location}
+          </div>
+        </div>
+
+        <div className="flex justify-between items-center">
+          <div className="flex items-center gap-1 text-lg font-bold">
+            <DollarSign className="w-4 h-4" />
+            {course.price}
+          </div>
+          <div className="text-sm">
+            {course.spotsAvailable} spots available
+          </div>
+        </div>
+
+        <div className="flex gap-2">
+          <div className={`badge badge-outline ${getSkillLevelBadgeClass(course.skillLevel)}`}>
+            {course.skillLevel}
+          </div>
+          <div className="badge badge-secondary">{course.category}</div>
+        </div>
+
+        <div className="card-actions justify-end">
+          <button className="btn btn-primary btn-sm">
+            Sign in to join
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

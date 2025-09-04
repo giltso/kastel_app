@@ -40,8 +40,20 @@ function hasOperationalAccess(role: string) {
 export const listTools = query({
   args: {},
   handler: async (ctx) => {
-    const user = await getCurrentUser(ctx);
-    const role = getEffectiveRole(user);
+    const identity = await ctx.auth.getUserIdentity();
+    let role = "guest"; // Default to guest for unauthenticated users
+    
+    // If authenticated, get user role
+    if (identity) {
+      const user = await ctx.db
+        .query("users")
+        .withIndex("by_clerkId", (q: any) => q.eq("clerkId", identity.subject))
+        .unique();
+      
+      if (user) {
+        role = getEffectiveRole(user);
+      }
+    }
 
     const tools = await ctx.db.query("tools").collect();
     
@@ -167,7 +179,22 @@ export const removeTool = mutation({
 export const listToolRentals = query({
   args: {},
   handler: async (ctx) => {
-    const user = await getCurrentUser(ctx);
+    const identity = await ctx.auth.getUserIdentity();
+    
+    // Unauthenticated users (guests) see no rentals
+    if (!identity) {
+      return [];
+    }
+    
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerkId", (q: any) => q.eq("clerkId", identity.subject))
+      .unique();
+    
+    if (!user) {
+      return [];
+    }
+    
     const role = getEffectiveRole(user);
 
     if (hasOperationalAccess(role)) {

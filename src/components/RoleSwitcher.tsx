@@ -13,7 +13,7 @@ export function RoleSwitcher() {
 
   const roles: Array<{ value: UserRole; label: string; description: string }> = [
     { value: "guest", label: "Guest", description: "Default new user role" },
-    { value: "customer", label: "Customer", description: "External customer" },
+    { value: "customer", label: "Customer", description: "External customer" },  
     { value: "worker", label: "Worker", description: "Operational staff" },
     { value: "manager", label: "Manager", description: "Worker + Manager permissions" },
   ];
@@ -24,8 +24,14 @@ export function RoleSwitcher() {
     void switchRole({ emulatingRole });
   };
 
-  const handleProToggle = () => {
-    void toggleProTag({ proTag: !user.proTag || !user.hasProAccess });
+  const handleProToggle = async () => {
+    try {
+      // Fix: Check current pro status properly from the user object
+      const currentlyHasPro = user.hasProAccess || user.proTag || (user.effectiveTags && user.effectiveTags.includes('pro'));
+      await toggleProTag({ proTag: !currentlyHasPro });
+    } catch (error) {
+      console.error("Failed to toggle pro tag:", error);
+    }
   };
 
   return (
@@ -58,8 +64,8 @@ export function RoleSwitcher() {
             >
               <span className="text-xs">🧪</span>
               <div className="text-left">
-                <div className="text-xs font-medium">Dev (Real Role)</div>
-                <div className="text-xs opacity-70">All permissions</div>
+                <div className="text-xs font-medium">Stop Emulation</div>
+                <div className="text-xs opacity-70">Return to dev role</div>
               </div>
             </button>
 
@@ -89,13 +95,13 @@ export function RoleSwitcher() {
             <div className="divider divider-horizontal text-xs opacity-50">Tags</div>
             <button
               className={`btn btn-sm w-full justify-start gap-2 ${
-                user.proTag || user.hasProAccess ? "btn-secondary" : "btn-outline"
+                user.hasProAccess || user.proTag || (user.effectiveTags && user.effectiveTags.includes('pro')) ? "btn-secondary" : "btn-outline"
               }`}
               onClick={handleProToggle}
             >
               <Tag className="w-4 h-4" />
               <span className="text-xs">
-                {user.proTag || user.hasProAccess ? "Disable pro" : "Enable pro"}
+                {user.hasProAccess || user.proTag || (user.effectiveTags && user.effectiveTags.includes('pro')) ? "Remove Pro Tag" : "Add Pro Tag"}
               </span>
             </button>
           </div>

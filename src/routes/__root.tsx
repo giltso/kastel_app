@@ -241,6 +241,20 @@ function MobileNavigationLinks({ onLinkClick }: { onLinkClick: () => void }) {
           Forms
         </Link>
       </li>
+      {hasPermission("access_pro_help") && (
+        <li>
+          <Link
+            to="/pro-help"
+            onClick={onLinkClick}
+            activeProps={{
+              className: "active",
+            }}
+            className="flex items-center p-2"
+          >
+            Pro Help
+          </Link>
+        </li>
+      )}
       <li>
         <Link
           to="/suggestions"

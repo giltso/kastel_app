@@ -52,7 +52,7 @@ export const ensureUser = mutation({
           }
         }
         
-        const preferredInterface = existingUser.preferredInterface || determineInterfaceFromRole(baseRole, tags);
+        const preferredInterface: "guest" | "customer" | "staff" = existingUser.preferredInterface || determineInterfaceFromRole(baseRole, tags);
         
         await ctx.db.patch(existingUser._id, { 
           name: clerkName,
@@ -106,13 +106,19 @@ export const getCurrentUser = query({
 
     // Handle new hierarchical role system if available
     if (user.baseRole) {
-      baseRole = user.baseRole;
-      effectiveTags = user.tags || [];
+      // Check for emulation (dev users only)
+      if (user.role === "dev" && user.emulatingBaseRole) {
+        baseRole = user.emulatingBaseRole;
+        effectiveTags = user.emulatingTags || [];
+      } else {
+        baseRole = user.baseRole;
+        effectiveTags = user.tags || [];
+      }
       preferredInterface = user.preferredInterface || determineInterfaceFromRole(baseRole, effectiveTags);
     } else {
       // LEGACY: Handle old single role system
-      const legacyRole = user.role === "dev" && user.emulatingRole 
-        ? user.emulatingRole 
+      const legacyRole = user.role === "dev" && (user.emulatingRole || user.emulatingBaseRole)
+        ? (user.emulatingRole || user.emulatingBaseRole)
         : (user.role || "guest");
       
       // Map legacy roles to new hierarchical system
@@ -188,6 +194,31 @@ function determineInterfaceFromRole(baseRole: string, tags: string[]): "guest" |
     return "customer";  
   }
   return "guest";
+}
+
+// Helper function to get effective role for legacy compatibility
+function getEffectiveRole(user: any): string {
+  if (user.baseRole) {
+    // NEW: Use hierarchical system
+    if (user.role === "dev" && user.emulatingBaseRole) {
+      const tags = user.emulatingTags || [];
+      if (user.emulatingBaseRole === "worker" && tags.includes("manager")) {
+        return "manager";
+      }
+      return user.emulatingBaseRole;
+    } else {
+      const tags = user.tags || [];
+      if (user.baseRole === "worker" && tags.includes("manager")) {
+        return "manager";
+      }
+      return user.baseRole;
+    }
+  } else {
+    // LEGACY: Handle old single role system  
+    return user.role === "dev" && (user.emulatingRole || user.emulatingBaseRole)
+      ? (user.emulatingRole || user.emulatingBaseRole)
+      : (user.role || "guest");
+  }
 }
 
 // Helper function to calculate permissions based on hierarchical role + tags
@@ -331,7 +362,7 @@ export const updateUserHierarchicalRole = mutation({
     await ctx.db.patch(args.userId, {
       baseRole: args.baseRole,
       tags: tags,
-      preferredInterface: args.preferredInterface || determineInterfaceFromRole(args.baseRole, tags),
+      preferredInterface: (args.preferredInterface || determineInterfaceFromRole(args.baseRole, tags)) as "guest" | "customer" | "staff",
     });
 
     return { success: true };
@@ -382,7 +413,7 @@ export const addUserTag = mutation({
       const newTags = [...currentTags, args.tag];
       await ctx.db.patch(args.userId, {
         tags: newTags,
-        preferredInterface: targetUser.preferredInterface || determineInterfaceFromRole(targetUser.baseRole || "guest", newTags),
+        preferredInterface: (targetUser.preferredInterface || determineInterfaceFromRole(targetUser.baseRole || "guest", newTags)) as "guest" | "customer" | "staff",
       });
     }
 
@@ -428,7 +459,7 @@ export const removeUserTag = mutation({
 
     await ctx.db.patch(args.userId, {
       tags: newTags,
-      preferredInterface: targetUser.preferredInterface || determineInterfaceFromRole(targetUser.baseRole || "guest", newTags),
+      preferredInterface: (targetUser.preferredInterface || determineInterfaceFromRole(targetUser.baseRole || "guest", newTags)) as "guest" | "customer" | "staff",
     });
 
     return { success: true };
@@ -504,9 +535,7 @@ export const updateUserRole = mutation({
     }
 
     // Only managers and devs can update roles
-    const effectiveRole = currentUser.role === "dev" && currentUser.emulatingRole 
-      ? currentUser.emulatingRole 
-      : (currentUser.role || "guest");
+    const effectiveRole = getEffectiveRole(currentUser);
 
     if (effectiveRole !== "manager" && currentUser.role !== "dev") {
       throw new ConvexError("Only managers can update user roles");
@@ -552,13 +581,38 @@ export const switchEmulatingRole = mutation({
       throw new ConvexError("User not found");
     }
 
-    // Only dev role can switch emulating role
+    // Only dev role can switch emulating role (check the old role field for dev users)
     if (user.role !== "dev") {
       throw new ConvexError("Only dev role can emulate other roles");
     }
 
+    // Convert the legacy emulation to new hierarchical system
+    let emulatingBaseRole: "guest" | "customer" | "worker" | undefined;
+    let emulatingTags: ("manager" | "pro" | "instructor" | "lead" | "specialist")[] = [];
+
+    if (args.emulatingRole) {
+      switch (args.emulatingRole) {
+        case "guest":
+          emulatingBaseRole = "guest";
+          break;
+        case "customer":
+          emulatingBaseRole = "customer";
+          break;
+        case "worker":
+          emulatingBaseRole = "worker";
+          break;
+        case "manager":
+          emulatingBaseRole = "worker";
+          emulatingTags = ["manager"];
+          break;
+      }
+    }
+
     await ctx.db.patch(user._id, {
-      emulatingRole: args.emulatingRole,
+      emulatingBaseRole,
+      emulatingTags,
+      // Clear old field for migration
+      emulatingRole: undefined,
     });
 
     return { success: true };
@@ -590,8 +644,15 @@ export const toggleProTag = mutation({
       throw new ConvexError("Only dev users can toggle pro tags");
     }
 
+    // Update both old proTag field and new tags array for compatibility
+    const currentTags = user.tags || [];
+    const newTags = args.proTag 
+      ? currentTags.includes('pro') ? currentTags : [...currentTags, 'pro']
+      : currentTags.filter(tag => tag !== 'pro');
+
     await ctx.db.patch(user._id, {
-      proTag: args.proTag,
+      proTag: args.proTag, // Keep legacy field
+      tags: newTags, // Update new hierarchical system
     });
 
     return { success: true };
@@ -616,9 +677,7 @@ export const listUsers = query({
     }
 
     // Only managers can see all users
-    const effectiveRole = currentUser.role === "dev" && currentUser.emulatingRole 
-      ? currentUser.emulatingRole 
-      : (currentUser.role || "guest");
+    const effectiveRole = getEffectiveRole(currentUser);
 
     if (effectiveRole !== "manager" && currentUser.role !== "dev") {
       return [];
@@ -645,9 +704,7 @@ export const listWorkers = query({
       return [];
     }
 
-    const effectiveRole = currentUser.role === "dev" && currentUser.emulatingRole 
-      ? currentUser.emulatingRole 
-      : (currentUser.role || "guest");
+    const effectiveRole = getEffectiveRole(currentUser);
 
     // Workers and managers can see workers and managers for event participation
     if (["worker", "manager", "dev"].includes(effectiveRole) || currentUser.role === "dev") {
@@ -693,9 +750,7 @@ export const checkPermission = query({
       return false;
     }
 
-    const effectiveRole = user.role === "dev" && user.emulatingRole 
-      ? user.emulatingRole 
-      : (user.role || "guest");
+    const effectiveRole = getEffectiveRole(user);
 
     // Define permissions by role
     const permissions: Record<string, string[]> = {

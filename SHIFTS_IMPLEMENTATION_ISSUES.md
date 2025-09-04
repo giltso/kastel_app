@@ -53,20 +53,57 @@
   - **Calendar View:** Daily hours displayed on each calendar date
   - **Date Range Selector:** From/to date picker for reports
 
+### 8. **Role Emulation System Issues**
+- **Problem:** Manager role emulation not working properly
+- **Issues:**
+  - Manager should be an extension of worker role, not separate
+  - Manager shouldn't be able to emulate dev role
+  - Pro button is broken in the emulation interface
+- **Impact:** Testing and role switching functionality compromised
+
+### 9. **Professional Help Field Visibility**
+- **Problem:** Professional help field shown to non-professional users
+- **Current:** Guests can see "make a profile" for professional help
+- **Required:** Hide professional help entirely from guests and non-pro users
+- **Impact:** Confusing UX for users who shouldn't access pro features
+
+### 10. **Courses Tab Layout Issues**
+- **Problem:** Courses tab has poor alignment and layout
+- **Current:** Right-leaning layout that looks unbalanced
+- **Required:** Center the courses tab content for better visual balance
+- **Priority:** Minor UI improvement
+
+### 11. **Courses Tracking Overhead**
+- **Problem:** Unnecessary tracking complexity for courses
+- **Current:** May have tracking implementation
+- **Required:** Remove tracking - skill level should be simple recommendation
+- **Rationale:** Skill level is guidance, not performance tracking
+
+### 12. **Home Page Missing Sign-in Benefits**
+- **Problem:** Home page doesn't communicate value of signing in
+- **Current:** Generic homepage without clear user benefits
+- **Required:** Show benefits and features available after authentication
+- **Impact:** Poor user onboarding and conversion
+
 ## 📋 PRIORITIZED ACTION ITEMS
 
 ### High Priority (Core Functionality)
 1. **Fix Assignment System** - Workers/managers must be able to assign to shifts
-2. **Calendar Integration** - Display shifts semi-transparently with events
-3. **Calendar Assignment UI** - Click-to-assign from calendar view
+2. **Fix Role Emulation System** - Manager should extend worker, can't emulate dev, fix pro button
+3. **Calendar Integration** - Display shifts semi-transparently with events
+4. **Calendar Assignment UI** - Click-to-assign from calendar view
 
 ### Medium Priority (User Experience)  
-4. **Day Order Fix** - Sunday-first week order throughout system
-5. **Non-Recurring Shifts** - Support one-time shifts
-6. **Navigation Simplification** - Replace Events tab with Shifts tab
+5. **Hide Professional Help from Non-Pros** - Remove visibility for guests/non-pro users
+6. **Day Order Fix** - Sunday-first week order throughout system
+7. **Non-Recurring Shifts** - Support one-time shifts
+8. **Navigation Simplification** - Replace Events tab with Shifts tab
+9. **Update Home Page** - Show sign-in benefits and value proposition
 
-### Low Priority (Reporting)
-7. **Worker Hours Reports** - Date range reporting with calendar view
+### Low Priority (UI Polish & Optimization)
+10. **Center Courses Tab Layout** - Fix right-leaning alignment issue
+11. **Remove Courses Tracking** - Simplify to recommendation-only skill levels
+12. **Worker Hours Reports** - Date range reporting with calendar view
 
 ## 🔧 TECHNICAL NOTES
 
@@ -86,11 +123,13 @@
 - Replace Events navigation with Shifts
 - Add hours reporting components
 
-## 📅 NEXT SESSION PRIORITIES
+## 📅 CURRENT SESSION PRIORITIES (Session 12)
 
-1. **Debug and fix assignment functionality** (blocking core usage)
-2. **Implement calendar-shift integration** (critical UX)
-3. **Update day-of-week ordering** (consistency fix)
-4. **Test end-to-end shift workflows** (validation)
+1. **Fix Role Emulation System** (manager extends worker, no dev emulation, fix pro button)
+2. **Hide Professional Help from Non-Pros** (remove guest visibility)
+3. **Center Courses Tab Layout** (minor UI alignment fix)
+4. **Remove Courses Tracking** (simplify to recommendations only)
+5. **Update Home Page** (show sign-in benefits)
+6. **Debug and fix assignment functionality** (blocking core usage)
+7. **Implement calendar-shift integration** (critical UX)
 
-The foundation is solid, but these issues prevent production use. Next session should focus on making the core assignment functionality work reliably.

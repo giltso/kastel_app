@@ -12,10 +12,17 @@ const toolRentalsQueryOptions = convexQuery(api.tools.listToolRentals, {});
 
 export const Route = createFileRoute("/tools")({
   loader: async ({ context: { queryClient } }) => {
-    await Promise.all([
-      queryClient.ensureQueryData(toolsQueryOptions),
-      queryClient.ensureQueryData(toolRentalsQueryOptions),
-    ]);
+    // Always load tools data
+    await queryClient.ensureQueryData(toolsQueryOptions);
+    
+    // Only load rentals data if user might be authenticated
+    // This avoids unnecessary API calls for guests
+    try {
+      await queryClient.ensureQueryData(toolRentalsQueryOptions);
+    } catch (error) {
+      // Ignore errors for unauthenticated users
+      console.log("Skipping rental data for unauthenticated user");
+    }
   },
   component: ToolsPage,
 });
@@ -23,6 +30,21 @@ export const Route = createFileRoute("/tools")({
 function ToolsPage() {
   const { hasPermission, effectiveRole } = usePermissions();
   const isOperational = hasPermission("access_worker_portal");
+  const isCustomer = hasPermission("access_customer_portal");
+  const isGuest = effectiveRole === "guest";
+
+  let description, ViewComponent;
+  
+  if (isOperational) {
+    description = "Manage tool inventory and rental requests";
+    ViewComponent = OperationalView;
+  } else if (isCustomer) {
+    description = "Browse and rent available tools";
+    ViewComponent = CustomerView;
+  } else {
+    description = "Discover our professional tool collection";
+    ViewComponent = GuestView;
+  }
   
   return (
     <Authenticated>
@@ -34,19 +56,12 @@ function ToolsPage() {
               Tool Rental
             </h1>
             <p className="text-base-content/70">
-              {isOperational 
-                ? "Manage tool inventory and rental requests" 
-                : "Browse and rent available tools"
-              }
+              {description}
             </p>
           </div>
         </div>
 
-        {isOperational ? (
-          <OperationalView />
-        ) : (
-          <CustomerView />
-        )}
+        <ViewComponent />
       </div>
     </Authenticated>
   );
@@ -222,6 +237,107 @@ function CustomerView() {
           onClose={() => setShowRequestModal(null)}
         />
       )}
+    </div>
+  );
+}
+
+function GuestView() {
+  const { data: tools } = useSuspenseQuery(toolsQueryOptions);
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+
+  // Handle case where tools data might not be loaded yet
+  if (!tools) {
+    return <div className="flex justify-center py-8"><span className="loading loading-spinner loading-lg"></span></div>;
+  }
+
+  // Get unique categories
+  const categories = ["all", ...new Set(tools.map(tool => tool.category))];
+  
+  // Filter tools by category
+  const filteredTools = tools.filter(tool => 
+    selectedCategory === "all" || tool.category === selectedCategory
+  );
+
+  return (
+    <div className="not-prose space-y-6">
+      {/* Call-to-action banner for guests */}
+      <div className="alert alert-info">
+        <div className="flex items-center gap-3">
+          <Hammer className="w-6 h-6" />
+          <div>
+            <h3 className="font-bold">Ready to rent professional tools?</h3>
+            <p className="text-sm">Sign in to check availability and request rentals for your projects.</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Category Filter */}
+      <div className="flex flex-wrap gap-2">
+        {categories.map((category) => (
+          <button
+            key={category}
+            onClick={() => setSelectedCategory(category)}
+            className={`btn btn-sm ${
+              selectedCategory === category ? "btn-primary" : "btn-outline"
+            }`}
+          >
+            {category === "all" ? "All Tools" : category.charAt(0).toUpperCase() + category.slice(1)}
+          </button>
+        ))}
+      </div>
+
+      {/* Tools Catalog Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {filteredTools.map((tool) => (
+          <GuestToolCard key={tool._id} tool={tool} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function GuestToolCard({ tool }: { tool: any }) {
+  return (
+    <div className="card bg-base-200 shadow-sm">
+      <div className="card-body">
+        <h3 className="card-title">{tool.name}</h3>
+        {tool.description && (
+          <p className="text-sm opacity-70 line-clamp-3">{tool.description}</p>
+        )}
+        
+        <div className="space-y-2 text-sm">
+          <div className="flex justify-between">
+            <span className="text-base-content/60">Brand:</span>
+            <span>{tool.brand || "N/A"}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-base-content/60">Model:</span>
+            <span>{tool.model || "N/A"}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-base-content/60">Category:</span>
+            <span className="badge badge-outline">{tool.category}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-base-content/60">Condition:</span>
+            <span className={`badge ${getConditionBadgeColor(tool.condition)}`}>
+              {tool.condition}
+            </span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-base-content/60">Price per day:</span>
+            <span className="font-semibold">
+              {tool.rentalPricePerDay === 0 ? "Free" : `$${tool.rentalPricePerDay}`}
+            </span>
+          </div>
+        </div>
+
+        <div className="card-actions justify-end mt-4">
+          <button className="btn btn-primary btn-sm">
+            Sign in to rent
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
