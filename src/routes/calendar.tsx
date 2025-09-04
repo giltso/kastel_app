@@ -773,6 +773,37 @@ function CalendarPage() {
 
     return (
       <>
+        {/* Month View Header - Planning Focus */}
+        <div className="mb-4 card bg-base-200 shadow-sm">
+          <div className="card-body p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-bold flex items-center gap-2">
+                <Calendar className="w-5 h-5" />
+                Month Planning Overview
+              </h3>
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-success/60"></div>
+                  <span className="text-xs opacity-70">Shifts Staffed</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-warning/60"></div>
+                  <span className="text-xs opacity-70">Needs Staff</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-primary/60"></div>
+                  <span className="text-xs opacity-70">Courses</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-accent/60"></div>
+                  <span className="text-xs opacity-70">Tools</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Week headers with Sunday first */}
         <div className="grid grid-cols-7 gap-2 mb-4">
           {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
             <div key={day} className="p-2 text-center font-medium opacity-70">
@@ -781,46 +812,111 @@ function CalendarPage() {
           ))}
         </div>
 
+        {/* Enhanced month grid for planning */}
         <div className="grid grid-cols-7 gap-2">
           {days.slice(0, 35).map((date, i) => {
             const isCurrentMonth = date.getMonth() === month;
             const isToday = date.toDateString() === today.toDateString();
             const dayItems = getItemsForDate(date);
+            
+            // Categorize items for quick overview
+            const shifts = dayItems.filter(item => item.type === 'shift');
+            const courses = dayItems.filter(item => item.type === 'course'); // TODO: Add course integration
+            const tools = dayItems.filter(item => item.type === 'tool'); // TODO: Add tool rental integration
+            const events = dayItems.filter(item => !['shift', 'course', 'tool'].includes(item.type));
+            
+            // Calculate shift status for the day
+            const shiftStatus = shifts.length > 0 
+              ? shifts.some(s => s.status === 'bad') ? 'error'
+              : shifts.some(s => s.status === 'close') ? 'warning' 
+              : shifts.some(s => s.status === 'good') ? 'success'
+              : 'info' : null;
           
             return (
               <DroppableTimeSlot
                 key={i}
                 date={date}
                 className={`
-                  min-h-24 p-2 border border-base-300 rounded
-                  ${isCurrentMonth ? 'bg-base-100' : 'bg-base-300 opacity-50'}
-                  ${isToday ? 'ring-2 ring-primary' : ''}
-                  hover:bg-base-200 cursor-pointer transition-colors select-none
+                  min-h-28 p-2 border rounded transition-all duration-200 select-none cursor-pointer
+                  ${isCurrentMonth ? 'bg-base-100 border-base-300' : 'bg-base-300/30 opacity-50 border-base-300/50'}
+                  ${isToday ? 'ring-2 ring-primary shadow-lg' : ''}
+                  hover:bg-base-200 hover:shadow-sm
+                  ${shiftStatus === 'error' ? 'border-l-4 border-l-error/60' : ''}
+                  ${shiftStatus === 'warning' ? 'border-l-4 border-l-warning/60' : ''}
+                  ${shiftStatus === 'success' ? 'border-l-4 border-l-success/60' : ''}
                 `}
-                onClick={() => handleEmptySpaceClick(date)}
+                onClick={() => {
+                  // Navigate to day view for this date
+                  setCurrentDate(new Date(date));
+                  setViewType("day");
+                }}
               >
-                <div className="text-sm font-medium mb-1">
-                  {date.getDate()}
+                {/* Date header */}
+                <div className="flex items-center justify-between mb-2">
+                  <div className={`text-sm font-bold ${isToday ? 'text-primary' : ''}`}>
+                    {date.getDate()}
+                  </div>
+                  {/* Quick status indicators */}
+                  <div className="flex gap-1">
+                    {shifts.length > 0 && (
+                      <div className={`w-2 h-2 rounded-full ${
+                        shiftStatus === 'error' ? 'bg-error' :
+                        shiftStatus === 'warning' ? 'bg-warning' :
+                        shiftStatus === 'success' ? 'bg-success' : 'bg-info'
+                      }`} title={`${shifts.length} shifts`} />
+                    )}
+                    {courses.length > 0 && (
+                      <div className="w-2 h-2 rounded-full bg-primary" title={`${courses.length} courses`} />
+                    )}
+                    {tools.length > 0 && (
+                      <div className="w-2 h-2 rounded-full bg-accent" title={`${tools.length} tool rentals`} />
+                    )}
+                  </div>
                 </div>
+
+                {/* Cursory overview of activities */}
                 <div className="space-y-1">
-                  {dayItems.slice(0, 3).map((item) => (
-                    <DraggableEvent
-                      key={item._id}
-                      event={item}
-                      canEdit={canEditItem(item)}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleItemClick(item);
-                      }}
-                      className={`text-xs p-1 rounded ${item.type === 'shift' ? 'text-neutral-content border' : 'text-white'} ${getItemColor(item)} truncate hover:opacity-80`}
-                      setIsResizing={setIsResizing}
-                      setResizeStartPos={setResizeStartPos}
-                      isCurrentlyResizing={isResizing?.event._id === item._id}
-                    />
-                  ))}
-                  {dayItems.length > 3 && (
+                  {/* Shift overview */}
+                  {shifts.length > 0 && (
+                    <div className={`text-xs px-1 py-0.5 rounded ${
+                      shiftStatus === 'error' ? 'bg-error/20 text-error' :
+                      shiftStatus === 'warning' ? 'bg-warning/20 text-warning' :
+                      shiftStatus === 'success' ? 'bg-success/20 text-success' : 'bg-info/20 text-info'
+                    }`}>
+                      {shifts.length === 1 ? '1 shift' : `${shifts.length} shifts`}
+                      {shifts.length === 1 && (
+                        <span className="opacity-70 ml-1">
+                          {shifts[0].currentWorkers || 0}/{shifts[0].requiredWorkers || 0}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                  
+                  {/* Course overview */}
+                  {courses.length > 0 && (
+                    <div className="text-xs px-1 py-0.5 rounded bg-primary/20 text-primary">
+                      {courses.length === 1 ? '1 course' : `${courses.length} courses`}
+                    </div>
+                  )}
+                  
+                  {/* Tool overview */}
+                  {tools.length > 0 && (
+                    <div className="text-xs px-1 py-0.5 rounded bg-accent/20 text-accent">
+                      {tools.length === 1 ? '1 tool' : `${tools.length} tools`}
+                    </div>
+                  )}
+                  
+                  {/* Other events (condensed) */}
+                  {events.length > 0 && (
                     <div className="text-xs opacity-60">
-                      +{dayItems.length - 3} more
+                      {events.length > 2 ? `${events.length} events` : events.map(e => e.title).join(', ')}
+                    </div>
+                  )}
+                  
+                  {/* Show total if multiple categories */}
+                  {dayItems.length > 4 && (
+                    <div className="text-xs opacity-40 mt-1">
+                      {dayItems.length} total
                     </div>
                   )}
                 </div>
@@ -833,7 +929,7 @@ function CalendarPage() {
   };
 
   const renderWeekView = () => {
-    // Get current week dates based on currentDate
+    // Get current week dates based on currentDate (Sunday-first as per requirements)
     const startOfWeek = new Date(currentDate);
     startOfWeek.setDate(currentDate.getDate() - currentDate.getDay());
     const weekDates = Array.from({ length: 7 }, (_, i) => {
@@ -843,9 +939,68 @@ function CalendarPage() {
     });
 
     return (
-      <div className="max-w-6xl mx-auto">
+      <div className="max-w-7xl mx-auto">
+        {/* Week View Header - Shift Focus */}
+        <div className="mb-4 card bg-base-200 shadow-sm">
+          <div className="card-body p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-bold flex items-center gap-2">
+                <Calendar className="w-5 h-5" />
+                Week Shift Schedule
+              </h3>
+              {effectiveRole === "worker" && (
+                <div className="flex items-center gap-2">
+                  <span className="text-xs opacity-70">Your shifts:</span>
+                  <div className="badge badge-primary badge-sm">
+                    {/* TODO: Count user's shifts this week */}5
+                  </div>
+                  <button className="btn btn-sm btn-outline">Request Switch</button>
+                </div>
+              )}
+            </div>
+            
+            {/* Week Summary Bar */}
+            <div className="grid grid-cols-7 gap-1 mb-2">
+              {weekDates.map((date, i) => {
+                const dayItems = getItemsForDate(date);
+                const dayShifts = dayItems.filter(item => item.type === 'shift');
+                const shiftStatus = dayShifts.length > 0 
+                  ? dayShifts.some(s => s.status === 'bad') ? 'error'
+                  : dayShifts.some(s => s.status === 'close') ? 'warning'
+                  : dayShifts.some(s => s.status === 'good') ? 'success'
+                  : 'info' : 'neutral';
+                
+                return (
+                  <div key={i} className={`p-2 rounded text-center text-xs border ${
+                    date.toDateString() === today.toDateString() ? 'ring-2 ring-primary' : ''
+                  }`}>
+                    <div className="font-medium opacity-70">
+                      {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][i]}
+                    </div>
+                    <div className={`text-sm font-bold ${date.toDateString() === today.toDateString() ? 'text-primary' : ''}`}>
+                      {date.getDate()}
+                    </div>
+                    <div className={`badge badge-xs mt-1 ${
+                      shiftStatus === 'error' ? 'badge-error' :
+                      shiftStatus === 'warning' ? 'badge-warning' :
+                      shiftStatus === 'success' ? 'badge-success' :
+                      shiftStatus === 'info' ? 'badge-info' : 'badge-neutral'
+                    }`}>
+                      {dayShifts.length}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        {/* Enhanced Week Grid Header */}
         <div className="grid grid-cols-8 gap-2 mb-4">
-          <div className="p-2"></div> {/* Time column header */}
+          <div className="p-2 text-center">
+            <div className="text-xs font-medium opacity-70">Time</div>
+            <div className="text-xs opacity-50">Shift Status</div>
+          </div>
           {weekDates.map((date, i) => (
             <div key={i} className="p-2 text-center">
               <div className="font-medium opacity-70">
@@ -854,6 +1009,10 @@ function CalendarPage() {
               <div className={`text-sm ${date.toDateString() === today.toDateString() ? 'font-bold text-primary' : ''}`}>
                 {date.getDate()}
               </div>
+              {/* Shift availability indicator */}
+              <div className="text-xs opacity-50 mt-1">
+                {getItemsForDate(date).filter(item => item.type === 'shift').length > 0 ? 'Shifts' : 'Open'}
+              </div>
             </div>
           ))}
         </div>
@@ -861,8 +1020,15 @@ function CalendarPage() {
         <div className="space-y-1" data-calendar-container>
           {Array.from({ length: 24 }, (_, hour) => (
             <div key={hour} className="grid grid-cols-8 gap-2">
-              <div className="p-2 text-sm opacity-70 text-right">
-                {hour === 0 ? '12 AM' : hour < 12 ? `${hour} AM` : hour === 12 ? '12 PM' : `${hour - 12} PM`}
+              <div className="p-2 text-sm opacity-70 text-right flex flex-col items-end">
+                <div className="font-medium">
+                  {hour === 0 ? '12 AM' : hour < 12 ? `${hour} AM` : hour === 12 ? '12 PM' : `${hour - 12} PM`}
+                </div>
+                {/* Show shift population status for this hour */}
+                <div className="text-xs opacity-50">
+                  {/* TODO: Calculate total workers needed vs assigned across all shifts this hour */}
+                  {Math.floor(Math.random() * 8) + 1}/8
+                </div>
               </div>
               {weekDates.map((date, dayIndex) => {
                 const dayItems = getItemsForDate(date);
@@ -871,15 +1037,82 @@ function CalendarPage() {
                   const startHour = parseInt(item.startTime.split(':')[0]);
                   return hour === startHour;
                 });
+                
+                // Get shift items for this hour (including ongoing ones)
+                const allHourItems = dayItems.filter(item => {
+                  const [startHour, startMinute] = item.startTime.split(':').map(Number);
+                  const [endHour, endMinute] = item.endTime.split(':').map(Number);
+                  const startTotalMinutes = startHour * 60 + startMinute;
+                  const endTotalMinutes = endHour * 60 + endMinute;
+                  const currentHourMinutes = hour * 60;
+                  
+                  // Check if this hour falls within the item's time range
+                  return currentHourMinutes >= startTotalMinutes && currentHourMinutes < endTotalMinutes;
+                });
+                
+                const shiftsInHour = allHourItems.filter(item => item.type === 'shift');
+                const hasActiveShift = shiftsInHour.length > 0;
+                
+                // Calculate shift population for background color
+                const shiftPopulationStatus = hasActiveShift 
+                  ? shiftsInHour.some(s => s.status === 'bad') ? 'bg-error/10 border-error/30'
+                  : shiftsInHour.some(s => s.status === 'close') ? 'bg-warning/10 border-warning/30'
+                  : shiftsInHour.some(s => s.status === 'good') ? 'bg-success/10 border-success/30'
+                  : 'bg-info/10 border-info/30'
+                  : 'bg-base-100 border-base-300';
 
                 return (
                   <DroppableTimeSlot
                     key={dayIndex}
                     date={date}
                     hour={hour}
-                    className="min-h-12 p-1 border border-base-300 rounded bg-base-100 hover:bg-base-200 cursor-pointer transition-colors relative select-none"
+                    className={`min-h-12 p-1 border rounded hover:bg-base-200/80 cursor-pointer transition-colors relative select-none ${shiftPopulationStatus}`}
                     onClick={() => handleEmptySpaceClick(date, hour)}
                   >
+                    {/* Show shift capacity background */}
+                    {hasActiveShift && (
+                      <div className="absolute inset-0 pointer-events-none">
+                        {shiftsInHour.map((shift, idx) => (
+                          <div
+                            key={shift._id}
+                            className={`absolute inset-0 opacity-20 rounded ${
+                              shift.status === 'bad' ? 'bg-error' :
+                              shift.status === 'close' ? 'bg-warning' :
+                              shift.status === 'good' ? 'bg-success' :
+                              'bg-info'
+                            }`}
+                            style={{
+                              left: `${idx * 2}px`,
+                              top: `${idx * 2}px`,
+                              right: `${idx * 2}px`,
+                              bottom: `${idx * 2}px`,
+                            }}
+                          />
+                        ))}
+                      </div>
+                    )}
+                    
+                    {/* Show shift population indicator */}
+                    {hasActiveShift && (
+                      <div className="absolute top-1 right-1 z-10">
+                        {shiftsInHour.map((shift) => (
+                          <div
+                            key={shift._id}
+                            className={`badge badge-xs ${
+                              shift.status === 'bad' ? 'badge-error' :
+                              shift.status === 'close' ? 'badge-warning' :
+                              shift.status === 'good' ? 'badge-success' :
+                              'badge-info'
+                            }`}
+                            title={`${shift.title}: ${shift.currentWorkers || 0}/${shift.requiredWorkers || 0} workers`}
+                          >
+                            {shift.currentWorkers || 0}/{shift.requiredWorkers || 0}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Render draggable events on top */}
                     {hourItems.map((item) => {
                       const itemStyle = getItemStyle(item, hour, dayItems, date);
                       if (!itemStyle) return null;
@@ -894,7 +1127,11 @@ function CalendarPage() {
                             e.stopPropagation();
                             handleItemClick(item);
                           }}
-                          className={`text-xs p-1 rounded ${item.type === 'shift' ? 'text-neutral-content border' : 'text-white'} ${getItemColor(item)} truncate hover:opacity-80`}
+                          className={`text-xs p-1 rounded font-medium z-20 relative ${
+                            item.type === 'shift' 
+                              ? 'text-base-content bg-base-100/80 border-2 border-current' 
+                              : 'text-white'
+                          } ${item.type !== 'shift' ? getItemColor(item) : ''} truncate hover:opacity-90 shadow-sm`}
                           setIsResizing={setIsResizing}
                           setResizeStartPos={setResizeStartPos}
                         />
@@ -975,14 +1212,55 @@ function CalendarPage() {
             </div>
           </div>
           
-          {/* Events & Shifts Sidebar */}
+          {/* Day View Operational Sidebar */}
           <div className="col-span-4">
-            <div className="sticky top-4">
+            <div className="sticky top-4 space-y-4">
+              {/* Manager Approval Panel - Only shown to managers */}
+              {effectiveRole === "manager" && (
+                <div className="card bg-warning/10 border border-warning/20 shadow-sm">
+                  <div className="card-body">
+                    <h3 className="card-title text-sm flex items-center gap-2">
+                      <Target className="w-4 h-4 text-warning" />
+                      Pending Approvals
+                      <div className="badge badge-warning badge-sm">
+                        {sortedItems.filter(item => item.status === 'pending_approval').length}
+                      </div>
+                    </h3>
+                    
+                    {sortedItems.filter(item => item.status === 'pending_approval').length === 0 ? (
+                      <div className="text-center py-4 opacity-60">
+                        <Target className="w-6 h-6 mx-auto mb-2 opacity-40" />
+                        <p className="text-xs">No pending approvals</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-2 max-h-40 overflow-y-auto">
+                        {sortedItems.filter(item => item.status === 'pending_approval').map((item) => (
+                          <div key={item._id} className="bg-base-100 rounded p-2 border border-warning/30">
+                            <div className="flex justify-between items-start mb-1">
+                              <h4 className="font-medium text-xs">{item.title}</h4>
+                              <div className="badge badge-warning badge-xs">pending</div>
+                            </div>
+                            <div className="text-xs opacity-70 mb-2">
+                              {item.startTime} - {item.endTime}
+                            </div>
+                            <div className="flex gap-1">
+                              <button className="btn btn-success btn-xs">Approve</button>
+                              <button className="btn btn-error btn-xs">Reject</button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Main Schedule Panel */}
               <div className="card bg-base-200 shadow-sm">
                 <div className="card-body">
                   <h3 className="card-title text-lg flex items-center gap-2">
                     <Calendar className="w-5 h-5" />
-                    Today's Schedule
+                    {effectiveRole === "manager" ? "Today's Operations" : "Today's Schedule"}
                     <div className="badge badge-primary badge-sm">{sortedItems.length}</div>
                   </h3>
                   
@@ -997,26 +1275,27 @@ function CalendarPage() {
                       {sortedItems.map((item) => (
                         <div 
                           key={item._id}
-                          className={`card shadow-sm hover:shadow-md transition-shadow cursor-pointer ${item.type === 'shift' ? 'bg-base-100/60 border' : 'bg-base-100'}`}
+                          className={`card shadow-sm hover:shadow-md transition-shadow cursor-pointer ${item.type === 'shift' ? 'bg-gradient-to-r from-base-100/80 to-base-100/60 border-l-4 border-l-primary/60' : 'bg-base-100'}`}
                           onClick={() => handleItemClick(item)}
                         >
-                          <div className="card-body p-4">
-                            <div className="flex items-start justify-between">
+                          <div className="card-body p-3">
+                            {/* Header with title and status */}
+                            <div className="flex items-start justify-between mb-2">
                               <div className="flex-1">
                                 <h4 className="font-semibold text-sm leading-tight">{item.title}</h4>
-                                <div className="text-xs opacity-70 mt-1">
-                                  {item.startTime} - {item.endTime}
+                                <div className="text-xs opacity-70 mt-0.5 flex items-center gap-2">
+                                  <span>{item.startTime} - {item.endTime}</span>
+                                  {item.type === 'shift' && item.currentWorkers !== undefined && (
+                                    <span className={`badge badge-xs ${
+                                      item.status === 'bad' ? 'badge-error' :
+                                      item.status === 'close' ? 'badge-warning' :
+                                      item.status === 'good' ? 'badge-success' :
+                                      'badge-info'
+                                    }`}>
+                                      {item.currentWorkers}/{item.requiredWorkers}
+                                    </span>
+                                  )}
                                 </div>
-                                {item.description && (
-                                  <p className="text-xs opacity-60 mt-2 line-clamp-2">
-                                    {item.description}
-                                  </p>
-                                )}
-                                {item.type === 'shift' && item.currentWorkers !== undefined && (
-                                  <p className="text-xs opacity-60 mt-1">
-                                    Workers: {item.currentWorkers}/{item.requiredWorkers}
-                                  </p>
-                                )}
                               </div>
                               <div className="flex flex-col items-end gap-1">
                                 {item.type === 'shift' ? (
@@ -1038,26 +1317,87 @@ function CalendarPage() {
                                 </div>
                               </div>
                             </div>
+
+                            {/* Operational details for day view */}
+                            {item.description && (
+                              <p className="text-xs opacity-60 mb-2 line-clamp-2">
+                                {item.description}
+                              </p>
+                            )}
                             
+                            {/* Enhanced participation display */}
                             {item.participants && item.participants.length > 0 && (
-                              <div className="flex items-center gap-1 mt-2">
-                                <div className="text-xs opacity-50">Participants:</div>
-                                <div className="flex -space-x-1">
-                                  {item.participants.slice(0, 3).map((participant: any) => (
-                                    <div 
-                                      key={participant._id} 
-                                      className="w-4 h-4 rounded-full bg-primary text-primary-content text-xs flex items-center justify-center border border-base-100"
-                                      title={participant.name}
-                                    >
-                                      {participant.name?.charAt(0).toUpperCase()}
-                                    </div>
-                                  ))}
-                                  {item.participants.length > 3 && (
-                                    <div className="w-4 h-4 rounded-full bg-base-300 text-xs flex items-center justify-center border border-base-100">
-                                      +{item.participants.length - 3}
-                                    </div>
-                                  )}
+                              <div className="flex items-center justify-between mt-2">
+                                <div className="flex items-center gap-1">
+                                  <div className="text-xs opacity-50">Staff:</div>
+                                  <div className="flex -space-x-1">
+                                    {item.participants.slice(0, 4).map((participant: any) => (
+                                      <div 
+                                        key={participant._id} 
+                                        className="w-5 h-5 rounded-full bg-primary text-primary-content text-xs flex items-center justify-center border-2 border-base-100 font-medium"
+                                        title={participant.name}
+                                      >
+                                        {participant.name?.charAt(0).toUpperCase()}
+                                      </div>
+                                    ))}
+                                    {item.participants.length > 4 && (
+                                      <div className="w-5 h-5 rounded-full bg-base-300 text-xs flex items-center justify-center border-2 border-base-100 font-medium">
+                                        +{item.participants.length - 4}
+                                      </div>
+                                    )}
+                                  </div>
                                 </div>
+                                
+                                {/* Quick action buttons for managers */}
+                                {effectiveRole === "manager" && item.status === 'pending_approval' && (
+                                  <div className="flex gap-1">
+                                    <button 
+                                      className="btn btn-success btn-xs"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        // TODO: Implement quick approve
+                                        console.log('Quick approve:', item._id);
+                                      }}
+                                    >
+                                      ✓
+                                    </button>
+                                    <button 
+                                      className="btn btn-error btn-xs"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        // TODO: Implement quick reject
+                                        console.log('Quick reject:', item._id);
+                                      }}
+                                    >
+                                      ✗
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+
+                            {/* Worker-specific features: Join/Leave buttons for events */}
+                            {effectiveRole === "worker" && item.type !== 'shift' && (
+                              <div className="flex items-center justify-between mt-2">
+                                <div className="text-xs opacity-50">
+                                  {item.participants?.some((p: any) => p._id === user?._id) 
+                                    ? "You're participating" 
+                                    : "Available to join"}
+                                </div>
+                                <button 
+                                  className={`btn btn-xs ${
+                                    item.participants?.some((p: any) => p._id === user?._id)
+                                      ? 'btn-outline btn-error' 
+                                      : 'btn-outline btn-primary'
+                                  }`}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    // TODO: Implement join/leave event
+                                    console.log('Join/leave event:', item._id);
+                                  }}
+                                >
+                                  {item.participants?.some((p: any) => p._id === user?._id) ? 'Leave' : 'Join'}
+                                </button>
                               </div>
                             )}
                           </div>
