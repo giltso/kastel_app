@@ -212,6 +212,7 @@ export default defineSchema({
     name: v.string(),
     description: v.optional(v.string()),
     category: v.string(), // drill, saw, hammer, etc.
+    type: v.optional(v.union(v.literal("rental"), v.literal("educational"))), // Type of tool usage
     brand: v.optional(v.string()),
     model: v.optional(v.string()),
     serialNumber: v.optional(v.string()),
@@ -317,6 +318,7 @@ export default defineSchema({
   shifts: defineTable({
     name: v.string(), // e.g., "Morning Shift", "Evening Shift"
     description: v.optional(v.string()),
+    type: v.optional(v.union(v.literal("operational"), v.literal("maintenance"), v.literal("educational"))), // Type of shift
     startTime: v.string(), // HH:MM format
     endTime: v.string(), // HH:MM format
     // Recurring pattern

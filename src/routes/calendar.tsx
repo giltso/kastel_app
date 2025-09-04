@@ -160,12 +160,15 @@ function CalendarPage() {
     participants: Doc<"users">[];
   }) | null>(null);
   
-  // Filtering state
+  // Filtering and search state
+  const [searchTerm, setSearchTerm] = useState("");
   const [filters, setFilters] = useState({
     showEvents: true,
     showShifts: true,
     showToolRentals: true,
   });
+  const [dateFilter, setDateFilter] = useState("");
+  const [creatorFilter, setCreatorFilter] = useState("all");
   
   // @dnd-kit state management
   const [activeEvent, setActiveEvent] = useState<any | null>(null);
@@ -466,13 +469,63 @@ function CalendarPage() {
       return item.startDate <= dateString && item.endDate >= dateString;
     });
 
-    // Apply filters
-    return allItems.filter(item => {
+    // Apply type filters
+    let filteredItems = allItems.filter(item => {
       if (item.type === 'shift' && !filters.showShifts) return false;
       if (item.type === 'tool_rental' && !filters.showToolRentals) return false;
       if (item.type === 'event' && !filters.showEvents) return false;
       return true;
     });
+
+    // Apply creator filter
+    if (creatorFilter === "me" && user) {
+      filteredItems = filteredItems.filter(item => 
+        item.createdBy?._id === user._id ||
+        item.participants?.some((p: any) => p._id === user._id)
+      );
+    }
+
+    // Apply weighted fuzzy search
+    if (searchTerm.trim()) {
+      const searchLower = searchTerm.toLowerCase().trim();
+      
+      filteredItems = filteredItems.filter(item => {
+        // Calculate weighted search score
+        let score = 0;
+        
+        // Name of activity (highest weight: 4)
+        const title = (item.toolRentalData?.toolName || item.title || '').toLowerCase();
+        if (title.includes(searchLower)) score += 4;
+        
+        // Creator name (weight: 3)
+        const creatorName = (item.createdBy?.name || '').toLowerCase();
+        if (creatorName.includes(searchLower)) score += 3;
+        
+        // Type of activity (weight: 2)
+        const type = (item.type || '').toLowerCase();
+        if (type.includes(searchLower)) score += 2;
+        
+        // Participants (weight: 2)
+        const participantMatch = item.participants?.some((p: any) => 
+          (p.name || '').toLowerCase().includes(searchLower)
+        );
+        if (participantMatch) score += 2;
+        
+        // Description (weight: 1)
+        const description = (item.description || '').toLowerCase();
+        if (description.includes(searchLower)) score += 1;
+        
+        // Tool category for tool rentals (weight: 1)
+        if (item.toolRentalData?.toolCategory) {
+          const category = item.toolRentalData.toolCategory.toLowerCase();
+          if (category.includes(searchLower)) score += 1;
+        }
+        
+        return score > 0;
+      });
+    }
+
+    return filteredItems;
   };
 
   // Calculate concurrent items and their positioning
@@ -886,12 +939,15 @@ function CalendarPage() {
                 date={date}
                 className={`
                   min-h-28 p-2 border rounded transition-all duration-200 select-none cursor-pointer
-                  ${isCurrentMonth ? 'bg-base-100 border-base-300' : 'bg-base-300/30 opacity-50 border-base-300/50'}
+                  ${isCurrentMonth ? (
+                    shiftStatus === 'error' ? 'bg-error/10 border-error/30' :
+                    shiftStatus === 'warning' ? 'bg-warning/10 border-warning/30' :
+                    shiftStatus === 'success' ? 'bg-success/10 border-success/30' :
+                    shifts.length > 0 ? 'bg-info/10 border-info/30' :
+                    'bg-base-100 border-base-300'
+                  ) : 'bg-base-300/30 opacity-50 border-base-300/50'}
                   ${isToday ? 'ring-2 ring-primary shadow-lg' : ''}
-                  hover:bg-base-200 hover:shadow-sm
-                  ${shiftStatus === 'error' ? 'border-l-4 border-l-error/60' : ''}
-                  ${shiftStatus === 'warning' ? 'border-l-4 border-l-warning/60' : ''}
-                  ${shiftStatus === 'success' ? 'border-l-4 border-l-success/60' : ''}
+                  hover:opacity-90 hover:shadow-sm
                 `}
                 onClick={() => {
                   // Navigate to day view for this date
@@ -1074,11 +1130,13 @@ function CalendarPage() {
         </div>
 
         <div className="space-y-1" data-calendar-container>
-          {Array.from({ length: 24 }, (_, hour) => (
+          {Array.from({ length: 19 }, (_, hourIndex) => {
+            const hour = hourIndex + 5; // Start at 5 AM, end at 11 PM
+            return (
             <div key={hour} className="grid grid-cols-8 gap-2">
               <div className="p-2 text-sm opacity-70 text-right flex flex-col items-end">
                 <div className="font-medium">
-                  {hour === 0 ? '12 AM' : hour < 12 ? `${hour} AM` : hour === 12 ? '12 PM' : `${hour - 12} PM`}
+                  {hour < 12 ? `${hour} AM` : hour === 12 ? '12 PM' : `${hour - 12} PM`}
                 </div>
                 {/* Show shift population status for this hour */}
                 <div className="text-xs opacity-50">
@@ -1197,7 +1255,8 @@ function CalendarPage() {
                 );
               })}
             </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     );
@@ -1501,29 +1560,9 @@ function CalendarPage() {
         </div>
       ) : (
         <div className="max-w-7xl mx-auto">
-        <div className="flex justify-between items-center mb-4">
-          <div>
-            <h1 className="text-3xl font-bold">Calendar</h1>
-            <p className="opacity-80">View and interact with scheduled events</p>
-          </div>
-          <div className="not-prose flex gap-2">
-            <button className="btn btn-outline">
-              <Filter className="w-4 h-4" />
-              Filter
-            </button>
-            <button 
-              className="btn btn-primary"
-              onClick={() => {
-                // Close edit modal if open before opening create modal
-                setEditingEvent(null);
-                setPrefilledEventData({});
-                setIsCreateModalOpen(true);
-              }}
-            >
-              <Plus className="w-4 h-4" />
-              Create Event
-            </button>
-          </div>
+        <div className="text-center mb-6">
+          <h1 className="text-3xl font-bold">LUZ</h1>
+          <p className="opacity-80">Operational Schedule & Resource Management</p>
         </div>
 
         {/* Calendar Navigation */}
@@ -1582,27 +1621,122 @@ function CalendarPage() {
           </div>
         </div>
 
-        {/* Filter Controls */}
-        <div className="flex items-center justify-center mb-4">
-          <div className="join">
-            <button
-              className={`join-item btn btn-xs ${filters.showEvents ? 'btn-primary' : 'btn-outline'}`}
-              onClick={() => setFilters(prev => ({ ...prev, showEvents: !prev.showEvents }))}
-            >
-              📅 Events
-            </button>
-            <button
-              className={`join-item btn btn-xs ${filters.showShifts ? 'btn-secondary' : 'btn-outline'}`}
-              onClick={() => setFilters(prev => ({ ...prev, showShifts: !prev.showShifts }))}
-            >
-              👥 Shifts
-            </button>
-            <button
-              className={`join-item btn btn-xs ${filters.showToolRentals ? 'btn-accent' : 'btn-outline'}`}
-              onClick={() => setFilters(prev => ({ ...prev, showToolRentals: !prev.showToolRentals }))}
-            >
-              🔧 Tools
-            </button>
+        {/* Advanced Filter & Search Controls */}
+        <div className="card bg-base-200 shadow-sm mb-4">
+          <div className="card-body">
+            <h3 className="card-title flex items-center gap-2 text-lg">
+              <Filter className="w-5 h-5" />
+              Filter & Search Calendar
+            </h3>
+            <div className="not-prose grid grid-cols-1 lg:grid-cols-5 gap-4 mt-4">
+              <div>
+                <label className="label">
+                  <span className="label-text">Search Activities</span>
+                </label>
+                <div className="relative">
+                  <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 opacity-60" />
+                  <input
+                    type="text"
+                    placeholder="Search by name, creator, type..."
+                    className="input input-bordered w-full pl-10"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                </div>
+              </div>
+              
+              <div>
+                <label className="label">
+                  <span className="label-text">Activity Types</span>
+                </label>
+                <div className="space-y-2">
+                  <label className="cursor-pointer label p-0">
+                    <input 
+                      type="checkbox" 
+                      className="toggle toggle-primary toggle-sm"
+                      checked={filters.showEvents}
+                      onChange={() => setFilters(prev => ({ ...prev, showEvents: !prev.showEvents }))}
+                    />
+                    <span className="label-text ml-2">Events</span>
+                  </label>
+                  <label className="cursor-pointer label p-0">
+                    <input 
+                      type="checkbox" 
+                      className="toggle toggle-secondary toggle-sm"
+                      checked={filters.showShifts}
+                      onChange={() => setFilters(prev => ({ ...prev, showShifts: !prev.showShifts }))}
+                    />
+                    <span className="label-text ml-2">Shifts</span>
+                  </label>
+                  <label className="cursor-pointer label p-0">
+                    <input 
+                      type="checkbox" 
+                      className="toggle toggle-accent toggle-sm"
+                      checked={filters.showToolRentals}
+                      onChange={() => setFilters(prev => ({ ...prev, showToolRentals: !prev.showToolRentals }))}
+                    />
+                    <span className="label-text ml-2">Tools</span>
+                  </label>
+                </div>
+              </div>
+              
+              <div>
+                <label className="label">
+                  <span className="label-text">Date Range</span>
+                </label>
+                <input
+                  type="date"
+                  className="input input-bordered w-full"
+                  value={dateFilter}
+                  onChange={(e) => {
+                    setDateFilter(e.target.value);
+                    if (e.target.value) {
+                      setCurrentDate(new Date(e.target.value));
+                    }
+                  }}
+                />
+              </div>
+              
+              <div>
+                <label className="label">
+                  <span className="label-text">Creator</span>
+                </label>
+                <select 
+                  className="select select-bordered w-full"
+                  value={creatorFilter}
+                  onChange={(e) => setCreatorFilter(e.target.value)}
+                >
+                  <option value="all">All Creators</option>
+                  {/* TODO: Populate with actual creators from data */}
+                  <option value="me">My Activities</option>
+                </select>
+              </div>
+              
+              <div>
+                <label className="label">
+                  <span className="label-text">Actions</span>
+                </label>
+                <div className="space-y-2">
+                  <button
+                    className="btn btn-ghost btn-sm w-full"
+                    onClick={() => {
+                      setSearchTerm("");
+                      setDateFilter("");
+                      setCreatorFilter("all");
+                      setFilters({ showEvents: true, showShifts: true, showToolRentals: true });
+                    }}
+                  >
+                    Clear Filters
+                  </button>
+                  <button
+                    className="btn btn-outline btn-sm w-full"
+                    onClick={goToToday}
+                  >
+                    Today
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
