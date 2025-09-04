@@ -245,7 +245,8 @@ export default defineSchema({
   .index("by_renterUserId", ["renterUserId"])
   .index("by_status", ["status"])
   .index("by_approvedBy", ["approvedBy"])
-  .index("by_rentalStartDate", ["rentalStartDate"]),
+  .index("by_rentalStartDate", ["rentalStartDate"])
+  .index("by_eventId", ["eventId"]),
 
   // Courses: Educational offerings
   courses: defineTable({

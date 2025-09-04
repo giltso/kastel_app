@@ -86,10 +86,20 @@ function DraggableEvent({ event, style, canEdit, onClick, className, setIsResizi
         </div>
       )}
       
-      <div className={`px-2 py-1 text-xs leading-tight font-medium ${canEdit ? 'cursor-move' : 'cursor-pointer'}`}>
-        {event.title}
-        {event.startDate !== event.endDate && (
-          <span className="ml-1 opacity-70">...</span>
+      <div className={`${
+        event.type === 'tool_rental' ? 'px-1 py-0.5 text-xs' : 'px-2 py-1 text-xs'
+      } leading-tight font-medium ${canEdit ? 'cursor-move' : 'cursor-pointer'}`}>
+        {event.type === 'tool_rental' ? (
+          <span className="flex items-center gap-1">
+            🔧 <span className="truncate">{event.toolRentalData?.toolName || event.title}</span>
+          </span>
+        ) : (
+          <>
+            {event.title}
+            {event.startDate !== event.endDate && (
+              <span className="ml-1 opacity-70">...</span>
+            )}
+          </>
         )}
       </div>
       
@@ -149,6 +159,13 @@ function CalendarPage() {
     assignedTo: Doc<"users"> | null;
     participants: Doc<"users">[];
   }) | null>(null);
+  
+  // Filtering state
+  const [filters, setFilters] = useState({
+    showEvents: true,
+    showShifts: true,
+    showToolRentals: true,
+  });
   
   // @dnd-kit state management
   const [activeEvent, setActiveEvent] = useState<any | null>(null);
@@ -444,9 +461,17 @@ function CalendarPage() {
 
   const getItemsForDate = (date: Date) => {
     const dateString = date.toISOString().split('T')[0]; // YYYY-MM-DD format
-    return calendarItems.filter(item => {
+    const allItems = calendarItems.filter(item => {
       // Check if item spans this date (start <= date <= end)
       return item.startDate <= dateString && item.endDate >= dateString;
+    });
+
+    // Apply filters
+    return allItems.filter(item => {
+      if (item.type === 'shift' && !filters.showShifts) return false;
+      if (item.type === 'tool_rental' && !filters.showToolRentals) return false;
+      if (item.type === 'event' && !filters.showEvents) return false;
+      return true;
     });
   };
 
@@ -573,14 +598,28 @@ function CalendarPage() {
 
   const handleItemClick = (item: any) => {
     if (item.type === 'shift') {
-      // For shifts, we'll handle assignment/viewing differently
-      // For now, just log - this will be enhanced with assignment modal
+      // For shifts, show shift details and availability
       console.log('Clicked shift:', item);
-      // TODO: Open shift assignment modal or navigate to shifts page
+      
+      if (effectiveRole === "worker") {
+        // Workers see shift switching options
+        alert(`Shift: ${item.title}\nWorkers: ${item.currentWorkers || 0}/${item.requiredWorkers || 0}\n\nShift switching options:\n- Request coverage from other workers\n- View available workers (TBD)\n- Check golden hour availability (TBD)`);
+      } else if (effectiveRole === "manager") {
+        // Managers see shift management options
+        alert(`Shift: ${item.title}\nStatus: ${item.status}\nWorkers: ${item.currentWorkers || 0}/${item.requiredWorkers || 0}\n\nManagement options:\n- Assign workers to this shift\n- View worker availability\n- Approve shift switches (TBD)`);
+      }
       return;
     }
     
-    // For events, only allow editing if user has permission
+    if (item.type === 'tool_rental') {
+      // For tool rentals, show tool rental details modal
+      console.log('Clicked tool rental:', item);
+      // TODO: Open tool rental modal with rental details, status, and management options
+      alert(`Tool Rental: ${item.toolRentalData?.toolName}\nStatus: ${item.toolRentalData?.status}\nDaily Rate: $${item.toolRentalData?.dailyRate}`);
+      return;
+    }
+    
+    // For regular events, only allow editing if user has permission
     if (canEditItem(item)) {
       // Close create modal if open before opening edit modal
       setIsCreateModalOpen(false);
@@ -616,7 +655,16 @@ function CalendarPage() {
       if (item.status === 'warning') return "bg-info/40 border-info/60";
       return "bg-neutral/40 border-neutral/60";
     }
-    // For events, use the regular status color
+    if (item.type === 'tool_rental') {
+      // Tool rental styling - compact accent colors based on status
+      if (item.toolRentalData?.status === 'pending') return "bg-warning/60 border-warning/80";
+      if (item.toolRentalData?.status === 'approved') return "bg-info/60 border-info/80";
+      if (item.toolRentalData?.status === 'active') return "bg-success/60 border-success/80";
+      if (item.toolRentalData?.status === 'returned') return "bg-accent/40 border-accent/60";
+      if (item.toolRentalData?.status === 'overdue') return "bg-error/60 border-error/80";
+      return "bg-accent/60 border-accent/80";
+    }
+    // For regular events, use the regular status color
     return getStatusColor(item.status);
   };
 
@@ -822,8 +870,8 @@ function CalendarPage() {
             // Categorize items for quick overview
             const shifts = dayItems.filter(item => item.type === 'shift');
             const courses = dayItems.filter(item => item.type === 'course'); // TODO: Add course integration
-            const tools = dayItems.filter(item => item.type === 'tool'); // TODO: Add tool rental integration
-            const events = dayItems.filter(item => !['shift', 'course', 'tool'].includes(item.type));
+            const tools = dayItems.filter(item => item.type === 'tool_rental');
+            const events = dayItems.filter(item => !['shift', 'course', 'tool_rental'].includes(item.type));
             
             // Calculate shift status for the day
             const shiftStatus = shifts.length > 0 
@@ -954,7 +1002,15 @@ function CalendarPage() {
                   <div className="badge badge-primary badge-sm">
                     {/* TODO: Count user's shifts this week */}5
                   </div>
-                  <button className="btn btn-sm btn-outline">Request Switch</button>
+                  <button 
+                    className="btn btn-sm btn-outline"
+                    onClick={() => {
+                      // TODO: Open shift switch modal
+                      alert("Shift switching will allow workers to find coverage for their shifts.\n\nComing features:\n- View available workers for each shift\n- Request specific workers to cover shifts\n- See shift requirements and current staffing\n- Golden hour availability (TBD)");
+                    }}
+                  >
+                    Request Switch
+                  </button>
                 </div>
               )}
             </div>
@@ -1522,6 +1578,30 @@ function CalendarPage() {
               onClick={navigateNext}
             >
               <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+
+        {/* Filter Controls */}
+        <div className="flex items-center justify-center mb-4">
+          <div className="join">
+            <button
+              className={`join-item btn btn-xs ${filters.showEvents ? 'btn-primary' : 'btn-outline'}`}
+              onClick={() => setFilters(prev => ({ ...prev, showEvents: !prev.showEvents }))}
+            >
+              📅 Events
+            </button>
+            <button
+              className={`join-item btn btn-xs ${filters.showShifts ? 'btn-secondary' : 'btn-outline'}`}
+              onClick={() => setFilters(prev => ({ ...prev, showShifts: !prev.showShifts }))}
+            >
+              👥 Shifts
+            </button>
+            <button
+              className={`join-item btn btn-xs ${filters.showToolRentals ? 'btn-accent' : 'btn-outline'}`}
+              onClick={() => setFilters(prev => ({ ...prev, showToolRentals: !prev.showToolRentals }))}
+            >
+              🔧 Tools
             </button>
           </div>
         </div>

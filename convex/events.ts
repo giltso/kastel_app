@@ -697,7 +697,7 @@ export const listCalendarItems = query({
         .collect();
     }
 
-    // Enrich events with user data (same as existing)
+    // Enrich events with user data and identify tool rental events
     const enrichedEvents = await Promise.all(
       events.map(async (event) => {
         const createdBy = await ctx.db.get(event.createdBy);
@@ -707,9 +707,30 @@ export const listCalendarItems = query({
           await Promise.all(event.participants.map((id: any) => ctx.db.get(id))) : 
           [];
 
+        // Check if this is a tool rental event by looking for linked rental
+        let toolRentalData = null;
+        const linkedRental = await ctx.db
+          .query("tool_rentals")
+          .withIndex("by_eventId", (q) => q.eq("eventId", event._id))
+          .first();
+        
+        if (linkedRental) {
+          const tool = await ctx.db.get(linkedRental.toolId);
+          toolRentalData = {
+            rentalId: linkedRental._id,
+            toolName: tool?.name || "Unknown Tool",
+            toolCategory: tool?.category,
+            renterUserId: linkedRental.renterUserId,
+            status: linkedRental.status,
+            dailyRate: linkedRental.dailyRate,
+            totalCost: linkedRental.totalCost,
+          };
+        }
+
         return {
           ...event,
-          type: 'event' as const,
+          type: toolRentalData ? 'tool_rental' as const : 'event' as const,
+          toolRentalData,
           createdBy,
           approvedBy,
           assignedTo,
