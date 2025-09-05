@@ -3,7 +3,7 @@ import { Authenticated, useMutation } from "convex/react";
 import { convexQuery } from "@convex-dev/react-query";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
-import { Calendar, ChevronLeft, ChevronRight, Filter, Plus, Target } from "lucide-react";
+import { Calendar, ChevronLeft, ChevronRight, Filter, Plus, Target, Search } from "lucide-react";
 import {
   DndContext,
   closestCenter,
@@ -17,7 +17,6 @@ import {
 } from '@dnd-kit/core';
 import {
   restrictToWindowEdges,
-  restrictToFirstScrollableAncestor,
 } from '@dnd-kit/modifiers';
 import { api } from "../../convex/_generated/api";
 import { CreateEventModal } from "@/components/CreateEventModal";
@@ -173,7 +172,7 @@ function CalendarPage() {
   // @dnd-kit state management
   const [activeEvent, setActiveEvent] = useState<any | null>(null);
   const [isResizing, setIsResizing] = useState<{event: any, type: 'start' | 'end'} | null>(null);
-  const [resizeStartPos, setResizeStartPos] = useState<{x: number, y: number} | null>(null);
+  const [, setResizeStartPos] = useState<{x: number, y: number} | null>(null);
   const [resizePreviewTime, setResizePreviewTime] = useState<string | null>(null);
   const [dragPreview, setDragPreview] = useState<{targetDate: Date, targetTime: string} | null>(null);
   const [resizePreviewDate, setResizePreviewDate] = useState<{targetDate: Date, type: 'start' | 'end'} | null>(null);
@@ -529,7 +528,7 @@ function CalendarPage() {
   };
 
   // Calculate concurrent items and their positioning
-  const getItemsWithPositioning = (items: any[], date: Date) => {
+  const getItemsWithPositioning = (items: any[]) => {
     if (!items.length) return [];
     
     // Group items by their start time to detect concurrency
@@ -621,7 +620,6 @@ function CalendarPage() {
     // Calculate total duration in minutes
     const startTotalMinutes = startHour * 60 + startMinute;
     const endTotalMinutes = endHour * 60 + endMinute;
-    const durationMinutes = endTotalMinutes - startTotalMinutes;
     
     // Calculate position relative to the current hour slot (48px height)
     const currentHourMinutes = currentHour * 60;
@@ -636,7 +634,7 @@ function CalendarPage() {
     }
     
     // Get positioned items for this date
-    const positionedItems = getItemsWithPositioning(allItems, date);
+    const positionedItems = getItemsWithPositioning(allItems);
     const positionedItem = positionedItems.find(pi => pi._id === item._id);
     
     if (!positionedItem) {
@@ -1133,7 +1131,7 @@ function CalendarPage() {
           {Array.from({ length: 19 }, (_, hourIndex) => {
             const hour = hourIndex + 5; // Start at 5 AM, end at 11 PM
             return (
-            <div key={hour} className="grid grid-cols-8 gap-2">
+              <div key={hour} className="grid grid-cols-8 gap-2">
               <div className="p-2 text-sm opacity-70 text-right flex flex-col items-end">
                 <div className="font-medium">
                   {hour < 12 ? `${hour} AM` : hour === 12 ? '12 PM' : `${hour - 12} PM`}
@@ -1254,7 +1252,7 @@ function CalendarPage() {
                   </DroppableTimeSlot>
                 );
               })}
-            </div>
+              </div>
             );
           })}
         </div>

@@ -62,7 +62,7 @@ function NavigationLinks({ onLinkClick }: { onLinkClick: () => void }) {
           }}
           onClick={onLinkClick}
         >
-          Calendar
+          LUZ
         </Link>
       )}
       {hasPermission("access_worker_portal") && (
@@ -187,7 +187,7 @@ function MobileNavigationLinks({ onLinkClick }: { onLinkClick: () => void }) {
             }}
             className="flex items-center p-2"
           >
-            Calendar
+            LUZ
           </Link>
         </li>
       )}

@@ -646,7 +646,7 @@ export const toggleProTag = mutation({
 
     // Update both old proTag field and new tags array for compatibility
     const currentTags = user.tags || [];
-    const newTags = args.proTag 
+    const newTags: ("manager" | "pro" | "instructor" | "lead" | "specialist")[] = args.proTag 
       ? currentTags.includes('pro') ? currentTags : [...currentTags, 'pro']
       : currentTags.filter(tag => tag !== 'pro');
 

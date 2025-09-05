@@ -78,7 +78,7 @@ function OperationalUserRedirect() {
     );
   }
   
-  // If user has worker portal access (worker, manager, dev), redirect to Calendar
+  // If user has worker portal access (worker, manager, dev), redirect to LUZ
   if (hasPermission("access_worker_portal")) {
     return <Navigate to="/calendar" replace />;
   }
