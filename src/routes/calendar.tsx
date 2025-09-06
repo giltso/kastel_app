@@ -23,6 +23,7 @@ import { CreateEventModal } from "@/components/CreateEventModal";
 import { EditEventModal } from "@/components/EditEventModal";
 import { ShiftAssignmentModal } from "@/components/ShiftAssignmentModal";
 import { ShiftSwitchModal } from "@/components/ShiftSwitchModal";
+import { ShiftModificationModal } from "@/components/ShiftModificationModal";
 import { usePermissions } from "@/hooks/usePermissions";
 import type { Doc } from "../../convex/_generated/dataModel";
 
@@ -51,7 +52,7 @@ function DraggableEvent({ event, style, canEdit, onClick, className, setIsResizi
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
     id: event._id,
     data: event,
-    disabled: !canEdit || event.type === 'shift', // Don't allow dragging shifts (for now)
+    disabled: !canEdit, // Allow dragging shifts for managers
   });
 
   const dragStyle = transform
@@ -267,6 +268,16 @@ function CalendarPage() {
   const [isSwitchModalOpen, setIsSwitchModalOpen] = useState(false);
   const [switchAssignmentData, setSwitchAssignmentData] = useState<any>(null);
   
+  // Shift modification modal state
+  const [isShiftModificationModalOpen, setIsShiftModificationModalOpen] = useState(false);
+  const [pendingShiftModification, setPendingShiftModification] = useState<{
+    shift: any;
+    newDate?: string;
+    newStartTime?: string;
+    newEndTime?: string;
+    modificationType: 'drag' | 'edit' | 'time_change';
+  } | null>(null);
+  
   // Filtering and search state
   const [searchTerm, setSearchTerm] = useState("");
   const [filters, setFilters] = useState({
@@ -288,6 +299,7 @@ function CalendarPage() {
   const { data: queryResult } = useSuspenseQuery(calendarQueryOptions);
   const calendarItems = queryResult?.calendarItems || [];
   const updateEvent = useMutation(api.events.updateEvent);
+  const createShiftReplacement = useMutation(api.events.createShiftReplacement);
   const today = new Date();
   const currentMonth = currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 
@@ -866,9 +878,34 @@ function CalendarPage() {
 
   const handleEventDrop = async (date: Date, hour?: number, draggedEvent?: any, customTime?: string) => {
     if (draggedEvent) {
+      const dateString = date.toISOString().split('T')[0];
+      const startTime = customTime || (hour !== undefined ? `${String(hour).padStart(2, '0')}:00` : draggedEvent.startTime);
+      
+      // Special handling for shift dragging - show confirmation modal
+      if (draggedEvent.type === 'shift') {
+        // Calculate duration and new end time
+        const [originalStartHour, originalStartMinute] = draggedEvent.startTime.split(':').map(Number);
+        const [originalEndHour, originalEndMinute] = draggedEvent.endTime.split(':').map(Number);
+        const durationMinutes = (originalEndHour * 60 + originalEndMinute) - (originalStartHour * 60 + originalStartMinute);
+        
+        const newStartMinutes = (hour !== undefined ? hour * 60 : originalStartHour * 60 + originalStartMinute);
+        const newEndMinutes = newStartMinutes + durationMinutes;
+        const newEndHour = Math.floor(newEndMinutes / 60);
+        const newEndMinute = newEndMinutes % 60;
+        const newEndTime = `${String(newEndHour).padStart(2, '0')}:${String(newEndMinute).padStart(2, '0')}`;
+        
+        setPendingShiftModification({
+          shift: draggedEvent,
+          newDate: dateString,
+          newStartTime: startTime,
+          newEndTime: newEndTime,
+          modificationType: 'drag'
+        });
+        setIsShiftModificationModalOpen(true);
+        return;
+      }
+      
       try {
-        const dateString = date.toISOString().split('T')[0];
-        const startTime = customTime || (hour !== undefined ? `${String(hour).padStart(2, '0')}:00` : draggedEvent.startTime);
         
         // Calculate duration of the original event
         const [originalStartHour, originalStartMinute] = draggedEvent.startTime.split(':').map(Number);
@@ -898,6 +935,29 @@ function CalendarPage() {
         console.error("Failed to move event:", error);
         alert("Failed to move event. Please try again.");
       }
+    }
+  };
+
+  const handleShiftModificationConfirm = async () => {
+    if (!pendingShiftModification) return;
+    
+    const { shift, newDate, newStartTime, newEndTime } = pendingShiftModification;
+    
+    try {
+      await createShiftReplacement({
+        parentShiftId: shift._id,
+        date: newDate!,
+        startTime: newStartTime,
+        endTime: newEndTime,
+        title: shift.title,
+        description: shift.description,
+        requiredWorkers: shift.requiredWorkers,
+        maxWorkers: shift.maxWorkers,
+      });
+    } catch (error) {
+      console.error("Failed to create shift exception:", error);
+      alert("Failed to create shift exception. Please try again.");
+      throw error; // Re-throw to prevent modal from closing
     }
   };
 
@@ -2120,6 +2180,20 @@ function CalendarPage() {
               currentUser={user}
             />
           )}
+
+          <ShiftModificationModal
+            isOpen={isShiftModificationModalOpen}
+            onClose={() => {
+              setIsShiftModificationModalOpen(false);
+              setPendingShiftModification(null);
+            }}
+            onConfirm={handleShiftModificationConfirm}
+            shift={pendingShiftModification?.shift}
+            modificationType={pendingShiftModification?.modificationType || 'drag'}
+            newDate={pendingShiftModification?.newDate}
+            newStartTime={pendingShiftModification?.newStartTime}
+            newEndTime={pendingShiftModification?.newEndTime}
+          />
         </div>
       )}
     </Authenticated>
