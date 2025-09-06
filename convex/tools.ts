@@ -353,3 +353,286 @@ export const updateRentalStatus = mutation({
     return { success: true };
   },
 });
+
+// Seed tools and tool rentals for testing (unauthenticated)
+export const seedToolRentals = mutation({
+  args: {},
+  handler: async (ctx) => {
+    console.log("🔧 Starting tool rental database seeding...");
+
+    // Get users or create some if none exist
+    let users = await ctx.db.query("users").collect();
+    
+    if (users.length === 0) {
+      // Create some basic users for testing
+      console.log("👥 No users found, creating test users...");
+      const testUsers = [
+        { name: "Manager Test", email: "manager@test.com", role: "manager" },
+        { name: "Worker Test", email: "worker@test.com", role: "worker" },  
+        { name: "Customer Test 1", email: "customer1@test.com", role: "customer" },
+        { name: "Customer Test 2", email: "customer2@test.com", role: "customer" },
+        { name: "Customer Test 3", email: "customer3@test.com", role: "customer" },
+      ];
+      
+      for (const userData of testUsers) {
+        const userId = await ctx.db.insert("users", {
+          clerkId: `seed_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          name: userData.name,
+          email: userData.email,
+          role: userData.role as "manager" | "worker" | "customer",
+        });
+        users.push({ 
+          _id: userId, 
+          _creationTime: Date.now(),
+          clerkId: `seed_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          ...userData 
+        } as any);
+      }
+      console.log(`✅ Created ${testUsers.length} test users`);
+    }
+
+    // Find a worker/manager to create tools
+    let toolCreator = users.find(u => u.role === "manager" || u.role === "worker");
+    if (!toolCreator) {
+      toolCreator = users[0]; // Fallback
+    }
+
+    // Tool data to create
+    const toolsData = [
+      // 5 paid tools ($20/day)
+      { name: "Circular Saw", category: "Power Tools", brand: "DeWalt", model: "DWE575", price: 20 },
+      { name: "Drill/Driver", category: "Power Tools", brand: "Milwaukee", model: "2804-20", price: 20 },
+      { name: "Angle Grinder", category: "Power Tools", brand: "Makita", model: "GA4530", price: 20 },
+      { name: "Impact Driver", category: "Power Tools", brand: "Ryobi", model: "P238", price: 20 },
+      { name: "Jigsaw", category: "Power Tools", brand: "Bosch", model: "JS470E", price: 20 },
+      
+      // 5 free tools
+      { name: "Hammer Set", category: "Hand Tools", brand: "Estwing", model: "E3-16C", price: 0 },
+      { name: "Screwdriver Set", category: "Hand Tools", brand: "Klein", model: "32500", price: 0 },
+      { name: "Level", category: "Hand Tools", brand: "Stanley", model: "42-468", price: 0 },
+      { name: "Measuring Tape", category: "Hand Tools", brand: "Stanley", model: "STHT33526", price: 0 },
+      { name: "Pliers Set", category: "Hand Tools", brand: "Irwin", model: "2078712", price: 0 },
+    ];
+
+    console.log("🛠️ Creating 10 tools...");
+    const createdTools = [];
+    
+    for (let i = 0; i < toolsData.length; i++) {
+      const tool = toolsData[i];
+      const toolId = await ctx.db.insert("tools", {
+        name: tool.name,
+        description: `Professional ${tool.name} - ${tool.brand} ${tool.model}`,
+        category: tool.category,
+        brand: tool.brand,
+        model: tool.model,
+        serialNumber: `SN${String(i + 1).padStart(3, '0')}`,
+        condition: "excellent",
+        rentalPricePerDay: tool.price,
+        isAvailable: true,
+        location: `Rack ${Math.floor(i / 5) + 1}`,
+        addedBy: toolCreator._id,
+        notes: `Added by seeding script`,
+      });
+      
+      createdTools.push({
+        _id: toolId,
+        name: tool.name,
+        category: tool.category,
+        rentalPricePerDay: tool.price,
+      });
+      
+      console.log(`  ✅ Created: ${tool.name} (${tool.price === 0 ? 'FREE' : '$' + tool.price + '/day'})`);
+    }
+
+    // Helper functions
+    const formatDate = (date: Date) => date.toISOString().split('T')[0];
+    const addDays = (date: Date, days: number) => {
+      const result = new Date(date);
+      result.setDate(result.getDate() + days);
+      return result;
+    };
+    const getRandomDateInNext2Weeks = () => {
+      const today = new Date();
+      const maxDate = new Date(today.getTime() + 14 * 24 * 60 * 60 * 1000);
+      const randomTime = today.getTime() + Math.random() * (maxDate.getTime() - today.getTime());
+      return new Date(randomTime);
+    };
+
+    // Get non-manager users for rentals
+    const renters = users.filter(u => u.role !== "manager").slice(0, 5);
+    if (renters.length === 0) {
+      renters.push(...users.slice(0, 3)); // Fallback
+    }
+
+    console.log("📅 Creating rental requests...");
+    const createdRentals = [];
+
+    // Create 15 long-term rentals (following specs)
+    
+    // 5 full day rentals
+    for (let i = 0; i < 5 && i < createdTools.length; i++) {
+      const tool = createdTools[i];
+      const renter = renters[i % renters.length];
+      const startDate = getRandomDateInNext2Weeks();
+      const endDate = addDays(startDate, 1);
+      
+      // Calculate cost
+      const rentalDays = 1;
+      const totalCost = rentalDays * tool.rentalPricePerDay;
+
+      const rentalId = await ctx.db.insert("tool_rentals", {
+        toolId: tool._id,
+        renterUserId: renter._id,
+        rentalStartDate: formatDate(startDate),
+        rentalEndDate: formatDate(endDate),
+        actualReturnDate: undefined,
+        dailyRate: tool.rentalPricePerDay,
+        totalCost,
+        status: "pending",
+        approvedBy: undefined,
+        createdBy: renter._id,
+        notes: "Full day rental - start of shift to end of shift",
+        eventId: undefined,
+      });
+      
+      createdRentals.push(rentalId);
+      console.log(`  ✅ Full day: ${tool.name} for ${renter.name} (${formatDate(startDate)})`);
+    }
+
+    // 3 week-long rentals  
+    for (let i = 5; i < 8 && i < createdTools.length; i++) {
+      const tool = createdTools[i];
+      const renter = renters[i % renters.length];
+      const startDate = getRandomDateInNext2Weeks();
+      const endDate = addDays(startDate, 7);
+      
+      const rentalDays = 7;
+      const totalCost = rentalDays * tool.rentalPricePerDay;
+
+      const rentalId = await ctx.db.insert("tool_rentals", {
+        toolId: tool._id,
+        renterUserId: renter._id,
+        rentalStartDate: formatDate(startDate),
+        rentalEndDate: formatDate(endDate),
+        actualReturnDate: undefined,
+        dailyRate: tool.rentalPricePerDay,
+        totalCost,
+        status: "pending",
+        approvedBy: undefined,
+        createdBy: renter._id,
+        notes: "Week-long rental - start of shift first day to end of shift last day",
+        eventId: undefined,
+      });
+      
+      createdRentals.push(rentalId);
+      console.log(`  ✅ Week-long: ${tool.name} for ${renter.name} (${formatDate(startDate)} - ${formatDate(endDate)})`);
+    }
+
+    // 7 few-days rentals (2-4 days)
+    for (let i = 8; i < 15; i++) {
+      const tool = createdTools[i % createdTools.length];
+      const renter = renters[i % renters.length];
+      const startDate = getRandomDateInNext2Weeks();
+      const daysToRent = Math.floor(Math.random() * 3) + 2; // 2-4 days
+      const endDate = addDays(startDate, daysToRent);
+      
+      const totalCost = daysToRent * tool.rentalPricePerDay;
+
+      const rentalId = await ctx.db.insert("tool_rentals", {
+        toolId: tool._id,
+        renterUserId: renter._id,
+        rentalStartDate: formatDate(startDate),
+        rentalEndDate: formatDate(endDate),
+        actualReturnDate: undefined,
+        dailyRate: tool.rentalPricePerDay,
+        totalCost,
+        status: "pending",
+        approvedBy: undefined,
+        createdBy: renter._id,
+        notes: `${daysToRent}-day rental - start of shift first day to end of shift last day`,
+        eventId: undefined,
+      });
+      
+      createdRentals.push(rentalId);
+      console.log(`  ✅ ${daysToRent}-day: ${tool.name} for ${renter.name} (${formatDate(startDate)} - ${formatDate(endDate)})`);
+    }
+
+    // Create 15 short-term rentals (< 1 day) - only free tools
+    console.log("⚡ Creating 15 short-term rentals...");
+    const freeTools = createdTools.filter(tool => tool.rentalPricePerDay === 0);
+    
+    for (let i = 0; i < 15; i++) {
+      const tool = freeTools[i % freeTools.length];
+      const renter = renters[i % renters.length];
+      const startDate = getRandomDateInNext2Weeks();
+      const endDate = startDate; // Same day
+      
+      let notes = "Short-term rental (< 1 day)";
+      // For 5 of them, specify end of day timing
+      if (i < 5) {
+        notes = i % 2 === 0 
+          ? "Short-term rental - Starts at end of day (17:00)" 
+          : "Short-term rental - Ends by end of day (17:00)";
+      }
+
+      const rentalId = await ctx.db.insert("tool_rentals", {
+        toolId: tool._id,
+        renterUserId: renter._id,
+        rentalStartDate: formatDate(startDate),
+        rentalEndDate: formatDate(endDate),
+        actualReturnDate: undefined,
+        dailyRate: 0, // Free
+        totalCost: 0,
+        status: "pending",
+        approvedBy: undefined,
+        createdBy: renter._id,
+        notes,
+        eventId: undefined,
+      });
+      
+      console.log(`  ✅ Short-term: ${tool.name} for ${renter.name} (${formatDate(startDate)}) - ${notes}`);
+    }
+
+    // Approve about 60% of rentals
+    console.log("✅ Approving some rental requests...");
+    const allRentals = await ctx.db.query("tool_rentals").collect();
+    const pendingRentals = allRentals.filter(r => r.status === "pending");
+    const rentalsToApprove = pendingRentals.slice(0, Math.floor(pendingRentals.length * 0.6));
+    
+    for (const rental of rentalsToApprove) {
+      await ctx.db.patch(rental._id, {
+        status: "approved",
+        approvedBy: toolCreator._id,
+        notes: (rental.notes || "") + "\nAuto-approved by seeding script",
+      });
+      console.log(`  ✅ Approved rental for tool ID: ${rental.toolId}`);
+    }
+
+    // Make some approved rentals active to show unavailable tools
+    console.log("🔄 Making some rentals active...");
+    const approvedRentals = await ctx.db.query("tool_rentals")
+      .filter((q) => q.eq(q.field("status"), "approved"))
+      .take(5);
+    
+    for (const rental of approvedRentals) {
+      await ctx.db.patch(rental._id, {
+        status: "active",
+        notes: (rental.notes || "") + "\nMade active by seeding script",
+      });
+      
+      // Make tool unavailable
+      await ctx.db.patch(rental.toolId, { isAvailable: false });
+      console.log(`  ✅ Made rental active for tool ID: ${rental.toolId} (now unavailable)`);
+    }
+
+    return {
+      success: true,
+      message: `Successfully seeded ${createdTools.length} tools and ${createdRentals.length + 15} rentals`,
+      tools: createdTools.length,
+      longTermRentals: createdRentals.length,
+      shortTermRentals: 15,
+      approvedRentals: rentalsToApprove.length,
+      activeRentals: approvedRentals.length,
+    };
+  },
+});

@@ -57,16 +57,16 @@ function OperationalView() {
 
   return (
     <div className="not-prose space-y-6">
-      <div className="flex flex-col lg:flex-row justify-between items-center gap-4">
+      <div className="flex flex-col lg:flex-row justify-center items-center gap-6">
         <button
           onClick={() => setIsAddCourseModalOpen(true)}
-          className="btn btn-primary"
+          className="btn btn-primary order-2 lg:order-1"
         >
           <Plus className="w-4 h-4" />
           Create Course
         </button>
         
-        <div className="stats shadow">
+        <div className="stats shadow order-1 lg:order-2">
           <div className="stat">
             <div className="stat-figure text-primary">
               <BookOpen className="w-8 h-8" />

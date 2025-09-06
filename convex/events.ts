@@ -814,3 +814,258 @@ export const listCalendarItems = query({
     };
   },
 });
+
+// Unified Shift Management Functions (using events system)
+
+// Create a shift (recurring or one-time) - managers only
+export const createShift = mutation({
+  args: {
+    title: v.string(),
+    description: v.optional(v.string()),
+    startTime: v.string(),
+    endTime: v.string(),
+    type: v.optional(v.union(v.literal("operational"), v.literal("maintenance"), v.literal("educational"))),
+    requiredWorkers: v.number(),
+    maxWorkers: v.optional(v.number()),
+    // Recurring settings
+    isRecurring: v.boolean(),
+    recurringDays: v.optional(v.array(v.union(
+      v.literal("monday"), v.literal("tuesday"), v.literal("wednesday"),
+      v.literal("thursday"), v.literal("friday"), v.literal("saturday"), v.literal("sunday")
+    ))),
+    // One-time shift settings  
+    specificDate: v.optional(v.string()), // For non-recurring shifts
+    // Replacement settings
+    parentShiftId: v.optional(v.id("events")), // If replacing a recurring shift instance
+    replacesDate: v.optional(v.string()), // Date this replaces
+  },
+  handler: async (ctx, args) => {
+    const user = await getCurrentUser(ctx);
+    const role = getEffectiveRole(user);
+
+    if (!hasManagerAccess(role)) {
+      throw new ConvexError("Only managers can create shifts");
+    }
+
+    // For recurring shifts, set start/end dates to a reasonable range
+    let startDate: string, endDate: string;
+    
+    if (args.isRecurring) {
+      // Recurring shifts: create for next 2 weeks by default
+      const today = new Date();
+      startDate = today.toISOString().split('T')[0];
+      const twoWeeksLater = new Date(today.getTime() + 14 * 24 * 60 * 60 * 1000);
+      endDate = twoWeeksLater.toISOString().split('T')[0];
+    } else {
+      // One-time shift: use specific date
+      if (!args.specificDate) {
+        throw new ConvexError("specificDate is required for non-recurring shifts");
+      }
+      startDate = args.specificDate;
+      endDate = args.specificDate;
+    }
+
+    const shiftData = {
+      title: args.title,
+      description: args.description,
+      startDate,
+      endDate,
+      startTime: args.startTime,
+      endTime: args.endTime,
+      type: "shift" as const,
+      status: "approved" as const, // Shifts are auto-approved when created by managers
+      isRecurring: args.isRecurring,
+      recurringType: args.isRecurring ? "weekly" as const : undefined,
+      recurringDays: args.recurringDays,
+      createdBy: user._id,
+      approvedBy: user._id,
+      assignedTo: undefined,
+      participants: undefined,
+      // Shift-specific fields
+      requiredWorkers: args.requiredWorkers,
+      maxWorkers: args.maxWorkers || args.requiredWorkers + 2,
+      parentShiftId: args.parentShiftId,
+      replacesDate: args.replacesDate,
+    };
+
+    const shiftId = await ctx.db.insert("events", shiftData);
+
+    return { success: true, shiftId };
+  },
+});
+
+// Assign worker to a shift instance
+export const assignWorkerToShift = mutation({
+  args: {
+    eventId: v.id("events"), // The shift event ID
+    workerId: v.id("users"),
+    date: v.string(), // Specific date for the assignment
+    notes: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const user = await getCurrentUser(ctx);
+    const role = getEffectiveRole(user);
+
+    // Check if shift exists and is a shift type
+    const shift = await ctx.db.get(args.eventId);
+    if (!shift) {
+      throw new ConvexError("Shift not found");
+    }
+    if (shift.type !== "shift") {
+      throw new ConvexError("Event is not a shift");
+    }
+
+    // Permission check: managers can assign anyone, workers can only assign themselves
+    if (role !== "manager" && args.workerId !== user._id) {
+      throw new ConvexError("You can only assign yourself to shifts");
+    }
+
+    // Check if worker is already assigned to this shift on this date
+    const existingAssignment = await ctx.db
+      .query("event_assignments")
+      .withIndex("by_eventId", (q) => q.eq("eventId", args.eventId))
+      .filter((q) => q.and(
+        q.eq(q.field("workerId"), args.workerId),
+        q.eq(q.field("date"), args.date)
+      ))
+      .first();
+
+    if (existingAssignment) {
+      throw new ConvexError("Worker is already assigned to this shift on this date");
+    }
+
+    // Check shift capacity
+    const currentAssignments = await ctx.db
+      .query("event_assignments")
+      .withIndex("by_eventId", (q) => q.eq("eventId", args.eventId))
+      .filter((q) => q.eq(q.field("date"), args.date))
+      .collect();
+
+    const maxWorkers = shift.maxWorkers || (shift.requiredWorkers || 1) + 2;
+    if (currentAssignments.length >= maxWorkers) {
+      throw new ConvexError("Shift is at maximum capacity");
+    }
+
+    const assignmentId = await ctx.db.insert("event_assignments", {
+      eventId: args.eventId,
+      workerId: args.workerId,
+      date: args.date,
+      assignmentType: role === "manager" ? "manager_assigned" : "self_signed",
+      assignedBy: user._id,
+      status: "assigned",
+      notes: args.notes,
+    });
+
+    return { success: true, assignmentId };
+  },
+});
+
+// Get shifts for calendar display with assignments
+export const getShiftsForCalendar = query({
+  args: {},
+  handler: async (ctx) => {
+    const user = await getCurrentUser(ctx);
+    const role = getEffectiveRole(user);
+
+    // Get all shift events
+    const shifts = await ctx.db
+      .query("events")
+      .withIndex("by_type", (q) => q.eq("type", "shift"))
+      .collect();
+
+    // Get assignments for these shifts
+    const shiftsWithAssignments = await Promise.all(
+      shifts.map(async (shift) => {
+        const assignments = await ctx.db
+          .query("event_assignments")
+          .withIndex("by_eventId", (q) => q.eq("eventId", shift._id))
+          .collect();
+
+        // Enrich assignments with worker data
+        const enrichedAssignments = await Promise.all(
+          assignments.map(async (assignment) => {
+            const worker = await ctx.db.get(assignment.workerId);
+            return {
+              ...assignment,
+              worker: worker ? { name: worker.name, email: worker.email } : null,
+            };
+          })
+        );
+
+        return {
+          ...shift,
+          assignments: enrichedAssignments,
+        };
+      })
+    );
+
+    return shiftsWithAssignments;
+  },
+});
+
+// Create a one-time shift replacement for a recurring shift
+export const createShiftReplacement = mutation({
+  args: {
+    parentShiftId: v.id("events"),
+    date: v.string(), // Date to replace
+    title: v.optional(v.string()),
+    description: v.optional(v.string()),
+    startTime: v.optional(v.string()),
+    endTime: v.optional(v.string()),
+    requiredWorkers: v.optional(v.number()),
+    maxWorkers: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const user = await getCurrentUser(ctx);
+    const role = getEffectiveRole(user);
+
+    if (!hasManagerAccess(role)) {
+      throw new ConvexError("Only managers can create shift replacements");
+    }
+
+    const parentShift = await ctx.db.get(args.parentShiftId);
+    if (!parentShift) {
+      throw new ConvexError("Parent shift not found");
+    }
+    if (parentShift.type !== "shift" || !parentShift.isRecurring) {
+      throw new ConvexError("Parent must be a recurring shift");
+    }
+
+    // Check if a replacement already exists for this date
+    const existingReplacement = await ctx.db
+      .query("events")
+      .withIndex("by_parentShiftId", (q) => q.eq("parentShiftId", args.parentShiftId))
+      .filter((q) => q.eq(q.field("replacesDate"), args.date))
+      .first();
+
+    if (existingReplacement) {
+      throw new ConvexError("A replacement shift already exists for this date");
+    }
+
+    const replacementData = {
+      title: args.title || `${parentShift.title} (Modified)`,
+      description: args.description || parentShift.description,
+      startDate: args.date,
+      endDate: args.date,
+      startTime: args.startTime || parentShift.startTime,
+      endTime: args.endTime || parentShift.endTime,
+      type: "shift" as const,
+      status: "approved" as const,
+      isRecurring: false,
+      recurringType: undefined,
+      recurringDays: undefined,
+      createdBy: user._id,
+      approvedBy: user._id,
+      assignedTo: undefined,
+      participants: undefined,
+      requiredWorkers: args.requiredWorkers || parentShift.requiredWorkers,
+      maxWorkers: args.maxWorkers || parentShift.maxWorkers,
+      parentShiftId: args.parentShiftId,
+      replacesDate: args.date,
+    };
+
+    const replacementId = await ctx.db.insert("events", replacementData);
+
+    return { success: true, replacementId };
+  },
+});

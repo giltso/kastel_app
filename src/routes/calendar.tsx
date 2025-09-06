@@ -77,6 +77,7 @@ function DraggableEvent({ event, style, canEdit, onClick, className, setIsResizi
           event.status === 'bad' ? 'border-error/60' :
           event.status === 'close' ? 'border-warning/60' :
           event.status === 'good' ? 'border-success/60' :
+          event.status === 'warning' ? 'border-warning/60' :
           'border-info/60'
         } rounded-lg overflow-hidden cursor-pointer`}
         title={`${event.title} (${event.startTime} - ${event.endTime}) - ${event.currentWorkers}/${event.requiredWorkers} workers`}
@@ -93,6 +94,7 @@ function DraggableEvent({ event, style, canEdit, onClick, className, setIsResizi
               event.status === 'bad' ? 'badge-error' :
               event.status === 'close' ? 'badge-warning' :
               event.status === 'good' ? 'badge-success' :
+              event.status === 'warning' ? 'badge-warning' :
               'badge-info'
             }`}>
               {event.currentWorkers}/{event.requiredWorkers}
@@ -819,7 +821,7 @@ function CalendarPage() {
       if (item.status === 'bad') return "bg-error/40 border-error/60";
       if (item.status === 'close') return "bg-warning/40 border-warning/60";
       if (item.status === 'good') return "bg-success/40 border-success/60";
-      if (item.status === 'warning') return "bg-info/40 border-info/60";
+      if (item.status === 'warning') return "bg-warning/40 border-warning/60";
       return "bg-neutral/40 border-neutral/60";
     }
     if (item.type === 'tool_rental') {
@@ -1025,9 +1027,9 @@ function CalendarPage() {
           </div>
         </div>
 
-        {/* Week headers with Sunday first */}
+        {/* Week headers with Monday first */}
         <div className="grid grid-cols-7 gap-2 mb-4">
-          {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
+          {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => (
             <div key={day} className="p-2 text-center font-medium opacity-70">
               {day}
             </div>
@@ -1052,6 +1054,7 @@ function CalendarPage() {
               ? shifts.some(s => s.status === 'bad') ? 'error'
               : shifts.some(s => s.status === 'close') ? 'warning' 
               : shifts.some(s => s.status === 'good') ? 'success'
+              : shifts.some(s => s.status === 'warning') ? 'warning'
               : 'info' : null;
           
             return (
@@ -1154,9 +1157,11 @@ function CalendarPage() {
   };
 
   const renderWeekView = () => {
-    // Get current week dates based on currentDate (Sunday-first consecutive week)
+    // Get current week dates based on currentDate (Monday-first consecutive week)
     const startOfWeek = new Date(currentDate);
-    startOfWeek.setDate(currentDate.getDate() - currentDate.getDay());
+    // Calculate days since Monday (getDay() returns 0=Sunday, 1=Monday, etc.)
+    const daysSinceMonday = (currentDate.getDay() + 6) % 7;
+    startOfWeek.setDate(currentDate.getDate() - daysSinceMonday);
     // Ensure we're at midnight to avoid timezone issues
     startOfWeek.setHours(0, 0, 0, 0);
     
@@ -1222,6 +1227,7 @@ function CalendarPage() {
                   ? dayShifts.some(s => s.status === 'bad') ? 'error'
                   : dayShifts.some(s => s.status === 'close') ? 'warning'
                   : dayShifts.some(s => s.status === 'good') ? 'success'
+                  : dayShifts.some(s => s.status === 'warning') ? 'warning'
                   : 'info' : 'neutral';
                 
                 return (
@@ -1229,7 +1235,7 @@ function CalendarPage() {
                     date.toDateString() === today.toDateString() ? 'ring-2 ring-primary' : ''
                   }`}>
                     <div className="font-medium opacity-70">
-                      {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][i]}
+                      {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][i]}
                     </div>
                     <div className={`text-sm font-bold ${date.toDateString() === today.toDateString() ? 'text-primary' : ''}`}>
                       {date.getDate()}
@@ -1258,7 +1264,7 @@ function CalendarPage() {
           {weekDates.map((date, i) => (
             <div key={i} className="p-2 text-center">
               <div className="font-medium opacity-70">
-                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][i]}
+                {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][i]}
               </div>
               <div className={`text-sm ${date.toDateString() === today.toDateString() ? 'font-bold text-primary' : ''}`}>
                 {date.getDate()}
@@ -1314,6 +1320,7 @@ function CalendarPage() {
                   ? shiftsInHour.some(s => s.status === 'bad') ? 'bg-error/10 border-error/30'
                   : shiftsInHour.some(s => s.status === 'close') ? 'bg-warning/10 border-warning/30'
                   : shiftsInHour.some(s => s.status === 'good') ? 'bg-success/10 border-success/30'
+                  : shiftsInHour.some(s => s.status === 'warning') ? 'bg-warning/10 border-warning/30'
                   : 'bg-info/10 border-info/30'
                   : 'bg-base-100 border-base-300';
 
@@ -1335,6 +1342,7 @@ function CalendarPage() {
                               shift.status === 'bad' ? 'bg-error' :
                               shift.status === 'close' ? 'bg-warning' :
                               shift.status === 'good' ? 'bg-success' :
+                              shift.status === 'warning' ? 'bg-warning' :
                               'bg-info'
                             }`}
                             style={{
@@ -1362,6 +1370,7 @@ function CalendarPage() {
                                   shift.status === 'bad' ? 'badge-error' :
                                   shift.status === 'close' ? 'badge-warning' :
                                   shift.status === 'good' ? 'badge-success' :
+                                  shift.status === 'warning' ? 'badge-warning' :
                                   'badge-info'
                                 }`}
                                 title={tooltipText}
@@ -1523,6 +1532,7 @@ function CalendarPage() {
                               shift.status === 'bad' ? 'badge-error' :
                               shift.status === 'close' ? 'badge-warning' :
                               shift.status === 'good' ? 'badge-success' :
+                              shift.status === 'warning' ? 'badge-warning' :
                               'badge-info'
                             }`}>
                               {shift.currentWorkers || 0}/{shift.requiredWorkers || 0}
@@ -1641,6 +1651,7 @@ function CalendarPage() {
                                       item.status === 'bad' ? 'badge-error' :
                                       item.status === 'close' ? 'badge-warning' :
                                       item.status === 'good' ? 'badge-success' :
+                                      item.status === 'warning' ? 'badge-warning' :
                                       'badge-info'
                                     }`}>
                                       {item.currentWorkers}/{item.requiredWorkers}
@@ -1654,6 +1665,7 @@ function CalendarPage() {
                                     item.status === 'bad' ? 'badge-error' :
                                     item.status === 'close' ? 'badge-warning' :
                                     item.status === 'good' ? 'badge-success' :
+                                    item.status === 'warning' ? 'badge-warning' :
                                     'badge-info'
                                   }`}>
                                     {item.status}
@@ -1801,62 +1813,6 @@ function CalendarPage() {
           <p className="opacity-80">Operational Schedule & Resource Management</p>
         </div>
 
-        {/* Calendar Navigation */}
-        <div className="grid grid-cols-3 items-center mb-2 gap-4">
-          {/* View Toggle - Left */}
-          <div className="not-prose justify-self-start">
-            <div className="join">
-              <button 
-                className={`join-item btn btn-sm ${viewType === "day" ? "btn-active" : "btn-ghost"}`}
-                onClick={() => setViewType("day")}
-              >
-                Day
-              </button>
-              <button 
-                className={`join-item btn btn-sm ${viewType === "week" ? "btn-active" : "btn-ghost"}`}
-                onClick={() => setViewType("week")}
-              >
-                Week
-              </button>
-              <button 
-                className={`join-item btn btn-sm ${viewType === "month" ? "btn-active" : "btn-ghost"}`}
-                onClick={() => setViewType("month")}
-              >
-                Month
-              </button>
-            </div>
-          </div>
-          
-          {/* Title - Center */}
-          <div className="justify-self-center">
-            <h2 className="text-2xl font-bold text-center leading-tight">{currentMonth}</h2>
-          </div>
-          
-          {/* Navigation - Right */}
-          <div className="not-prose flex gap-2 items-center justify-self-end">
-            <button 
-              className="btn btn-sm btn-ghost"
-              onClick={navigatePrevious}
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-            <button 
-              className="btn btn-sm btn-ghost"
-              onClick={goToToday}
-              title="Go to today"
-            >
-              <Target className="w-4 h-4" />
-              Today
-            </button>
-            <button 
-              className="btn btn-sm btn-ghost"
-              onClick={navigateNext}
-            >
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-
         {/* Advanced Filter & Search Controls */}
         <div className="card bg-base-200 shadow-sm mb-4">
           <div className="card-body">
@@ -1975,6 +1931,63 @@ function CalendarPage() {
             </div>
           </div>
         </div>
+
+        {/* Calendar Navigation */}
+        <div className="grid grid-cols-3 items-center mb-2 gap-4">
+          {/* View Toggle - Left */}
+          <div className="not-prose justify-self-start">
+            <div className="join">
+              <button 
+                className={`join-item btn btn-lg ${viewType === "day" ? "btn-active" : "btn-outline"}`}
+                onClick={() => setViewType("day")}
+              >
+                Day
+              </button>
+              <button 
+                className={`join-item btn btn-lg ${viewType === "week" ? "btn-active" : "btn-outline"}`}
+                onClick={() => setViewType("week")}
+              >
+                Week
+              </button>
+              <button 
+                className={`join-item btn btn-lg ${viewType === "month" ? "btn-active" : "btn-outline"}`}
+                onClick={() => setViewType("month")}
+              >
+                Month
+              </button>
+            </div>
+          </div>
+          
+          {/* Title - Center */}
+          <div className="justify-self-center">
+            <h2 className="text-2xl font-bold text-center leading-tight">{currentMonth}</h2>
+          </div>
+          
+          {/* Navigation - Right */}
+          <div className="not-prose flex gap-2 items-center justify-self-end">
+            <button 
+              className="btn btn-lg btn-outline"
+              onClick={navigatePrevious}
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+            <button 
+              className="btn btn-lg btn-primary"
+              onClick={goToToday}
+              title="Go to today"
+            >
+              <Target className="w-5 h-5" />
+              Today
+            </button>
+            <button 
+              className="btn btn-lg btn-outline"
+              onClick={navigateNext}
+            >
+              <ChevronRight className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+
 
         <DndContext
           sensors={sensors}

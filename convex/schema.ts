@@ -115,7 +115,7 @@ export default defineSchema({
     startTime_legacy: v.optional(v.number()),
     endTime_legacy: v.optional(v.number()),
     // Event properties
-    type: v.union(v.literal("work"), v.literal("meeting"), v.literal("maintenance"), v.literal("team"), v.literal("educational")),
+    type: v.union(v.literal("work"), v.literal("meeting"), v.literal("maintenance"), v.literal("team"), v.literal("educational"), v.literal("shift")),
     status: v.union(v.literal("pending_approval"), v.literal("approved"), v.literal("in_progress"), v.literal("completed"), v.literal("cancelled")),
     // Repetition settings
     isRecurring: v.boolean(),
@@ -134,12 +134,21 @@ export default defineSchema({
     approvedBy: v.optional(v.id("users")), // Manager who approved
     assignedTo: v.optional(v.id("users")),
     participants: v.optional(v.array(v.id("users"))), // Event participants (default includes creator)
+    
+    // Shift-specific fields (only used when type === "shift")
+    requiredWorkers: v.optional(v.number()), // Target number of workers for shifts
+    maxWorkers: v.optional(v.number()), // Maximum workers allowed for shifts
+    parentShiftId: v.optional(v.id("events")), // If this is a one-time replacement for a recurring shift
+    replacesDate: v.optional(v.string()), // ISO date this replaces in the recurring pattern
   })
   .index("by_createdBy", ["createdBy"])
   .index("by_approvedBy", ["approvedBy"])
   .index("by_assignedTo", ["assignedTo"])
   .index("by_startDate", ["startDate"])
-  .index("by_status", ["status"]),
+  .index("by_status", ["status"])
+  .index("by_type", ["type"])
+  .index("by_parentShiftId", ["parentShiftId"])
+  .index("by_replacesDate", ["replacesDate"]),
 
   // Tickets: Problem resolution system  
   tickets: defineTable({
@@ -342,7 +351,34 @@ export default defineSchema({
   .index("by_createdBy", ["createdBy"])
   .index("by_isActive", ["isActive"]),
 
-  // Shift Assignments: Who is assigned to specific shift instances
+  // Event Assignments: Who is assigned to specific event/shift instances (unified system)
+  event_assignments: defineTable({
+    eventId: v.id("events"), // References either a recurring event or specific event instance
+    workerId: v.id("users"),
+    date: v.string(), // ISO date string (YYYY-MM-DD) for the specific day
+    // Assignment method
+    assignmentType: v.union(
+      v.literal("manager_assigned"), // Assigned by manager
+      v.literal("self_signed") // Worker signed themselves up
+    ),
+    assignedBy: v.id("users"), // Manager who assigned or worker who self-assigned
+    // Status
+    status: v.union(
+      v.literal("assigned"), 
+      v.literal("confirmed"), 
+      v.literal("completed"),
+      v.literal("no_show"),
+      v.literal("cancelled")
+    ),
+    // Optional notes
+    notes: v.optional(v.string()),
+  })
+  .index("by_eventId", ["eventId"])
+  .index("by_workerId", ["workerId"])
+  .index("by_date", ["date"])
+  .index("by_status", ["status"])
+  
+  // Legacy: Keep shift_assignments for backward compatibility during transition
   shift_assignments: defineTable({
     shiftId: v.id("shifts"),
     workerId: v.id("users"),

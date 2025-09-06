@@ -52,6 +52,48 @@ This application includes a comprehensive role-based event management system wit
 - When feature complete and user approves or asks to push perform a squash: run `pnpm run lint` first, check where the remote is with `git log origin/main..HEAD --oneline` to see unpushed commits, then find the first commit for the session/feature, then `git reset --soft [starting-commit]` then commit with `"feat: [complete feature description]"`
 - Before major feature work: Tell user "Starting [feature], will make frequent commits as checkpoints then squash when complete"
 
+## Session Workflow
+
+This project follows a structured multi-session development approach with emphasis on documentation maintenance and systematic task management.
+
+### Session Start Protocol
+1. **Always read these design files at session start**:
+   - `design/PROJECT_OVERVIEW.md` - Read always, update after major changes
+   - `design/session_history.md` - Read last 2 sessions for context, update current session when complete
+   - Feature-specific docs (e.g., `design/SHIFTS_IMPLEMENTATION.md`) - Read all if working on that feature
+
+2. **If approaching 5-hour limit**: Update documentation before doing anything else, add current todo list to PROJECT_OVERVIEW.md
+
+### Task Management Workflow
+For major tasks, follow this systematic approach:
+
+1. **Plan Phase**:
+   - Read task requirements, create TodoWrite list
+   - Write implementation plan in terminal
+   - Ask clarifying questions if needed
+   - Update relevant feature documentation (create new doc if needed using SHIFTS_IMPLEMENTATION template)
+   - Update TodoWrite with refined tasks
+
+2. **Implementation Phase**:
+   - Execute tasks systematically
+   - Use TodoWrite to track progress in real-time
+   - Commit after each significant step (following Git Workflow above)
+
+3. **Completion Phase**:
+   - Report completion status in terminal, focusing on problems and unfinished tasks
+   - Update feature documentation with changes made
+   - Update PROJECT_OVERVIEW.md implementation status
+   - Mark TodoWrite tasks as completed
+
+### Documentation Standards
+- **PROJECT_OVERVIEW.md**: Central project state, update after major feature completion
+- **session_history.md**: Historical context, update at end of each session with achievements and issues
+- **Feature docs**: Detailed implementation notes, update during development
+- **CLAUDE.md**: Technical guidelines (this file), update when adding new patterns or practices
+
+### New Feature Documentation
+When creating feature-specific documentation, use `design/SHIFTS_IMPLEMENTATION.md` as template structure.
+
 ## Testing & Validation
 
 - Always follow these steps before squashing or pushing
