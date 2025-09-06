@@ -3,7 +3,7 @@ import { Authenticated, useMutation } from "convex/react";
 import { convexQuery } from "@convex-dev/react-query";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { Hammer, Plus, Edit, Trash2, Calendar, User, Clock, DollarSign, Package } from "lucide-react";
+import { Hammer, Plus, Edit, Trash2, Calendar, User, Clock, DollarSign, Package, History, Search } from "lucide-react";
 import { api } from "../../convex/_generated/api";
 import { usePermissions } from "@/hooks/usePermissions";
 
@@ -71,6 +71,7 @@ function OperationalView() {
   const { data: tools } = useSuspenseQuery(toolsQueryOptions);
   const { data: rentals } = useSuspenseQuery(toolRentalsQueryOptions);
   const [showAddTool, setShowAddTool] = useState(false);
+  const [showRentalHistory, setShowRentalHistory] = useState(false);
   const [activeTab, setActiveTab] = useState<"inventory" | "rentals">("inventory");
 
   return (
@@ -83,6 +84,13 @@ function OperationalView() {
         >
           <Plus className="w-4 h-4" />
           Add Tool
+        </button>
+        <button
+          onClick={() => setShowRentalHistory(true)}
+          className="btn btn-outline"
+        >
+          <History className="w-4 h-4" />
+          Rental History
         </button>
       </div>
 
@@ -112,6 +120,10 @@ function OperationalView() {
 
       {showAddTool && (
         <AddToolModal onClose={() => setShowAddTool(false)} />
+      )}
+
+      {showRentalHistory && (
+        <RentalHistoryModal onClose={() => setShowRentalHistory(false)} />
       )}
     </div>
   );
@@ -744,6 +756,162 @@ function RentalRequestModal({
             </button>
           </div>
         </form>
+      </div>
+    </dialog>
+  );
+}
+
+function RentalHistoryModal({ onClose }: { onClose: () => void }) {
+  const [toolFilter, setToolFilter] = useState("");
+  const [renterFilter, setRenterFilter] = useState("");
+
+  // Create query options with filters
+  const historyQueryOptions = convexQuery(
+    api.tools.listRentalHistory, 
+    {
+      toolFilter: toolFilter || undefined,
+      renterFilter: renterFilter || undefined,
+    }
+  );
+  const { data: history } = useSuspenseQuery(historyQueryOptions);
+
+  const formatDateRange = (startDate: string, endDate: string, returnedAt?: number) => {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const formatOptions: Intl.DateTimeFormatOptions = { 
+      month: 'short', 
+      day: 'numeric', 
+      year: start.getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined 
+    };
+    
+    let dateRange = `${start.toLocaleDateString('en-US', formatOptions)} to ${end.toLocaleDateString('en-US', formatOptions)}`;
+    
+    if (returnedAt) {
+      const returned = new Date(returnedAt);
+      dateRange += `\nReturned: ${returned.toLocaleDateString('en-US', formatOptions)}`;
+    }
+    
+    return dateRange;
+  };
+
+  return (
+    <dialog className="modal modal-open">
+      <div className="modal-box max-w-6xl">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="font-bold text-lg flex items-center gap-2">
+            <History className="w-5 h-5" />
+            Rental History
+          </h3>
+          <button onClick={onClose} className="btn btn-sm btn-circle btn-ghost">
+            ✕
+          </button>
+        </div>
+
+        {/* Search and Filter Controls */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          <div className="form-control">
+            <label className="label">
+              <span className="label-text">Search by Tool</span>
+            </label>
+            <div className="input-group">
+              <span className="bg-base-200 px-3 flex items-center">
+                <Search className="w-4 h-4" />
+              </span>
+              <input
+                type="text"
+                placeholder="Tool name..."
+                className="input input-bordered flex-1"
+                value={toolFilter}
+                onChange={(e) => setToolFilter(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="form-control">
+            <label className="label">
+              <span className="label-text">Search by Renter</span>
+            </label>
+            <div className="input-group">
+              <span className="bg-base-200 px-3 flex items-center">
+                <User className="w-4 h-4" />
+              </span>
+              <input
+                type="text"
+                placeholder="Renter name or email..."
+                className="input input-bordered flex-1"
+                value={renterFilter}
+                onChange={(e) => setRenterFilter(e.target.value)}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Results Summary */}
+        <div className="mb-4 text-sm text-base-content/70">
+          Showing {history.length} rental{history.length !== 1 ? 's' : ''}
+          {(toolFilter || renterFilter) && ' (filtered)'}
+        </div>
+
+        {/* History Table */}
+        <div className="overflow-x-auto max-h-96">
+          <table className="table table-sm">
+            <thead>
+              <tr>
+                <th>Tool</th>
+                <th>Renter</th>
+                <th>Rental Period</th>
+                <th>Total Cost</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {history.map((rental) => (
+                <tr key={rental._id} className="hover">
+                  <td>
+                    <div>
+                      <div className="font-medium">{rental.tool?.name || 'Unknown Tool'}</div>
+                      <div className="text-xs text-base-content/60">{rental.tool?.category}</div>
+                    </div>
+                  </td>
+                  <td>
+                    <div>
+                      <div className="font-medium">{rental.renterUser?.name || 'Unknown User'}</div>
+                      <div className="text-xs text-base-content/60">{rental.renterUser?.email}</div>
+                    </div>
+                  </td>
+                  <td>
+                    <div className="text-xs whitespace-pre-line">
+                      {formatDateRange(rental.rentalStartDate, rental.rentalEndDate, rental.returnedAt)}
+                    </div>
+                  </td>
+                  <td>
+                    <span className="font-mono">${rental.totalCost?.toFixed(2) || '0.00'}</span>
+                  </td>
+                  <td>
+                    <span className={`badge badge-sm ${getStatusBadgeColor(rental.status)}`}>
+                      {rental.status}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {history.length === 0 && (
+          <div className="text-center py-8 text-base-content/60">
+            {toolFilter || renterFilter ? 
+              'No rentals match your search criteria.' : 
+              'No rental history found.'
+            }
+          </div>
+        )}
+
+        <div className="modal-action">
+          <button onClick={onClose} className="btn">
+            Close
+          </button>
+        </div>
       </div>
     </dialog>
   );

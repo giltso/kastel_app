@@ -215,12 +215,13 @@ export const listToolRentals = query({
     const role = getEffectiveRole(user);
 
     if (hasOperationalAccess(role)) {
-      // Workers/managers see all rentals
+      // Workers/managers see all rentals EXCEPT returned ones
       const rentals = await ctx.db.query("tool_rentals").collect();
+      const activeRentals = rentals.filter(rental => rental.status !== "returned");
       
       // Enrich with tool and user data
       const enrichedRentals = await Promise.all(
-        rentals.map(async (rental) => {
+        activeRentals.map(async (rental) => {
           const tool = await ctx.db.get(rental.toolId);
           const renterUser = await ctx.db.get(rental.renterUserId);
           const approvedByUser = rental.approvedBy ? await ctx.db.get(rental.approvedBy) : null;
@@ -236,15 +237,17 @@ export const listToolRentals = query({
       
       return enrichedRentals;
     } else {
-      // Customers see only their own rentals
+      // Customers see only their own rentals (excluding returned)
       const rentals = await ctx.db
         .query("tool_rentals")
         .withIndex("by_renterUserId", (q: any) => q.eq("renterUserId", user._id))
         .collect();
+      
+      const activeRentals = rentals.filter(rental => rental.status !== "returned");
 
       // Enrich with tool data only
       const enrichedRentals = await Promise.all(
-        rentals.map(async (rental) => {
+        activeRentals.map(async (rental) => {
           const tool = await ctx.db.get(rental.toolId);
           
           return {
@@ -256,6 +259,63 @@ export const listToolRentals = query({
       
       return enrichedRentals;
     }
+  },
+});
+
+// Rental history query for workers (includes returned rentals)
+export const listRentalHistory = query({
+  args: {
+    toolFilter: v.optional(v.string()), // Tool name filter
+    renterFilter: v.optional(v.string()), // Renter name filter
+  },
+  handler: async (ctx, args) => {
+    const user = await getCurrentUser(ctx);
+    const role = getEffectiveRole(user);
+
+    // Only workers and managers can access rental history
+    if (!hasOperationalAccess(role)) {
+      throw new ConvexError("Only workers and managers can access rental history");
+    }
+
+    // Get all rentals
+    const rentals = await ctx.db.query("tool_rentals").collect();
+    
+    // Enrich with tool and user data
+    const enrichedRentals = await Promise.all(
+      rentals.map(async (rental) => {
+        const tool = await ctx.db.get(rental.toolId);
+        const renterUser = await ctx.db.get(rental.renterUserId);
+        const approvedByUser = rental.approvedBy ? await ctx.db.get(rental.approvedBy) : null;
+        
+        return {
+          ...rental,
+          tool: tool ? { name: tool.name, category: tool.category } : null,
+          renterUser: renterUser ? { name: renterUser.name, email: renterUser.email } : null,
+          approvedByUser: approvedByUser ? { name: approvedByUser.name } : null,
+        };
+      })
+    );
+    
+    // Apply filters
+    let filteredRentals = enrichedRentals;
+    
+    if (args.toolFilter && args.toolFilter.trim()) {
+      const toolFilter = args.toolFilter.trim().toLowerCase();
+      filteredRentals = filteredRentals.filter(rental => 
+        rental.tool?.name.toLowerCase().includes(toolFilter)
+      );
+    }
+    
+    if (args.renterFilter && args.renterFilter.trim()) {
+      const renterFilter = args.renterFilter.trim().toLowerCase();
+      filteredRentals = filteredRentals.filter(rental => 
+        rental.renterUser?.name.toLowerCase().includes(renterFilter) ||
+        (rental.renterUser?.email && rental.renterUser.email.toLowerCase().includes(renterFilter))
+      );
+    }
+    
+    // Sort by creation time (most recent first)
+    return filteredRentals.sort((a, b) => b._creationTime - a._creationTime);
   },
 });
 
