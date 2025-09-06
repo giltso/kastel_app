@@ -31,25 +31,49 @@ interface ShiftCardProps {
   };
   canManage: boolean;
   canSelfAssign: boolean;
+  isUserAssigned?: boolean;
+  userAssignmentId?: Id<"shift_assignments">;
+  onSelfAssign?: (shiftId: Id<"shifts">) => void;
+  onSelfUnassign?: (assignmentId: Id<"shift_assignments">) => void;
   onAssignWorker?: (shiftId: Id<"shifts">) => void;
 }
 
-export function ShiftCard({ shift, canManage, canSelfAssign, onAssignWorker }: ShiftCardProps) {
+export function ShiftCard({ 
+  shift, 
+  canManage, 
+  canSelfAssign, 
+  isUserAssigned, 
+  userAssignmentId, 
+  onSelfAssign, 
+  onSelfUnassign, 
+  onAssignWorker 
+}: ShiftCardProps) {
   const [isAssigning, setIsAssigning] = useState(false);
   const assignWorkerToShift = useMutation(api.shifts.assignWorkerToShift);
 
   const handleSelfAssign = async () => {
     setIsAssigning(true);
     try {
-      const today = new Date().toISOString().split('T')[0];
-      // We'll need the current user ID - this should come from the parent component
-      // For now, we'll trigger the parent's assign handler
-      if (onAssignWorker) {
-        onAssignWorker(shift._id);
+      if (onSelfAssign) {
+        onSelfAssign(shift._id);
       }
     } catch (error) {
       console.error("Failed to assign to shift:", error);
       alert("Failed to join shift. Please try again.");
+    } finally {
+      setIsAssigning(false);
+    }
+  };
+
+  const handleSelfUnassign = async () => {
+    if (!userAssignmentId || !onSelfUnassign) return;
+    
+    setIsAssigning(true);
+    try {
+      onSelfUnassign(userAssignmentId);
+    } catch (error) {
+      console.error("Failed to leave shift:", error);
+      alert("Failed to leave shift. Please try again.");
     } finally {
       setIsAssigning(false);
     }
@@ -166,21 +190,44 @@ export function ShiftCard({ shift, canManage, canSelfAssign, onAssignWorker }: S
 
         {/* Actions */}
         <div className="card-actions justify-end mt-4">
-          {canSelfAssign && shift.status !== "good" && shift.spotsAvailable > 0 && (
-            <button
-              onClick={handleSelfAssign}
-              disabled={isAssigning}
-              className="btn btn-sm btn-primary"
-            >
-              {isAssigning ? (
-                <span className="loading loading-spinner loading-xs"></span>
+          {canSelfAssign && (
+            <>
+              {isUserAssigned ? (
+                // Show unassign button if user is already assigned
+                <button
+                  onClick={handleSelfUnassign}
+                  disabled={isAssigning}
+                  className="btn btn-sm btn-warning"
+                >
+                  {isAssigning ? (
+                    <span className="loading loading-spinner loading-xs"></span>
+                  ) : (
+                    <>
+                      <UserPlus className="w-4 h-4 rotate-45" />
+                      Leave Shift
+                    </>
+                  )}
+                </button>
               ) : (
-                <>
-                  <UserPlus className="w-4 h-4" />
-                  Join Shift
-                </>
+                // Show join button if user is not assigned and there are spots available
+                shift.spotsAvailable > 0 && (
+                  <button
+                    onClick={handleSelfAssign}
+                    disabled={isAssigning}
+                    className="btn btn-sm btn-primary"
+                  >
+                    {isAssigning ? (
+                      <span className="loading loading-spinner loading-xs"></span>
+                    ) : (
+                      <>
+                        <UserPlus className="w-4 h-4" />
+                        Join Shift
+                      </>
+                    )}
+                  </button>
+                )
               )}
-            </button>
+            </>
           )}
           
           {canManage && (

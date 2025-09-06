@@ -456,3 +456,39 @@ export const getMySwapRequests = query({
     return swapsWithDetails;
   },
 });
+
+// Unassign worker from shift (self or manager action)
+export const unassignWorkerFromShift = mutation({
+  args: {
+    assignmentId: v.id("shift_assignments"),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new ConvexError("Not authenticated");
+
+    const currentUser = await ctx.db
+      .query("users")
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+
+    if (!currentUser) throw new ConvexError("User not found");
+
+    const assignment = await ctx.db.get(args.assignmentId);
+    if (!assignment) throw new ConvexError("Assignment not found");
+
+    const effectiveRole = currentUser.emulatingRole || currentUser.role;
+    const isSelfUnassignment = assignment.workerId === currentUser._id;
+    const isManagerAction = ["manager", "dev"].includes(effectiveRole || "");
+
+    if (!isSelfUnassignment && !isManagerAction) {
+      throw new ConvexError("You can only unassign yourself or be a manager to unassign others");
+    }
+
+    // Update assignment status to cancelled instead of deleting
+    await ctx.db.patch(args.assignmentId, {
+      status: "cancelled",
+    });
+
+    return { success: true };
+  },
+});

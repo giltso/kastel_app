@@ -33,6 +33,7 @@ function ShiftsPage() {
   const swapRequests = useQuery(api.shifts.getMySwapRequests);
   
   const assignWorkerToShift = useMutation(api.shifts.assignWorkerToShift);
+  const unassignWorkerFromShift = useMutation(api.shifts.unassignWorkerFromShift);
 
   const handleSelfAssign = async (shiftId: Id<"shifts">) => {
     if (!user) return;
@@ -49,6 +50,19 @@ function ShiftsPage() {
         alert(`Failed to join shift: ${error.message}`);
       } else {
         alert("Failed to join shift. Please try again.");
+      }
+    }
+  };
+
+  const handleSelfUnassign = async (assignmentId: Id<"shift_assignments">) => {
+    try {
+      await unassignWorkerFromShift({ assignmentId });
+    } catch (error) {
+      console.error("Failed to leave shift:", error);
+      if (error instanceof Error) {
+        alert(`Failed to leave shift: ${error.message}`);
+      } else {
+        alert("Failed to leave shift. Please try again.");
       }
     }
   };
@@ -220,12 +234,23 @@ function ShiftsPage() {
                 
                 if (!runsOnSelectedDay) return null;
 
+                // Check if current user is already assigned to this shift on selected date
+                const userAssignment = shiftAssignments?.find(assignment => 
+                  assignment.shiftId === shift._id && 
+                  assignment.workerId === user?._id &&
+                  assignment.status !== "cancelled"
+                );
+
                 return (
                   <ShiftCard
                     key={shift._id}
                     shift={shift}
                     canManage={canManageShifts}
                     canSelfAssign={isOperational && effectiveRole !== "manager"} // Workers can self-assign
+                    isUserAssigned={!!userAssignment}
+                    userAssignmentId={userAssignment?._id}
+                    onSelfAssign={handleSelfAssign}
+                    onSelfUnassign={handleSelfUnassign}
                     onAssignWorker={handleAssignWorker}
                   />
                 );
