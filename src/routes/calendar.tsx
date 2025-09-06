@@ -70,18 +70,35 @@ function DraggableEvent({ event, style, canEdit, onClick, className, setIsResizi
 
   // Special rendering for shifts with nested events
   if (event.type === 'shift') {
+    const {
+      isOver,
+      setNodeRef: setDropNodeRef,
+    } = useDroppable({
+      id: `shift-${event._id}`,
+      data: { 
+        type: 'shift',
+        shift: event,
+        date: event.startDate || new Date().toISOString().split('T')[0]
+      },
+    });
+
     return (
       <div
-        ref={setNodeRef}
+        ref={(node) => {
+          setNodeRef(node);
+          setDropNodeRef(node);
+        }}
         style={{ ...style, ...dragStyle }}
         className={`${className} relative transition-all duration-200 shadow-lg hover:shadow-xl
           border-2 border-solid ${
+          isOver && !isCurrentlyResizing ? 'border-primary/90 shadow-primary/40 scale-[1.02]' : // Highlight when event is dragged over
           event.status === 'bad' ? 'border-error/70 shadow-error/20' :
           event.status === 'close' ? 'border-warning/70 shadow-warning/20' :
           event.status === 'good' ? 'border-success/70 shadow-success/20' :
           event.status === 'warning' ? 'border-warning/70 shadow-warning/20' :
           'border-info/70 shadow-info/20'
-        } rounded-lg overflow-hidden cursor-pointer backdrop-blur-sm bg-base-100/80`}
+        } rounded-lg overflow-hidden cursor-pointer backdrop-blur-sm bg-base-100/80
+        ${isOver && !isCurrentlyResizing ? 'bg-primary/10' : ''}`}
         title={`${event.title} (${event.startTime} - ${event.endTime}) - ${event.currentWorkers}/${event.requiredWorkers} workers`}
         onClick={onClick}
       >
@@ -331,6 +348,8 @@ function CalendarPage() {
   const calendarItems = queryResult?.calendarItems || [];
   const updateEvent = useMutation(api.events.updateEvent);
   const createShiftReplacement = useMutation(api.events.createShiftReplacement);
+  const nestEventInShift = useMutation(api.events.nestEventInShift);
+  const unnestEventFromShift = useMutation(api.events.unnestEventFromShift);
   const today = new Date();
   const currentMonth = currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 
@@ -548,7 +567,12 @@ function CalendarPage() {
       const draggedEvent = active.data.current;
       const dropTarget = over.data.current;
       
-      if (dropTarget?.date) {
+      // Handle dropping an event onto a shift container (drag-in)
+      if (dropTarget?.type === 'shift' && draggedEvent.type !== 'shift') {
+        void handleEventToShiftDrop(draggedEvent, dropTarget);
+      }
+      // Handle dropping an event onto a calendar cell (potentially drag-out)
+      else if (dropTarget?.date) {
         void handleEventDrop(dropTarget.date, dropTarget.hour, draggedEvent);
       }
     } else if (dragPreview && active.data.current) {
@@ -936,6 +960,30 @@ function CalendarPage() {
         return;
       }
       
+      // Check if this is a nested event being dragged out of a shift (drag-out)
+      const wasNested = calendarItems.some((item: any) => 
+        item.type === 'shift' && 
+        item.nestedEvents?.some((nested: any) => nested._id === draggedEvent._id)
+      );
+
+      if (wasNested) {
+        // This is an event being dragged out of a shift - unnest it
+        try {
+          await unnestEventFromShift({
+            eventId: draggedEvent._id,
+            date: dateString,
+          });
+        } catch (error) {
+          console.error("Failed to unnest event from shift:", error);
+          if (error instanceof Error) {
+            alert(`Failed to remove event from shift: ${error.message}`);
+          } else {
+            alert("Failed to remove event from shift. Please try again.");
+          }
+          return;
+        }
+      }
+
       try {
         
         // Calculate duration of the original event
@@ -989,6 +1037,25 @@ function CalendarPage() {
       console.error("Failed to create shift exception:", error);
       alert("Failed to create shift exception. Please try again.");
       throw error; // Re-throw to prevent modal from closing
+    }
+  };
+
+  const handleEventToShiftDrop = async (draggedEvent: any, dropTarget: any) => {
+    const { shift, date } = dropTarget;
+    
+    try {
+      await nestEventInShift({
+        eventId: draggedEvent._id,
+        shiftId: shift._id,
+        date: date,
+      });
+    } catch (error) {
+      console.error("Failed to nest event in shift:", error);
+      if (error instanceof Error) {
+        alert(`Failed to add event to shift: ${error.message}`);
+      } else {
+        alert("Failed to add event to shift. Please try again.");
+      }
     }
   };
 
