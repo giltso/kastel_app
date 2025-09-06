@@ -115,7 +115,7 @@ export default defineSchema({
     startTime_legacy: v.optional(v.number()),
     endTime_legacy: v.optional(v.number()),
     // Event properties
-    type: v.union(v.literal("work"), v.literal("meeting"), v.literal("maintenance"), v.literal("team"), v.literal("educational"), v.literal("shift")),
+    type: v.union(v.literal("work"), v.literal("meeting"), v.literal("maintenance"), v.literal("team"), v.literal("educational"), v.literal("shift"), v.literal("tool_rental")),
     status: v.union(v.literal("pending_approval"), v.literal("approved"), v.literal("in_progress"), v.literal("completed"), v.literal("cancelled")),
     // Repetition settings
     isRecurring: v.boolean(),
@@ -376,7 +376,7 @@ export default defineSchema({
   .index("by_eventId", ["eventId"])
   .index("by_workerId", ["workerId"])
   .index("by_date", ["date"])
-  .index("by_status", ["status"])
+  .index("by_status", ["status"]),
   
   // Legacy: Keep shift_assignments for backward compatibility during transition
   shift_assignments: defineTable({

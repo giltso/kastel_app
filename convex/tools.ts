@@ -334,11 +334,40 @@ export const updateRentalStatus = mutation({
 
     if (args.status === "approved") {
       updates.approvedBy = user._id;
+      
+      // Create calendar event for the rental
+      const tool = await ctx.db.get(rental.toolId);
+      const renterUser = await ctx.db.get(rental.renterUserId);
+      
+      if (tool && renterUser) {
+        const eventId = await ctx.db.insert("events", {
+          title: `Tool Rental: ${tool.name}`,
+          description: `${renterUser.name} rented ${tool.name} (${tool.model || 'No model'})`,
+          startDate: rental.rentalStartDate,
+          endDate: rental.rentalEndDate,
+          startTime: "08:00", // Default business hours
+          endTime: "17:00",
+          type: "tool_rental",
+          status: "approved",
+          isRecurring: false,
+          createdBy: user._id,
+          assignedTo: rental.renterUserId,
+          participants: [rental.renterUserId],
+        });
+        
+        // Link the event to the rental
+        updates.eventId = eventId;
+      }
     } else if (args.status === "returned") {
       updates.actualReturnDate = new Date().toISOString().split('T')[0];
       
       // Make tool available again
       await ctx.db.patch(rental.toolId, { isAvailable: true });
+      
+      // Mark calendar event as completed if exists
+      if (rental.eventId) {
+        await ctx.db.patch(rental.eventId, { status: "completed" });
+      }
     } else if (args.status === "active") {
       // Mark tool as unavailable
       await ctx.db.patch(rental.toolId, { isAvailable: false });

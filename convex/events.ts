@@ -1,6 +1,39 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { ConvexError } from "convex/values";
+import type { Doc } from "./_generated/dataModel";
+
+// Utility functions for authentication and permissions
+async function getCurrentUser(ctx: any) {
+  const identity = await ctx.auth.getUserIdentity();
+  if (!identity) {
+    throw new ConvexError("Not authenticated");
+  }
+
+  const user = await ctx.db
+    .query("users")
+    .withIndex("by_clerkId", (q: any) => q.eq("clerkId", identity.subject))
+    .unique();
+
+  if (!user) {
+    throw new ConvexError("User not found");
+  }
+
+  return user;
+}
+
+// Get effective role (considering dev emulation)
+function getEffectiveRole(user: Doc<"users">) {
+  if (user.role === "dev" && user.emulatingRole) {
+    return user.emulatingRole;
+  }
+  return user.role || "guest";
+}
+
+// Check if user has manager permissions
+function hasManagerAccess(role: string) {
+  return role === "manager";
+}
 
 // Create a new scheduled event (workers create, requires manager approval)
 export const createEvent = mutation({
