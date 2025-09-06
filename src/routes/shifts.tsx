@@ -13,6 +13,7 @@ import {
 import { api } from "../../convex/_generated/api";
 import { usePermissions } from "../hooks/usePermissions";
 import { CreateShiftModal } from "../components/CreateShiftModal";
+import { ShiftAssignmentModal } from "../components/ShiftAssignmentModal";
 import { ShiftCard } from "../components/ShiftCard";
 import type { Id } from "../../convex/_generated/dataModel";
 
@@ -26,6 +27,8 @@ function ShiftsPage() {
   const canManageShifts = hasPermission("manage_events"); // Using existing permission
   
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
+  const [selectedShiftForAssignment, setSelectedShiftForAssignment] = useState<any>(null);
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
 
   const shifts = useQuery(api.shifts.listShifts);
@@ -68,8 +71,11 @@ function ShiftsPage() {
   };
 
   const handleAssignWorker = (shiftId: Id<"shifts">) => {
-    // TODO: Open worker selection modal for managers
-    console.log("Assign worker to shift:", shiftId);
+    const shift = shifts?.find(s => s._id === shiftId);
+    if (shift) {
+      setSelectedShiftForAssignment(shift);
+      setIsAssignModalOpen(true);
+    }
   };
 
   return (
@@ -295,6 +301,19 @@ function ShiftsPage() {
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
       />
+      
+      {selectedShiftForAssignment && (
+        <ShiftAssignmentModal
+          isOpen={isAssignModalOpen}
+          onClose={() => {
+            setIsAssignModalOpen(false);
+            setSelectedShiftForAssignment(null);
+          }}
+          shift={selectedShiftForAssignment}
+          date={new Date(selectedDate)}
+          currentUser={user}
+        />
+      )}
     </Authenticated>
   );
 }

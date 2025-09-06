@@ -18,13 +18,23 @@ export function ShiftAssignmentModal({ isOpen, onClose, shift, date, currentUser
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const assignWorkerToShift = useMutation(api.shifts.assignWorkerToShift);
   
+  const dateString = date.toISOString().split('T')[0];
+  
   // Get list of workers for manager assignment
   const workers = useQuery(api.users.listUsers) || [];
-  const eligibleWorkers = workers.filter(w => 
-    w.role === "worker" || w.role === "manager"
+  const shiftAssignments = useQuery(api.shifts.getShiftAssignments, { date: dateString }) || [];
+  
+  // Filter out workers who are already assigned to any shift on this date
+  const assignedWorkerIds = new Set(
+    shiftAssignments
+      .filter(assignment => assignment.status !== "cancelled")
+      .map(assignment => assignment.workerId)
   );
-
-  const dateString = date.toISOString().split('T')[0];
+  
+  const eligibleWorkers = workers.filter(w => 
+    (w.role === "worker" || w.role === "manager") && 
+    !assignedWorkerIds.has(w._id)
+  );
   const isManager = currentUser?.role === "manager" || currentUser?.role === "dev";
   const canSelfAssign = currentUser?.role === "worker" || currentUser?.role === "manager";
 
