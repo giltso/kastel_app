@@ -823,6 +823,19 @@ export const listCalendarItems = query({
         // 2. Have start/end times that overlap with or fall within the shift timeframe
         // 3. Involve workers assigned to this shift (optional - some events may be exempt)
         const nestedEvents = enrichedEvents.filter(event => {
+          // Check for manual nesting override first
+          if (event.manualNestingOverride) {
+            const override = event.manualNestingOverride;
+            if (override.date === instance.date) {
+              if (override.action === "nested" && override.shiftId === instance.parentShiftId) {
+                return true; // Manually nested in this shift
+              }
+              if (override.action === "unnested") {
+                return false; // Manually unnested from any shift
+              }
+            }
+          }
+
           // Check if event is on the same date
           if (event.startDate !== instance.date) return false;
 
@@ -848,8 +861,12 @@ export const listCalendarItems = query({
             assignedWorkerIds.includes(event.assignedTo?._id) ||
             event.participants?.some((p: any) => assignedWorkerIds.includes(p._id));
 
+          // Exclude courses from automatic nesting (courses should happen outside work hours)
+          if (event.type === 'course') {
+            return false;
+          }
+
           // For now, nest events that involve shift workers or are general operational events
-          // TODO: Add more sophisticated nesting rules based on event type
           return eventInvolvesShiftWorkers || event.type === 'work' || event.type === 'maintenance';
         });
 
@@ -1139,5 +1156,89 @@ export const createShiftReplacement = mutation({
     const replacementId = await ctx.db.insert("events", replacementData);
 
     return { success: true, replacementId };
+  },
+});
+
+// Manually nest an event within a shift (drag-in functionality)
+export const nestEventInShift = mutation({
+  args: {
+    eventId: v.id("events"),
+    shiftId: v.id("events"),
+    date: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new ConvexError("Not authenticated");
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+
+    if (!user) throw new ConvexError("User not found");
+
+    const effectiveRole = user.emulatingRole || user.role;
+    if (!["manager", "dev"].includes(effectiveRole || "")) {
+      throw new ConvexError("Only managers can manually nest events in shifts");
+    }
+
+    const event = await ctx.db.get(args.eventId);
+    const shift = await ctx.db.get(args.shiftId);
+
+    if (!event || !shift) throw new ConvexError("Event or shift not found");
+    if (shift.type !== "shift") throw new ConvexError("Target must be a shift");
+
+    // Add manual nesting override to the event
+    await ctx.db.patch(args.eventId, {
+      manualNestingOverride: {
+        shiftId: args.shiftId,
+        date: args.date,
+        action: "nested",
+        overriddenBy: user._id,
+        overriddenAt: Date.now(),
+      },
+    });
+
+    return { success: true };
+  },
+});
+
+// Manually unnest an event from a shift (drag-out functionality)  
+export const unnestEventFromShift = mutation({
+  args: {
+    eventId: v.id("events"),
+    date: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new ConvexError("Not authenticated");
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+
+    if (!user) throw new ConvexError("User not found");
+
+    const effectiveRole = user.emulatingRole || user.role;
+    if (!["manager", "dev"].includes(effectiveRole || "")) {
+      throw new ConvexError("Only managers can manually unnest events from shifts");
+    }
+
+    const event = await ctx.db.get(args.eventId);
+    if (!event) throw new ConvexError("Event not found");
+
+    // Add manual unnesting override to the event
+    await ctx.db.patch(args.eventId, {
+      manualNestingOverride: {
+        shiftId: null,
+        date: args.date,
+        action: "unnested",
+        overriddenBy: user._id,
+        overriddenAt: Date.now(),
+      },
+    });
+
+    return { success: true };
   },
 });

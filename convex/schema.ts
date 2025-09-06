@@ -140,6 +140,14 @@ export default defineSchema({
     maxWorkers: v.optional(v.number()), // Maximum workers allowed for shifts
     parentShiftId: v.optional(v.id("events")), // If this is a one-time replacement for a recurring shift
     replacesDate: v.optional(v.string()), // ISO date this replaces in the recurring pattern
+    // Manual nesting override for drag-in/drag-out functionality
+    manualNestingOverride: v.optional(v.object({
+      shiftId: v.optional(v.id("events")), // Which shift this was manually nested in (null if unnested)
+      date: v.string(), // Date for which the override applies
+      action: v.union(v.literal("nested"), v.literal("unnested")), // What action was taken
+      overriddenBy: v.id("users"), // Who made the manual override
+      overriddenAt: v.number(), // Timestamp when override was made
+    }))
   })
   .index("by_createdBy", ["createdBy"])
   .index("by_approvedBy", ["approvedBy"])
