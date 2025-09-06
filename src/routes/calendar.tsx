@@ -22,6 +22,7 @@ import { api } from "../../convex/_generated/api";
 import { CreateEventModal } from "@/components/CreateEventModal";
 import { EditEventModal } from "@/components/EditEventModal";
 import { ShiftAssignmentModal } from "@/components/ShiftAssignmentModal";
+import { ShiftDetailsModal } from "@/components/ShiftDetailsModal";
 import { ShiftSwitchModal } from "@/components/ShiftSwitchModal";
 import { ShiftModificationModal } from "@/components/ShiftModificationModal";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -308,6 +309,13 @@ function CalendarPage() {
   }) | null>(null);
   const [isAssignmentModalOpen, setIsAssignmentModalOpen] = useState(false);
   const [assignmentData, setAssignmentData] = useState<{
+    shift: any;
+    date: Date;
+  } | null>(null);
+  
+  // Shift details modal state (comprehensive shift modal with editing)
+  const [isShiftDetailsModalOpen, setIsShiftDetailsModalOpen] = useState(false);
+  const [shiftDetailsData, setShiftDetailsData] = useState<{
     shift: any;
     date: Date;
   } | null>(null);
@@ -835,15 +843,17 @@ function CalendarPage() {
 
   const handleItemClick = (item: any) => {
     if (item.type === 'shift') {
-      // For shifts, open assignment modal
+      // For shifts, open comprehensive shift details modal
       console.log('Clicked shift:', item);
       
-      // Find the date for this shift - use the current view date for now
-      setAssignmentData({
+      // Find the date for this shift - use item's date or current view date
+      const shiftDate = item.startDate ? new Date(item.startDate) : currentDate;
+      
+      setShiftDetailsData({
         shift: item,
-        date: currentDate
+        date: shiftDate
       });
-      setIsAssignmentModalOpen(true);
+      setIsShiftDetailsModalOpen(true);
       return;
     }
     
@@ -2263,6 +2273,19 @@ function CalendarPage() {
               }}
               shift={assignmentData.shift}
               date={assignmentData.date}
+              currentUser={user}
+            />
+          )}
+
+          {shiftDetailsData && (
+            <ShiftDetailsModal 
+              isOpen={isShiftDetailsModalOpen}
+              onClose={() => {
+                setIsShiftDetailsModalOpen(false);
+                setShiftDetailsData(null);
+              }}
+              shift={shiftDetailsData.shift}
+              date={shiftDetailsData.date}
               currentUser={user}
             />
           )}
