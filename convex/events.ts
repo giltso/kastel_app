@@ -748,7 +748,7 @@ export const listCalendarItems = query({
     }
 
     // Enrich events with user data and identify tool rental events
-    const enrichedEvents = await Promise.all(
+    const enrichedEventsWithNulls = await Promise.all(
       events.map(async (event) => {
         const createdBy = await ctx.db.get(event.createdBy);
         const approvedBy = event.approvedBy ? await ctx.db.get(event.approvedBy) : null;
@@ -768,6 +768,11 @@ export const listCalendarItems = query({
             .first();
           
           if (rental) {
+            // Skip returned tool rentals from calendar display
+            if (rental.status === "returned") {
+              return null;
+            }
+            
             const tool = await ctx.db.get(rental.toolId);
             toolRentalData = {
               ...rental,
@@ -787,6 +792,9 @@ export const listCalendarItems = query({
         };
       })
     );
+
+    // Filter out null values (returned tool rentals)
+    const enrichedEvents = enrichedEventsWithNulls.filter((event) => event !== null);
 
     // Enrich shift instances with assignment data and nested events
     const enrichedShiftInstances = await Promise.all(

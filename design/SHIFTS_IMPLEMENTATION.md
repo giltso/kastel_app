@@ -25,17 +25,6 @@
   so the database should of both in the same system. 
   - shifts should exist in the database only for 2 weeks in advance, and if there are assigned workers should be saved indefenatly.
 
-
-### minor polish (UI Polish & Optimization) ✅ COMPLETED 2025-09-06
-
-1. ✅ Center Courses Tab Layout - Fix left-leaning alignment issue (Fixed justify-between to justify-center with proper ordering)
-2. ✅ Remove Courses Tracking - Simplify to recommendation-only skill levels (Schema design already supports this)
-3. ✅ Hide Professional Help from Non-Pros - Remove visibility for guests/non-pro users (Already implemented via access_pro_help permission)
-4. ✅ Weekly toggles start Monday-Sunday instead of Sunday-Monday (Updated week calculation to use Monday-first logic)
-5. ✅ Replace the location of the filtration module on the LUZ tab to be above the navigation (Moved filter section above calendar navigation)
-6. ✅ Make the navigation tools a bit bigger, and slightly more pronounced (Changed from btn-sm to btn-lg, improved styling)
-7. ✅ Change the color of a over-full shift to yellow, similar to a not quite full shift (Updated 'warning' status from blue/info to yellow/warning) 
-
 ## 🔧 TECHNICAL NOTES - for claude to update
 
 ### Database Changes Needed
@@ -71,6 +60,3 @@
 3. **Worker Visibility** - Added easy viewing of who is currently on shift with avatars and status indicators
 4. **Shift Switching** - Added switch button functionality for workers to request shift swaps through UI
 5. **Calendar Synchronization** - Shifts tab now synchronized with LUZ tab for consistent user experience
-
-### 🎨 UI POLISH COMPLETED 2025-09-06
-All 7 minor polish items completed (see section above for details)
