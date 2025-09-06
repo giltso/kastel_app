@@ -23,11 +23,28 @@ async function getCurrentUser(ctx: any) {
 }
 
 // Get effective role (considering dev emulation)
-function getEffectiveRole(user: Doc<"users">) {
-  if (user.role === "dev" && user.emulatingRole) {
-    return user.emulatingRole;
+function getEffectiveRole(user: any): string {
+  if (user.baseRole) {
+    // NEW: Use hierarchical system
+    if (user.role === "dev" && user.emulatingBaseRole) {
+      const tags = user.emulatingTags || [];
+      if (user.emulatingBaseRole === "worker" && tags.includes("manager")) {
+        return "manager";
+      }
+      return user.emulatingBaseRole;
+    } else {
+      const tags = user.tags || [];
+      if (user.baseRole === "worker" && tags.includes("manager")) {
+        return "manager";
+      }
+      return user.baseRole;
+    }
+  } else {
+    // LEGACY: Handle old single role system  
+    return user.role === "dev" && (user.emulatingRole || user.emulatingBaseRole)
+      ? (user.emulatingRole || user.emulatingBaseRole)
+      : (user.role || "guest");
   }
-  return user.role || "guest";
 }
 
 // Check if user has manager permissions
@@ -742,12 +759,26 @@ export const listCalendarItems = query({
 
         // Check if this is a tool rental event by looking for linked rental
         let toolRentalData = null;
-        // TODO: Fix index type issue and implement proper tool rental lookup
-        // For now, tool rental data is not linked to calendar events
+        if (event.type === "tool_rental") {
+          // Find the rental that created this event
+          const rental = await ctx.db
+            .query("tool_rentals")
+            .withIndex("by_renterUserId")
+            .filter((q) => q.eq(q.field("eventId"), event._id))
+            .first();
+          
+          if (rental) {
+            const tool = await ctx.db.get(rental.toolId);
+            toolRentalData = {
+              ...rental,
+              tool: tool ? { name: tool.name, category: tool.category } : null,
+            };
+          }
+        }
 
         return {
           ...event,
-          type: toolRentalData ? 'tool_rental' as const : 'event' as const,
+          type: event.type, // Keep the original event type from database
           toolRentalData,
           createdBy,
           approvedBy,

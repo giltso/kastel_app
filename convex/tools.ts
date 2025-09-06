@@ -24,11 +24,28 @@ async function getCurrentUser(ctx: any) {
 }
 
 // Get effective role (considering dev emulation)
-function getEffectiveRole(user: Doc<"users">) {
-  if (user.role === "dev" && user.emulatingRole) {
-    return user.emulatingRole;
+function getEffectiveRole(user: any): string {
+  if (user.baseRole) {
+    // NEW: Use hierarchical system
+    if (user.role === "dev" && user.emulatingBaseRole) {
+      const tags = user.emulatingTags || [];
+      if (user.emulatingBaseRole === "worker" && tags.includes("manager")) {
+        return "manager";
+      }
+      return user.emulatingBaseRole;
+    } else {
+      const tags = user.tags || [];
+      if (user.baseRole === "worker" && tags.includes("manager")) {
+        return "manager";
+      }
+      return user.baseRole;
+    }
+  } else {
+    // LEGACY: Handle old single role system  
+    return user.role === "dev" && (user.emulatingRole || user.emulatingBaseRole)
+      ? (user.emulatingRole || user.emulatingBaseRole)
+      : (user.role || "guest");
   }
-  return user.role || "guest";
 }
 
 // Check if user has operational permissions (worker or manager)
@@ -264,9 +281,32 @@ export const createRentalRequest = mutation({
       throw new ConvexError("Tool is not available for rental");
     }
 
-    // Calculate rental days and cost
+    // Check for overlapping rentals
     const startDate = new Date(args.rentalStartDate);
     const endDate = new Date(args.rentalEndDate);
+    
+    // Get all existing rentals for this tool that could conflict
+    const existingRentals = await ctx.db
+      .query("tool_rentals")
+      .filter((q: any) => q.eq(q.field("toolId"), args.toolId))
+      .filter((q: any) => q.neq(q.field("status"), "cancelled"))
+      .filter((q: any) => q.neq(q.field("status"), "returned"))
+      .collect();
+
+    // Check for date overlaps
+    const hasConflict = existingRentals.some(rental => {
+      const rentalStart = new Date(rental.rentalStartDate);
+      const rentalEnd = new Date(rental.rentalEndDate);
+      
+      // Check if new rental overlaps with existing rental
+      return (startDate <= rentalEnd && endDate >= rentalStart);
+    });
+
+    if (hasConflict) {
+      throw new ConvexError("This tool is already reserved for the selected period. Please choose different dates.");
+    }
+
+    // Calculate rental days and cost
     const rentalDays = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
     const totalCost = rentalDays * tool.rentalPricePerDay;
 
@@ -308,6 +348,104 @@ export const createRentalRequest = mutation({
   },
 });
 
+// Update rental details (before approval, or by managers after approval)
+export const updateRental = mutation({
+  args: {
+    rentalId: v.id("tool_rentals"),
+    rentalStartDate: v.optional(v.string()),
+    rentalEndDate: v.optional(v.string()),
+    notes: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const user = await getCurrentUser(ctx);
+    const role = getEffectiveRole(user);
+
+    const rental = await ctx.db.get(args.rentalId);
+    if (!rental) {
+      throw new ConvexError("Rental not found");
+    }
+
+    // Permission check: owner can edit pending rentals, managers can edit any rental
+    const isOwner = rental.renterUserId === user._id;
+    const isManager = hasOperationalAccess(role);
+    const canEdit = isOwner || isManager;
+
+    if (!canEdit) {
+      throw new ConvexError("You don't have permission to edit this rental");
+    }
+
+    // Only allow editing dates if rental is pending or if user is manager
+    if ((args.rentalStartDate || args.rentalEndDate) && rental.status !== "pending" && !isManager) {
+      throw new ConvexError("Only managers can modify dates of approved rentals");
+    }
+
+    const updates: any = {};
+    
+    // If updating dates, check for conflicts
+    if (args.rentalStartDate || args.rentalEndDate) {
+      const newStartDate = new Date(args.rentalStartDate || rental.rentalStartDate);
+      const newEndDate = new Date(args.rentalEndDate || rental.rentalEndDate);
+      
+      // Get all other rentals for this tool that could conflict
+      const conflictingRentals = await ctx.db
+        .query("tool_rentals")
+        .filter((q: any) => q.eq(q.field("toolId"), rental.toolId))
+        .filter((q: any) => q.neq(q.field("_id"), args.rentalId))
+        .filter((q: any) => q.neq(q.field("status"), "cancelled"))
+        .filter((q: any) => q.neq(q.field("status"), "returned"))
+        .collect();
+
+      // Check for date overlaps
+      const hasConflict = conflictingRentals.some(conflictRental => {
+        const conflictStart = new Date(conflictRental.rentalStartDate);
+        const conflictEnd = new Date(conflictRental.rentalEndDate);
+        
+        return (newStartDate <= conflictEnd && newEndDate >= conflictStart);
+      });
+
+      if (hasConflict) {
+        throw new ConvexError("Cannot update: tool is already reserved for overlapping dates. Please choose different dates.");
+      }
+
+      if (args.rentalStartDate) {
+        updates.rentalStartDate = args.rentalStartDate;
+      }
+      if (args.rentalEndDate) {
+        updates.rentalEndDate = args.rentalEndDate;
+        
+        // Recalculate cost if dates changed
+        const tool = await ctx.db.get(rental.toolId);
+        if (tool) {
+          const startDate = new Date(args.rentalStartDate || rental.rentalStartDate);
+          const endDate = new Date(args.rentalEndDate);
+          const rentalDays = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+          updates.totalCost = rentalDays * tool.rentalPricePerDay;
+        }
+      }
+
+      // Update calendar event if rental is approved and has an eventId
+      if (rental.eventId && (args.rentalStartDate || args.rentalEndDate)) {
+        try {
+          await ctx.db.patch(rental.eventId, {
+            startDate: args.rentalStartDate || rental.rentalStartDate,
+            endDate: args.rentalEndDate || rental.rentalEndDate,
+          });
+        } catch (error) {
+          // Calendar event might have been deleted, continue with rental update
+        }
+      }
+    }
+
+    if (args.notes !== undefined) {
+      updates.notes = args.notes;
+    }
+
+    await ctx.db.patch(args.rentalId, updates);
+    
+    return { success: true };
+  },
+});
+
 // Approve/reject rental request (workers/managers only)
 export const updateRentalStatus = mutation({
   args: {
@@ -318,6 +456,7 @@ export const updateRentalStatus = mutation({
   handler: async (ctx, args) => {
     const user = await getCurrentUser(ctx);
     const role = getEffectiveRole(user);
+
 
     if (!hasOperationalAccess(role)) {
       throw new ConvexError("Only workers and managers can update rental status");
@@ -333,6 +472,33 @@ export const updateRentalStatus = mutation({
     };
 
     if (args.status === "approved") {
+      // Check for conflicts before approving
+      const startDate = new Date(rental.rentalStartDate);
+      const endDate = new Date(rental.rentalEndDate);
+      
+      // Get all other approved/active rentals for this tool
+      const conflictingRentals = await ctx.db
+        .query("tool_rentals")
+        .filter((q: any) => q.eq(q.field("toolId"), rental.toolId))
+        .filter((q: any) => q.neq(q.field("_id"), args.rentalId))
+        .filter((q: any) => q.or(
+          q.eq(q.field("status"), "approved"),
+          q.eq(q.field("status"), "active")
+        ))
+        .collect();
+
+      // Check for date overlaps
+      const hasConflict = conflictingRentals.some(conflictRental => {
+        const conflictStart = new Date(conflictRental.rentalStartDate);
+        const conflictEnd = new Date(conflictRental.rentalEndDate);
+        
+        return (startDate <= conflictEnd && endDate >= conflictStart);
+      });
+
+      if (hasConflict) {
+        throw new ConvexError("Cannot approve: tool is already reserved for overlapping dates. Please check the calendar.");
+      }
+
       updates.approvedBy = user._id;
       
       // Create calendar event for the rental
