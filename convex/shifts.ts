@@ -305,6 +305,54 @@ export const respondToShiftSwap = mutation({
   },
 });
 
+// Get available shifts for swapping (for current user)
+export const getAvailableShiftsForSwap = query({
+  args: {
+    myAssignmentId: v.id("shift_assignments"),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return [];
+
+    const currentUser = await ctx.db
+      .query("users")
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+
+    if (!currentUser) return [];
+
+    const myAssignment = await ctx.db.get(args.myAssignmentId);
+    if (!myAssignment) return [];
+
+    // Verify the user owns this assignment
+    if (myAssignment.workerId !== currentUser._id) return [];
+
+    // Get all other assignments for the same date (potential swap targets)
+    const otherAssignments = await ctx.db
+      .query("shift_assignments")
+      .withIndex("by_date", (q) => q.eq("date", myAssignment.date))
+      .filter((q) => q.neq(q.field("_id"), args.myAssignmentId))
+      .filter((q) => q.eq(q.field("status"), "assigned"))
+      .collect();
+
+    // Enrich with shift and worker data
+    const enrichedAssignments = await Promise.all(
+      otherAssignments.map(async (assignment) => {
+        const shift = await ctx.db.get(assignment.shiftId);
+        const worker = await ctx.db.get(assignment.workerId);
+        
+        return {
+          ...assignment,
+          shift,
+          worker,
+        };
+      })
+    );
+
+    return enrichedAssignments;
+  },
+});
+
 // Request golden time (pro workers only)
 export const requestGoldenTime = mutation({
   args: {

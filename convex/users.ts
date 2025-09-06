@@ -816,3 +816,180 @@ export const checkPermission = query({
     return permissions[effectiveRole]?.includes(args.action) || false;
   },
 });
+
+// TEMPORARY: Public seeding function for development (remove in production)
+export const seedSampleUsersPublic = mutation({
+  args: {},
+  handler: async (ctx) => {
+    // TEMPORARY: Skip authentication for dev seeding - REMOVE IN PRODUCTION
+    
+    const sampleUsers = [
+      // 10 Workers (5 pros, 2 managers)
+      { name: "Alex Thompson", email: "alex.thompson@kastel.com", baseRole: "worker", tags: [] },
+      { name: "Sarah Chen", email: "sarah.chen@kastel.com", baseRole: "worker", tags: ["pro"] },
+      { name: "Mike Rodriguez", email: "mike.rodriguez@kastel.com", baseRole: "worker", tags: [] },
+      { name: "Emily Davis", email: "emily.davis@kastel.com", baseRole: "worker", tags: ["pro"] },
+      { name: "James Wilson", email: "james.wilson@kastel.com", baseRole: "worker", tags: ["pro"] },
+      { name: "Lisa Anderson", email: "lisa.anderson@kastel.com", baseRole: "worker", tags: ["pro", "manager"] },
+      { name: "David Brown", email: "david.brown@kastel.com", baseRole: "worker", tags: [] },
+      { name: "Jennifer Taylor", email: "jennifer.taylor@kastel.com", baseRole: "worker", tags: ["pro"] },
+      { name: "Robert Johnson", email: "robert.johnson@kastel.com", baseRole: "worker", tags: ["manager"] },
+      { name: "Amanda White", email: "amanda.white@kastel.com", baseRole: "worker", tags: [] },
+      
+      // 20 Customers (5 pros)
+      { name: "John Smith", email: "john.smith@example.com", baseRole: "customer", tags: [] },
+      { name: "Mary Johnson", email: "mary.johnson@example.com", baseRole: "customer", tags: ["pro"] },
+      { name: "William Brown", email: "william.brown@example.com", baseRole: "customer", tags: [] },
+      { name: "Patricia Williams", email: "patricia.williams@example.com", baseRole: "customer", tags: [] },
+      { name: "Richard Jones", email: "richard.jones@example.com", baseRole: "customer", tags: ["pro"] },
+      { name: "Linda Garcia", email: "linda.garcia@example.com", baseRole: "customer", tags: [] },
+      { name: "Thomas Miller", email: "thomas.miller@example.com", baseRole: "customer", tags: [] },
+      { name: "Helen Davis", email: "helen.davis@example.com", baseRole: "customer", tags: ["pro"] },
+      { name: "Gary Rodriguez", email: "gary.rodriguez@example.com", baseRole: "customer", tags: [] },
+      { name: "Nancy Wilson", email: "nancy.wilson@example.com", baseRole: "customer", tags: [] },
+      { name: "Paul Martinez", email: "paul.martinez@example.com", baseRole: "customer", tags: [] },
+      { name: "Sandra Anderson", email: "sandra.anderson@example.com", baseRole: "customer", tags: ["pro"] },
+      { name: "Kevin Taylor", email: "kevin.taylor@example.com", baseRole: "customer", tags: [] },
+      { name: "Dorothy Thomas", email: "dorothy.thomas@example.com", baseRole: "customer", tags: [] },
+      { name: "Steven Hernandez", email: "steven.hernandez@example.com", baseRole: "customer", tags: [] },
+      { name: "Betty Moore", email: "betty.moore@example.com", baseRole: "customer", tags: ["pro"] },
+      { name: "Daniel Martin", email: "daniel.martin@example.com", baseRole: "customer", tags: [] },
+      { name: "Susan Jackson", email: "susan.jackson@example.com", baseRole: "customer", tags: [] },
+      { name: "Christopher Thompson", email: "christopher.thompson@example.com", baseRole: "customer", tags: [] },
+      { name: "Carol White", email: "carol.white@example.com", baseRole: "customer", tags: [] }
+    ];
+
+    const createdUsers = [];
+    for (const userData of sampleUsers) {
+      // Check if user already exists
+      const existingUser = await ctx.db
+        .query("users")
+        .filter((q) => q.eq(q.field("email"), userData.email))
+        .first();
+
+      if (!existingUser) {
+        // Determine interface and role with explicit typing
+        const preferredInterface: "guest" | "customer" | "staff" = 
+          userData.baseRole === "worker" ? "staff" : 
+          userData.baseRole === "customer" ? "customer" : "guest";
+        
+        const role: "guest" | "customer" | "worker" | "manager" = 
+          (userData.baseRole === "worker" && userData.tags.includes("manager")) ? "manager" : 
+          userData.baseRole as "guest" | "customer" | "worker";
+
+        const userId = await ctx.db.insert("users", {
+          clerkId: `seed_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          name: userData.name,
+          email: userData.email,
+          baseRole: userData.baseRole as "guest" | "customer" | "worker",
+          tags: userData.tags as ("manager" | "pro" | "instructor" | "lead" | "specialist")[],
+          preferredInterface,
+          role,
+        });
+
+        createdUsers.push({ id: userId, ...userData });
+      }
+    }
+
+    return {
+      success: true,
+      message: `Successfully seeded ${createdUsers.length} users`,
+      users: createdUsers
+    };
+  }
+});
+
+// Seed database with sample users for testing
+export const seedSampleUsers = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new ConvexError("Not authenticated");
+    }
+
+    // Only allow dev users to seed
+    const currentUser = await ctx.db
+      .query("users")
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+
+    if (!currentUser || currentUser.role !== "dev") {
+      throw new ConvexError("Only dev users can seed sample data");
+    }
+
+    const sampleUsers = [
+      // 10 Workers
+      { name: "Alex Thompson", email: "alex.thompson@kastel.com", baseRole: "worker", tags: [] },
+      { name: "Sarah Chen", email: "sarah.chen@kastel.com", baseRole: "worker", tags: ["pro"] },
+      { name: "Mike Rodriguez", email: "mike.rodriguez@kastel.com", baseRole: "worker", tags: [] },
+      { name: "Emma Johnson", email: "emma.johnson@kastel.com", baseRole: "worker", tags: ["pro"] },
+      { name: "David Kim", email: "david.kim@kastel.com", baseRole: "worker", tags: ["manager"] }, // Manager (not pro)
+      { name: "Lisa Anderson", email: "lisa.anderson@kastel.com", baseRole: "worker", tags: ["pro", "manager"] }, // Manager + Pro
+      { name: "James Wilson", email: "james.wilson@kastel.com", baseRole: "worker", tags: [] },
+      { name: "Maria Garcia", email: "maria.garcia@kastel.com", baseRole: "worker", tags: ["pro"] },
+      { name: "Robert Brown", email: "robert.brown@kastel.com", baseRole: "worker", tags: [] },
+      { name: "Jennifer Davis", email: "jennifer.davis@kastel.com", baseRole: "worker", tags: ["pro"] },
+
+      // 20 Customers (5 will be pros)
+      { name: "Alice Cooper", email: "alice.cooper@email.com", baseRole: "customer", tags: [] },
+      { name: "Bob Miller", email: "bob.miller@email.com", baseRole: "customer", tags: [] },
+      { name: "Carol White", email: "carol.white@email.com", baseRole: "customer", tags: ["pro"] },
+      { name: "Dan Taylor", email: "dan.taylor@email.com", baseRole: "customer", tags: [] },
+      { name: "Eva Martinez", email: "eva.martinez@email.com", baseRole: "customer", tags: ["pro"] },
+      { name: "Frank Jackson", email: "frank.jackson@email.com", baseRole: "customer", tags: [] },
+      { name: "Grace Lee", email: "grace.lee@email.com", baseRole: "customer", tags: [] },
+      { name: "Henry Clark", email: "henry.clark@email.com", baseRole: "customer", tags: ["pro"] },
+      { name: "Iris Young", email: "iris.young@email.com", baseRole: "customer", tags: [] },
+      { name: "Jack Turner", email: "jack.turner@email.com", baseRole: "customer", tags: ["pro"] },
+      { name: "Kate Phillips", email: "kate.phillips@email.com", baseRole: "customer", tags: [] },
+      { name: "Leo Adams", email: "leo.adams@email.com", baseRole: "customer", tags: [] },
+      { name: "Mia Scott", email: "mia.scott@email.com", baseRole: "customer", tags: ["pro"] },
+      { name: "Noah Green", email: "noah.green@email.com", baseRole: "customer", tags: [] },
+      { name: "Olivia Hall", email: "olivia.hall@email.com", baseRole: "customer", tags: [] },
+      { name: "Paul Wright", email: "paul.wright@email.com", baseRole: "customer", tags: [] },
+      { name: "Quinn Lopez", email: "quinn.lopez@email.com", baseRole: "customer", tags: [] },
+      { name: "Ruby Hill", email: "ruby.hill@email.com", baseRole: "customer", tags: [] },
+      { name: "Sam Baker", email: "sam.baker@email.com", baseRole: "customer", tags: [] },
+      { name: "Tina King", email: "tina.king@email.com", baseRole: "customer", tags: [] },
+    ];
+
+    const createdUsers = [];
+
+    for (const userData of sampleUsers) {
+      // Check if user already exists by email
+      const existingUser = await ctx.db
+        .query("users")
+        .filter((q) => q.eq(q.field("email"), userData.email))
+        .first();
+
+      if (!existingUser) {
+        // Determine interface and role with explicit typing
+        const preferredInterface: "guest" | "customer" | "staff" = 
+          userData.baseRole === "worker" ? "staff" : 
+          userData.baseRole === "customer" ? "customer" : "guest";
+        
+        const role: "guest" | "customer" | "worker" | "manager" = 
+          (userData.baseRole === "worker" && userData.tags.includes("manager")) ? "manager" : 
+          userData.baseRole as "guest" | "customer" | "worker";
+
+        const userId = await ctx.db.insert("users", {
+          clerkId: `seed_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          name: userData.name,
+          email: userData.email,
+          baseRole: userData.baseRole as "guest" | "customer" | "worker",
+          tags: userData.tags as ("manager" | "pro" | "instructor" | "lead" | "specialist")[],
+          preferredInterface,
+          role,
+        });
+
+        createdUsers.push({ id: userId, ...userData });
+      }
+    }
+
+    return {
+      message: `Created ${createdUsers.length} sample users`,
+      users: createdUsers,
+    };
+  },
+});

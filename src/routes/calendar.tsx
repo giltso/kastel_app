@@ -3,7 +3,7 @@ import { Authenticated, useMutation } from "convex/react";
 import { convexQuery } from "@convex-dev/react-query";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
-import { Calendar, ChevronLeft, ChevronRight, Filter, Plus, Target, Search } from "lucide-react";
+import { Calendar, ChevronLeft, ChevronRight, Filter, Plus, Target, Search, User } from "lucide-react";
 import {
   DndContext,
   closestCenter,
@@ -21,6 +21,8 @@ import {
 import { api } from "../../convex/_generated/api";
 import { CreateEventModal } from "@/components/CreateEventModal";
 import { EditEventModal } from "@/components/EditEventModal";
+import { ShiftAssignmentModal } from "@/components/ShiftAssignmentModal";
+import { ShiftSwitchModal } from "@/components/ShiftSwitchModal";
 import { usePermissions } from "@/hooks/usePermissions";
 import type { Doc } from "../../convex/_generated/dataModel";
 
@@ -35,7 +37,7 @@ export const Route = createFileRoute("/calendar")({
 type ViewType = "day" | "week" | "month";
 
 // Draggable Event Component with Resize Handles
-function DraggableEvent({ event, style, canEdit, onClick, className, setIsResizing, setResizeStartPos, isCurrentlyResizing }: {
+function DraggableEvent({ event, style, canEdit, onClick, className, setIsResizing, setResizeStartPos, isCurrentlyResizing, onNestedClick }: {
   event: any;
   style?: React.CSSProperties;
   canEdit: boolean;
@@ -44,11 +46,12 @@ function DraggableEvent({ event, style, canEdit, onClick, className, setIsResizi
   setIsResizing: (resizing: {event: any, type: 'start' | 'end'} | null) => void;
   setResizeStartPos: (pos: {x: number, y: number} | null) => void;
   isCurrentlyResizing?: boolean;
+  onNestedClick?: (item: any) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
     id: event._id,
     data: event,
-    disabled: !canEdit,
+    disabled: !canEdit || event.type === 'shift', // Don't allow dragging shifts (for now)
   });
 
   const dragStyle = transform
@@ -63,6 +66,100 @@ function DraggableEvent({ event, style, canEdit, onClick, className, setIsResizi
     setIsResizing({ event, type });
     setResizeStartPos({ x: e.clientX, y: e.clientY });
   };
+
+  // Special rendering for shifts with nested events
+  if (event.type === 'shift') {
+    return (
+      <div
+        ref={setNodeRef}
+        style={{ ...style, ...dragStyle }}
+        className={`${className} relative transition-all duration-200 border-2 border-dashed ${
+          event.status === 'bad' ? 'border-error/60' :
+          event.status === 'close' ? 'border-warning/60' :
+          event.status === 'good' ? 'border-success/60' :
+          'border-info/60'
+        } rounded-lg overflow-hidden cursor-pointer`}
+        title={`${event.title} (${event.startTime} - ${event.endTime}) - ${event.currentWorkers}/${event.requiredWorkers} workers`}
+        onClick={onClick}
+      >
+        {/* Shift background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-transparent via-current/5 to-current/10 pointer-events-none" />
+        
+        {/* Shift header with worker info */}
+        <div className={`px-2 py-1 text-xs font-medium bg-current/20 text-base-content border-b border-current/30`}>
+          <div className="flex items-center justify-between">
+            <span className="truncate">{event.title}</span>
+            <span className={`badge badge-xs ${
+              event.status === 'bad' ? 'badge-error' :
+              event.status === 'close' ? 'badge-warning' :
+              event.status === 'good' ? 'badge-success' :
+              'badge-info'
+            }`}>
+              {event.currentWorkers}/{event.requiredWorkers}
+            </span>
+          </div>
+          
+          {/* Worker avatars/names */}
+          {event.assignments && event.assignments.length > 0 && (
+            <div className="flex items-center gap-1 mt-1">
+              <div className="flex -space-x-1">
+                {event.assignments.slice(0, 3).map((assignment: any) => (
+                  <div 
+                    key={assignment.workerId} 
+                    className="w-4 h-4 rounded-full bg-primary text-primary-content text-xs flex items-center justify-center border border-base-100 font-medium"
+                    title={assignment.worker?.name || 'Unknown'}
+                  >
+                    {(assignment.worker?.name || '?').charAt(0).toUpperCase()}
+                  </div>
+                ))}
+                {event.assignments.length > 3 && (
+                  <div className="w-4 h-4 rounded-full bg-base-300 text-xs flex items-center justify-center border border-base-100 font-medium">
+                    +{event.assignments.length - 3}
+                  </div>
+                )}
+              </div>
+              {event.assignments.length <= 2 && (
+                <span className="text-xs opacity-60 ml-1">
+                  {event.assignments.map((a: any) => a.worker?.name).filter(Boolean).join(', ')}
+                </span>
+              )}
+            </div>
+          )}
+          
+          {/* No workers assigned indicator */}
+          {(!event.assignments || event.assignments.length === 0) && (
+            <div className="text-xs opacity-60 mt-1 italic">
+              No workers assigned
+            </div>
+          )}
+        </div>
+        
+        {/* Nested events within shift */}
+        <div className="p-1 space-y-1">
+          {event.nestedEvents && event.nestedEvents.length > 0 ? (
+            event.nestedEvents.map((nestedEvent: any, index: number) => (
+              <div
+                key={nestedEvent._id}
+                className={`text-xs px-2 py-1 rounded ${getItemColor(nestedEvent, true)} text-white/90 truncate border border-white/20`}
+                style={{ marginLeft: `${Math.min(index * 4, 12)}px` }} // Slight indentation for visual hierarchy
+                title={`${nestedEvent.title} (${nestedEvent.startTime} - ${nestedEvent.endTime})`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onNestedClick?.(nestedEvent);
+                }}
+              >
+                {nestedEvent.title}
+              </div>
+            ))
+          ) : (
+            <div className="text-xs px-2 py-1 text-base-content/60 italic">
+              No scheduled activities
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -158,6 +255,15 @@ function CalendarPage() {
     assignedTo: Doc<"users"> | null;
     participants: Doc<"users">[];
   }) | null>(null);
+  const [isAssignmentModalOpen, setIsAssignmentModalOpen] = useState(false);
+  const [assignmentData, setAssignmentData] = useState<{
+    shift: any;
+    date: Date;
+  } | null>(null);
+  
+  // Shift switch modal state
+  const [isSwitchModalOpen, setIsSwitchModalOpen] = useState(false);
+  const [switchAssignmentData, setSwitchAssignmentData] = useState<any>(null);
   
   // Filtering and search state
   const [searchTerm, setSearchTerm] = useState("");
@@ -416,11 +522,14 @@ function CalendarPage() {
 
   const navigatePrevious = () => {
     const newDate = new Date(currentDate);
+    newDate.setHours(0, 0, 0, 0); // Ensure consistent time
+    
     switch (viewType) {
       case "day":
         newDate.setDate(newDate.getDate() - 1);
         break;
       case "week":
+        // Navigate to previous full week (7 days back)
         newDate.setDate(newDate.getDate() - 7);
         break;
       case "month":
@@ -432,11 +541,14 @@ function CalendarPage() {
 
   const navigateNext = () => {
     const newDate = new Date(currentDate);
+    newDate.setHours(0, 0, 0, 0); // Ensure consistent time
+    
     switch (viewType) {
       case "day":
         newDate.setDate(newDate.getDate() + 1);
         break;
       case "week":
+        // Navigate to next full week (7 days forward)
         newDate.setDate(newDate.getDate() + 7);
         break;
       case "month":
@@ -647,18 +759,22 @@ function CalendarPage() {
     };
   };
 
+  const handleRequestShiftSwitch = (assignment: any) => {
+    setSwitchAssignmentData(assignment);
+    setIsSwitchModalOpen(true);
+  };
+
   const handleItemClick = (item: any) => {
     if (item.type === 'shift') {
-      // For shifts, show shift details and availability
+      // For shifts, open assignment modal
       console.log('Clicked shift:', item);
       
-      if (effectiveRole === "worker") {
-        // Workers see shift switching options
-        alert(`Shift: ${item.title}\nWorkers: ${item.currentWorkers || 0}/${item.requiredWorkers || 0}\n\nShift switching options:\n- Request coverage from other workers\n- View available workers (TBD)\n- Check golden hour availability (TBD)`);
-      } else if (effectiveRole === "manager") {
-        // Managers see shift management options
-        alert(`Shift: ${item.title}\nStatus: ${item.status}\nWorkers: ${item.currentWorkers || 0}/${item.requiredWorkers || 0}\n\nManagement options:\n- Assign workers to this shift\n- View worker availability\n- Approve shift switches (TBD)`);
-      }
+      // Find the date for this shift - use the current view date for now
+      setAssignmentData({
+        shift: item,
+        date: currentDate
+      });
+      setIsAssignmentModalOpen(true);
       return;
     }
     
@@ -697,7 +813,7 @@ function CalendarPage() {
     }
   };
 
-  const getItemColor = (item: any) => {
+  const getItemColor = (item: any, isNestedInShift = false) => {
     if (item.type === 'shift') {
       // Shift-specific styling with semi-transparent background
       if (item.status === 'bad') return "bg-error/40 border-error/60";
@@ -708,15 +824,22 @@ function CalendarPage() {
     }
     if (item.type === 'tool_rental') {
       // Tool rental styling - compact accent colors based on status
-      if (item.toolRentalData?.status === 'pending') return "bg-warning/60 border-warning/80";
-      if (item.toolRentalData?.status === 'approved') return "bg-info/60 border-info/80";
-      if (item.toolRentalData?.status === 'active') return "bg-success/60 border-success/80";
-      if (item.toolRentalData?.status === 'returned') return "bg-accent/40 border-accent/60";
-      if (item.toolRentalData?.status === 'overdue') return "bg-error/60 border-error/80";
-      return "bg-accent/60 border-accent/80";
+      const baseOpacity = isNestedInShift ? '/80' : '/60';
+      const borderOpacity = isNestedInShift ? '/90' : '/80';
+      if (item.toolRentalData?.status === 'pending') return `bg-warning${baseOpacity} border-warning${borderOpacity}`;
+      if (item.toolRentalData?.status === 'approved') return `bg-info${baseOpacity} border-info${borderOpacity}`;
+      if (item.toolRentalData?.status === 'active') return `bg-success${baseOpacity} border-success${borderOpacity}`;
+      if (item.toolRentalData?.status === 'returned') return `bg-accent/40 border-accent${borderOpacity}`;
+      if (item.toolRentalData?.status === 'overdue') return `bg-error${baseOpacity} border-error${borderOpacity}`;
+      return `bg-accent${baseOpacity} border-accent${borderOpacity}`;
     }
-    // For regular events, use the regular status color
-    return getStatusColor(item.status);
+    // For regular events, use appropriate opacity based on nesting
+    const statusColor = getStatusColor(item.status);
+    if (isNestedInShift) {
+      // Make nested events more prominent within shifts
+      return statusColor.replace('bg-', 'bg-').replace(/\/\d+/, '/90');
+    }
+    return statusColor;
   };
 
   // Empty space click handler for creating new events
@@ -1031,12 +1154,16 @@ function CalendarPage() {
   };
 
   const renderWeekView = () => {
-    // Get current week dates based on currentDate (Sunday-first as per requirements)
+    // Get current week dates based on currentDate (Sunday-first consecutive week)
     const startOfWeek = new Date(currentDate);
     startOfWeek.setDate(currentDate.getDate() - currentDate.getDay());
+    // Ensure we're at midnight to avoid timezone issues
+    startOfWeek.setHours(0, 0, 0, 0);
+    
     const weekDates = Array.from({ length: 7 }, (_, i) => {
       const date = new Date(startOfWeek);
       date.setDate(startOfWeek.getDate() + i);
+      date.setHours(0, 0, 0, 0); // Ensure consistent time
       return date;
     });
 
@@ -1059,8 +1186,25 @@ function CalendarPage() {
                   <button 
                     className="btn btn-sm btn-outline"
                     onClick={() => {
-                      // TODO: Open shift switch modal
-                      alert("Shift switching will allow workers to find coverage for their shifts.\n\nComing features:\n- View available workers for each shift\n- Request specific workers to cover shifts\n- See shift requirements and current staffing\n- Golden hour availability (TBD)");
+                      // Find user's assignments for this week and let them pick one to switch
+                      const userAssignments = calendarItems
+                        .filter((item: any) => item.type === 'shift' && item.assignments?.some((a: any) => a.workerId === user?._id))
+                        .map((shift: any) => shift.assignments?.find((a: any) => a.workerId === user?._id))
+                        .filter(Boolean);
+                      
+                      if (userAssignments.length === 0) {
+                        alert("You don't have any shift assignments this week to switch.");
+                        return;
+                      }
+                      
+                      if (userAssignments.length === 1) {
+                        // If only one assignment, use it directly
+                        handleRequestShiftSwitch(userAssignments[0]);
+                      } else {
+                        // Multiple assignments - for now just use the first one
+                        // TODO: Add a picker modal for multiple assignments
+                        handleRequestShiftSwitch(userAssignments[0]);
+                      }
                     }}
                   >
                     Request Switch
@@ -1204,23 +1348,46 @@ function CalendarPage() {
                       </div>
                     )}
                     
-                    {/* Show shift population indicator */}
+                    {/* Show shift population indicator with worker names */}
                     {hasActiveShift && (
-                      <div className="absolute top-1 right-1 z-10">
-                        {shiftsInHour.map((shift) => (
-                          <div
-                            key={shift._id}
-                            className={`badge badge-xs ${
-                              shift.status === 'bad' ? 'badge-error' :
-                              shift.status === 'close' ? 'badge-warning' :
-                              shift.status === 'good' ? 'badge-success' :
-                              'badge-info'
-                            }`}
-                            title={`${shift.title}: ${shift.currentWorkers || 0}/${shift.requiredWorkers || 0} workers`}
-                          >
-                            {shift.currentWorkers || 0}/{shift.requiredWorkers || 0}
-                          </div>
-                        ))}
+                      <div className="absolute top-1 right-1 z-10 space-y-1">
+                        {shiftsInHour.map((shift) => {
+                          const workerNames = shift.assignments?.map((a: any) => a.worker?.name?.split(' ')[0]).filter(Boolean) || [];
+                          const tooltipText = `${shift.title}: ${shift.currentWorkers || 0}/${shift.requiredWorkers || 0} workers${workerNames.length > 0 ? `\nAssigned: ${workerNames.join(', ')}` : ''}`;
+                          
+                          return (
+                            <div key={shift._id} className="space-y-0.5">
+                              <div
+                                className={`badge badge-xs ${
+                                  shift.status === 'bad' ? 'badge-error' :
+                                  shift.status === 'close' ? 'badge-warning' :
+                                  shift.status === 'good' ? 'badge-success' :
+                                  'badge-info'
+                                }`}
+                                title={tooltipText}
+                              >
+                                {shift.currentWorkers || 0}/{shift.requiredWorkers || 0}
+                              </div>
+                              {/* Mini worker indicator for week view */}
+                              {workerNames.length > 0 && (
+                                <div className="flex -space-x-0.5">
+                                  {workerNames.slice(0, 2).map((name: string, idx: number) => (
+                                    <div 
+                                      key={idx}
+                                      className="w-2 h-2 rounded-full bg-primary/80 text-[7px] flex items-center justify-center border border-white"
+                                      title={name}
+                                    />
+                                  ))}
+                                  {workerNames.length > 2 && (
+                                    <div className="w-2 h-2 rounded-full bg-base-300 text-[6px] flex items-center justify-center border border-white font-bold">
+                                      •
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
                       </div>
                     )}
 
@@ -1246,6 +1413,7 @@ function CalendarPage() {
                           } ${item.type !== 'shift' ? getItemColor(item) : ''} truncate hover:opacity-90 shadow-sm`}
                           setIsResizing={setIsResizing}
                           setResizeStartPos={setResizeStartPos}
+                          onNestedClick={handleItemClick}
                         />
                       );
                     })}
@@ -1315,6 +1483,7 @@ function CalendarPage() {
                             className={`text-xs p-1 rounded ${item.type === 'shift' ? 'text-neutral-content border' : 'text-white'} ${getItemColor(item)} truncate hover:opacity-80`}
                             setIsResizing={setIsResizing}
                             setResizeStartPos={setResizeStartPos}
+                            onNestedClick={handleItemClick}
                           />
                         );
                       })}
@@ -1328,6 +1497,75 @@ function CalendarPage() {
           {/* Day View Operational Sidebar */}
           <div className="col-span-4">
             <div className="sticky top-4 space-y-4">
+              {/* Current Shift Workers Panel */}
+              <div className="card bg-info/10 border border-info/20 shadow-sm">
+                <div className="card-body">
+                  <h3 className="card-title text-sm flex items-center gap-2">
+                    <User className="w-4 h-4 text-info" />
+                    Workers on Shift
+                    <div className="badge badge-info badge-sm">
+                      {sortedItems.filter(item => item.type === 'shift' && item.assignments?.length > 0).length}
+                    </div>
+                  </h3>
+                  
+                  {sortedItems.filter(item => item.type === 'shift').length === 0 ? (
+                    <div className="text-center py-4 opacity-60">
+                      <User className="w-6 h-6 mx-auto mb-2 opacity-40" />
+                      <p className="text-xs">No shifts today</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3 max-h-32 overflow-y-auto">
+                      {sortedItems.filter(item => item.type === 'shift').map((shift: any) => (
+                        <div key={shift._id} className="bg-base-100 rounded p-2 border border-info/30">
+                          <div className="flex justify-between items-start mb-1">
+                            <h4 className="font-medium text-xs">{shift.title}</h4>
+                            <div className={`badge badge-xs ${
+                              shift.status === 'bad' ? 'badge-error' :
+                              shift.status === 'close' ? 'badge-warning' :
+                              shift.status === 'good' ? 'badge-success' :
+                              'badge-info'
+                            }`}>
+                              {shift.currentWorkers || 0}/{shift.requiredWorkers || 0}
+                            </div>
+                          </div>
+                          <div className="text-xs opacity-70 mb-2">
+                            {shift.startTime} - {shift.endTime}
+                          </div>
+                          {shift.assignments && shift.assignments.length > 0 ? (
+                            <div className="space-y-2">
+                              <div className="flex flex-wrap gap-1">
+                                {shift.assignments.map((assignment: any) => (
+                                  <div key={assignment.workerId} className="flex items-center gap-1">
+                                    <span className="badge badge-primary badge-xs">
+                                      {assignment.worker?.name?.split(' ')[0] || 'Unknown'}
+                                    </span>
+                                    {/* Show switch button if this is the current user's assignment */}
+                                    {assignment.workerId === user?._id && effectiveRole === "worker" && (
+                                      <button 
+                                        className="btn btn-xs btn-ghost opacity-60 hover:opacity-100"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleRequestShiftSwitch(assignment);
+                                        }}
+                                        title="Request to switch this shift with another worker"
+                                      >
+                                        ↔
+                                      </button>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="text-xs text-error italic">No workers assigned</div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
               {/* Manager Approval Panel - Only shown to managers */}
               {effectiveRole === "manager" && (
                 <div className="card bg-warning/10 border border-warning/20 shadow-sm">
@@ -1842,6 +2080,31 @@ function CalendarPage() {
               isOpen={!!editingEvent} 
               onClose={() => setEditingEvent(null)} 
               event={editingEvent}
+            />
+          )}
+
+          {assignmentData && (
+            <ShiftAssignmentModal 
+              isOpen={isAssignmentModalOpen}
+              onClose={() => {
+                setIsAssignmentModalOpen(false);
+                setAssignmentData(null);
+              }}
+              shift={assignmentData.shift}
+              date={assignmentData.date}
+              currentUser={user}
+            />
+          )}
+          
+          {switchAssignmentData && (
+            <ShiftSwitchModal 
+              isOpen={isSwitchModalOpen}
+              onClose={() => {
+                setIsSwitchModalOpen(false);
+                setSwitchAssignmentData(null);
+              }}
+              assignment={switchAssignmentData}
+              currentUser={user}
             />
           )}
         </div>

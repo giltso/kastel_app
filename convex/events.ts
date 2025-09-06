@@ -724,7 +724,7 @@ export const listCalendarItems = query({
       })
     );
 
-    // Enrich shift instances with assignment data
+    // Enrich shift instances with assignment data and nested events
     const enrichedShiftInstances = await Promise.all(
       shiftInstances.map(async (instance) => {
         const assignmentsForThisShift = shiftAssignments.filter(assignment => 
@@ -745,6 +745,42 @@ export const listCalendarItems = query({
                      currentWorkers === instance.requiredWorkers - 1 ? "close" :
                      currentWorkers === instance.requiredWorkers ? "good" : "warning";
 
+        // Find events that should be nested within this shift
+        // Events are nested if they:
+        // 1. Occur on the same date as the shift
+        // 2. Have start/end times that overlap with or fall within the shift timeframe
+        // 3. Involve workers assigned to this shift (optional - some events may be exempt)
+        const nestedEvents = enrichedEvents.filter(event => {
+          // Check if event is on the same date
+          if (event.startDate !== instance.date) return false;
+
+          // Parse times for comparison
+          const shiftStart = instance.startTime.split(':').map((n: string) => parseInt(n));
+          const shiftEnd = instance.endTime.split(':').map((n: string) => parseInt(n));
+          const eventStart = event.startTime.split(':').map((n: string) => parseInt(n));
+          const eventEnd = event.endTime.split(':').map((n: string) => parseInt(n));
+
+          const shiftStartMinutes = shiftStart[0] * 60 + shiftStart[1];
+          const shiftEndMinutes = shiftEnd[0] * 60 + shiftEnd[1];
+          const eventStartMinutes = eventStart[0] * 60 + eventStart[1];
+          const eventEndMinutes = eventEnd[0] * 60 + eventEnd[1];
+
+          // Check for time overlap
+          const hasTimeOverlap = eventStartMinutes < shiftEndMinutes && eventEndMinutes > shiftStartMinutes;
+          if (!hasTimeOverlap) return false;
+
+          // Check if event involves workers assigned to this shift
+          const assignedWorkerIds = assignedWorkers.map(aw => aw.worker?._id).filter(Boolean);
+          const eventInvolvesShiftWorkers = 
+            assignedWorkerIds.includes(event.createdBy?._id) ||
+            assignedWorkerIds.includes(event.assignedTo?._id) ||
+            event.participants?.some((p: any) => assignedWorkerIds.includes(p._id));
+
+          // For now, nest events that involve shift workers or are general operational events
+          // TODO: Add more sophisticated nesting rules based on event type
+          return eventInvolvesShiftWorkers || event.type === 'work' || event.type === 'maintenance';
+        });
+
         return {
           ...instance,
           assignments: assignedWorkers,
@@ -752,13 +788,22 @@ export const listCalendarItems = query({
           status,
           spotsAvailable: Math.max(0, instance.requiredWorkers - currentWorkers),
           isOverpopulated: currentWorkers > instance.requiredWorkers,
+          nestedEvents: nestedEvents, // Add nested events to shift instance
         };
       })
     );
 
-    // Combine all calendar items
+    // Filter out events that are nested within shifts to avoid duplication
+    const standaloneEvents = enrichedEvents.filter(event => {
+      // Check if this event is nested in any shift
+      return !enrichedShiftInstances.some(shift => 
+        shift.nestedEvents && shift.nestedEvents.some((nestedEvent: any) => nestedEvent._id === event._id)
+      );
+    });
+
+    // Combine standalone events and shifts (shifts contain their nested events)
     const calendarItems = [
-      ...enrichedEvents,
+      ...standaloneEvents,
       ...enrichedShiftInstances,
     ];
 
