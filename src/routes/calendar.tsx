@@ -74,18 +74,21 @@ function DraggableEvent({ event, style, canEdit, onClick, className, setIsResizi
       <div
         ref={setNodeRef}
         style={{ ...style, ...dragStyle }}
-        className={`${className} relative transition-all duration-200 border-2 border-dashed ${
-          event.status === 'bad' ? 'border-error/60' :
-          event.status === 'close' ? 'border-warning/60' :
-          event.status === 'good' ? 'border-success/60' :
-          event.status === 'warning' ? 'border-warning/60' :
-          'border-info/60'
-        } rounded-lg overflow-hidden cursor-pointer`}
+        className={`${className} relative transition-all duration-200 shadow-lg hover:shadow-xl
+          border-2 border-solid ${
+          event.status === 'bad' ? 'border-error/70 shadow-error/20' :
+          event.status === 'close' ? 'border-warning/70 shadow-warning/20' :
+          event.status === 'good' ? 'border-success/70 shadow-success/20' :
+          event.status === 'warning' ? 'border-warning/70 shadow-warning/20' :
+          'border-info/70 shadow-info/20'
+        } rounded-lg overflow-hidden cursor-pointer backdrop-blur-sm bg-base-100/80`}
         title={`${event.title} (${event.startTime} - ${event.endTime}) - ${event.currentWorkers}/${event.requiredWorkers} workers`}
         onClick={onClick}
       >
-        {/* Shift background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-transparent via-current/5 to-current/10 pointer-events-none" />
+        {/* Enhanced shift background with container visual cues */}
+        <div className="absolute inset-0 bg-gradient-to-br from-current/10 via-current/5 to-transparent pointer-events-none" />
+        <div className="absolute inset-x-0 top-0 h-1 bg-current/30" />
+        <div className="absolute inset-y-0 left-0 w-1 bg-current/30" />
         
         {/* Shift header with worker info */}
         <div className={`px-2 py-1 text-xs font-medium bg-current/20 text-base-content border-b border-current/30`}>
@@ -137,26 +140,54 @@ function DraggableEvent({ event, style, canEdit, onClick, className, setIsResizi
           )}
         </div>
         
-        {/* Nested events within shift */}
-        <div className="p-1 space-y-1">
+        {/* Enhanced nested events container with improved visual hierarchy */}
+        <div className="p-2 space-y-1 bg-base-100/20 backdrop-blur-sm">
           {event.nestedEvents && event.nestedEvents.length > 0 ? (
-            event.nestedEvents.map((nestedEvent: any, index: number) => (
-              <div
-                key={nestedEvent._id}
-                className={`text-xs px-2 py-1 rounded ${getItemColor(nestedEvent, true)} text-white/90 truncate border border-white/20`}
-                style={{ marginLeft: `${Math.min(index * 4, 12)}px` }} // Slight indentation for visual hierarchy
-                title={`${nestedEvent.title} (${nestedEvent.startTime} - ${nestedEvent.endTime})`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onNestedClick?.(nestedEvent);
-                }}
-              >
-                {nestedEvent.title}
+            <>
+              <div className="flex items-center gap-2 mb-2 text-xs font-medium text-base-content/70">
+                <div className="w-3 h-px bg-current/40" />
+                <span>Scheduled Activities ({event.nestedEvents.length})</span>
+                <div className="flex-1 h-px bg-current/20" />
               </div>
-            ))
+              {event.nestedEvents.map((nestedEvent: any, index: number) => (
+                <div
+                  key={nestedEvent._id}
+                  className={`relative group transition-all duration-200 hover:shadow-md hover:scale-[1.02]`}
+                  style={{ marginLeft: `${Math.min(index * 6, 18)}px` }} // Enhanced progressive indentation
+                >
+                  {/* Connection line to show nesting hierarchy */}
+                  <div className="absolute -left-3 top-1/2 w-2 h-px bg-current/30 transform -translate-y-1/2" />
+                  {index > 0 && (
+                    <div className="absolute -left-3 -top-2 w-px h-4 bg-current/20" />
+                  )}
+                  
+                  <div
+                    className={`text-xs px-3 py-2 rounded-md ${getItemColor(nestedEvent, true)} text-white/95 truncate 
+                      border border-white/30 shadow-sm backdrop-blur-sm
+                      hover:border-white/50 transition-all duration-200 cursor-pointer
+                      ${isCurrentlyResizing ? 'pointer-events-none' : ''}`}
+                    title={`${nestedEvent.title} (${nestedEvent.startTime} - ${nestedEvent.endTime})`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onNestedClick?.(nestedEvent);
+                    }}
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-medium truncate">{nestedEvent.title}</span>
+                      <span className="text-xs opacity-75 whitespace-nowrap">
+                        {nestedEvent.startTime}-{nestedEvent.endTime}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </>
           ) : (
-            <div className="text-xs px-2 py-1 text-base-content/60 italic">
-              No scheduled activities
+            <div className="text-xs px-3 py-2 text-base-content/50 italic text-center bg-base-100/10 rounded-md border border-dashed border-current/20">
+              <div className="flex items-center justify-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-current/20" />
+                <span>No scheduled activities</span>
+              </div>
             </div>
           )}
         </div>
