@@ -58,7 +58,7 @@ export const Route = createFileRoute("/calendar")({
 type ViewType = "day" | "week" | "month";
 
 // Draggable Event Component with Resize Handles
-function DraggableEvent({ event, style, canEdit, onClick, className, setIsResizing, setResizeStartPos, isCurrentlyResizing, onNestedClick, getItemColor, onApprove }: {
+function DraggableEvent({ event, style, canEdit, onClick, className, setIsResizing, setResizeStartPos, isCurrentlyResizing, onNestedClick, getItemColor, onApprove, bulkMode, isSelected, onToggleSelection }: {
   event: any;
   style?: React.CSSProperties;
   canEdit: boolean;
@@ -70,6 +70,9 @@ function DraggableEvent({ event, style, canEdit, onClick, className, setIsResizi
   onNestedClick?: (item: any) => void;
   getItemColor: (item: any, isNestedInShift?: boolean) => string;
   onApprove?: (item: any, approve: boolean) => void;
+  bulkMode?: boolean;
+  isSelected?: boolean;
+  onToggleSelection?: (itemId: string) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
     id: event._id,
@@ -258,7 +261,20 @@ function DraggableEvent({ event, style, canEdit, onClick, className, setIsResizi
       <div className={`${
         event.type === 'tool_rental' ? 'px-1 py-0.5 text-xs' : 'px-2 py-1 text-xs'
       } leading-tight font-medium ${canEdit ? 'cursor-move' : 'cursor-pointer'}`}>
-        <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          {/* Bulk selection checkbox */}
+          {bulkMode && event.canApprove && event.pendingApproval && (
+            <input
+              type="checkbox"
+              className="checkbox checkbox-xs flex-shrink-0"
+              checked={isSelected || false}
+              onChange={(e) => {
+                e.stopPropagation();
+                onToggleSelection?.(event.id);
+              }}
+            />
+          )}
+          
           <div className="flex-1 truncate">
             {event.type === 'tool_rental' ? (
               <span className="flex items-center gap-1">
@@ -409,6 +425,10 @@ function CalendarPage() {
   const [resizePreviewTime, setResizePreviewTime] = useState<string | null>(null);
   const [dragPreview, setDragPreview] = useState<{targetDate: Date, targetTime: string} | null>(null);
   const [resizePreviewDate, setResizePreviewDate] = useState<{targetDate: Date, type: 'start' | 'end'} | null>(null);
+  
+  // Bulk operations state
+  const [bulkMode, setBulkMode] = useState(false);
+  const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
   
   // Calculate date range based on current view
   const getDateRange = () => {
@@ -1060,10 +1080,38 @@ function CalendarPage() {
       });
       
       console.log(`Bulk ${approve ? 'approval' : 'rejection'} completed for ${items.length} items`);
+      // Clear selection after successful bulk operation
+      setSelectedItems(new Set());
+      setBulkMode(false);
     } catch (error) {
       console.error('Bulk approval failed:', error);
       alert(`Failed to ${approve ? 'approve' : 'reject'} selected items.`);
     }
+  };
+
+  // Bulk operations helpers
+  const toggleItemSelection = (itemId: string) => {
+    const newSelected = new Set(selectedItems);
+    if (newSelected.has(itemId)) {
+      newSelected.delete(itemId);
+    } else {
+      newSelected.add(itemId);
+    }
+    setSelectedItems(newSelected);
+  };
+
+  const selectAllPendingItems = () => {
+    const pendingItems = calendarItems.filter(item => item.pendingApproval && item.canApprove);
+    setSelectedItems(new Set(pendingItems.map(item => item.id)));
+  };
+
+  const clearSelection = () => {
+    setSelectedItems(new Set());
+    setBulkMode(false);
+  };
+
+  const getSelectedItemsData = () => {
+    return calendarItems.filter(item => selectedItems.has(item.id));
   };
 
   const handleEventDrop = async (date: Date, hour?: number, draggedEvent?: any, customTime?: string) => {
@@ -1712,12 +1760,15 @@ function CalendarPage() {
                             item.type === 'shift' 
                               ? 'text-base-content bg-base-100/80 border-2 border-current' 
                               : 'text-white'
-                          } ${item.type !== 'shift' ? getItemColor(item) : ''} truncate hover:opacity-90 shadow-sm`}
+                          } ${item.type !== 'shift' ? getItemColor(item) : ''} ${selectedItems.has(item.id) ? 'ring-2 ring-primary' : ''} truncate hover:opacity-90 shadow-sm`}
                           setIsResizing={setIsResizing}
                           setResizeStartPos={setResizeStartPos}
                           onNestedClick={handleItemClick}
                           getItemColor={getItemColor}
                           onApprove={handleApproveCalendarItem}
+                          bulkMode={bulkMode}
+                          isSelected={selectedItems.has(item.id)}
+                          onToggleSelection={toggleItemSelection}
                         />
                       );
                     })}
@@ -1784,12 +1835,15 @@ function CalendarPage() {
                               e.stopPropagation();
                               handleItemClick(item);
                             }}
-                            className={`text-xs p-1 rounded ${item.type === 'shift' ? 'text-neutral-content border' : 'text-white'} ${getItemColor(item)} truncate hover:opacity-80`}
+                            className={`text-xs p-1 rounded ${item.type === 'shift' ? 'text-neutral-content border' : 'text-white'} ${getItemColor(item)} ${selectedItems.has(item.id) ? 'ring-2 ring-primary' : ''} truncate hover:opacity-80`}
                             setIsResizing={setIsResizing}
                             setResizeStartPos={setResizeStartPos}
                             onNestedClick={handleItemClick}
                             getItemColor={getItemColor}
                             onApprove={handleApproveCalendarItem}
+                            bulkMode={bulkMode}
+                            isSelected={selectedItems.has(item.id)}
+                            onToggleSelection={toggleItemSelection}
                           />
                         );
                       })}
@@ -2259,13 +2313,68 @@ function CalendarPage() {
           <div className="justify-self-center">
             <div className="text-center">
               <h2 className="text-2xl font-bold leading-tight">{currentMonth}</h2>
-              {/* Pending Approvals Indicator for Managers */}
-              {hasPermission("manage_events") && calendarSummary.pendingApprovals > 0 && (
-                <div className="mt-1">
-                  <div className="badge badge-warning gap-1 text-xs">
-                    <span>⏳</span>
-                    {calendarSummary.pendingApprovals} pending approval{calendarSummary.pendingApprovals !== 1 ? 's' : ''}
-                  </div>
+              {/* Pending Approvals & Bulk Operations for Managers */}
+              {hasPermission("manage_events") && (
+                <div className="mt-1 space-y-2">
+                  {/* Pending Approvals Indicator */}
+                  {calendarSummary.pendingApprovals > 0 && (
+                    <div>
+                      <div className="badge badge-warning gap-1 text-xs">
+                        <span>⏳</span>
+                        {calendarSummary.pendingApprovals} pending approval{calendarSummary.pendingApprovals !== 1 ? 's' : ''}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Bulk Operations Panel */}
+                  {calendarSummary.pendingApprovals > 0 && (
+                    <div className="flex gap-2 items-center text-xs">
+                      {!bulkMode ? (
+                        <button 
+                          className="btn btn-xs btn-outline"
+                          onClick={() => setBulkMode(true)}
+                        >
+                          Bulk Select
+                        </button>
+                      ) : (
+                        <div className="flex gap-2 items-center bg-base-200 px-3 py-1 rounded-full">
+                          <span className="text-xs font-medium">
+                            {selectedItems.size} selected
+                          </span>
+                          <button
+                            className="btn btn-xs btn-ghost"
+                            onClick={selectAllPendingItems}
+                          >
+                            Select All
+                          </button>
+                          {selectedItems.size > 0 && (
+                            <>
+                              <button
+                                className="btn btn-xs btn-success"
+                                onClick={() => handleBulkApprove(getSelectedItemsData(), true)}
+                              >
+                                <Check className="w-3 h-3" />
+                                Approve ({selectedItems.size})
+                              </button>
+                              <button
+                                className="btn btn-xs btn-error"
+                                onClick={() => handleBulkApprove(getSelectedItemsData(), false)}
+                              >
+                                <X className="w-3 h-3" />
+                                Reject ({selectedItems.size})
+                              </button>
+                            </>
+                          )}
+                          <button
+                            className="btn btn-xs btn-ghost"
+                            onClick={clearSelection}
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
