@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { useForm } from "@tanstack/react-form";
-import { X, User, Calendar, Clock, AlertCircle, Edit, Users, Settings } from "lucide-react";
+import { X, User, Calendar, Clock, AlertCircle, Users, Settings } from "lucide-react";
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
 
@@ -21,7 +21,6 @@ export function ShiftDetailsModal({ isOpen, onClose, shift, date, currentUser }:
   const [activeTab, setActiveTab] = useState<TabType>('overview');
   
   const assignWorkerToShift = useMutation(api.shifts.assignWorkerToShift);
-  const updateEvent = useMutation(api.events.updateEvent);
   const createShiftReplacement = useMutation(api.events.createShiftReplacement);
   
   const dateString = date.toISOString().split('T')[0];
@@ -180,7 +179,7 @@ export function ShiftDetailsModal({ isOpen, onClose, shift, date, currentUser }:
             </div>
 
             {/* Tab Content */}
-            <div className="tab-content">
+            <div className="tab-content min-h-[200px]">
               {/* Overview Tab */}
               {activeTab === 'overview' && (
                 <div className="space-y-6">
@@ -188,16 +187,16 @@ export function ShiftDetailsModal({ isOpen, onClose, shift, date, currentUser }:
                   <div className="bg-base-200 rounded-lg p-4">
                     <h3 className="font-semibold flex items-center gap-2 mb-3">
                       <Calendar className="w-4 h-4" />
-                      {shift.title || shift.name}
+                      {shift?.title || shift?.name || 'Shift'}
                     </h3>
                     <div className="grid grid-cols-2 gap-4 text-sm">
                       <div className="flex items-center gap-2">
                         <Clock className="w-4 h-4" />
-                        <span>{shift.startTime} - {shift.endTime}</span>
+                        <span>{shift?.startTime || 'N/A'} - {shift?.endTime || 'N/A'}</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <User className="w-4 h-4" />
-                        <span>{shift.currentWorkers || 0}/{shift.requiredWorkers} workers</span>
+                        <span>{shift?.currentWorkers || 0}/{shift?.requiredWorkers || 0} workers</span>
                       </div>
                       <div className="col-span-2">
                         <span className="opacity-70">Date: {date.toLocaleDateString()}</span>
@@ -280,7 +279,9 @@ export function ShiftDetailsModal({ isOpen, onClose, shift, date, currentUser }:
               )}
 
               {/* Assignments Tab */}
-              {activeTab === 'assignments' && isManager && (
+              {activeTab === 'assignments' && (
+                <div className="space-y-4">
+                  {isManager && (
                 <form
                   onSubmit={(e) => {
                     e.preventDefault();
@@ -312,7 +313,7 @@ export function ShiftDetailsModal({ isOpen, onClose, shift, date, currentUser }:
                         </select>
                         {!field.state.meta.isValid && (
                           <div className="text-error text-xs mt-1">
-                            {field.state.meta.errors.map(e => e.message).join(", ")}
+                            {field.state.meta.errors.map(e => String(e)).join(", ")}
                           </div>
                         )}
                       </div>
@@ -363,6 +364,16 @@ export function ShiftDetailsModal({ isOpen, onClose, shift, date, currentUser }:
                     </button>
                   </div>
                 </form>
+                  )}
+                  {!isManager && (
+                    <div className="alert alert-warning">
+                      <div>
+                        <h4 className="font-medium">Manager Access Required</h4>
+                        <p className="text-sm">Only managers can assign workers to shifts</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
               )}
 
               {/* Edit Tab */}

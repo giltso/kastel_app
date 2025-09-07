@@ -823,6 +823,9 @@ export const listCalendarItems = query({
         // 2. Have start/end times that overlap with or fall within the shift timeframe
         // 3. Involve workers assigned to this shift (optional - some events may be exempt)
         const nestedEvents = enrichedEvents.filter(event => {
+          // Safety check - skip null/undefined events
+          if (!event) return false;
+          
           // Check for manual nesting override first
           if (event.manualNestingOverride) {
             const override = event.manualNestingOverride;
@@ -884,6 +887,9 @@ export const listCalendarItems = query({
 
     // Filter out events that are nested within shifts to avoid duplication
     const standaloneEvents = enrichedEvents.filter(event => {
+      // Safety check - skip null/undefined events
+      if (!event) return false;
+      
       // Check if this event is nested in any shift
       return !enrichedShiftInstances.some(shift => 
         shift.nestedEvents && shift.nestedEvents.some((nestedEvent: any) => nestedEvent._id === event._id)
@@ -1231,7 +1237,7 @@ export const unnestEventFromShift = mutation({
     // Add manual unnesting override to the event
     await ctx.db.patch(args.eventId, {
       manualNestingOverride: {
-        shiftId: null,
+        shiftId: undefined,
         date: args.date,
         action: "unnested",
         overriddenBy: user._id,

@@ -28,6 +28,15 @@ detailed history of all sessions. to be updated on new session
 
 **Status**: Shift assignment system ready for manual testing - all major functionality issues resolved
 
+**Session 13 Continuation**: Advanced calendar integration implementation (coded without dev server testing)
+- **Advanced Visual Hierarchy**: Enhanced shift containers with nesting indicators, connection lines, progressive indentation
+- **Manager Drag Operations**: Shift dragging with exception confirmation, time calculation, non-recurring creation
+- **Drag-In/Drag-Out System**: Manual event nesting override with backend metadata tracking, course exclusions
+- **Comprehensive Shift Modal**: ShiftDetailsModal with tabbed interface (overview/assignments/edit), shift editing with exception warnings
+- **Backend Enhancements**: Manual nesting mutations, schema updates, override logic integration
+
+**⚠️ Critical Note**: All Session 13 work was implemented "blind" without dev server testing - comprehensive UI validation needed before marking as production-ready
+
 ### Session 12 - September 6, 2025
 
 **Goals**: UX refinements, tool rental seeding, and calendar integration improvements
