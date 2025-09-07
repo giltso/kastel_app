@@ -24,11 +24,26 @@ async function getCurrentUser(ctx: any) {
 }
 
 // Get effective role (considering dev emulation)
-function getEffectiveRole(user: Doc<"users">) {
-  if (user.role === "dev" && user.emulatingRole) {
-    return user.emulatingRole;
+function getEffectiveRole(user: any): string {
+  if (user.baseRole) {
+    if (user.role === "dev" && user.emulatingBaseRole) {
+      const tags = user.emulatingTags || [];
+      if (user.emulatingBaseRole === "worker" && tags.includes("manager")) {
+        return "manager";
+      }
+      return user.emulatingBaseRole;
+    } else {
+      const tags = user.tags || [];
+      if (user.baseRole === "worker" && tags.includes("manager")) {
+        return "manager";
+      }
+      return user.baseRole;
+    }
+  } else {
+    return user.role === "dev" && (user.emulatingRole || user.emulatingBaseRole)
+      ? (user.emulatingRole || user.emulatingBaseRole)
+      : (user.role || "guest");
   }
-  return user.role || "guest";
 }
 
 // Check if user has operational permissions (worker or manager)
