@@ -3,7 +3,7 @@ import { Authenticated, useMutation } from "convex/react";
 import { convexQuery } from "@convex-dev/react-query";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
-import { Calendar, ChevronLeft, ChevronRight, Filter, Plus, Target, Search, User } from "lucide-react";
+import { Calendar, ChevronLeft, ChevronRight, Filter, Plus, Target, Search, User, Check, X } from "lucide-react";
 import {
   DndContext,
   closestCenter,
@@ -58,7 +58,7 @@ export const Route = createFileRoute("/calendar")({
 type ViewType = "day" | "week" | "month";
 
 // Draggable Event Component with Resize Handles
-function DraggableEvent({ event, style, canEdit, onClick, className, setIsResizing, setResizeStartPos, isCurrentlyResizing, onNestedClick, getItemColor }: {
+function DraggableEvent({ event, style, canEdit, onClick, className, setIsResizing, setResizeStartPos, isCurrentlyResizing, onNestedClick, getItemColor, onApprove }: {
   event: any;
   style?: React.CSSProperties;
   canEdit: boolean;
@@ -69,6 +69,7 @@ function DraggableEvent({ event, style, canEdit, onClick, className, setIsResizi
   isCurrentlyResizing?: boolean;
   onNestedClick?: (item: any) => void;
   getItemColor: (item: any, isNestedInShift?: boolean) => string;
+  onApprove?: (item: any, approve: boolean) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
     id: event._id,
@@ -257,18 +258,55 @@ function DraggableEvent({ event, style, canEdit, onClick, className, setIsResizi
       <div className={`${
         event.type === 'tool_rental' ? 'px-1 py-0.5 text-xs' : 'px-2 py-1 text-xs'
       } leading-tight font-medium ${canEdit ? 'cursor-move' : 'cursor-pointer'}`}>
-        {event.type === 'tool_rental' ? (
-          <span className="flex items-center gap-1">
-            🔧 <span className="truncate">{event.toolRentalData?.toolName || event.title}</span>
-          </span>
-        ) : (
-          <>
-            {event.title}
-            {event.startDate !== event.endDate && (
-              <span className="ml-1 opacity-70">...</span>
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex-1 truncate">
+            {event.type === 'tool_rental' ? (
+              <span className="flex items-center gap-1">
+                🔧 <span className="truncate">{event.toolRentalData?.toolName || event.title}</span>
+              </span>
+            ) : (
+              <>
+                {event.title}
+                {event.startDate !== event.endDate && (
+                  <span className="ml-1 opacity-70">...</span>
+                )}
+              </>
             )}
-          </>
-        )}
+          </div>
+          
+          {/* Inline Approval Buttons for Managers */}
+          {event.canApprove && event.pendingApproval && (
+            <div className="flex gap-1 flex-shrink-0">
+              <button
+                className="btn btn-xs btn-success opacity-90 hover:opacity-100"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onApprove?.(event, true);
+                }}
+                title="Approve"
+              >
+                <Check className="w-3 h-3" />
+              </button>
+              <button
+                className="btn btn-xs btn-error opacity-90 hover:opacity-100"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onApprove?.(event, false);
+                }}
+                title="Reject"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            </div>
+          )}
+          
+          {/* Status indicator for pending items */}
+          {event.pendingApproval && !event.canApprove && (
+            <div className="badge badge-xs badge-warning flex-shrink-0" title="Pending Approval">
+              ⏳
+            </div>
+          )}
+        </div>
       </div>
       
       {/* Bottom resize handle */}
@@ -405,6 +443,10 @@ function CalendarPage() {
   const createShiftReplacement = useMutation(api.events.createShiftReplacement);
   const nestEventInShift = useMutation(api.events.nestEventInShift);
   const unnestEventFromShift = useMutation(api.events.unnestEventFromShift);
+  
+  // Approval workflow mutations
+  const approveCalendarItem = useMutation(api.calendar_unified.approveCalendarItem);
+  const bulkApproveCalendarItems = useMutation(api.calendar_unified.bulkApproveCalendarItems);
   const today = new Date();
   const currentMonth = currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 
@@ -987,6 +1029,42 @@ function CalendarPage() {
     setIsCreateModalOpen(true);
   };
 
+  // Approval workflow handlers
+  const handleApproveCalendarItem = async (item: any, approve: boolean, reason?: string) => {
+    try {
+      await approveCalendarItem({
+        itemId: item.id,
+        itemType: item.type === 'tool_rental' ? 'tool_rental' : 'event',
+        approve,
+        reason
+      });
+      
+      // Show success feedback
+      console.log(`${item.type} ${approve ? 'approved' : 'rejected'} successfully`);
+    } catch (error) {
+      console.error('Failed to process approval:', error);
+      alert(`Failed to ${approve ? 'approve' : 'reject'} ${item.type}. You may not have permission.`);
+    }
+  };
+
+  const handleBulkApprove = async (items: any[], approve: boolean) => {
+    try {
+      const bulkItems = items.map(item => ({
+        itemId: item.id,
+        itemType: item.type === 'tool_rental' ? 'tool_rental' as const : 'event' as const
+      }));
+      
+      await bulkApproveCalendarItems({
+        items: bulkItems,
+        approve
+      });
+      
+      console.log(`Bulk ${approve ? 'approval' : 'rejection'} completed for ${items.length} items`);
+    } catch (error) {
+      console.error('Bulk approval failed:', error);
+      alert(`Failed to ${approve ? 'approve' : 'reject'} selected items.`);
+    }
+  };
 
   const handleEventDrop = async (date: Date, hour?: number, draggedEvent?: any, customTime?: string) => {
     if (draggedEvent) {
@@ -1639,6 +1717,7 @@ function CalendarPage() {
                           setResizeStartPos={setResizeStartPos}
                           onNestedClick={handleItemClick}
                           getItemColor={getItemColor}
+                          onApprove={handleApproveCalendarItem}
                         />
                       );
                     })}
@@ -1710,6 +1789,7 @@ function CalendarPage() {
                             setResizeStartPos={setResizeStartPos}
                             onNestedClick={handleItemClick}
                             getItemColor={getItemColor}
+                            onApprove={handleApproveCalendarItem}
                           />
                         );
                       })}
@@ -2177,7 +2257,18 @@ function CalendarPage() {
           
           {/* Title - Center */}
           <div className="justify-self-center">
-            <h2 className="text-2xl font-bold text-center leading-tight">{currentMonth}</h2>
+            <div className="text-center">
+              <h2 className="text-2xl font-bold leading-tight">{currentMonth}</h2>
+              {/* Pending Approvals Indicator for Managers */}
+              {hasPermission("manage_events") && calendarSummary.pendingApprovals > 0 && (
+                <div className="mt-1">
+                  <div className="badge badge-warning gap-1 text-xs">
+                    <span>⏳</span>
+                    {calendarSummary.pendingApprovals} pending approval{calendarSummary.pendingApprovals !== 1 ? 's' : ''}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
           
           {/* Navigation - Right */}
