@@ -28,18 +28,37 @@ import { ShiftModificationModal } from "@/components/ShiftModificationModal";
 import { usePermissions } from "@/hooks/usePermissions";
 import type { Doc } from "../../convex/_generated/dataModel";
 
-const calendarQueryOptions = convexQuery(api.events.listCalendarItems, {});
+const calendarQueryOptions = (startDate: string, endDate: string, view: "day" | "week" | "month") => 
+  convexQuery(api.calendar_unified.getUnifiedCalendarData, {
+    startDate,
+    endDate,
+    view,
+    filters: {
+      showEvents: true,
+      showShifts: true,
+      showTools: true,
+      showPendingOnly: false
+    }
+  });
 
 export const Route = createFileRoute("/calendar")({
-  loader: async ({ context: { queryClient } }) =>
-    await queryClient.ensureQueryData(calendarQueryOptions),
+  loader: async ({ context: { queryClient } }) => {
+    // Preload current month data
+    const now = new Date();
+    const startDate = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+    const endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
+    
+    await queryClient.ensureQueryData(
+      calendarQueryOptions(startDate, endDate, "month")
+    );
+  },
   component: CalendarPage,
 });
 
 type ViewType = "day" | "week" | "month";
 
 // Draggable Event Component with Resize Handles
-function DraggableEvent({ event, style, canEdit, onClick, className, setIsResizing, setResizeStartPos, isCurrentlyResizing, onNestedClick }: {
+function DraggableEvent({ event, style, canEdit, onClick, className, setIsResizing, setResizeStartPos, isCurrentlyResizing, onNestedClick, getItemColor }: {
   event: any;
   style?: React.CSSProperties;
   canEdit: boolean;
@@ -49,6 +68,7 @@ function DraggableEvent({ event, style, canEdit, onClick, className, setIsResizi
   setResizeStartPos: (pos: {x: number, y: number} | null) => void;
   isCurrentlyResizing?: boolean;
   onNestedClick?: (item: any) => void;
+  getItemColor: (item: any, isNestedInShift?: boolean) => string;
 }) {
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
     id: event._id,
@@ -352,8 +372,35 @@ function CalendarPage() {
   const [dragPreview, setDragPreview] = useState<{targetDate: Date, targetTime: string} | null>(null);
   const [resizePreviewDate, setResizePreviewDate] = useState<{targetDate: Date, type: 'start' | 'end'} | null>(null);
   
-  const { data: queryResult } = useSuspenseQuery(calendarQueryOptions);
-  const calendarItems = queryResult?.calendarItems || [];
+  // Calculate date range based on current view
+  const getDateRange = () => {
+    const startDate = new Date(currentDate);
+    const endDate = new Date(currentDate);
+    
+    if (viewType === "month") {
+      startDate.setDate(1);
+      endDate.setMonth(endDate.getMonth() + 1);
+      endDate.setDate(0);
+    } else if (viewType === "week") {
+      const dayOfWeek = startDate.getDay();
+      startDate.setDate(startDate.getDate() - dayOfWeek);
+      endDate.setDate(startDate.getDate() + 6);
+    }
+    // For day view, use current date
+    
+    return {
+      startDate: startDate.toISOString().split('T')[0],
+      endDate: endDate.toISOString().split('T')[0]
+    };
+  };
+  
+  const dateRange = getDateRange();
+  const { data: queryResult } = useSuspenseQuery(
+    calendarQueryOptions(dateRange.startDate, dateRange.endDate, viewType)
+  );
+  
+  const calendarItems = queryResult?.items || [];
+  const calendarSummary = queryResult?.summary || { totalItems: 0, pendingApprovals: 0, itemTypes: { events: 0, shifts: 0, toolRentals: 0 } };
   const updateEvent = useMutation(api.events.updateEvent);
   const createShiftReplacement = useMutation(api.events.createShiftReplacement);
   const nestEventInShift = useMutation(api.events.nestEventInShift);
@@ -1591,6 +1638,7 @@ function CalendarPage() {
                           setIsResizing={setIsResizing}
                           setResizeStartPos={setResizeStartPos}
                           onNestedClick={handleItemClick}
+                          getItemColor={getItemColor}
                         />
                       );
                     })}
@@ -1661,6 +1709,7 @@ function CalendarPage() {
                             setIsResizing={setIsResizing}
                             setResizeStartPos={setResizeStartPos}
                             onNestedClick={handleItemClick}
+                            getItemColor={getItemColor}
                           />
                         );
                       })}
