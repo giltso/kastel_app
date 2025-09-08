@@ -42,16 +42,6 @@ const calendarQueryOptions = (startDate: string, endDate: string, view: "day" | 
   });
 
 export const Route = createFileRoute("/calendar")({
-  loader: async ({ context: { queryClient } }) => {
-    // Preload current month data
-    const now = new Date();
-    const startDate = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
-    const endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
-    
-    await queryClient.ensureQueryData(
-      calendarQueryOptions(startDate, endDate, "month")
-    );
-  },
   component: CalendarPage,
 });
 

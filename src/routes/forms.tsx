@@ -8,8 +8,6 @@ import { api } from "../../convex/_generated/api";
 const formsQueryOptions = convexQuery(api.forms.listForms, {});
 
 export const Route = createFileRoute("/forms")({
-  loader: async ({ context: { queryClient } }) =>
-    await queryClient.ensureQueryData(formsQueryOptions),
   component: FormsPage,
 });
 

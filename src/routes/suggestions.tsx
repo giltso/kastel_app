@@ -21,10 +21,6 @@ import { useIsDev } from "@/hooks/usePermissions";
 
 export const Route = createFileRoute("/suggestions")({
   component: SuggestionsPage,
-  loader: async ({ context: { queryClient } }) => {
-    const suggestionsQuery = convexQuery(api.suggestions.getSuggestions, {});
-    await queryClient.ensureQueryData(suggestionsQuery);
-  },
 });
 
 type SuggestionStatus = "pending" | "reviewed" | "implemented" | "rejected";

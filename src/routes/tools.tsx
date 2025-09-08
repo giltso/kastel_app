@@ -11,19 +11,6 @@ const toolsQueryOptions = convexQuery(api.tools.listTools, {});
 const toolRentalsQueryOptions = convexQuery(api.tools.listToolRentals, {});
 
 export const Route = createFileRoute("/tools")({
-  loader: async ({ context: { queryClient } }) => {
-    // Always load tools data
-    await queryClient.ensureQueryData(toolsQueryOptions);
-    
-    // Only load rentals data if user might be authenticated
-    // This avoids unnecessary API calls for guests
-    try {
-      await queryClient.ensureQueryData(toolRentalsQueryOptions);
-    } catch (error) {
-      // Ignore errors for unauthenticated users
-      console.log("Skipping rental data for unauthenticated user");
-    }
-  },
   component: ToolsPage,
 });
 

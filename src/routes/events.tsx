@@ -13,8 +13,6 @@ import type { Id, Doc } from "../../convex/_generated/dataModel";
 const eventsQueryOptions = convexQuery(api.events.listEvents, {});
 
 export const Route = createFileRoute("/events")({
-  loader: async ({ context: { queryClient } }) =>
-    await queryClient.ensureQueryData(eventsQueryOptions),
   component: EventsPage,
 });
 
