@@ -3,73 +3,26 @@
 **Date:** 2025-09-08  
 **Status:** Planning Phase - Comprehensive UI/UX Enhancement Initiative
 
-## 🎯 Design Heuristics
-
-These foundational principles guide all UI improvements and ensure consistency across the application:
-
-### 1. **Role-Aware Design**
-- **Context First**: Every interface element should clearly communicate the user's current role and permissions
-- **Progressive Disclosure**: Show only relevant features and controls based on user capabilities
-- **Seamless Transitions**: Role switching should be intuitive without cognitive overhead
-- *Application*: Manager approval buttons only visible to managers, worker self-assignment prominent for workers
-
-### 2. **Calendar-Centric Architecture**
-- **Temporal Priority**: Time-based information takes visual precedence in operational interfaces
-- **Unified Context**: Related temporal data (events, shifts, approvals) should be visually connected
-- **Contextual Actions**: Operations should be performable within the calendar view when possible
-- *Application*: Embedded approval workflows, inline assignment controls, contextual creation
-
-### 3. **Touch-First Responsive Design**
-- **44px Touch Targets**: All interactive elements sized for finger interaction
-- **Mobile-First Layout**: Design for smallest screen, enhance for larger
-- **Gesture Support**: Common gestures (swipe, pinch, long-press) should feel natural
-- *Application*: Large buttons on mobile, swipe navigation, pinch-to-zoom calendars
-
-### 4. **Cognitive Load Reduction**
-- **Visual Hierarchy**: Most important actions should be immediately apparent
-- **Consistent Patterns**: Similar operations should look and behave identically
-- **Clear Feedback**: Every user action should have immediate, understandable feedback
-- *Application*: Primary buttons prominent, consistent modal layouts, loading states
-
-### 5. **Accessibility as Standard**
-- **WCAG AA Compliance**: All interactions accessible via keyboard and screen reader
-- **High Contrast Support**: Text and backgrounds meet contrast requirements
-- **Clear Language**: Interface copy should be simple and jargon-free
-- *Application*: ARIA labels, keyboard navigation, semantic HTML structure
-
-### 6. **Performance Consciousness**
-- **Perceived Speed**: UI should feel fast even when backend operations are slow
-- **Progressive Enhancement**: Core functionality available immediately, enhancements load progressively
-- **Efficient Interactions**: Minimize clicks and taps to complete common tasks
-- *Application*: Optimistic UI updates, skeleton loading, smart defaults
-
-### 7. **Family Business Context**
-- **Approachable Technology**: Interface should feel welcoming, not intimidating
-- **Multi-Generational Users**: Support varying levels of technical expertise
-- **Small Team Efficiency**: Optimize for tight-knit team coordination and communication
-- *Application*: Friendly error messages, helpful tooltips, clear status indicators
-
-### 8. **Data-Dense Simplicity**
-- **Essential Information First**: Critical data prominently displayed, details on-demand
-- **Smart Filtering**: Intelligent defaults with easy customization
-- **Scannable Layouts**: Tables and lists optimized for quick information gathering
-- *Application*: Calendar overview with drill-down, status-based filtering, clear visual grouping
-
 ## 📋 Project Overview
 
-This document outlines systematic improvements to enhance user experience across all application interfaces, organized by navigation tabs and role-specific views. All improvements align with the established design heuristics to ensure consistency and user-centered design.
+This document outlines systematic improvements to enhance user experience across all application interfaces, organized by navigation tabs and role-specific views. Focus areas include visual polish, responsive design, accessibility, and workflow optimization.
 
 ## 🎯 Improvement Categories
 
-### High Priority
+### quick fixes 
+
 - **Role Switcher Text Overflow**: Critical fix for "manager (emulated)" display
-- **Mobile Experience**: Touch interactions and responsive layouts
+
+### High Priority
+
+- **Visual Polish**: Interface improvements and design enhancements
 - **Design System Consistency**: Standardize spacing, colors, patterns
+- **Calendar Drag Interactions**: Advanced drag/drop refinement
 
 ### Medium Priority  
-- **Calendar Drag Interactions**: Advanced drag/drop refinement
-- **Visual Polish**: Interface improvements and design enhancements
+
 - **Performance Optimization**: UI rendering and interaction responsiveness
+- **Mobile Experience**: Touch interactions and responsive layouts
 
 ### Low Priority
 - **Accessibility Enhancements**: Screen reader support, keyboard navigation
@@ -112,19 +65,19 @@ This document outlines systematic improvements to enhance user experience across
 
 ### Month View
 **All Roles:**
-- [ ] Grid spacing inconsistencies on smaller screens **(Heuristic 3: Touch-First Responsive)**
-- [ ] Event overflow handling needs improvement **(Heuristic 8: Data-Dense Simplicity)**
-- [ ] Date navigation buttons could be larger for mobile **(Heuristic 3: Touch-First Responsive)**
+- [ ] Grid spacing inconsistencies on smaller screens
+- [ ] Event overflow handling needs improvement
+- [ ] Date navigation buttons could be larger for mobile
 
 **Manager-Specific:**
-- [ ] Bulk operations panel positioning optimization **(Heuristic 2: Calendar-Centric Architecture)**
-- [ ] Pending approval counter styling enhancement **(Heuristic 1: Role-Aware Design)**
-- [ ] Better visual distinction for pending vs approved items **(Heuristic 4: Cognitive Load Reduction)**
+- [ ] Bulk operations panel positioning optimization
+- [ ] Pending approval counter styling enhancement
+- [ ] Better visual distinction for pending vs approved items
 
 **Worker-Specific:**
-- [ ] Assignment status indicators need better contrast **(Heuristic 5: Accessibility as Standard)**
-- [ ] Self-assignment buttons could be more prominent **(Heuristic 1: Role-Aware Design)**
-- [ ] Personal filter toggle needs clearer active state **(Heuristic 4: Cognitive Load Reduction)**
+- [ ] Assignment status indicators need better contrast
+- [ ] Self-assignment buttons could be more prominent
+- [ ] Personal filter toggle needs clearer active state
 
 **Customer/Guest:**
 - [ ] Read-only view needs better visual cues
@@ -379,15 +332,15 @@ This document outlines systematic improvements to enhance user experience across
 - [ ] Active tab indication clarity
 
 **Improvements:**
-- [ ] Shortened role display text **(Heuristic 1: Role-Aware Design)**
-- [ ] Improved mobile navigation drawer **(Heuristic 3: Touch-First Responsive)**
-- [ ] Enhanced visual feedback for active states **(Heuristic 4: Cognitive Load Reduction)**
+- [ ] Shortened role display text
+- [ ] Improved mobile navigation drawer
+- [ ] Enhanced visual feedback for active states
 
 ### Role Switcher Component
 **High Priority:**
-- [ ] **Fix text overflow**: Shorten "manager (emulated)" to "worker-manager" **(Heuristic 1: Role-Aware Design)**
-- [ ] Improve dropdown positioning on mobile **(Heuristic 3: Touch-First Responsive)**
-- [ ] Add role transition animations **(Heuristic 4: Cognitive Load Reduction)**
+- [ ] **Fix text overflow**: Shorten "manager (emulated)" to "worker-manager"
+- [ ] Improve dropdown positioning on mobile
+- [ ] Add role transition animations
 
 ### Theme Toggle
 **Issues:**
@@ -450,9 +403,9 @@ This document outlines systematic improvements to enhance user experience across
 
 ### Touch Interactions
 **High Priority:**
-- [ ] Button sizes for touch targets (44px minimum) **(Heuristic 3: Touch-First Responsive)**
-- [ ] Gesture recognition for swipe actions **(Heuristic 3: Touch-First Responsive)**
-- [ ] Touch feedback animations **(Heuristic 4: Cognitive Load Reduction)**
+- [ ] Button sizes for touch targets (44px minimum)
+- [ ] Gesture recognition for swipe actions
+- [ ] Touch feedback animations
 
 ### Layout Adaptations
 **Issues:**

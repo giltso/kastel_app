@@ -28,6 +28,7 @@ import { RoleSwitcher } from "@/components/RoleSwitcher";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { UserRoleDebug } from "@/components/UserRoleDebug";
 import { SuggestionBoxTrigger } from "@/components/SuggestionBoxTrigger";
+import { KastelLogo } from "@/components/KastelLogo";
 import { usePermissions, useIsDev } from "@/hooks/usePermissions";
 
 export const Route = createRootRouteWithContext<{
@@ -310,8 +311,9 @@ function RootComponent() {
                       </label>
                       <Link
                         to="/"
-                        className="btn btn-ghost normal-case text-xl"
+                        className="btn btn-ghost normal-case text-xl flex items-center gap-2"
                       >
+                        <KastelLogo size={32} />
                         Kastel
                       </Link>
                     </div>
@@ -364,7 +366,10 @@ function RootComponent() {
               <header className="navbar bg-base-100 shadow-sm border-b border-base-300">
                 <div className="flex justify-between w-full px-4">
                   <div className="navbar-start">
-                    <h1 className="font-semibold">Kastel</h1>
+                    <h1 className="font-semibold flex items-center gap-2">
+                      <KastelLogo size={28} />
+                      Kastel
+                    </h1>
                   </div>
                   <div className="navbar-end">
                     <SignInButton mode="modal">

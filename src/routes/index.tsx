@@ -2,6 +2,7 @@ import { SignInButton } from "@clerk/clerk-react";
 import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { Authenticated, Unauthenticated } from "convex/react";
 import { usePermissions } from "@/hooks/usePermissions";
+import { KastelLogo } from "@/components/KastelLogo";
 import { 
   Calendar, 
   FileText, 
@@ -32,7 +33,7 @@ function HomePage() {
           <div className="hero-content text-center">
             <div className="max-w-4xl">
               <div className="not-prose flex justify-center mb-6">
-                <Wrench className="w-20 h-20 text-primary" />
+                <KastelLogo size={80} />
               </div>
               <h1 className="text-5xl font-bold">Welcome to Kastel Hardware</h1>
               <p className="text-xl opacity-80 py-6">
