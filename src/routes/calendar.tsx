@@ -908,6 +908,7 @@ function CalendarPage() {
     // Calculate total duration in minutes
     const startTotalMinutes = startHour * 60 + startMinute;
     const endTotalMinutes = endHour * 60 + endMinute;
+    const durationMinutes = endTotalMinutes - startTotalMinutes;
     
     // Calculate position relative to the current hour slot (48px height)
     const currentHourMinutes = currentHour * 60;
@@ -929,9 +930,20 @@ function CalendarPage() {
       return null;
     }
     
+    // For shifts in week view, calculate height to span multiple hours
+    let height = positionedItem.style.height;
+    if (item.type === 'shift' && durationMinutes > 60) {
+      // Calculate height based on duration - each hour slot is approximately 48px
+      const hourSlotHeight = 48;
+      const heightInPixels = (durationMinutes / 60) * hourSlotHeight;
+      height = `${heightInPixels}px`;
+    }
+    
     return {
       ...positionedItem.style,
       top: `${topPercent}%`,
+      height: height,
+      zIndex: item.type === 'shift' ? 30 : positionedItem.style.zIndex, // Higher z-index for shifts to appear above hour slot backgrounds
     };
   };
 

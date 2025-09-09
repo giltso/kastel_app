@@ -16,7 +16,6 @@ import type {
 import type * as adminHelpers from "../adminHelpers.js";
 import type * as calendar_unified from "../calendar_unified.js";
 import type * as courses from "../courses.js";
-import type * as debug from "../debug.js";
 import type * as demo from "../demo.js";
 import type * as events from "../events.js";
 import type * as forms from "../forms.js";
@@ -42,7 +41,6 @@ declare const fullApi: ApiFromModules<{
   adminHelpers: typeof adminHelpers;
   calendar_unified: typeof calendar_unified;
   courses: typeof courses;
-  debug: typeof debug;
   demo: typeof demo;
   events: typeof events;
   forms: typeof forms;

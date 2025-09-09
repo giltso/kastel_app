@@ -145,13 +145,18 @@ export const getUnifiedCalendarData = query({
       // Get shifts from the dedicated shifts table, not events
       const shifts = await ctx.db.query("shifts").collect();
       
-      // Generate shift instances for the date range
+      // Calculate 2-week limit from today (not from query start date)
+      const today = new Date();
+      const twoWeeksFromToday = new Date(today);
+      twoWeeksFromToday.setDate(today.getDate() + 14);
+      
+      // Generate shift instances for the date range, limited to 2 weeks from today
       for (const shift of shifts) {
         if (!shift.recurringDays || !shift.isActive) continue; // Only show active shifts
         
         const current = new Date(startDateObj);
         
-        while (current <= endDateObj) {
+        while (current <= endDateObj && current <= twoWeeksFromToday) {
           const dayName = current.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
           
           if (shift.recurringDays.includes(dayName as any)) {
@@ -165,6 +170,8 @@ export const getUnifiedCalendarData = query({
               startTime: shift.startTime || "09:00", 
               endTime: shift.endTime || "17:00",
               date: dateString,
+              startDate: dateString, // Frontend expects startDate field
+              endDate: dateString, // Single-day shifts have same start/end date
               status: 'approved', // Shifts are always approved
               approvalRequired: false,
               canEdit: isManager,
