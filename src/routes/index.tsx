@@ -84,10 +84,39 @@ function OperationalUserRedirect() {
     return <Navigate to="/calendar" replace />;
   }
   
-  // For customers/guests, show the guest homepage content
+  // For customers/guests, show the full public experience (same as unauthenticated)
   return (
-    <div className="container mx-auto px-4 py-12">
-      <PublicHomePage />
+    <div>
+      {/* Hero Section - same as unauthenticated users */}
+      <div className="hero bg-gradient-to-br from-primary/10 to-accent/10 py-20">
+        <div className="hero-content text-center">
+          <div className="max-w-4xl">
+            <div className="not-prose flex justify-center mb-6">
+              <KastelLogo size={80} />
+            </div>
+            <h1 className="text-5xl font-bold">Welcome to Kastel Hardware</h1>
+            <p className="text-xl opacity-80 py-6">
+              Your trusted partner for tools, education, and professional services
+            </p>
+            <p className="text-lg opacity-70 pb-6">
+              Sign in for instant tool bookings, course enrollment, and personalized project support
+            </p>
+            
+            <div className="not-prose">
+              <SignInButton mode="modal">
+                <button className="btn btn-primary btn-lg gap-2">
+                  Get Started - Free Account <ArrowRight className="w-5 h-5" />
+                </button>
+              </SignInButton>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="container mx-auto px-4 py-12">
+        <PublicHomePage />
+      </div>
     </div>
   );
 }
