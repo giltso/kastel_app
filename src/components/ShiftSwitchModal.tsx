@@ -164,7 +164,7 @@ export function ShiftSwitchModal({ isOpen, onClose, assignment, currentUser }: S
                         </div>
                         {!field.state.meta.isValid && (
                           <div className="text-error text-xs mt-1">
-                            {field.state.meta.errors.map(e => e.message).join(", ")}
+                            {field.state.meta.errors.map((e: any) => e?.message).filter(Boolean).join(", ")}
                           </div>
                         )}
                       </div>

@@ -762,7 +762,7 @@ function RentalHistoryModal({ onClose }: { onClose: () => void }) {
   );
   const { data: history } = useSuspenseQuery(historyQueryOptions);
 
-  const formatDateRange = (startDate: string, endDate: string, returnedAt?: number) => {
+  const formatDateRange = (startDate: string, endDate: string, actualReturnDate?: string) => {
     const start = new Date(startDate);
     const end = new Date(endDate);
     const formatOptions: Intl.DateTimeFormatOptions = { 
@@ -773,8 +773,8 @@ function RentalHistoryModal({ onClose }: { onClose: () => void }) {
     
     let dateRange = `${start.toLocaleDateString('en-US', formatOptions)} to ${end.toLocaleDateString('en-US', formatOptions)}`;
     
-    if (returnedAt) {
-      const returned = new Date(returnedAt);
+    if (actualReturnDate) {
+      const returned = new Date(actualReturnDate);
       dateRange += `\nReturned: ${returned.toLocaleDateString('en-US', formatOptions)}`;
     }
     
@@ -868,7 +868,7 @@ function RentalHistoryModal({ onClose }: { onClose: () => void }) {
                   </td>
                   <td>
                     <div className="text-xs whitespace-pre-line">
-                      {formatDateRange(rental.rentalStartDate, rental.rentalEndDate, rental.returnedAt)}
+                      {formatDateRange(rental.rentalStartDate, rental.rentalEndDate, rental.actualReturnDate)}
                     </div>
                   </td>
                   <td>

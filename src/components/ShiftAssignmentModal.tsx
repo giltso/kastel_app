@@ -182,7 +182,7 @@ export function ShiftAssignmentModal({ isOpen, onClose, shift, date, currentUser
                       )}
                       {!field.state.meta.isValid && (
                         <div className="text-error text-xs mt-1">
-                          {field.state.meta.errors.map(e => e.message).join(", ")}
+                          {field.state.meta.errors.map((e: any) => e?.message).filter(Boolean).join(", ")}
                         </div>
                       )}
                     </div>

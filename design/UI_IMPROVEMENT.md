@@ -35,6 +35,8 @@ This document outlines systematic improvements to enhance user experience across
 
 ## Landing Page (Public Interface)
 
+1. the customer view should differ from guest reviw there as a customer already has an account and does not need to see the "unluck more" page, instead make the 
+
 ### Current View - Unauthenticated Users
 **Issues:**
 - [ ] Hero section alignment on mobile devices

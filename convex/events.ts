@@ -452,7 +452,7 @@ export const updateEvent = mutation({
     endDate: v.optional(v.string()),
     startTime: v.optional(v.string()),
     endTime: v.optional(v.string()),
-    type: v.optional(v.union(v.literal("work"), v.literal("meeting"), v.literal("maintenance"), v.literal("team"))),
+    type: v.optional(v.union(v.literal("work"), v.literal("meeting"), v.literal("maintenance"), v.literal("team"), v.literal("educational"), v.literal("shift"), v.literal("tool_rental"))),
     isRecurring: v.optional(v.boolean()),
     recurringType: v.optional(v.union(v.literal("weekly"))),
     recurringDays: v.optional(v.array(v.union(
