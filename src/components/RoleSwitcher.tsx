@@ -39,7 +39,7 @@ export function RoleSwitcher() {
       <div tabIndex={0} role="button" className="btn btn-ghost btn-sm gap-2">
         <Filter className="h-4 w-4" />
         <span className="text-xs">
-          {effectiveRole === user.role ? `${effectiveRole}` : `${effectiveRole} (emulated)`}
+          {effectiveRole === user.role ? effectiveRole : `${effectiveRole}-emulated`}
         </span>
       </div>
       <div 
