@@ -110,16 +110,18 @@ function NavigationLinks({ onLinkClick }: { onLinkClick: () => void }) {
       >
         Courses
       </Link>
-      <Link
-        to="/forms"
-        className="btn btn-ghost"
-        activeProps={{
-          className: "btn btn-ghost btn-active",
-        }}
-        onClick={onLinkClick}
-      >
-        Forms
-      </Link>
+      {hasPermission("access_worker_portal") && (
+        <Link
+          to="/forms"
+          className="btn btn-ghost"
+          activeProps={{
+            className: "btn btn-ghost btn-active",
+          }}
+          onClick={onLinkClick}
+        >
+          Forms
+        </Link>
+      )}
       {hasPermission("access_pro_help") && (
         <Link
           to="/pro-help"
@@ -230,18 +232,20 @@ function MobileNavigationLinks({ onLinkClick }: { onLinkClick: () => void }) {
           Courses
         </Link>
       </li>
-      <li>
-        <Link
-          to="/forms"
-          onClick={onLinkClick}
-          activeProps={{
-            className: "active",
-          }}
-          className="flex items-center p-2"
-        >
-          Forms
-        </Link>
-      </li>
+      {hasPermission("access_worker_portal") && (
+        <li>
+          <Link
+            to="/forms"
+            onClick={onLinkClick}
+            activeProps={{
+              className: "active",
+            }}
+            className="flex items-center p-2"
+          >
+            Forms
+          </Link>
+        </li>
+      )}
       {hasPermission("access_pro_help") && (
         <li>
           <Link
