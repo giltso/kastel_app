@@ -71,11 +71,11 @@ export const getUnifiedCalendarData = query({
     const startDateObj = new Date(args.startDate);
     const endDateObj = new Date(args.endDate);
     
-    // Initialize filters with defaults
+    // Initialize filters with defaults - TEMPORARILY DISABLE EVERYTHING EXCEPT SHIFTS
     const filters = {
-      showEvents: true,
+      showEvents: false, // DISABLED FOR SHIFT DEBUGGING
       showShifts: true, 
-      showTools: true,
+      showTools: false, // DISABLED FOR SHIFT DEBUGGING
       showPendingOnly: false,
       ...args.filters
     };
@@ -142,14 +142,12 @@ export const getUnifiedCalendarData = query({
     
     // ===== FETCH SHIFTS =====  
     if (filters.showShifts) {
-      const shifts = await ctx.db
-        .query("events")
-        .withIndex("by_type", (q) => q.eq("type", "shift"))
-        .collect();
+      // Get shifts from the dedicated shifts table, not events
+      const shifts = await ctx.db.query("shifts").collect();
       
       // Generate shift instances for the date range
       for (const shift of shifts) {
-        if (!shift.recurringDays) continue;
+        if (!shift.recurringDays || !shift.isActive) continue; // Only show active shifts
         
         const current = new Date(startDateObj);
         
@@ -162,7 +160,7 @@ export const getUnifiedCalendarData = query({
             items.push({
               id: `${shift._id}-${dateString}`,
               type: 'shift',
-              title: shift.title || 'Shift',
+              title: shift.name || 'Shift', // FIXED: Use 'name' field from shifts table
               description: shift.description,
               startTime: shift.startTime || "09:00", 
               endTime: shift.endTime || "17:00",
@@ -177,6 +175,7 @@ export const getUnifiedCalendarData = query({
                 shiftId: shift._id,
                 requiredWorkers: shift.requiredWorkers || 1,
                 maxWorkers: shift.maxWorkers || shift.requiredWorkers || 1,
+                shiftType: shift.type || 'operational'
               }
             });
           }
