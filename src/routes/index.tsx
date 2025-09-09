@@ -313,13 +313,6 @@ function PublicHomePage() {
             <p className="text-sm opacity-70">Enroll in professional training and certification programs</p>
           </div>
           
-          <div className="text-center p-4">
-            <div className="not-prose bg-accent/10 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
-              <FileText className="w-8 h-8 text-accent" />
-            </div>
-            <h4 className="font-bold mb-2">Access Work Forms</h4>
-            <p className="text-sm opacity-70">Submit project requests and track their progress</p>
-          </div>
           
           <div className="text-center p-4">
             <div className="not-prose bg-success/10 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
