@@ -26,6 +26,7 @@ import type * as seed from "../seed.js";
 import type * as shifts from "../shifts.js";
 import type * as suggestions from "../suggestions.js";
 import type * as testHelpers from "../testHelpers.js";
+import type * as testShifts from "../testShifts.js";
 import type * as tools from "../tools.js";
 import type * as users from "../users.js";
 
@@ -51,6 +52,7 @@ declare const fullApi: ApiFromModules<{
   shifts: typeof shifts;
   suggestions: typeof suggestions;
   testHelpers: typeof testHelpers;
+  testShifts: typeof testShifts;
   tools: typeof tools;
   users: typeof users;
 }>;

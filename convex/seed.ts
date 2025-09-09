@@ -205,12 +205,53 @@ export const seedDatabase = mutation({
       submittedAt: now - (2 * oneDay),
     });
 
+    // Create test shifts - Sunday through Thursday
+    const fullDayShiftId = await ctx.db.insert("shifts", {
+      name: "Full Day Shift",
+      description: "Complete daily operations coverage",
+      startTime: "09:00",
+      endTime: "19:00",
+      recurringDays: ["sunday", "monday", "tuesday", "wednesday", "thursday"],
+      requiredWorkers: 3,
+      maxWorkers: 5,
+      color: "#3B82F6", // Blue
+      isActive: true,
+      createdBy: managerId,
+    });
+
+    const morningShiftId = await ctx.db.insert("shifts", {
+      name: "Morning Shift",
+      description: "Morning operations and customer service",
+      startTime: "09:00",
+      endTime: "13:00",
+      recurringDays: ["sunday", "monday", "tuesday", "wednesday", "thursday"],
+      requiredWorkers: 2,
+      maxWorkers: 4,
+      color: "#10B981", // Green
+      isActive: true,
+      createdBy: managerId,
+    });
+
+    const eveningShiftId = await ctx.db.insert("shifts", {
+      name: "Evening Shift", 
+      description: "Afternoon/evening operations and closing procedures",
+      startTime: "15:00",
+      endTime: "19:00",
+      recurringDays: ["sunday", "monday", "tuesday", "wednesday", "thursday"],
+      requiredWorkers: 2,
+      maxWorkers: 3,
+      color: "#F59E0B", // Amber
+      isActive: true,
+      createdBy: managerId,
+    });
+
     return {
       message: "Database seeded successfully!",
       users: 3,
       events: 4,
       forms: 2,
       submissions: 2,
+      shifts: 3,
     };
   },
 });

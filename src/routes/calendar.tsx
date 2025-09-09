@@ -1326,8 +1326,23 @@ function CalendarPage() {
       currentDateForComparison.setDate(currentDateForComparison.getDate() + 1);
     }
 
+    // Get all items for the month for the event area
+    const monthItems = days.flatMap(date => getItemsForDate(date));
+    const sortedMonthItems = [...monthItems].sort((a, b) => {
+      const aTime = parseInt(a.startTime.replace(':', ''));
+      const bTime = parseInt(b.startTime.replace(':', ''));
+      return aTime - bTime;
+    });
+
     return (
-      <>
+      <div className="grid grid-cols-12 gap-6">
+        {/* Event Area - Left Side (30%) */}
+        <div className="col-span-4">
+          {renderEventArea(sortedMonthItems, 'month')}
+        </div>
+        
+        {/* Calendar Column - Right Side (70%) */}
+        <div className="col-span-8">
         {/* Month View Header - Planning Focus */}
         <div className="mb-4 card bg-base-200 shadow-sm">
           <div className="card-body p-4">
@@ -1483,7 +1498,8 @@ function CalendarPage() {
             );
           })}
         </div>
-      </>
+        </div>
+      </div>
     );
   };
 
@@ -1503,8 +1519,24 @@ function CalendarPage() {
       return date;
     });
 
+    // Get all items for the week for the event area
+    const weekItems = weekDates.flatMap(date => getItemsForDate(date));
+    const sortedWeekItems = [...weekItems].sort((a, b) => {
+      const aTime = parseInt(a.startTime.replace(':', ''));
+      const bTime = parseInt(b.startTime.replace(':', ''));
+      return aTime - bTime;
+    });
+
     return (
       <div className="max-w-7xl mx-auto">
+        <div className="grid grid-cols-12 gap-6">
+          {/* Event Area - Left Side (30%) */}
+          <div className="col-span-4">
+            {renderEventArea(sortedWeekItems, 'week')}
+          </div>
+          
+          {/* Calendar Column - Right Side (70%) */}
+          <div className="col-span-8">
         {/* Week View Header - Shift Focus */}
         <div className="mb-4 card bg-base-200 shadow-sm">
           <div className="card-body p-4">
@@ -1768,6 +1800,154 @@ function CalendarPage() {
               </div>
             );
           })}
+        </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Shared event area component for month/week views
+  const renderEventArea = (items: any[], viewType: 'month' | 'week') => {
+    return (
+      <div className="sticky top-4 space-y-4">
+        {/* Manager Approval Panel - Only shown to managers */}
+        {effectiveRole === "manager" && (
+          <div className="card bg-warning/10 border border-warning/20 shadow-sm">
+            <div className="card-body">
+              <h3 className="card-title text-sm flex items-center gap-2">
+                <Target className="w-4 h-4 text-warning" />
+                Pending Approvals ({viewType})
+                <div className="badge badge-warning badge-sm">
+                  {items.filter(item => item.status === 'pending_approval').length}
+                </div>
+              </h3>
+              
+              {items.filter(item => item.status === 'pending_approval').length === 0 ? (
+                <div className="text-center py-4 opacity-60">
+                  <Target className="w-6 h-6 mx-auto mb-2 opacity-40" />
+                  <p className="text-xs">No pending approvals</p>
+                </div>
+              ) : (
+                <div className="space-y-2 max-h-40 overflow-y-auto">
+                  {items.filter(item => item.status === 'pending_approval').map((item) => (
+                    <div key={item._id} className="bg-base-100 rounded p-2 border border-warning/30">
+                      <div className="flex justify-between items-start mb-1">
+                        <h4 className="font-medium text-xs">{item.title}</h4>
+                        <div className="badge badge-warning badge-xs">pending</div>
+                      </div>
+                      <div className="text-xs opacity-70 mb-2">
+                        {item.startTime} - {item.endTime}
+                      </div>
+                      <div className="flex gap-1">
+                        <button className="btn btn-success btn-xs">Approve</button>
+                        <button className="btn btn-error btn-xs">Reject</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Main Schedule Panel */}
+        <div className="card bg-base-200 shadow-sm">
+          <div className="card-body">
+            <h3 className="card-title text-lg flex items-center gap-2">
+              <Calendar className="w-5 h-5" />
+              {viewType === 'month' ? 'Monthly Overview' : 'Weekly Overview'}
+              <div className="badge badge-primary badge-sm">{items.length}</div>
+            </h3>
+            
+            {items.length === 0 ? (
+              <div className="text-center py-8 opacity-60">
+                <Calendar className="w-8 h-8 mx-auto mb-2 opacity-40" />
+                <p className="text-sm">No items scheduled</p>
+                <p className="text-xs">Click on the calendar to create one</p>
+              </div>
+            ) : (
+              <div className="space-y-3 max-h-96 overflow-y-auto">
+                {items.slice(0, 20).map((item) => (
+                  <div 
+                    key={item._id}
+                    className={`card shadow-sm hover:shadow-md transition-shadow cursor-pointer ${item.type === 'shift' ? 'bg-gradient-to-r from-base-100/80 to-base-100/60 border-l-4 border-l-primary/60' : 'bg-base-100'}`}
+                    onClick={() => handleItemClick(item)}
+                  >
+                    <div className="card-body p-3">
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-sm leading-tight">{item.title}</h4>
+                          <div className="text-xs opacity-70 mt-0.5 flex items-center gap-2">
+                            <span>{item.startTime} - {item.endTime}</span>
+                            {item.date && (
+                              <span className="badge badge-xs badge-ghost">
+                                {new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex flex-col items-end gap-1">
+                          <div className={`badge badge-xs ${getStatusColor(item.status).replace('bg-', 'badge-')}`}>
+                            {item.status.replace('_', ' ')}
+                          </div>
+                          <div className="badge badge-xs badge-outline">
+                            {item.type}
+                          </div>
+                        </div>
+                      </div>
+
+                      {item.participants && item.participants.length > 0 && (
+                        <div className="flex items-center gap-1">
+                          <div className="text-xs opacity-50">Staff:</div>
+                          <div className="flex -space-x-1">
+                            {item.participants.slice(0, 3).map((participant: any) => (
+                              <div 
+                                key={participant._id} 
+                                className="w-4 h-4 rounded-full bg-primary text-primary-content text-[10px] flex items-center justify-center border border-base-100 font-medium"
+                                title={participant.name}
+                              >
+                                {participant.name?.charAt(0).toUpperCase()}
+                              </div>
+                            ))}
+                            {item.participants.length > 3 && (
+                              <div className="w-4 h-4 rounded-full bg-base-300 text-[10px] flex items-center justify-center border border-base-100 font-medium">
+                                +{item.participants.length - 3}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+                {items.length > 20 && (
+                  <div className="text-center text-xs opacity-50 py-2">
+                    ... and {items.length - 20} more items
+                  </div>
+                )}
+              </div>
+            )}
+            
+            <div className="card-actions justify-end mt-4">
+              <button 
+                className="btn btn-sm btn-primary"
+                onClick={() => {
+                  setEditingEvent(null);
+                  setPrefilledEventData({
+                    startDate: currentDate.toISOString().split('T')[0],
+                    endDate: currentDate.toISOString().split('T')[0],
+                    startTime: "09:00",
+                    endTime: "17:00",
+                  });
+                  setIsCreateModalOpen(true);
+                }}
+              >
+                <Plus className="w-3 h-3" />
+                New Event
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     );
