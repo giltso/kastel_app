@@ -162,6 +162,18 @@ export const getUnifiedCalendarData = query({
           if (shift.recurringDays.includes(dayName as any)) {
             const dateString = current.toISOString().split('T')[0];
             
+            // Get current worker assignments for this shift on this date
+            const assignments = await ctx.db
+              .query("shift_assignments")
+              .filter((q: any) => q.eq(q.field("shiftId"), shift._id))
+              .filter((q: any) => q.eq(q.field("date"), dateString))
+              .filter((q: any) => q.eq(q.field("status"), "assigned"))
+              .collect();
+
+            const currentWorkers = assignments.length;
+            const requiredWorkers = shift.requiredWorkers || 1;
+            const maxWorkers = shift.maxWorkers || requiredWorkers;
+            
             items.push({
               id: `${shift._id}-${dateString}`,
               type: 'shift',
@@ -178,6 +190,10 @@ export const getUnifiedCalendarData = query({
               canApprove: false,
               canAssign: isManager,
               pendingApproval: false,
+              // Add worker count fields that frontend expects
+              currentWorkers: currentWorkers,
+              requiredWorkers: requiredWorkers,
+              maxWorkers: maxWorkers,
               metadata: {
                 shiftId: shift._id,
                 requiredWorkers: shift.requiredWorkers || 1,

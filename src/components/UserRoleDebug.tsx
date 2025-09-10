@@ -4,7 +4,7 @@ import { api } from "../../convex/_generated/api";
 
 export function UserRoleDebug() {
   const { user, isLoading } = useCurrentUser();
-  const createTestUser = useMutation(api.debug.createTestUser);
+  const createTestUser = useMutation(api.users.seedSampleUsersPublic);
 
   const handleCreateUser = async () => {
     try {
