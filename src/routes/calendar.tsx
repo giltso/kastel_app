@@ -48,7 +48,7 @@ export const Route = createFileRoute("/calendar")({
 type ViewType = "day" | "week" | "month";
 
 // Draggable Event Component with Resize Handles
-function DraggableEvent({ event, style, canEdit, onClick, className, setIsResizing, setResizeStartPos, isCurrentlyResizing, onNestedClick, getItemColor, onApprove, bulkMode, isSelected, onToggleSelection }: {
+function DraggableEvent({ event, style, canEdit, onClick, className, setIsResizing, setResizeStartPos, isCurrentlyResizing, onNestedClick, getItemColor, onApprove, bulkMode, isSelected, onToggleSelection, children }: {
   event: any;
   style?: React.CSSProperties;
   canEdit: boolean;
@@ -59,6 +59,7 @@ function DraggableEvent({ event, style, canEdit, onClick, className, setIsResizi
   isCurrentlyResizing?: boolean;
   onNestedClick?: (item: any) => void;
   getItemColor: (item: any, isNestedInShift?: boolean) => string;
+  children?: React.ReactNode;
   onApprove?: (item: any, approve: boolean) => void;
   bulkMode?: boolean;
   isSelected?: boolean;
@@ -2243,7 +2244,9 @@ function CalendarPage() {
                         hour={hour}
                         className="h-16 border border-base-300 rounded hover:bg-base-200/50 cursor-pointer transition-colors"
                         onClick={() => handleEmptySpaceClick(currentDate, hour)}
-                      />
+                      >
+                        <></>
+                      </DroppableTimeSlot>
                     );
                   })}
                 </div>
