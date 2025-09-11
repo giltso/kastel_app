@@ -816,73 +816,54 @@ function CalendarPage() {
     return filteredItems;
   };
 
-  // Calculate concurrent items and their positioning
+  // Calculate concurrent items and their positioning - stack non-overlapping items
   const getItemsWithPositioning = (items: any[]) => {
     if (!items.length) return [];
     
-    // Group items by their start time to detect concurrency
-    const itemGroups: Map<string, any[]> = new Map();
-    
-    items.forEach(item => {
-      const startKey = `${item.startTime}-${item.endTime}`;
-      if (!itemGroups.has(startKey)) {
-        itemGroups.set(startKey, []);
-      }
-      itemGroups.get(startKey)!.push(item);
+    // Sort items by start time for consistent ordering
+    const sortedItems = [...items].sort((a, b) => {
+      const aTime = parseInt(a.startTime.replace(':', ''));
+      const bTime = parseInt(b.startTime.replace(':', ''));
+      return aTime - bTime;
     });
     
-    // Calculate positioning for each item
     const positionedItems: any[] = [];
-    let concurrentGroups: any[][] = [];
     
-    // First pass: find overlapping groups
-    items.forEach(item => {
+    // Find actually overlapping items (not just concurrent start times)
+    const findOverlappingItems = (targetItem: any, allItems: any[]) => {
+      const [targetStart, targetStartMin] = targetItem.startTime.split(':').map(Number);
+      const [targetEnd, targetEndMin] = targetItem.endTime.split(':').map(Number);
+      const targetStartMinutes = targetStart * 60 + targetStartMin;
+      const targetEndMinutes = targetEnd * 60 + targetEndMin;
+      
+      return allItems.filter(item => {
+        if (item._id === targetItem._id) return false; // Don't include self
+        
+        const [itemStart, itemStartMin] = item.startTime.split(':').map(Number);
+        const [itemEnd, itemEndMin] = item.endTime.split(':').map(Number);
+        const itemStartMinutes = itemStart * 60 + itemStartMin;
+        const itemEndMinutes = itemEnd * 60 + itemEndMin;
+        
+        // Check for actual time overlap
+        return (targetStartMinutes < itemEndMinutes) && (targetEndMinutes > itemStartMinutes);
+      });
+    };
+    
+    // Process each item
+    sortedItems.forEach(item => {
+      const overlappingItems = findOverlappingItems(item, sortedItems);
+      const allOverlappingGroup = [item, ...overlappingItems];
+      
       const [startHour, startMinute] = item.startTime.split(':').map(Number);
       const [endHour, endMinute] = item.endTime.split(':').map(Number);
       const startTotalMinutes = startHour * 60 + startMinute;
       const endTotalMinutes = endHour * 60 + endMinute;
+      const durationMinutes = endTotalMinutes - startTotalMinutes;
+      const startHourSlot = Math.floor(startTotalMinutes / 60);
+      const heightPx = Math.max(24, (durationMinutes / 60) * 48);
       
-      // Find which group this item belongs to
-      let foundGroup = false;
-      for (const group of concurrentGroups) {
-        const hasOverlap = group.some(groupItem => {
-          const [gStartHour, gStartMinute] = groupItem.startTime.split(':').map(Number);
-          const [gEndHour, gEndMinute] = groupItem.endTime.split(':').map(Number);
-          const gStartTotalMinutes = gStartHour * 60 + gStartMinute;
-          const gEndTotalMinutes = gEndHour * 60 + gEndMinute;
-          
-          // Check if items overlap
-          return (startTotalMinutes < gEndTotalMinutes) && (endTotalMinutes > gStartTotalMinutes);
-        });
-        
-        if (hasOverlap) {
-          group.push(item);
-          foundGroup = true;
-          break;
-        }
-      }
-      
-      if (!foundGroup) {
-        concurrentGroups.push([item]);
-      }
-    });
-    
-    // Second pass: calculate positions within each group
-    concurrentGroups.forEach(group => {
-      const groupSize = group.length;
-      
-      // For groups with only one item (non-overlapping), use full width and stack vertically
-      if (groupSize === 1) {
-        const item = group[0];
-        const [startHour, startMinute] = item.startTime.split(':').map(Number);
-        const [endHour, endMinute] = item.endTime.split(':').map(Number);
-        const startTotalMinutes = startHour * 60 + startMinute;
-        const endTotalMinutes = endHour * 60 + endMinute;
-        const durationMinutes = endTotalMinutes - startTotalMinutes;
-        const startHourSlot = Math.floor(startTotalMinutes / 60);
-        
-        const heightPx = Math.max(24, (durationMinutes / 60) * 48);
-        
+      if (overlappingItems.length === 0) {
+        // No overlaps - use full width and stack vertically
         positionedItems.push({
           ...item,
           startHourSlot,
@@ -894,43 +875,38 @@ function CalendarPage() {
           style: {
             height: `${heightPx}px`,
             left: '0%',
-            width: '100%', // Full width for non-overlapping items
+            width: '100%',
             position: 'absolute' as const,
             zIndex: item.type === 'shift' ? 5 : 10
           }
         });
       } else {
-        // For overlapping items, position them side-by-side
-        group.forEach((item, index) => {
-          const [startHour, startMinute] = item.startTime.split(':').map(Number);
-          const [endHour, endMinute] = item.endTime.split(':').map(Number);
-          const startTotalMinutes = startHour * 60 + startMinute;
-          const endTotalMinutes = endHour * 60 + endMinute;
-          const durationMinutes = endTotalMinutes - startTotalMinutes;
-          const startHourSlot = Math.floor(startTotalMinutes / 60);
-          
-          // Calculate width and left position for concurrent items
-          const width = Math.floor(100 / groupSize);
-          const leftPercent = (index * width);
-          
-          const heightPx = Math.max(24, (durationMinutes / 60) * 48);
-          
-          positionedItems.push({
-            ...item,
-            startHourSlot,
-            position: {
-              left: index,
-              width: 1,
-              totalColumns: groupSize
-            },
-            style: {
-              height: `${heightPx}px`,
-              left: `${leftPercent}%`,
-              width: `${width - 1}%`, // Small gap between concurrent items
-              position: 'absolute' as const,
-              zIndex: item.type === 'shift' ? 5 + index : 10 + index // Shifts lower z-index
-            }
-          });
+        // Has overlaps - position side by side
+        const sortedGroup = allOverlappingGroup.sort((a, b) => {
+          const aTime = parseInt(a.startTime.replace(':', ''));
+          const bTime = parseInt(b.startTime.replace(':', ''));
+          return aTime - bTime;
+        });
+        const itemIndex = sortedGroup.findIndex(groupItem => groupItem._id === item._id);
+        const groupSize = allOverlappingGroup.length;
+        const width = Math.floor(100 / groupSize);
+        const leftPercent = itemIndex * width;
+        
+        positionedItems.push({
+          ...item,
+          startHourSlot,
+          position: {
+            left: itemIndex,
+            width: 1,
+            totalColumns: groupSize
+          },
+          style: {
+            height: `${heightPx}px`,
+            left: `${leftPercent}%`,
+            width: `${width - 1}%`,
+            position: 'absolute' as const,
+            zIndex: item.type === 'shift' ? 5 + itemIndex : 10 + itemIndex
+          }
         });
       }
     });
@@ -1587,283 +1563,167 @@ function CalendarPage() {
           
           {/* Calendar Column - Right Side (70%) */}
           <div className="col-span-8">
-        {/* Week View Header - Shift Focus */}
-        <div className="mb-4 card bg-base-200 shadow-sm">
-          <div className="card-body p-4">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="font-bold flex items-center gap-2">
-                <Calendar className="w-5 h-5" />
-                Week Shift Schedule
-              </h3>
-              {effectiveRole === "worker" && (
-                <div className="flex items-center gap-2">
-                  <span className="text-xs opacity-70">Your shifts:</span>
-                  <div className="badge badge-primary badge-sm">
-                    {/* TODO: Count user's shifts this week */}5
-                  </div>
-                  <button 
-                    className="btn btn-sm btn-outline"
-                    onClick={() => {
-                      // Find user's assignments for this week and let them pick one to switch
-                      const userAssignments = calendarItems
-                        .filter((item: any) => item.type === 'shift' && item.assignments?.some((a: any) => a.workerId === user?._id))
-                        .map((shift: any) => shift.assignments?.find((a: any) => a.workerId === user?._id))
-                        .filter(Boolean);
-                      
-                      if (userAssignments.length === 0) {
-                        alert("You don't have any shift assignments this week to switch.");
-                        return;
-                      }
-                      
-                      if (userAssignments.length === 1) {
-                        // If only one assignment, use it directly
-                        handleRequestShiftSwitch(userAssignments[0]);
-                      } else {
-                        // Multiple assignments - for now just use the first one
-                        // TODO: Add a picker modal for multiple assignments
-                        handleRequestShiftSwitch(userAssignments[0]);
-                      }
-                    }}
-                  >
-                    Request Switch
-                  </button>
-                </div>
-              )}
-            </div>
-            
-            {/* Week Summary Bar */}
-            <div className="grid grid-cols-7 gap-1 mb-2">
-              {weekDates.map((date, i) => {
-                const dayItems = getItemsForDate(date);
-                const dayShifts = dayItems.filter(item => item.type === 'shift');
-                const shiftStatus = dayShifts.length > 0 
-                  ? dayShifts.some(s => s.status === 'bad') ? 'error'
-                  : dayShifts.some(s => s.status === 'close') ? 'warning'
-                  : dayShifts.some(s => s.status === 'good') ? 'success'
-                  : dayShifts.some(s => s.status === 'warning') ? 'warning'
-                  : 'info' : 'neutral';
-                
-                return (
-                  <div key={i} className={`p-2 rounded text-center text-xs border ${
-                    date.toDateString() === today.toDateString() ? 'ring-2 ring-primary' : ''
-                  }`}>
-                    <div className="font-medium opacity-70">
+            <div className="mb-4">
+              <div className="text-sm font-medium mb-2 text-base-content/70">
+                Week of {startOfWeek.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })} - {new Date(startOfWeek.getTime() + 6 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+              </div>
+              
+              {/* Week Headers */}
+              <div className="grid grid-cols-8 gap-2 mb-4">
+                <div className="p-2 text-center text-sm font-medium opacity-70">Time</div>
+                {weekDates.map((date, i) => (
+                  <div key={i} className="p-2 text-center">
+                    <div className="text-xs font-medium opacity-70">
                       {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][i]}
                     </div>
-                    <div className={`text-sm font-bold ${date.toDateString() === today.toDateString() ? 'text-primary' : ''}`}>
+                    <div className={`text-sm ${date.toDateString() === today.toDateString() ? 'font-bold text-primary' : ''}`}>
                       {date.getDate()}
                     </div>
-                    <div className={`badge badge-xs mt-1 ${
-                      shiftStatus === 'error' ? 'badge-error' :
-                      shiftStatus === 'warning' ? 'badge-warning' :
-                      shiftStatus === 'success' ? 'badge-success' :
-                      shiftStatus === 'info' ? 'badge-info' : 'badge-neutral'
-                    }`}>
-                      {dayShifts.length}
-                    </div>
                   </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
+                ))}
+              </div>
 
-        {/* Enhanced Week Grid Header */}
-        <div className="grid grid-cols-8 gap-2 mb-4">
-          <div className="p-2 text-center">
-            <div className="text-xs font-medium opacity-70">Time</div>
-            <div className="text-xs opacity-50">Shift Status</div>
-          </div>
-          {weekDates.map((date, i) => (
-            <div key={i} className="p-2 text-center">
-              <div className="font-medium opacity-70">
-                {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][i]}
-              </div>
-              <div className={`text-sm ${date.toDateString() === today.toDateString() ? 'font-bold text-primary' : ''}`}>
-                {date.getDate()}
-              </div>
-              {/* Shift availability indicator */}
-              <div className="text-xs opacity-50 mt-1">
-                {getItemsForDate(date).filter(item => item.type === 'shift').length > 0 ? 'Shifts' : 'Open'}
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <div className="space-y-1" data-calendar-container>
-          {Array.from({ length: 19 }, (_, hourIndex) => {
-            const hour = hourIndex + 5; // Start at 5 AM, end at 11 PM
-            return (
-              <div key={hour} className="grid grid-cols-8 gap-2">
-              <div className="p-2 text-sm opacity-70 text-right flex flex-col items-end">
-                <div className="font-medium">
-                  {hour < 12 ? `${hour} AM` : hour === 12 ? '12 PM' : `${hour - 12} PM`}
-                </div>
-                {/* Show shift population status for this hour */}
-                <div className="text-xs opacity-50">
-                  {/* TODO: Calculate total workers needed vs assigned across all shifts this hour */}
-                  {Math.floor(Math.random() * 8) + 1}/8
-                </div>
-              </div>
-              {weekDates.map((date, dayIndex) => {
-                const dayItems = getItemsForDate(date);
-                // Only show items that start in this hour
-                const hourItems = dayItems.filter(item => {
-                  const startHour = parseInt(item.startTime.split(':')[0]);
-                  return hour === startHour;
-                });
-                
-                // Get shift items for this hour (including ongoing ones)
-                const allHourItems = dayItems.filter(item => {
-                  const [startHour, startMinute] = item.startTime.split(':').map(Number);
-                  const [endHour, endMinute] = item.endTime.split(':').map(Number);
-                  const startTotalMinutes = startHour * 60 + startMinute;
-                  const endTotalMinutes = endHour * 60 + endMinute;
-                  const currentHourMinutes = hour * 60;
+              {/* Time Grid - Same Layout as Day View but with 7 Day Columns */}
+              <div className="relative border border-base-300 rounded-lg overflow-hidden" style={{ minHeight: '600px' }}>
+                <div className="grid grid-cols-8 gap-0" style={{ minHeight: '600px' }}>
+                  {/* Time Column */}
+                  <div className="border-r border-base-300 bg-base-100">
+                    {Array.from({ length: 16 }, (_, index) => {
+                      const hour = index + 7; // Start at 7 AM, end at 10 PM (16 hours)
+                      return (
+                        <div key={hour} className="h-16 border-b border-base-300 flex items-center justify-end pr-2 text-xs opacity-70 bg-base-50">
+                          {hour < 12 ? `${hour} AM` : hour === 12 ? '12 PM' : `${hour - 12} PM`}
+                        </div>
+                      );
+                    })}
+                  </div>
                   
-                  // Check if this hour falls within the item's time range
-                  return currentHourMinutes >= startTotalMinutes && currentHourMinutes < endTotalMinutes;
-                });
-                
-                const shiftsInHour = allHourItems.filter(item => item.type === 'shift');
-                const hasActiveShift = shiftsInHour.length > 0;
-                
-                // Calculate shift population for background color
-                const shiftPopulationStatus = hasActiveShift 
-                  ? shiftsInHour.some(s => s.status === 'bad') ? 'bg-error/10 border-error/30'
-                  : shiftsInHour.some(s => s.status === 'close') ? 'bg-warning/10 border-warning/30'
-                  : shiftsInHour.some(s => s.status === 'good') ? 'bg-success/10 border-success/30'
-                  : shiftsInHour.some(s => s.status === 'warning') ? 'bg-warning/10 border-warning/30'
-                  : 'bg-info/10 border-info/30'
-                  : 'bg-base-100 border-base-300';
-
-                return (
-                  <DroppableTimeSlot
-                    key={dayIndex}
-                    date={date}
-                    hour={hour}
-                    className={`min-h-12 p-1 border rounded hover:bg-base-200/80 cursor-pointer transition-colors relative select-none ${shiftPopulationStatus}`}
-                    onClick={() => handleEmptySpaceClick(date, hour)}
-                  >
-                    {/* Show shift capacity background */}
-                    {hasActiveShift && (
-                      <div className="absolute inset-0 pointer-events-none">
-                        {shiftsInHour.map((shift, idx) => (
-                          <div
-                            key={shift._id}
-                            className={`absolute inset-0 opacity-20 rounded ${
-                              shift.status === 'bad' ? 'bg-error' :
-                              shift.status === 'close' ? 'bg-warning' :
-                              shift.status === 'good' ? 'bg-success' :
-                              shift.status === 'warning' ? 'bg-warning' :
-                              'bg-info'
-                            }`}
-                            style={{
-                              left: `${idx * 2}px`,
-                              top: `${idx * 2}px`,
-                              right: `${idx * 2}px`,
-                              bottom: `${idx * 2}px`,
-                            }}
-                          />
-                        ))}
-                      </div>
-                    )}
+                  {/* Day Columns */}
+                  {weekDates.map((date, dayIndex) => {
+                    const dayItems = getItemsForDate(date);
+                    const positionedItems = getItemsWithPositioning(dayItems);
                     
-                    {/* Show shift population indicator with worker names */}
-                    {hasActiveShift && (
-                      <div className="absolute top-1 right-1 z-10 space-y-1">
-                        {shiftsInHour.map((shift) => {
-                          const workerNames = shift.assignments?.map((a: any) => a.worker?.name?.split(' ')[0]).filter(Boolean) || [];
-                          const tooltipText = `${shift.title}: ${shift.currentWorkers || 0}/${shift.requiredWorkers || 0} workers${workerNames.length > 0 ? `\nAssigned: ${workerNames.join(', ')}` : ''}`;
-                          
-                          return (
-                            <div key={shift._id} className="space-y-0.5">
-                              <div
-                                className={`badge badge-xs ${
-                                  shift.status === 'bad' ? 'badge-error' :
-                                  shift.status === 'close' ? 'badge-warning' :
-                                  shift.status === 'good' ? 'badge-success' :
-                                  shift.status === 'warning' ? 'badge-warning' :
-                                  'badge-info'
-                                }`}
-                                title={tooltipText}
+                    return (
+                      <div key={dayIndex} className="border-r border-base-300 relative">
+                        {/* Time Slots Grid for this day */}
+                        {Array.from({ length: 16 }, (_, timeIndex) => (
+                          <DroppableTimeSlot
+                            key={timeIndex}
+                            date={date}
+                            hour={timeIndex + 7} // Start at 7 AM
+                            className="h-16 border-b border-base-300 hover:bg-base-200/50 cursor-pointer relative transition-colors"
+                            onClick={() => handleEmptySpaceClick(date, timeIndex + 7)}
+                          >
+                            <></>
+                          </DroppableTimeSlot>
+                        ))}
+                        
+                        {/* Positioned Items Overlay */}
+                        <div className="absolute inset-0 pointer-events-none">
+                          {positionedItems.map((item) => {
+                            if (!item.position) return null;
+                            
+                            const startHour = parseInt(item.startTime.split(':')[0]);
+                            const startMinute = parseInt(item.startTime.split(':')[1]);
+                            const endHour = parseInt(item.endTime.split(':')[0]);
+                            const endMinute = parseInt(item.endTime.split(':')[1]);
+                            
+                            const startTotalMinutes = startHour * 60 + startMinute;
+                            const endTotalMinutes = endHour * 60 + endMinute;
+                            const durationMinutes = endTotalMinutes - startTotalMinutes;
+                            
+                            // Calculate position relative to 7 AM start (timeSlots[0] = "7 AM")
+                            const topOffset = ((startTotalMinutes - 7 * 60) / 60) * 4; // 4rem per hour (h-16)
+                            const height = Math.max((durationMinutes / 60) * 4, 1); // Minimum 1rem height
+                            
+                            // Skip items outside our visible range (7 AM - 11 PM)
+                            if (startHour < 7 || startHour >= 23) return null;
+                            
+                            return (
+                              <DraggableEvent
+                                key={item._id}
+                                event={item}
+                                style={{
+                                  position: 'absolute',
+                                  top: `${topOffset}rem`,
+                                  left: item.style?.left || '0%',
+                                  width: item.style?.width || '100%',
+                                  height: `${height}rem`,
+                                  zIndex: 10,
+                                  pointerEvents: 'auto'
+                                }}
+                                canEdit={canEditItem(item)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleItemClick(item);
+                                }}
+                                className={`text-xs p-1 rounded font-medium text-white ${getItemColor(item)} ${selectedItems.has(item.id) ? 'ring-2 ring-primary' : ''} truncate hover:opacity-90 shadow-sm cursor-pointer`}
+                                setIsResizing={setIsResizing}
+                                setResizeStartPos={setResizeStartPos}
+                                onNestedClick={handleItemClick}
+                                getItemColor={getItemColor}
+                                onApprove={handleApproveCalendarItem}
+                                bulkMode={bulkMode}
+                                isSelected={selectedItems.has(item.id)}
+                                onToggleSelection={toggleItemSelection}
                               >
-                                {shift.currentWorkers || 0}/{shift.requiredWorkers || 0}
-                              </div>
-                              {/* Mini worker indicator for week view */}
-                              {workerNames.length > 0 && (
-                                <div className="flex -space-x-0.5">
-                                  {workerNames.slice(0, 2).map((name: string, idx: number) => (
-                                    <div 
-                                      key={idx}
-                                      className="w-2 h-2 rounded-full bg-primary/80 text-[7px] flex items-center justify-center border border-white"
-                                      title={name}
-                                    />
-                                  ))}
-                                  {workerNames.length > 2 && (
-                                    <div className="w-2 h-2 rounded-full bg-base-300 text-[6px] flex items-center justify-center border border-white font-bold">
-                                      •
+                                <div className="flex items-center justify-between h-full min-h-0">
+                                  <div className="flex-1 min-w-0 overflow-hidden">
+                                    <div className="font-medium truncate text-xs leading-tight">{item.title}</div>
+                                    {height >= 2 && (
+                                      <div className="text-xs opacity-80 truncate">
+                                        {item.startTime} - {item.endTime}
+                                      </div>
+                                    )}
+                                  </div>
+                                  {bulkMode && height >= 2 && (
+                                    <div className="ml-2 flex-shrink-0">
+                                      <input
+                                        type="checkbox"
+                                        className="checkbox checkbox-xs"
+                                        checked={selectedItems.has(item.id)}
+                                        onChange={(e) => {
+                                          e.stopPropagation();
+                                          toggleItemSelection(item.id);
+                                        }}
+                                      />
+                                    </div>
+                                  )}
+                                  {item.status === 'pending_approval' && effectiveRole === 'manager' && !bulkMode && height >= 2 && (
+                                    <div className="ml-2 flex gap-1 flex-shrink-0">
+                                      <button
+                                        className="btn btn-success btn-xs p-0.5"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleApproveCalendarItem(item._id, true);
+                                        }}
+                                        title="Approve"
+                                      >
+                                        <Check className="w-3 h-3" />
+                                      </button>
+                                      <button
+                                        className="btn btn-error btn-xs p-0.5"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleApproveCalendarItem(item._id, false);
+                                        }}
+                                        title="Reject"
+                                      >
+                                        <X className="w-3 h-3" />
+                                      </button>
                                     </div>
                                   )}
                                 </div>
-                              )}
-                            </div>
-                          );
-                        })}
+                              </DraggableEvent>
+                            );
+                          })}
+                        </div>
                       </div>
-                    )}
-
-                    {/* Render draggable events on top - exclude shifts since they're shown as badges */}
-                    {hourItems.filter(item => item.type !== 'shift').map((item) => {
-                      const itemStyle = getItemStyle(item, hour, dayItems, date);
-                      if (!itemStyle) return null;
-                      
-                      return (
-                        <DraggableEvent
-                          key={item._id}
-                          event={item}
-                          style={itemStyle}
-                          canEdit={canEditItem(item)}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleItemClick(item);
-                          }}
-                          className={`text-xs p-1 rounded font-medium z-20 relative text-white ${getItemColor(item)} ${selectedItems.has(item.id) ? 'ring-2 ring-primary' : ''} truncate hover:opacity-90 shadow-sm`}
-                          setIsResizing={setIsResizing}
-                          setResizeStartPos={setResizeStartPos}
-                          onNestedClick={handleItemClick}
-                          getItemColor={getItemColor}
-                          onApprove={handleApproveCalendarItem}
-                          bulkMode={bulkMode}
-                          isSelected={selectedItems.has(item.id)}
-                          onToggleSelection={toggleItemSelection}
-                        />
-                      );
-                    })}
-                    
-                    {/* Make shift badges clickable for shift details */}
-                    {hasActiveShift && (
-                      <div className="absolute inset-0 z-10">
-                        {shiftsInHour.map((shift) => (
-                          <div
-                            key={shift._id}
-                            className="absolute inset-0 cursor-pointer hover:bg-primary/5 rounded transition-colors"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleItemClick(shift);
-                            }}
-                            title={`Click for ${shift.title} details`}
-                          />
-                        ))}
-                      </div>
-                    )}
-                  </DroppableTimeSlot>
-                );
-              })}
+                    );
+                  })}
+                </div>
               </div>
-            );
-          })}
-        </div>
+            </div>
           </div>
         </div>
       </div>
