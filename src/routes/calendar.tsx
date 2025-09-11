@@ -870,7 +870,10 @@ function CalendarPage() {
     // Second pass: calculate positions within each group
     concurrentGroups.forEach(group => {
       const groupSize = group.length;
-      group.forEach((item, index) => {
+      
+      // For groups with only one item (non-overlapping), use full width and stack vertically
+      if (groupSize === 1) {
+        const item = group[0];
         const [startHour, startMinute] = item.startTime.split(':').map(Number);
         const [endHour, endMinute] = item.endTime.split(':').map(Number);
         const startTotalMinutes = startHour * 60 + startMinute;
@@ -878,29 +881,58 @@ function CalendarPage() {
         const durationMinutes = endTotalMinutes - startTotalMinutes;
         const startHourSlot = Math.floor(startTotalMinutes / 60);
         
-        // Calculate width and left position for concurrent items
-        const width = Math.floor(100 / groupSize);
-        const leftPercent = (index * width);
-        
         const heightPx = Math.max(24, (durationMinutes / 60) * 48);
         
         positionedItems.push({
           ...item,
           startHourSlot,
           position: {
-            left: index,
+            left: 0,
             width: 1,
-            totalColumns: groupSize
+            totalColumns: 1
           },
           style: {
             height: `${heightPx}px`,
-            left: `${leftPercent}%`,
-            width: `${width - 1}%`, // Small gap between concurrent items
+            left: '0%',
+            width: '100%', // Full width for non-overlapping items
             position: 'absolute' as const,
-            zIndex: item.type === 'shift' ? 5 + index : 10 + index // Shifts lower z-index
+            zIndex: item.type === 'shift' ? 5 : 10
           }
         });
-      });
+      } else {
+        // For overlapping items, position them side-by-side
+        group.forEach((item, index) => {
+          const [startHour, startMinute] = item.startTime.split(':').map(Number);
+          const [endHour, endMinute] = item.endTime.split(':').map(Number);
+          const startTotalMinutes = startHour * 60 + startMinute;
+          const endTotalMinutes = endHour * 60 + endMinute;
+          const durationMinutes = endTotalMinutes - startTotalMinutes;
+          const startHourSlot = Math.floor(startTotalMinutes / 60);
+          
+          // Calculate width and left position for concurrent items
+          const width = Math.floor(100 / groupSize);
+          const leftPercent = (index * width);
+          
+          const heightPx = Math.max(24, (durationMinutes / 60) * 48);
+          
+          positionedItems.push({
+            ...item,
+            startHourSlot,
+            position: {
+              left: index,
+              width: 1,
+              totalColumns: groupSize
+            },
+            style: {
+              height: `${heightPx}px`,
+              left: `${leftPercent}%`,
+              width: `${width - 1}%`, // Small gap between concurrent items
+              position: 'absolute' as const,
+              zIndex: item.type === 'shift' ? 5 + index : 10 + index // Shifts lower z-index
+            }
+          });
+        });
+      }
     });
     
     return positionedItems;
@@ -1781,8 +1813,8 @@ function CalendarPage() {
                       </div>
                     )}
 
-                    {/* Render draggable events on top */}
-                    {hourItems.map((item) => {
+                    {/* Render draggable events on top - exclude shifts since they're shown as badges */}
+                    {hourItems.filter(item => item.type !== 'shift').map((item) => {
                       const itemStyle = getItemStyle(item, hour, dayItems, date);
                       if (!itemStyle) return null;
                       
@@ -1796,11 +1828,7 @@ function CalendarPage() {
                             e.stopPropagation();
                             handleItemClick(item);
                           }}
-                          className={`text-xs p-1 rounded font-medium z-20 relative ${
-                            item.type === 'shift' 
-                              ? 'text-base-content bg-base-100/80 border-2 border-current' 
-                              : 'text-white'
-                          } ${item.type !== 'shift' ? getItemColor(item) : ''} ${selectedItems.has(item.id) ? 'ring-2 ring-primary' : ''} truncate hover:opacity-90 shadow-sm`}
+                          className={`text-xs p-1 rounded font-medium z-20 relative text-white ${getItemColor(item)} ${selectedItems.has(item.id) ? 'ring-2 ring-primary' : ''} truncate hover:opacity-90 shadow-sm`}
                           setIsResizing={setIsResizing}
                           setResizeStartPos={setResizeStartPos}
                           onNestedClick={handleItemClick}
@@ -1812,6 +1840,23 @@ function CalendarPage() {
                         />
                       );
                     })}
+                    
+                    {/* Make shift badges clickable for shift details */}
+                    {hasActiveShift && (
+                      <div className="absolute inset-0 z-10">
+                        {shiftsInHour.map((shift) => (
+                          <div
+                            key={shift._id}
+                            className="absolute inset-0 cursor-pointer hover:bg-primary/5 rounded transition-colors"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleItemClick(shift);
+                            }}
+                            title={`Click for ${shift.title} details`}
+                          />
+                        ))}
+                      </div>
+                    )}
                   </DroppableTimeSlot>
                 );
               })}
