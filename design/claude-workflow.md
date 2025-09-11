@@ -18,8 +18,6 @@ generally, when starting a session you will be directed to read these files:
 
 read always, update on finish and after major changes are finished
 
-
-
 if approching 5 hour limit, update these docs before doing anything else. add your current todo list to the bottom of the project_overview file  
 
 **if  asked to make a new file for a specific feature, use the SHIFT_IMPLAMENTATION_ISSUES as a template.**
@@ -29,7 +27,7 @@ if approching 5 hour limit, update these docs before doing anything else. add yo
 
 read last 2 session to get context.
 
-after taht update on last session on start of new session
+after that update on last session on start of new session
 
 ### a specific feature implamenteation doc ###
 

@@ -3,7 +3,7 @@ import { Authenticated, useMutation } from "convex/react";
 import { convexQuery } from "@convex-dev/react-query";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
-import { Calendar, ChevronLeft, ChevronRight, Filter, Plus, Target, Search, User, Check, X } from "lucide-react";
+import { Calendar, ChevronLeft, ChevronRight, Filter, Plus, Target, Search, User, Check, X, UserPlus } from "lucide-react";
 import {
   DndContext,
   closestCenter,
@@ -886,6 +886,11 @@ function CalendarPage() {
         positionedItems.push({
           ...item,
           startHourSlot,
+          position: {
+            left: index,
+            width: 1,
+            totalColumns: groupSize
+          },
           style: {
             height: `${heightPx}px`,
             left: `${leftPercent}%`,
@@ -1968,12 +1973,44 @@ function CalendarPage() {
   const renderDayView = () => {
     const currentDateItems = getItemsForDate(currentDate);
     
+    // DEBUG: Log data to console
+    console.log('Debug - Day View Data:', {
+      currentDate: currentDate.toISOString().split('T')[0],
+      allCalendarItems: calendarItems.length,
+      calendarItemTypes: calendarItems.map(item => ({ type: item.type, title: item.title })),
+      currentDateItems: currentDateItems.length,
+      currentDateItemTypes: currentDateItems.map(item => ({ type: item.type, title: item.title })),
+      shifts: currentDateItems.filter(item => item.type === 'shift'),
+      filters: filters
+    });
+    
     // Sort items by start time for the sidebar
     const sortedItems = [...currentDateItems].sort((a, b) => {
       const aTime = parseInt(a.startTime.replace(':', ''));
       const bTime = parseInt(b.startTime.replace(':', ''));
       return aTime - bTime;
     });
+
+    // Use positioned items for side-by-side display of concurrent items
+    const positionedItems = getItemsWithPositioning(currentDateItems);
+    
+    // DEBUG: Log positioning data and store in window for inspection
+    const debugData = {
+      positionedItems: positionedItems,
+      positionedItemsLength: positionedItems.length,
+      positionsAssigned: positionedItems.map(item => ({ 
+        id: item.id, 
+        title: item.title,
+        position: item.position,
+        startTime: item.startTime,
+        endTime: item.endTime
+      }))
+    };
+    console.log('Debug - Positioning Details:', debugData);
+    
+    // Store in window for browser inspection
+    (window as any).debugPositionedItems = positionedItems;
+    (window as any).debugPositionsAssigned = debugData.positionsAssigned;
 
     return (
       <div className="max-w-7xl mx-auto">
@@ -1982,61 +2019,7 @@ function CalendarPage() {
         </div>
         
         <div className="grid grid-cols-12 gap-6">
-          {/* Calendar Column */}
-          <div className="col-span-8">
-            <div className="space-y-1" data-calendar-container>
-              {Array.from({ length: 24 }, (_, hour) => {
-                // Only show items that start in this hour
-                const hourItems = currentDateItems.filter(item => {
-                  const startHour = parseInt(item.startTime.split(':')[0]);
-                  return hour === startHour;
-                });
-
-                return (
-                  <div key={hour} className="grid grid-cols-12 gap-2">
-                    <div className="col-span-2 p-2 text-sm opacity-70 text-right">
-                      {hour === 0 ? '12 AM' : hour < 12 ? `${hour} AM` : hour === 12 ? '12 PM' : `${hour - 12} PM`}
-                    </div>
-                    <DroppableTimeSlot
-                      date={currentDate}
-                      hour={hour}
-                      className="col-span-10 min-h-12 p-2 border border-base-300 rounded bg-base-100 hover:bg-base-200 cursor-pointer transition-colors relative select-none"
-                      onClick={() => handleEmptySpaceClick(currentDate, hour)}
-                    >
-                      {hourItems.map((item) => {
-                        const itemStyle = getItemStyle(item, hour, currentDateItems, currentDate);
-                        if (!itemStyle) return null;
-                        
-                        return (
-                          <DraggableEvent
-                            key={item._id}
-                            event={item}
-                            style={itemStyle}
-                            canEdit={canEditItem(item)}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleItemClick(item);
-                            }}
-                            className={`text-xs p-1 rounded ${item.type === 'shift' ? 'text-neutral-content border' : 'text-white'} ${getItemColor(item)} ${selectedItems.has(item.id) ? 'ring-2 ring-primary' : ''} truncate hover:opacity-80`}
-                            setIsResizing={setIsResizing}
-                            setResizeStartPos={setResizeStartPos}
-                            onNestedClick={handleItemClick}
-                            getItemColor={getItemColor}
-                            onApprove={handleApproveCalendarItem}
-                            bulkMode={bulkMode}
-                            isSelected={selectedItems.has(item.id)}
-                            onToggleSelection={toggleItemSelection}
-                          />
-                        );
-                      })}
-                    </DroppableTimeSlot>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-          
-          {/* Day View Operational Sidebar */}
+          {/* Day View Operational Sidebar - Move to LEFT side */}
           <div className="col-span-4">
             <div className="sticky top-4 space-y-4">
               {/* Current Shift Workers Panel */}
@@ -2062,11 +2045,10 @@ function CalendarPage() {
                           <div className="flex justify-between items-start mb-1">
                             <h4 className="font-medium text-xs">{shift.title}</h4>
                             <div className={`badge badge-xs ${
-                              shift.status === 'bad' ? 'badge-error' :
-                              shift.status === 'close' ? 'badge-warning' :
-                              shift.status === 'good' ? 'badge-success' :
-                              shift.status === 'warning' ? 'badge-warning' :
-                              'badge-info'
+                              (shift.currentWorkers || 0) === 0 ? 'badge-neutral' :
+                              (shift.currentWorkers || 0) < (shift.requiredWorkers || 1) ? 'badge-error' :
+                              (shift.currentWorkers || 0) === (shift.requiredWorkers || 1) ? 'badge-warning' :
+                              'badge-success'
                             }`}>
                               {shift.currentWorkers || 0}/{shift.requiredWorkers || 0}
                             </div>
@@ -2149,177 +2131,202 @@ function CalendarPage() {
                 </div>
               )}
 
-              {/* Main Schedule Panel */}
-              <div className="card bg-base-200 shadow-sm">
+              {/* Today's Operations Panel */}
+              <div className="card bg-success/10 border border-success/20 shadow-sm">
                 <div className="card-body">
-                  <h3 className="card-title text-lg flex items-center gap-2">
-                    <Calendar className="w-5 h-5" />
-                    {effectiveRole === "manager" ? "Today's Operations" : "Today's Schedule"}
-                    <div className="badge badge-primary badge-sm">{sortedItems.length}</div>
+                  <h3 className="card-title text-sm flex items-center gap-2">
+                    <Calendar className="w-4 h-4 text-success" />
+                    Today's Operations
+                    <div className="badge badge-success badge-sm">
+                      {sortedItems.length}
+                    </div>
                   </h3>
                   
                   {sortedItems.length === 0 ? (
-                    <div className="text-center py-8 opacity-60">
-                      <Calendar className="w-8 h-8 mx-auto mb-2 opacity-40" />
-                      <p className="text-sm">No items scheduled</p>
-                      <p className="text-xs">Click on the calendar to create one</p>
+                    <div className="text-center py-4 opacity-60">
+                      <Calendar className="w-6 h-6 mx-auto mb-2 opacity-40" />
+                      <p className="text-xs">No operations today</p>
                     </div>
                   ) : (
-                    <div className="space-y-3 max-h-96 overflow-y-auto">
+                    <div className="space-y-2 max-h-48 overflow-y-auto">
                       {sortedItems.map((item) => (
-                        <div 
+                        <div
                           key={item._id}
-                          className={`card shadow-sm hover:shadow-md transition-shadow cursor-pointer ${item.type === 'shift' ? 'bg-gradient-to-r from-base-100/80 to-base-100/60 border-l-4 border-l-primary/60' : 'bg-base-100'}`}
+                          className="bg-base-100 rounded p-2 border border-success/30 cursor-pointer hover:border-success/50 transition-colors"
                           onClick={() => handleItemClick(item)}
                         >
-                          <div className="card-body p-3">
-                            {/* Header with title and status */}
-                            <div className="flex items-start justify-between mb-2">
-                              <div className="flex-1">
-                                <h4 className="font-semibold text-sm leading-tight">{item.title}</h4>
-                                <div className="text-xs opacity-70 mt-0.5 flex items-center gap-2">
-                                  <span>{item.startTime} - {item.endTime}</span>
-                                  {item.type === 'shift' && item.currentWorkers !== undefined && (
-                                    <span className={`badge badge-xs ${
-                                      item.status === 'bad' ? 'badge-error' :
-                                      item.status === 'close' ? 'badge-warning' :
-                                      item.status === 'good' ? 'badge-success' :
-                                      item.status === 'warning' ? 'badge-warning' :
-                                      'badge-info'
-                                    }`}>
-                                      {item.currentWorkers}/{item.requiredWorkers}
-                                    </span>
-                                  )}
-                                </div>
+                          <div className="flex justify-between items-start mb-1">
+                            <h4 className="font-medium text-xs">{item.title}</h4>
+                            <div className="flex items-center gap-1">
+                              <div className="text-xs opacity-70">
+                                {item.startTime} - {item.endTime}
                               </div>
-                              <div className="flex flex-col items-end gap-1">
-                                {item.type === 'shift' ? (
-                                  <div className={`badge badge-xs ${
-                                    item.status === 'bad' ? 'badge-error' :
-                                    item.status === 'close' ? 'badge-warning' :
-                                    item.status === 'good' ? 'badge-success' :
-                                    item.status === 'warning' ? 'badge-warning' :
-                                    'badge-info'
-                                  }`}>
-                                    {item.status}
-                                  </div>
-                                ) : (
-                                  <div className={`badge badge-xs ${getStatusColor(item.status).replace('bg-', 'badge-')}`}>
-                                    {item.status.replace('_', ' ')}
-                                  </div>
-                                )}
-                                <div className="badge badge-xs badge-outline">
-                                  {item.type}
+                              {item.type === 'shift' && (
+                                <div className={`badge badge-xs ${
+                                  (item.currentWorkers || 0) === 0 ? 'badge-neutral' :
+                                  (item.currentWorkers || 0) < (item.requiredWorkers || 1) ? 'badge-error' :
+                                  (item.currentWorkers || 0) === (item.requiredWorkers || 1) ? 'badge-warning' :
+                                  'badge-success'
+                                }`}>
+                                  {item.currentWorkers || 0}/{item.requiredWorkers || 0}
                                 </div>
-                              </div>
+                              )}
                             </div>
-
-                            {/* Operational details for day view */}
-                            {item.description && (
-                              <p className="text-xs opacity-60 mb-2 line-clamp-2">
-                                {item.description}
-                              </p>
-                            )}
-                            
-                            {/* Enhanced participation display */}
-                            {item.participants && item.participants.length > 0 && (
-                              <div className="flex items-center justify-between mt-2">
-                                <div className="flex items-center gap-1">
-                                  <div className="text-xs opacity-50">Staff:</div>
-                                  <div className="flex -space-x-1">
-                                    {item.participants.slice(0, 4).map((participant: any) => (
-                                      <div 
-                                        key={participant._id} 
-                                        className="w-5 h-5 rounded-full bg-primary text-primary-content text-xs flex items-center justify-center border-2 border-base-100 font-medium"
-                                        title={participant.name}
-                                      >
-                                        {participant.name?.charAt(0).toUpperCase()}
-                                      </div>
-                                    ))}
-                                    {item.participants.length > 4 && (
-                                      <div className="w-5 h-5 rounded-full bg-base-300 text-xs flex items-center justify-center border-2 border-base-100 font-medium">
-                                        +{item.participants.length - 4}
-                                      </div>
-                                    )}
-                                  </div>
-                                </div>
-                                
-                                {/* Quick action buttons for managers */}
-                                {effectiveRole === "manager" && item.status === 'pending_approval' && (
-                                  <div className="flex gap-1">
-                                    <button 
-                                      className="btn btn-success btn-xs"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        // TODO: Implement quick approve
-                                        console.log('Quick approve:', item._id);
-                                      }}
-                                    >
-                                      ✓
-                                    </button>
-                                    <button 
-                                      className="btn btn-error btn-xs"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        // TODO: Implement quick reject
-                                        console.log('Quick reject:', item._id);
-                                      }}
-                                    >
-                                      ✗
-                                    </button>
-                                  </div>
-                                )}
-                              </div>
-                            )}
-
-                            {/* Worker-specific features: Join/Leave buttons for events */}
-                            {effectiveRole === "worker" && item.type !== 'shift' && (
-                              <div className="flex items-center justify-between mt-2">
-                                <div className="text-xs opacity-50">
-                                  {item.participants?.some((p: any) => p._id === user?._id) 
-                                    ? "You're participating" 
-                                    : "Available to join"}
-                                </div>
-                                <button 
-                                  className={`btn btn-xs ${
-                                    item.participants?.some((p: any) => p._id === user?._id)
-                                      ? 'btn-outline btn-error' 
-                                      : 'btn-outline btn-primary'
-                                  }`}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    // TODO: Implement join/leave event
-                                    console.log('Join/leave event:', item._id);
-                                  }}
-                                >
-                                  {item.participants?.some((p: any) => p._id === user?._id) ? 'Leave' : 'Join'}
-                                </button>
-                              </div>
-                            )}
                           </div>
+                          <div className="flex items-center gap-2">
+                            <div className={`badge badge-xs ${
+                              item.status === 'approved' ? 'badge-success' :
+                              item.status === 'pending_approval' ? 'badge-warning' :
+                              item.status === 'cancelled' ? 'badge-error' : 'badge-info'
+                            }`}>
+                              {item.status || 'active'}
+                            </div>
+                            <div className="badge badge-xs badge-outline">
+                              {item.type}
+                            </div>
+                          </div>
+                          <p className="text-xs opacity-60 mt-1">{item.description}</p>
                         </div>
                       ))}
                     </div>
                   )}
                   
-                  <div className="card-actions justify-end mt-4">
-                    <button 
-                      className="btn btn-sm btn-primary"
-                      onClick={() => {
-                        setEditingEvent(null);
-                        setPrefilledEventData({
-                          startDate: currentDate.toISOString().split('T')[0],
-                          endDate: currentDate.toISOString().split('T')[0],
-                          startTime: "09:00",
-                          endTime: "17:00",
-                        });
-                        setIsCreateModalOpen(true);
-                      }}
-                    >
-                      <Plus className="w-3 h-3" />
-                      New Event
-                    </button>
-                  </div>
+                  <button 
+                    className="btn btn-sm btn-primary w-full mt-3"
+                    onClick={() => {
+                      setEditingEvent(null);
+                      setPrefilledEventData({
+                        startDate: currentDate.toISOString().split('T')[0],
+                        endDate: currentDate.toISOString().split('T')[0],
+                        startTime: "09:00",
+                        endTime: "17:00",
+                      });
+                      setIsCreateModalOpen(true);
+                    }}
+                  >
+                    <Plus className="w-3 h-3" />
+                    New Event
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          {/* Calendar Column - Move to RIGHT side and limit to 5 AM - 11 PM */}
+          <div className="col-span-8">
+            {/* Day Calendar Grid - Continuous Display */}
+            <div className="grid grid-cols-12 gap-2">
+              {/* Time Column */}
+              <div className="col-span-2 space-y-1">
+                {Array.from({ length: 19 }, (_, hourIndex) => {
+                  const hour = hourIndex + 5;
+                  return (
+                    <div key={hour} className="h-16 p-2 text-sm opacity-70 text-right flex flex-col items-end justify-center">
+                      <div className="font-medium">
+                        {hour < 12 ? `${hour} AM` : hour === 12 ? '12 PM' : `${hour - 12} PM`}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              
+              {/* Day Column with Continuous Items */}
+              <div className="col-span-10 relative">
+                {/* Time Slot Grid Lines */}
+                <div className="absolute inset-0 space-y-1">
+                  {Array.from({ length: 19 }, (_, hourIndex) => {
+                    const hour = hourIndex + 5;
+                    return (
+                      <DroppableTimeSlot
+                        key={hour}
+                        date={currentDate}
+                        hour={hour}
+                        className="h-16 border border-base-300 rounded hover:bg-base-200/50 cursor-pointer transition-colors"
+                        onClick={() => handleEmptySpaceClick(currentDate, hour)}
+                      />
+                    );
+                  })}
+                </div>
+                
+                {/* Continuous Item Display */}
+                <div className="absolute inset-0 pointer-events-none">
+                  {positionedItems.map((item) => {
+                    if (!item.position) return null;
+                    
+                    const [startHour, startMinute] = item.startTime.split(':').map(Number);
+                    const [endHour, endMinute] = item.endTime.split(':').map(Number);
+                    
+                    // Calculate position within 5 AM - 11 PM range (19 hours total)
+                    const startMinutes = (startHour - 5) * 60 + startMinute;
+                    const endMinutes = (endHour - 5) * 60 + endMinute;
+                    const totalMinutes = 19 * 60; // 19 hours
+                    
+                    // Skip items outside our time range
+                    if (startHour < 5 || startHour > 23) return null;
+                    
+                    const top = Math.max(0, (startMinutes / totalMinutes) * 100);
+                    const height = Math.min(100 - top, ((endMinutes - Math.max(0, startMinutes)) / totalMinutes) * 100);
+                    const left = (item.position.left / item.position.totalColumns) * 100;
+                    const width = (item.position.width / item.position.totalColumns) * 100;
+                    
+                    return (
+                      <div
+                        key={item.id}
+                        className="absolute pointer-events-auto"
+                        style={{
+                          top: `${top}%`,
+                          height: `${height}%`,
+                          left: `${left}%`,
+                          width: `${width}%`,
+                        }}
+                      >
+                        <DraggableEvent
+                          event={item}
+                          style={{}}
+                          canEdit={canEditItem(item)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleItemClick(item);
+                          }}
+                          className={`h-full text-xs p-1 rounded font-medium z-20 relative overflow-hidden ${
+                            item.type === 'shift' 
+                              ? 'text-base-content border-2' 
+                              : 'text-white'
+                          } ${getItemColor(item)} ${selectedItems.has(item.id) ? 'ring-2 ring-primary' : ''} hover:opacity-90 shadow-sm`}
+                          setIsResizing={setIsResizing}
+                          setResizeStartPos={setResizeStartPos}
+                          onNestedClick={handleItemClick}
+                          getItemColor={getItemColor}
+                          onApprove={handleApproveCalendarItem}
+                          bulkMode={bulkMode}
+                          isSelected={selectedItems.has(item.id)}
+                          onToggleSelection={toggleItemSelection}
+                        >
+                          <div className="text-xs font-medium truncate">{item.title}</div>
+                          <div className="text-xs opacity-80">
+                            {item.startTime} - {item.endTime}
+                          </div>
+                          {item.type === 'shift' && (
+                            <div className="flex items-center gap-1 mt-1">
+                              {effectiveRole === "manager" && (
+                                <UserPlus className="w-3 h-3 opacity-60" />
+                              )}
+                              <div 
+                                className={`badge badge-xs ${
+                                  (item.currentWorkers || 0) === 0 ? 'badge-neutral' :
+                                  (item.currentWorkers || 0) < (item.requiredWorkers || 1) ? 'badge-error' :
+                                  (item.currentWorkers || 0) === (item.requiredWorkers || 1) ? 'badge-warning' :
+                                  'badge-success'
+                                }`}
+                              >
+                                {item.currentWorkers || 0}/{item.requiredWorkers || 0}
+                              </div>
+                            </div>
+                          )}
+                        </DraggableEvent>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             </div>
