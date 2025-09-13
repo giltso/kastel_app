@@ -11,6 +11,32 @@ Always follow the guidelines in this file, unless explicitly told otherwise by t
 - Environment variables: Client vars need `VITE_` prefix, Convex vars set in dashboard
 - Package manager: Always use `pnpm` and `pnpx`, NOT `npm` or `npx`
 
+## Critical Assessment Standards
+
+**Always be brutally honest about implementation status and unsolved problems. Never overstate completion.**
+
+### Documentation Standards
+- **Distinguish between "working" and "production-ready"** - Basic functionality ≠ complete implementation
+- **Highlight production blockers prominently** - Schema validation failures, missing migrations, deployment issues
+- **Document technical debt explicitly** - Temporary workarounds, optional fields that should be required, scattered logic
+- **List specific unresolved problems** - Don't just say "needs more work", specify what exactly is missing
+
+### Testing & Validation Requirements
+- **One successful test case is insufficient** - Test edge cases, error conditions, malformed data, concurrent operations
+- **Frontend crashes are critical bugs** - `.includes()` on undefined, missing null checks, unhandled errors
+- **Schema validation failures block production** - Cannot deploy with inconsistent data models
+- **Error handling is mandatory** - User-friendly messages, graceful failures, proper validation
+
+### Implementation Completion Criteria
+Before marking any feature as "complete":
+1. **All critical paths tested** - Happy path, error path, edge cases
+2. **No schema validation errors** - Database migrations completed, data integrity maintained
+3. **Production deployment safe** - No crashes, proper error handling, backward compatibility
+4. **Documentation reflects reality** - Current limitations clearly stated, required work itemized
+5. **No temporary workarounds in production code** - Proper fixes implemented, not band-aids
+
+**Remember: It's better to be honest about incomplete work than to claim completion and create false confidence.**
+
 ## Event Management System
 
 This application includes a comprehensive role-based event management system with advanced calendar interactions:
