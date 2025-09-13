@@ -14,20 +14,24 @@ export function calculateShiftStatus(currentWorkers: number, requiredWorkers: nu
   return "warning"; // Over max
 }
 
-// Create a new shift (managers only)
+// Create a new shift (managers only) - supports both recurring and non-recurring
 export const createShift = mutation({
   args: {
     name: v.string(),
     description: v.optional(v.string()),
     startTime: v.string(),
     endTime: v.string(),
-    recurringDays: v.array(v.union(
+    // NEW: Support for recurring vs non-recurring
+    isRecurring: v.boolean(),
+    recurringDays: v.optional(v.array(v.union(
       v.literal("monday"), v.literal("tuesday"), v.literal("wednesday"),
       v.literal("thursday"), v.literal("friday"), v.literal("saturday"), v.literal("sunday")
-    )),
+    ))),
+    specificDate: v.optional(v.string()), // For non-recurring shifts
     requiredWorkers: v.number(),
     maxWorkers: v.optional(v.number()),
     color: v.optional(v.string()),
+    type: v.optional(v.union(v.literal("operational"), v.literal("maintenance"), v.literal("educational"))),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -46,11 +50,122 @@ export const createShift = mutation({
       throw new ConvexError("Only managers can create shifts");
     }
 
+    // Validation: recurring shifts must have recurringDays
+    if (args.isRecurring && (!args.recurringDays || args.recurringDays.length === 0)) {
+      throw new ConvexError("Recurring shifts must have at least one recurring day");
+    }
+
+    // Validation: non-recurring shifts must have specificDate
+    if (!args.isRecurring && !args.specificDate) {
+      throw new ConvexError("Non-recurring shifts must have a specific date");
+    }
+
     return await ctx.db.insert("shifts", {
-      ...args,
+      name: args.name,
+      description: args.description,
+      type: args.type,
+      startTime: args.startTime,
+      endTime: args.endTime,
+      isRecurring: args.isRecurring,
+      recurringDays: args.recurringDays,
+      specificDate: args.specificDate,
+      requiredWorkers: args.requiredWorkers,
+      maxWorkers: args.maxWorkers,
+      color: args.color,
       isActive: true,
       createdBy: user._id,
     });
+  },
+});
+
+// Edit a shift instance (creates non-recurring copy with inherited data)
+export const editShiftInstance = mutation({
+  args: {
+    parentShiftId: v.id("shifts"),
+    specificDate: v.string(),
+    name: v.optional(v.string()),
+    description: v.optional(v.string()),
+    startTime: v.optional(v.string()),
+    endTime: v.optional(v.string()),
+    requiredWorkers: v.optional(v.number()),
+    maxWorkers: v.optional(v.number()),
+    color: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new ConvexError("Not authenticated");
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+
+    if (!user) throw new ConvexError("User not found");
+
+    // Check permissions - only managers can edit shifts
+    const effectiveRole = user.emulatingRole || user.role;
+    if (effectiveRole !== "manager" && effectiveRole !== "dev") {
+      throw new ConvexError("Only managers can edit shifts");
+    }
+
+    // Get the parent shift
+    const parentShift = await ctx.db.get(args.parentShiftId);
+    if (!parentShift) throw new ConvexError("Parent shift not found");
+
+    // Check if an edited instance already exists for this date
+    const existingInstance = await ctx.db
+      .query("shifts")
+      .withIndex("by_parentShiftId", (q) => q.eq("parentShiftId", args.parentShiftId))
+      .filter((q) => q.eq(q.field("specificDate"), args.specificDate))
+      .unique();
+
+    if (existingInstance) {
+      throw new ConvexError("An edited instance already exists for this date");
+    }
+
+    // Create unique instance tag
+    const instanceTag = `${parentShift.name}_${args.specificDate}_${Date.now()}`;
+
+    // Create new shift with inherited and overridden data
+    const newShiftId = await ctx.db.insert("shifts", {
+      name: args.name ?? parentShift.name,
+      description: args.description ?? parentShift.description,
+      type: parentShift.type,
+      startTime: args.startTime ?? parentShift.startTime,
+      endTime: args.endTime ?? parentShift.endTime,
+      isRecurring: false, // Always non-recurring for edited instances
+      recurringDays: undefined,
+      specificDate: args.specificDate,
+      parentShiftId: args.parentShiftId,
+      instanceTag,
+      requiredWorkers: args.requiredWorkers ?? parentShift.requiredWorkers,
+      maxWorkers: args.maxWorkers ?? parentShift.maxWorkers,
+      color: args.color ?? parentShift.color,
+      isActive: true,
+      createdBy: user._id,
+    });
+
+    // Copy existing assignments from parent shift for this date
+    const existingAssignments = await ctx.db
+      .query("shift_assignments")
+      .withIndex("by_shift_date", (q) => q.eq("shiftId", args.parentShiftId).eq("date", args.specificDate))
+      .filter((q) => q.neq(q.field("status"), "cancelled"))
+      .collect();
+
+    // Create new assignments for the edited instance
+    for (const assignment of existingAssignments) {
+      await ctx.db.insert("shift_assignments", {
+        shiftId: newShiftId,
+        workerId: assignment.workerId,
+        date: args.specificDate,
+        assignmentType: "manager_assigned", // Manager edited, so this is manager-assigned
+        assignedBy: user._id,
+        status: assignment.status,
+        notes: `Copied from parent shift: ${assignment.notes || ""}`.trim(),
+      });
+    }
+
+    return newShiftId;
   },
 });
 
@@ -65,7 +180,7 @@ export const listShifts = query({
 
     // Add assignment counts and status for each shift
     const today = new Date().toISOString().split('T')[0];
-    
+
     const shiftsWithStatus = await Promise.all(
       shifts.map(async (shift) => {
         const assignments = await ctx.db
@@ -83,6 +198,59 @@ export const listShifts = query({
           status,
           spotsAvailable: Math.max(0, shift.requiredWorkers - currentWorkers),
           isOverpopulated: currentWorkers > shift.requiredWorkers,
+        };
+      })
+    );
+
+    return shiftsWithStatus;
+  },
+});
+
+// Get shifts for a specific date (handles recurring vs non-recurring logic)
+export const getShiftsForDate = query({
+  args: { date: v.string() },
+  handler: async (ctx, { date }) => {
+    const dayOfWeek = new Date(date).toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
+
+    // Get all active shifts
+    const allShifts = await ctx.db
+      .query("shifts")
+      .withIndex("by_isActive", (q) => q.eq("isActive", true))
+      .collect();
+
+    // Separate recurring and non-recurring shifts
+    const recurringShifts = allShifts.filter(shift => shift.isRecurring && shift.recurringDays?.includes(dayOfWeek as any));
+    const nonRecurringShifts = allShifts.filter(shift => !shift.isRecurring && shift.specificDate === date);
+
+    // Find edited instances that override recurring shifts for this date
+    const editedInstances = nonRecurringShifts.filter(shift => shift.parentShiftId);
+    const editedParentIds = new Set(editedInstances.map(shift => shift.parentShiftId));
+
+    // Filter out recurring shifts that have been overridden
+    const activeRecurringShifts = recurringShifts.filter(shift => !editedParentIds.has(shift._id));
+
+    // Combine active recurring shifts with all non-recurring shifts for this date
+    const relevantShifts = [...activeRecurringShifts, ...nonRecurringShifts];
+
+    // Add assignment counts and status for each shift
+    const shiftsWithStatus = await Promise.all(
+      relevantShifts.map(async (shift) => {
+        const assignments = await ctx.db
+          .query("shift_assignments")
+          .withIndex("by_shift_date", (q) => q.eq("shiftId", shift._id).eq("date", date))
+          .filter((q) => q.neq(q.field("status"), "cancelled"))
+          .collect();
+
+        const currentWorkers = assignments.length;
+        const status = calculateShiftStatus(currentWorkers, shift.requiredWorkers, shift.maxWorkers);
+
+        return {
+          ...shift,
+          currentWorkers,
+          status,
+          spotsAvailable: Math.max(0, shift.requiredWorkers - currentWorkers),
+          isOverpopulated: currentWorkers > shift.requiredWorkers,
+          isEditedInstance: !!shift.parentShiftId,
         };
       })
     );

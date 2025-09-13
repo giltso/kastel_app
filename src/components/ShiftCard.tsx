@@ -168,7 +168,18 @@ export function ShiftCard({
           
           <div className="flex items-center gap-2 text-sm">
             <Calendar className="w-4 h-4 opacity-70" />
-            <span>{formatDays(shift.recurringDays)}</span>
+            <span>
+              {shift.isRecurring !== false && shift.recurringDays
+                ? formatDays(shift.recurringDays)
+                : shift.specificDate
+                  ? new Date(shift.specificDate).toLocaleDateString('en-US', {
+                      weekday: 'short',
+                      month: 'short',
+                      day: 'numeric'
+                    })
+                  : 'One-time'
+              }
+            </span>
           </div>
           
           <div className="flex items-center gap-2 text-sm">

@@ -331,23 +331,29 @@ export default defineSchema({
   .index("by_similarityHash", ["similarityHash"])
   .index("by_reviewedBy", ["reviewedBy"]),
 
-  // Shifts: Special recurring events for daily operations
+  // Shifts: Recurring and non-recurring operational schedules
   shifts: defineTable({
     name: v.string(), // e.g., "Morning Shift", "Evening Shift"
     description: v.optional(v.string()),
     type: v.optional(v.union(v.literal("operational"), v.literal("maintenance"), v.literal("educational"))), // Type of shift
     startTime: v.string(), // HH:MM format
     endTime: v.string(), // HH:MM format
-    // Recurring pattern
-    recurringDays: v.array(v.union(
+    // NEW: Recurring vs non-recurring support
+    isRecurring: v.optional(v.boolean()), // true for recurring, false for one-time shifts (defaults to true for existing records)
+    // Recurring pattern (only for recurring shifts)
+    recurringDays: v.optional(v.array(v.union(
       v.literal("monday"),
-      v.literal("tuesday"), 
+      v.literal("tuesday"),
       v.literal("wednesday"),
       v.literal("thursday"),
       v.literal("friday"),
       v.literal("saturday"),
       v.literal("sunday")
-    )), // Which days this shift runs
+    ))), // Which days this shift runs (null for non-recurring)
+    // Non-recurring support
+    specificDate: v.optional(v.string()), // ISO date for non-recurring shifts (YYYY-MM-DD)
+    parentShiftId: v.optional(v.id("shifts")), // Reference to original shift if this is an edited instance
+    instanceTag: v.optional(v.string()), // Unique identifier for edited instances
     // Capacity management
     requiredWorkers: v.number(), // Target number of workers
     maxWorkers: v.optional(v.number()), // Optional maximum (defaults to requiredWorkers + 2)
@@ -357,7 +363,10 @@ export default defineSchema({
     color: v.optional(v.string()), // Hex color for calendar display
   })
   .index("by_createdBy", ["createdBy"])
-  .index("by_isActive", ["isActive"]),
+  .index("by_isActive", ["isActive"])
+  .index("by_specificDate", ["specificDate"])
+  .index("by_parentShiftId", ["parentShiftId"])
+  .index("by_isRecurring", ["isRecurring"]),
 
   // Event Assignments: Who is assigned to specific event/shift instances (unified system)
   event_assignments: defineTable({

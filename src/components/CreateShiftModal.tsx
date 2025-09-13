@@ -20,7 +20,9 @@ export function CreateShiftModal({ isOpen, onClose }: CreateShiftModalProps) {
       description: "",
       startTime: "09:00",
       endTime: "17:00",
+      isRecurring: true,
       recurringDays: [] as string[],
+      specificDate: "",
       requiredWorkers: 2,
       maxWorkers: 4,
       color: "#3B82F6", // Blue default
@@ -29,9 +31,16 @@ export function CreateShiftModal({ isOpen, onClose }: CreateShiftModalProps) {
       setIsSubmitting(true);
       try {
         await createShift({
-          ...value,
-          recurringDays: value.recurringDays as any,
+          name: value.name,
+          description: value.description || undefined,
+          startTime: value.startTime,
+          endTime: value.endTime,
+          isRecurring: value.isRecurring,
+          recurringDays: value.isRecurring ? (value.recurringDays as any) : undefined,
+          specificDate: !value.isRecurring ? value.specificDate : undefined,
+          requiredWorkers: value.requiredWorkers,
           maxWorkers: value.maxWorkers || undefined,
+          color: value.color,
         });
         
         setSubmitSuccess(true);
@@ -207,45 +216,106 @@ export function CreateShiftModal({ isOpen, onClose }: CreateShiftModalProps) {
             />
           </div>
 
-          {/* Recurring Days */}
+          {/* Shift Type Selection */}
           <form.Field
-            name="recurringDays"
+            name="isRecurring"
             children={(field) => (
               <div>
-                <label className="label">
-                  <span className="label-text flex items-center gap-1">
+                <label className="label cursor-pointer">
+                  <span className="label-text flex items-center gap-2">
                     <Calendar className="w-4 h-4" />
-                    Days of the Week
+                    One-time shift (non-recurring)
                   </span>
+                  <input
+                    type="checkbox"
+                    checked={!field.state.value}
+                    onChange={(e) => field.handleChange(!e.target.checked)}
+                    className="toggle toggle-primary"
+                  />
                 </label>
-                <div className="grid grid-cols-7 gap-2">
-                  {daysOfWeek.map((day) => (
-                    <label key={day.value} className="cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={field.state.value.includes(day.value)}
-                        onChange={(e) => {
-                          const current = field.state.value;
-                          if (e.target.checked) {
-                            field.handleChange([...current, day.value]);
-                          } else {
-                            field.handleChange(current.filter(d => d !== day.value));
-                          }
-                        }}
-                        className="checkbox checkbox-primary checkbox-sm"
-                      />
-                      <span className="label-text text-xs ml-1">{day.label}</span>
-                    </label>
-                  ))}
-                </div>
-                {field.state.value.length === 0 && (
-                  <div className="label">
-                    <span className="label-text-alt text-warning">
-                      Please select at least one day
-                    </span>
-                  </div>
-                )}
               </div>
+            )}
+          />
+
+          {/* Conditional: Recurring Days or Specific Date */}
+          <form.Field
+            name="isRecurring"
+            children={(recurringField) => (
+              <>
+                {recurringField.state.value ? (
+                  // Recurring Days
+                  <form.Field
+                    name="recurringDays"
+                    children={(field) => (
+                      <div>
+                        <label className="label">
+                          <span className="label-text flex items-center gap-1">
+                            <Calendar className="w-4 h-4" />
+                            Days of the Week
+                          </span>
+                        </label>
+                        <div className="grid grid-cols-7 gap-2">
+                          {daysOfWeek.map((day) => (
+                            <label key={day.value} className="cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={field.state.value.includes(day.value)}
+                                onChange={(e) => {
+                                  const current = field.state.value;
+                                  if (e.target.checked) {
+                                    field.handleChange([...current, day.value]);
+                                  } else {
+                                    field.handleChange(current.filter(d => d !== day.value));
+                                  }
+                                }}
+                                className="checkbox checkbox-primary checkbox-sm"
+                              />
+                              <span className="label-text text-xs ml-1">{day.label}</span>
+                            </label>
+                          ))}
+                        </div>
+                        {field.state.value.length === 0 && (
+                          <div className="label">
+                            <span className="label-text-alt text-warning">
+                              Please select at least one day
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  />
+                ) : (
+                  // Specific Date
+                  <form.Field
+                    name="specificDate"
+                    children={(field) => (
+                      <div>
+                        <label className="label">
+                          <span className="label-text flex items-center gap-1">
+                            <Calendar className="w-4 h-4" />
+                            Shift Date
+                          </span>
+                        </label>
+                        <input
+                          type="date"
+                          name={field.name}
+                          value={field.state.value}
+                          onChange={(e) => field.handleChange(e.target.value)}
+                          className="input input-bordered w-full"
+                          min={new Date().toISOString().split('T')[0]} // Prevent past dates
+                        />
+                        {!field.state.value && (
+                          <div className="label">
+                            <span className="label-text-alt text-warning">
+                              Please select a date
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  />
+                )}
+              </>
             )}
           />
 

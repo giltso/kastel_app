@@ -134,22 +134,70 @@ function ShiftsPage() {
           </div>
         </div>
 
-        {/* Manager Controls */}
-        {canManageShifts && (
-          <div className="flex justify-between items-center mb-6 p-4 bg-base-200 rounded-lg">
-            <div>
-              <h2 className="font-semibold">Manager Controls</h2>
-              <p className="text-sm opacity-70">Create and manage shifts</p>
+        {/* Enhanced Control and Overview Bar */}
+        <div className="mb-6 space-y-4">
+          {/* Overview Statistics */}
+          {shifts && shifts.length > 0 && (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-base-100 border border-base-300 rounded-lg shadow-sm">
+              <div className="text-center">
+                <div className="text-2xl font-bold text-success">
+                  {shifts.filter(s => s.status === "good").length}
+                </div>
+                <div className="text-xs opacity-70">Fully Staffed</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-warning">
+                  {shifts.filter(s => s.status === "close").length}
+                </div>
+                <div className="text-xs opacity-70">Almost Full</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-error">
+                  {shifts.filter(s => s.status === "bad").length}
+                </div>
+                <div className="text-xs opacity-70">Need Workers</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-info">
+                  {shifts.filter(s => s.isOverpopulated).length}
+                </div>
+                <div className="text-xs opacity-70">Overstaffed</div>
+              </div>
             </div>
-            <button
-              onClick={() => setIsCreateModalOpen(true)}
-              className="btn btn-primary"
-            >
-              <Plus className="w-4 h-4" />
-              Create Shift
-            </button>
-          </div>
-        )}
+          )}
+
+          {/* Manager Controls */}
+          {canManageShifts && (
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 p-4 bg-base-200 rounded-lg">
+              <div className="flex-1">
+                <h2 className="font-semibold flex items-center gap-2">
+                  <Users className="w-4 h-4" />
+                  Manager Controls
+                </h2>
+                <p className="text-sm opacity-70">Create shifts and manage worker assignments</p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={() => setIsCreateModalOpen(true)}
+                  className="btn btn-primary btn-sm"
+                >
+                  <Plus className="w-4 h-4" />
+                  Create Shift
+                </button>
+                <button
+                  className="btn btn-outline btn-sm"
+                  onClick={() => {
+                    // TODO: Implement bulk assignment modal
+                    alert("Bulk assignment feature coming soon!");
+                  }}
+                >
+                  <UserPlus className="w-4 h-4" />
+                  Bulk Assign
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
 
         {/* Pending Swap Requests */}
         {swapRequests && swapRequests.length > 0 && (
@@ -235,9 +283,17 @@ function ShiftsPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {shifts.map((shift) => {
                 // Check if this shift runs on the selected day
-                const selectedDayOfWeek = new Date(selectedDate).toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
-                const runsOnSelectedDay = shift.recurringDays.includes(selectedDayOfWeek as any);
-                
+                let runsOnSelectedDay = false;
+
+                if (shift.isRecurring !== false) {
+                  // Recurring shift (including undefined for backward compatibility): check if it runs on the selected day of week
+                  const selectedDayOfWeek = new Date(selectedDate).toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
+                  runsOnSelectedDay = shift.recurringDays?.includes(selectedDayOfWeek as any) || false;
+                } else {
+                  // Non-recurring shift: check if it matches the specific date
+                  runsOnSelectedDay = shift.specificDate === selectedDate;
+                }
+
                 if (!runsOnSelectedDay) return null;
 
                 // Check if current user is already assigned to this shift on selected date

@@ -127,7 +127,7 @@ function DraggableEvent({ event, style, canEdit, onClick, className, setIsResizi
         <div className={`px-2 py-1 text-xs font-medium bg-current/20 text-base-content border-b border-current/30`}>
           <div className="flex items-center justify-between">
             <span className="truncate">{event.title}</span>
-            <span className={`badge badge-xs ${
+            <span className={`badge badge-sm font-medium ${
               event.status === 'bad' ? 'badge-error' :
               event.status === 'close' ? 'badge-warning' :
               event.status === 'good' ? 'badge-success' :
@@ -167,7 +167,7 @@ function DraggableEvent({ event, style, canEdit, onClick, className, setIsResizi
           
           {/* No workers assigned indicator */}
           {(!event.assignments || event.assignments.length === 0) && (
-            <div className="text-xs opacity-60 mt-1 italic">
+            <div className="text-xs opacity-75 mt-1 italic font-medium">
               No workers assigned
             </div>
           )}
@@ -216,9 +216,9 @@ function DraggableEvent({ event, style, canEdit, onClick, className, setIsResizi
               ))}
             </>
           ) : (
-            <div className="text-xs px-3 py-2 text-base-content/50 italic text-center bg-base-100/10 rounded-md border border-dashed border-current/20">
+            <div className="text-xs px-3 py-2 text-base-content/70 italic text-center bg-base-100/15 rounded-md border border-dashed border-current/30 font-medium">
               <div className="flex items-center justify-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-current/20" />
+                <div className="w-2 h-2 rounded-full bg-current/30" />
                 <span>No scheduled activities</span>
               </div>
             </div>
@@ -1649,7 +1649,7 @@ function CalendarPage() {
                     {Array.from({ length: 16 }, (_, index) => {
                       const hour = index + 7; // Start at 7 AM, end at 10 PM (16 hours)
                       return (
-                        <div key={hour} className="h-16 border-b border-base-300 flex items-center justify-end pr-2 text-xs opacity-70 bg-base-50">
+                        <div key={hour} className="h-16 border-b border-base-300 flex items-center justify-end pr-3 text-sm opacity-80 bg-base-50 font-medium">
                           {hour < 12 ? `${hour} AM` : hour === 12 ? '12 PM' : `${hour - 12} PM`}
                         </div>
                       );
@@ -1955,13 +1955,13 @@ function CalendarPage() {
           {currentDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
         </div>
         
-        <div className="grid grid-cols-12 gap-6">
-          {/* Day View Operational Sidebar - Move to LEFT side */}
-          <div className="col-span-4">
-            <div className="sticky top-4 space-y-4">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-6">
+          {/* Day View Operational Sidebar - Mobile-friendly layout */}
+          <div className="lg:col-span-4 order-2 lg:order-1">
+            <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-1 gap-3 lg:space-y-4 lg:sticky lg:top-4 sm:[&>*]:space-y-0 lg:[&>*]:space-y-4">
               {/* Current Shift Workers Panel */}
               <div className="card bg-info/10 border border-info/20 shadow-sm">
-                <div className="card-body">
+                <div className="card-body p-3 sm:p-4">
                   <h3 className="card-title text-sm flex items-center gap-2">
                     <User className="w-4 h-4 text-info" />
                     Workers on Shift
@@ -2031,7 +2031,7 @@ function CalendarPage() {
               {/* Manager Approval Panel - Only shown to managers */}
               {effectiveRole === "manager" && (
                 <div className="card bg-warning/10 border border-warning/20 shadow-sm">
-                  <div className="card-body">
+                  <div className="card-body p-3 sm:p-4">
                     <h3 className="card-title text-sm flex items-center gap-2">
                       <Target className="w-4 h-4 text-warning" />
                       Pending Approvals
@@ -2070,7 +2070,7 @@ function CalendarPage() {
 
               {/* Today's Operations Panel */}
               <div className="card bg-success/10 border border-success/20 shadow-sm">
-                <div className="card-body">
+                <div className="card-body p-3 sm:p-4">
                   <h3 className="card-title text-sm flex items-center gap-2">
                     <Calendar className="w-4 h-4 text-success" />
                     Today's Operations
@@ -2149,17 +2149,17 @@ function CalendarPage() {
             </div>
           </div>
           
-          {/* Calendar Column - Move to RIGHT side and limit to 5 AM - 11 PM */}
-          <div className="col-span-8">
-            {/* Day Calendar Grid - Continuous Display */}
-            <div className="grid grid-cols-12 gap-2">
-              {/* Time Column */}
-              <div className="col-span-2 space-y-1">
+          {/* Calendar Column - Mobile-first responsive layout */}
+          <div className="lg:col-span-8 order-1 lg:order-2">
+            {/* Day Calendar Grid - Mobile responsive */}
+            <div className="grid grid-cols-12 gap-1 sm:gap-2">
+              {/* Time Column - Compact on mobile */}
+              <div className="col-span-3 sm:col-span-2 space-y-1">
                 {Array.from({ length: 19 }, (_, hourIndex) => {
                   const hour = hourIndex + 5;
                   return (
-                    <div key={hour} className="h-16 p-2 text-sm opacity-70 text-right flex flex-col items-end justify-center">
-                      <div className="font-medium">
+                    <div key={hour} className="h-12 sm:h-16 p-1 sm:p-2 text-xs sm:text-sm opacity-80 text-right flex flex-col items-end justify-center">
+                      <div className="font-medium leading-tight">
                         {hour < 12 ? `${hour} AM` : hour === 12 ? '12 PM' : `${hour - 12} PM`}
                       </div>
                     </div>
@@ -2167,8 +2167,8 @@ function CalendarPage() {
                 })}
               </div>
               
-              {/* Day Column with Continuous Items */}
-              <div className="col-span-10 relative">
+              {/* Day Column with Continuous Items - Mobile responsive */}
+              <div className="col-span-9 sm:col-span-10 relative">
                 {/* Time Slot Grid Lines */}
                 <div className="absolute inset-0 space-y-1">
                   {Array.from({ length: 19 }, (_, hourIndex) => {
@@ -2178,7 +2178,7 @@ function CalendarPage() {
                         key={hour}
                         date={currentDate}
                         hour={hour}
-                        className="h-16 border border-base-300 rounded hover:bg-base-200/50 cursor-pointer transition-colors"
+                        className="h-12 sm:h-16 border border-base-300 rounded hover:bg-base-200/50 cursor-pointer transition-colors"
                         onClick={() => handleEmptySpaceClick(currentDate, hour)}
                       >
                         <></>

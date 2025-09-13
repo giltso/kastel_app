@@ -211,6 +211,7 @@ export const seedDatabase = mutation({
       description: "Complete daily operations coverage",
       startTime: "09:00",
       endTime: "19:00",
+      isRecurring: true,
       recurringDays: ["sunday", "monday", "tuesday", "wednesday", "thursday"],
       requiredWorkers: 3,
       maxWorkers: 5,
@@ -224,6 +225,7 @@ export const seedDatabase = mutation({
       description: "Morning operations and customer service",
       startTime: "09:00",
       endTime: "13:00",
+      isRecurring: true,
       recurringDays: ["sunday", "monday", "tuesday", "wednesday", "thursday"],
       requiredWorkers: 2,
       maxWorkers: 4,
@@ -233,10 +235,11 @@ export const seedDatabase = mutation({
     });
 
     const eveningShiftId = await ctx.db.insert("shifts", {
-      name: "Evening Shift", 
+      name: "Evening Shift",
       description: "Afternoon/evening operations and closing procedures",
       startTime: "15:00",
       endTime: "19:00",
+      isRecurring: true,
       recurringDays: ["sunday", "monday", "tuesday", "wednesday", "thursday"],
       requiredWorkers: 2,
       maxWorkers: 3,
