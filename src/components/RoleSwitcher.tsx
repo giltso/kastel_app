@@ -34,12 +34,20 @@ export function RoleSwitcher() {
     }
   };
 
+  const getRoleDisplayText = () => {
+    if (effectiveRole === user.role) return effectiveRole;
+
+    // Shorten emulated role text to prevent overflow
+    if (effectiveRole === "manager") return "worker-manager";
+    return `${effectiveRole}-emu`;
+  };
+
   return (
     <div className="dropdown dropdown-end">
       <div tabIndex={0} role="button" className="btn btn-ghost btn-sm gap-2">
         <Filter className="h-4 w-4" />
         <span className="text-xs">
-          {effectiveRole === user.role ? effectiveRole : `${effectiveRole}-emulated`}
+          {getRoleDisplayText()}
         </span>
       </div>
       <div 

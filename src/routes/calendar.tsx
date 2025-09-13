@@ -816,8 +816,55 @@ function CalendarPage() {
     return filteredItems;
   };
 
-  // Calculate concurrent items and their positioning - stack non-overlapping items
-  const getItemsWithPositioning = (items: any[]) => {
+  // Configurable nesting container selection strategy
+  const selectNestingContainer = (shifts: any[], strategy: 'longest' | 'specified' = 'longest', specifiedShiftId?: string) => {
+    if (strategy === 'specified' && specifiedShiftId) {
+      return shifts.find(shift => shift._id === specifiedShiftId);
+    }
+    
+    // Default: longest shift (by duration)
+    return shifts.reduce((longest, shift) => {
+      const getDurationMinutes = (item: any) => {
+        const [startHour, startMinute] = item.startTime.split(':').map(Number);
+        const [endHour, endMinute] = item.endTime.split(':').map(Number);
+        return (endHour * 60 + endMinute) - (startHour * 60 + startMinute);
+      };
+      
+      return getDurationMinutes(shift) > getDurationMinutes(longest) ? shift : longest;
+    });
+  };
+
+  // Separate positioning: Concurrency vs Nesting
+  const getItemsWithPositioning = (items: any[], nestingStrategy: 'longest' | 'specified' = 'longest', specifiedShiftId?: string) => {
+    if (!items.length) return [];
+    
+    // Step 1: Separate items by positioning strategy
+    const shifts = items.filter(item => item.type === 'shift');
+    const nonNestedEvents = items.filter(item => 
+      item.type !== 'shift' && !item.nestedInShift && !item.manuallyNested
+    );
+    const nestedEvents = items.filter(item => 
+      item.nestedInShift || item.manuallyNested
+    );
+    
+    // Step 2: Standard concurrent positioning for shifts + non-nested events
+    const mainTimelineItems = [...shifts, ...nonNestedEvents];
+    const standardPositionedItems = applyStandardConcurrentPositioning(mainTimelineItems);
+    
+    // Step 3: Nested positioning within selected shift container
+    let nestedPositionedItems: any[] = [];
+    if (nestedEvents.length > 0 && shifts.length > 0) {
+      const containerShift = selectNestingContainer(shifts, nestingStrategy, specifiedShiftId);
+      if (containerShift) {
+        nestedPositionedItems = applyNestedPositioning(nestedEvents, containerShift);
+      }
+    }
+    
+    return [...standardPositionedItems, ...nestedPositionedItems];
+  };
+
+  // Standard calendar positioning algorithm for concurrent items
+  const applyStandardConcurrentPositioning = (items: any[]) => {
     if (!items.length) return [];
     
     // Sort items by start time for consistent ordering
@@ -828,90 +875,101 @@ function CalendarPage() {
     });
     
     const positionedItems: any[] = [];
+    const columns: { endTime: number; items: any[] }[] = [];
     
-    // Find actually overlapping items (not just concurrent start times)
-    const findOverlappingItems = (targetItem: any, allItems: any[]) => {
-      const [targetStart, targetStartMin] = targetItem.startTime.split(':').map(Number);
-      const [targetEnd, targetEndMin] = targetItem.endTime.split(':').map(Number);
-      const targetStartMinutes = targetStart * 60 + targetStartMin;
-      const targetEndMinutes = targetEnd * 60 + targetEndMin;
-      
-      return allItems.filter(item => {
-        if (item._id === targetItem._id) return false; // Don't include self
-        
-        const [itemStart, itemStartMin] = item.startTime.split(':').map(Number);
-        const [itemEnd, itemEndMin] = item.endTime.split(':').map(Number);
-        const itemStartMinutes = itemStart * 60 + itemStartMin;
-        const itemEndMinutes = itemEnd * 60 + itemEndMin;
-        
-        // Check for actual time overlap
-        return (targetStartMinutes < itemEndMinutes) && (targetEndMinutes > itemStartMinutes);
-      });
-    };
-    
-    // Process each item
-    sortedItems.forEach(item => {
-      const overlappingItems = findOverlappingItems(item, sortedItems);
-      const allOverlappingGroup = [item, ...overlappingItems];
-      
+    // Use standard overlap logic for ALL items (shifts and events)
+    sortedItems.forEach((item, itemIndex) => {
       const [startHour, startMinute] = item.startTime.split(':').map(Number);
       const [endHour, endMinute] = item.endTime.split(':').map(Number);
-      const startTotalMinutes = startHour * 60 + startMinute;
-      const endTotalMinutes = endHour * 60 + endMinute;
-      const durationMinutes = endTotalMinutes - startTotalMinutes;
-      const startHourSlot = Math.floor(startTotalMinutes / 60);
+      const startMinutes = startHour * 60 + startMinute;
+      const endMinutes = endHour * 60 + endMinute;
+      
+      
+      // Find available column (first column where item doesn't overlap with any existing items)
+      let targetColumnIndex = -1;
+      
+      for (let i = 0; i < columns.length; i++) {
+        // Check if this item overlaps with any item already in this column
+        let hasOverlap = false;
+        for (const existingItem of columns[i].items) {
+          const [existingStartHour, existingStartMinute] = existingItem.startTime.split(':').map(Number);
+          const [existingEndHour, existingEndMinute] = existingItem.endTime.split(':').map(Number);
+          const existingStartMinutes = existingStartHour * 60 + existingStartMinute;
+          const existingEndMinutes = existingEndHour * 60 + existingEndMinute;
+          
+          // Check for overlap: items overlap if one starts before the other ends
+          const overlaps = startMinutes < existingEndMinutes && endMinutes > existingStartMinutes;
+          
+          if (overlaps) {
+            hasOverlap = true;
+            break;
+          }
+        }
+        
+        if (!hasOverlap) {
+          targetColumnIndex = i;
+          break;
+        }
+      }
+      
+      // Create new column if no available column found
+      if (targetColumnIndex === -1) {
+        targetColumnIndex = columns.length;
+        columns.push({ endTime: endMinutes, items: [] });
+      } else {
+        columns[targetColumnIndex].endTime = Math.max(columns[targetColumnIndex].endTime, endMinutes);
+      }
+      
+      columns[targetColumnIndex].items.push(item);
+      item._columnIndex = targetColumnIndex;
+    });
+    
+    // Second pass: calculate positions with correct total columns
+    const totalColumns = columns.length;
+    
+    sortedItems.forEach(item => {
+      const [startHour, startMinute] = item.startTime.split(':').map(Number);
+      const [endHour, endMinute] = item.endTime.split(':').map(Number);
+      const startMinutes = startHour * 60 + startMinute;
+      const endMinutes = endHour * 60 + endMinute;
+      const durationMinutes = endMinutes - startMinutes;
       const heightPx = Math.max(24, (durationMinutes / 60) * 48);
       
-      if (overlappingItems.length === 0) {
-        // No overlaps - use full width and stack vertically
-        positionedItems.push({
-          ...item,
-          startHourSlot,
-          position: {
-            left: 0,
-            width: 1,
-            totalColumns: 1
-          },
-          style: {
-            height: `${heightPx}px`,
-            left: '0%',
-            width: '100%',
-            position: 'absolute' as const,
-            zIndex: item.type === 'shift' ? 5 : 10
-          }
-        });
-      } else {
-        // Has overlaps - position side by side
-        const sortedGroup = allOverlappingGroup.sort((a, b) => {
-          const aTime = parseInt(a.startTime.replace(':', ''));
-          const bTime = parseInt(b.startTime.replace(':', ''));
-          return aTime - bTime;
-        });
-        const itemIndex = sortedGroup.findIndex(groupItem => groupItem._id === item._id);
-        const groupSize = allOverlappingGroup.length;
-        const width = Math.floor(100 / groupSize);
-        const leftPercent = itemIndex * width;
-        
-        positionedItems.push({
-          ...item,
-          startHourSlot,
-          position: {
-            left: itemIndex,
-            width: 1,
-            totalColumns: groupSize
-          },
-          style: {
-            height: `${heightPx}px`,
-            left: `${leftPercent}%`,
-            width: `${width - 1}%`,
-            position: 'absolute' as const,
-            zIndex: item.type === 'shift' ? 5 + itemIndex : 10 + itemIndex
-          }
-        });
-      }
+      const targetColumnIndex = item._columnIndex;
+      const width = Math.floor(100 / totalColumns);
+      const leftPercent = targetColumnIndex * width;
+      
+      positionedItems.push({
+        ...item,
+        startHourSlot: Math.floor(startMinutes / 60),
+        position: {
+          left: targetColumnIndex,
+          width: 1,
+          totalColumns: totalColumns
+        },
+        style: {
+          height: `${heightPx}px`,
+          left: `${leftPercent}%`,
+          width: `${width - 1}%`,
+          position: 'absolute' as const,
+          zIndex: item.type === 'shift' ? 5 + targetColumnIndex : 10 + targetColumnIndex
+        }
+      });
+      
+      // Clean up temporary property
+      delete item._columnIndex;
     });
     
     return positionedItems;
+  };
+
+  // Nested positioning algorithm for events within shift containers
+  const applyNestedPositioning = (nestedEvents: any[], containerShift: any) => {
+    // TODO: Implement nested positioning logic
+    // For now, return empty array to prevent errors
+    // Future implementation will position events within the container shift's bounds
+    console.log(`Nested positioning: ${nestedEvents.length} events in container shift: ${containerShift.title}`);
+    return [];
   };
 
   // Calculate item positioning and size based on start/end times
@@ -1400,16 +1458,16 @@ function CalendarPage() {
         </div>
 
         {/* Week headers with Monday first */}
-        <div className="grid grid-cols-7 gap-2 mb-4">
+        <div className="grid grid-cols-7 gap-1 sm:gap-2 mb-4">
           {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => (
-            <div key={day} className="p-2 text-center font-medium opacity-70">
+            <div key={day} className="p-1 sm:p-2 text-center text-xs sm:text-sm font-medium opacity-70">
               {day}
             </div>
           ))}
         </div>
 
         {/* Enhanced month grid for planning */}
-        <div className="grid grid-cols-7 gap-2">
+        <div className="grid grid-cols-7 gap-1 sm:gap-2">
           {days.slice(0, 35).map((date, i) => {
             const isCurrentMonth = date.getMonth() === month;
             const isToday = date.toDateString() === today.toDateString();
@@ -1434,7 +1492,7 @@ function CalendarPage() {
                 key={i}
                 date={date}
                 className={`
-                  min-h-28 p-2 border rounded transition-all duration-200 select-none cursor-pointer
+                  min-h-20 sm:min-h-28 p-1 sm:p-2 border rounded transition-all duration-200 select-none cursor-pointer
                   ${isCurrentMonth ? (
                     shiftStatus === 'error' ? 'bg-error/10 border-error/30' :
                     shiftStatus === 'warning' ? 'bg-warning/10 border-warning/30' :
@@ -1452,8 +1510,8 @@ function CalendarPage() {
                 }}
               >
                 {/* Date header */}
-                <div className="flex items-center justify-between mb-2">
-                  <div className={`text-sm font-bold ${isToday ? 'text-primary' : ''}`}>
+                <div className="flex items-center justify-between mb-1 sm:mb-2">
+                  <div className={`text-xs sm:text-sm font-bold ${isToday ? 'text-primary' : ''}`}>
                     {date.getDate()}
                   </div>
                   {/* Quick status indicators */}
@@ -1475,10 +1533,10 @@ function CalendarPage() {
                 </div>
 
                 {/* Cursory overview of activities */}
-                <div className="space-y-1">
+                <div className="space-y-0.5 sm:space-y-1">
                   {/* Shift overview */}
                   {shifts.length > 0 && (
-                    <div className={`text-xs px-1 py-0.5 rounded ${
+                    <div className={`text-xs px-1 py-0.5 rounded text-center ${
                       shiftStatus === 'error' ? 'bg-error/20 text-error' :
                       shiftStatus === 'warning' ? 'bg-warning/20 text-warning' :
                       shiftStatus === 'success' ? 'bg-success/20 text-success' : 'bg-info/20 text-info'
@@ -1879,16 +1937,6 @@ function CalendarPage() {
   const renderDayView = () => {
     const currentDateItems = getItemsForDate(currentDate);
     
-    // DEBUG: Log data to console
-    console.log('Debug - Day View Data:', {
-      currentDate: currentDate.toISOString().split('T')[0],
-      allCalendarItems: calendarItems.length,
-      calendarItemTypes: calendarItems.map(item => ({ type: item.type, title: item.title })),
-      currentDateItems: currentDateItems.length,
-      currentDateItemTypes: currentDateItems.map(item => ({ type: item.type, title: item.title })),
-      shifts: currentDateItems.filter(item => item.type === 'shift'),
-      filters: filters
-    });
     
     // Sort items by start time for the sidebar
     const sortedItems = [...currentDateItems].sort((a, b) => {
@@ -1900,23 +1948,6 @@ function CalendarPage() {
     // Use positioned items for side-by-side display of concurrent items
     const positionedItems = getItemsWithPositioning(currentDateItems);
     
-    // DEBUG: Log positioning data and store in window for inspection
-    const debugData = {
-      positionedItems: positionedItems,
-      positionedItemsLength: positionedItems.length,
-      positionsAssigned: positionedItems.map(item => ({ 
-        id: item.id, 
-        title: item.title,
-        position: item.position,
-        startTime: item.startTime,
-        endTime: item.endTime
-      }))
-    };
-    console.log('Debug - Positioning Details:', debugData);
-    
-    // Store in window for browser inspection
-    (window as any).debugPositionedItems = positionedItems;
-    (window as any).debugPositionsAssigned = debugData.positionsAssigned;
 
     return (
       <div className="max-w-7xl mx-auto">
@@ -2179,7 +2210,7 @@ function CalendarPage() {
                     
                     return (
                       <div
-                        key={item.id}
+                        key={item._id}
                         className="absolute pointer-events-auto"
                         style={{
                           top: `${top}%`,

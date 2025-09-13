@@ -2,6 +2,82 @@
 
 detailed history of all sessions. to be updated on new session
 
+### Session 21 - September 13, 2025
+
+**Goals**: Continue previous session work on shift positioning and complete calendar functionality
+
+**Completed**:
+- ✅ **CRITICAL SHIFT POSITIONING ALGORITHM FIX**: Resolved fundamental shift display issue
+  - **Problem Identified**: User correctly pointed out shifts were displaying side-by-side when Morning and Evening shifts should stack vertically
+  - **Root Cause**: Algorithm was giving each shift its own dedicated column instead of using proper time-overlap detection
+  - **Solution**: Completely rewrote positioning logic to use standard overlap detection for ALL items (shifts and events)
+  - **Result**: Morning Shift (09:00-13:00) and Evening Shift (15:00-19:00) now correctly share same column and stack vertically
+  - **Technical Fix**: Full Day Shift (09:00-19:00) gets separate column due to time overlap with both other shifts
+- ✅ **Calendar Backend Filter Restoration**: Fixed event display issues after debugging period
+  - **Issue**: Events and tools weren't showing on calendar due to backend filters set to false during previous debugging
+  - **Solution**: Changed default filters in calendar_unified.ts from disabled to enabled (showEvents: true, showTools: true)
+  - **Result**: UI-controlled filtering now works correctly with backend showing all types by default
+- ✅ **Documentation Consolidation**: United and cleaned up session planning documents  
+  - **Action**: Combined NEXT_SESSION.md and NEXT_SESSION_TODO.md into single comprehensive file
+  - **Updates**: Removed outdated TODO file, updated session plan with current completion status
+  - **Result**: Clear roadmap for next session focusing on assignment functionality testing
+
+**Technical Achievements**:
+- **Positioning Logic Mastery**: Corrected fundamental misunderstanding of overlap-based column assignment
+- **User Experience Fix**: Shifts now display intuitively with proper time-based stacking behavior
+- **Code Quality**: Removed all debug console logs and cleaned up implementation for production readiness
+- **Documentation Maintenance**: Comprehensive updates to PROJECT_OVERVIEW.md and session planning files
+
+**Current State**: Calendar display layer is now fully functional and correct. Next session should focus on interaction layer (assignment workflows).
+
+### Session 20 - September 12, 2025
+
+**Goals**: Continue UI improvements and shifts implementation polish based on UI_IMPROVEMENT.md
+
+**Status**: Session started, development servers running
+- **Development Environment**: Frontend (localhost:5173) and Convex backend running successfully
+- **Current Focus**: UI improvements phase with priority on quick fixes and shifts implementation polish
+- **Documentation Review**: Completed reading of project documentation to understand current state
+
+**Context from Previous Sessions**:
+- **Session 19 Achievements**: Fixed all critical calendar display issues, resolved day view shift display, eliminated double rendering in week view
+- **Current State**: All critical calendar functionality working, shifts displaying correctly in all views
+- **Next Priority**: UI/UX enhancement phase focusing on role switcher overflow fix and design consistency improvements
+
+**Today's Planned Work**:
+- Address role switcher text overflow issue ("manager (emulated)" → "worker-manager")
+- Continue systematic UI improvements from UI_IMPROVEMENT.md
+- Polish shifts implementation details and user experience
+
+### Session 19 - September 11, 2025
+
+**Goals**: Fix calendar display issues from Session 18, specifically day view shift rendering
+
+**Completed**:
+- ✅ **Calendar Day View Critical Fix**: Resolved major issue where shifts weren't displaying in individual day view
+  - **Root Cause**: getItemsWithPositioning function wasn't adding position property to items
+  - **Solution**: Fixed positioning logic to add proper left/width/totalColumns for day view display
+  - **Validation**: Console logs confirm "positionedItems: Array(3), positionedItemsLength: 3"
+  - **Result**: All 3 shift patterns now display correctly with proper positioning
+- ✅ **UserPlus Import Fix**: Resolved compilation error preventing build
+  - **Issue**: Missing UserPlus import from lucide-react in calendar.tsx
+  - **Impact**: Development server now compiles cleanly without errors
+- ✅ **Non-Overlapping Shift Layout**: Fixed day view layout logic for non-concurrent shifts
+  - **Improvement**: Morning (09:00-13:00) and evening (15:00-19:00) shifts now stack vertically using full width
+  - **Logic**: Non-overlapping shifts use full width, overlapping shifts display side-by-side as expected
+- ✅ **Week View Double Rendering Fix**: Eliminated layered/double rendering artifacts
+  - **Solution**: Excluded shifts from DraggableEvent rendering to prevent duplication
+  - **Result**: Clean shift badges without visual artifacts, matching day view behavior
+- ✅ **Authentication Testing**: Successfully tested with claude+clerk_test@example.com in manager-emulated role
+
+**Technical Achievements**:
+- **Calendar Display Consistency**: All calendar views (day/week/month) now display shift patterns consistently
+- **Development Stability**: Resolved all compilation errors and authentication flow issues
+- **Shift Positioning Logic**: Fixed core positioning algorithm for proper calendar item display
+- **Visual Polish**: Eliminated rendering artifacts and improved visual consistency across views
+
+**Status**: All critical calendar and shift display issues resolved - system ready for UI/UX enhancement phase
+
 ### Session 18 - September 9, 2025
 
 **Goals**: Test calendar UI with new shift patterns and validate display functionality

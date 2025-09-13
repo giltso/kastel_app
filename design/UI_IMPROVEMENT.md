@@ -42,6 +42,7 @@ This document outlines systematic improvements to enhance user experience across
 - [ ] Hero section alignment on mobile devices
 - [ ] CTA buttons could be more prominent
 - [ ] Service preview cards need better visual hierarchy
+- [ ] no need for a "our services" banner with the hero banner, make the hero banner do both 
 
 **Improvements:**
 - [ ] Responsive hero section optimization
@@ -289,7 +290,7 @@ This document outlines systematic improvements to enhance user experience across
 
 ## Professional Services
 
-### Pro Directory
+### Pro Directoryhi c
 **All Roles:**
 - [ ] Professional profile card design
 - [ ] Service category filtering

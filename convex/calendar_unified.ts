@@ -71,11 +71,11 @@ export const getUnifiedCalendarData = query({
     const startDateObj = new Date(args.startDate);
     const endDateObj = new Date(args.endDate);
     
-    // Initialize filters with defaults - TEMPORARILY DISABLE EVERYTHING EXCEPT SHIFTS
+    // Initialize filters with defaults - show all types by default, let UI filters control visibility
     const filters = {
-      showEvents: false, // DISABLED FOR SHIFT DEBUGGING
+      showEvents: true,
       showShifts: true, 
-      showTools: false, // DISABLED FOR SHIFT DEBUGGING
+      showTools: true,
       showPendingOnly: false,
       ...args.filters
     };
