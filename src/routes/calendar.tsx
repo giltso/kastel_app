@@ -28,15 +28,15 @@ import { ShiftModificationModal } from "@/components/ShiftModificationModal";
 import { usePermissions } from "@/hooks/usePermissions";
 import type { Doc } from "../../convex/_generated/dataModel";
 
-const calendarQueryOptions = (startDate: string, endDate: string, view: "day" | "week" | "month") => 
+const calendarQueryOptions = (startDate: string, endDate: string, view: "day" | "week" | "month", userFilters: any) =>
   convexQuery(api.calendar_unified.getUnifiedCalendarData, {
     startDate,
     endDate,
     view,
     filters: {
-      showEvents: true,
-      showShifts: true,
-      showTools: true,
+      showEvents: userFilters.showEvents,
+      showShifts: userFilters.showShifts,
+      showTools: userFilters.showToolRentals,
       showPendingOnly: false
     }
   });
@@ -445,7 +445,7 @@ function CalendarPage() {
   
   const dateRange = getDateRange();
   const { data: queryResult } = useSuspenseQuery(
-    calendarQueryOptions(dateRange.startDate, dateRange.endDate, viewType)
+    calendarQueryOptions(dateRange.startDate, dateRange.endDate, viewType, filters)
   );
   
   const calendarItems = queryResult?.items || [];

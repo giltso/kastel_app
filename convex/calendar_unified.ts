@@ -81,11 +81,11 @@ export const getUnifiedCalendarData = query({
     };
     
     const items: any[] = [];
-    
+
     // ===== FETCH EVENTS =====
     if (filters.showEvents) {
       let events: any[] = [];
-      
+
       if (effectiveRole === "manager" || effectiveRole === "worker" || currentUser.role === "dev") {
         const allEvents = await ctx.db.query("events").collect();
         const nonShiftEvents = allEvents.filter(event => event.type !== "shift");
