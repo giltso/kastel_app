@@ -11,8 +11,6 @@ This document outlines systematic improvements to enhance user experience across
 
 ### quick fixes 
 
-- **Role Switcher Text Overflow**: Critical fix for "manager (emulated)" display
-
 ### High Priority
 
 - **Visual Polish**: Interface improvements and design enhancements

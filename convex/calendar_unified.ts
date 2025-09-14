@@ -91,10 +91,18 @@ export const getUnifiedCalendarData = query({
         const nonShiftEvents = allEvents.filter(event => event.type !== "shift");
         
         events = nonShiftEvents.filter(event => {
-          // Date filtering
-          const eventDate = new Date(event.startDate);
-          if (eventDate < startDateObj || eventDate > endDateObj) return false;
-          
+          // Date filtering - handle multi-day events properly
+          const eventStart = new Date(event.startDate);
+          const eventEnd = event.endDate ? new Date(event.endDate) : eventStart;
+
+          // Check if event overlaps with the date range
+          if (eventEnd < startDateObj || eventStart > endDateObj) return false;
+
+          // Status filtering - only show approved events unless manager viewing pending
+          // Note: Temporarily relaxed to debug status values
+          if (event.status === "pending_approval" && !isManager) return false;
+          // if (!["approved", "pending_approval", "in_progress"].includes(event.status)) return false;
+
           // Permission filtering
           return event.createdBy === currentUser._id ||
                  event.assignedTo === currentUser._id ||
