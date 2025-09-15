@@ -6,57 +6,55 @@
 ⚠️ **BREAKING CHANGE**: This redesign will remove most existing functionality and rebuild from ground up with three core focuses.
 
 ### **What We're KEEPING**
+- landing page, sign in, and the basic role structure including emualtion
+- UI decitions such as styling and color
 - Tool Rental System
 - Course Management System
 - Core Authentication & Roles
 
 ### **What We're COMPLETELY REDESIGNING**
+
 - Shift Management System (complete rebuild to fit new job requirements)
+
 - Calendar Interface (simplified to support new shift system)
 
 ### **What We're REMOVING**
+
 - Event Management System
 - Professional Services (Pro Help)
 - Suggestion Box System
 - Advanced Calendar Features (drag/drop, complex approvals)
 - Current Complex Shift System (replaced with redesigned version)
-- Multi-role emulation
-- Homepage/Landing pages
+
 
 ---
 
 ## 🏗️ V2 Core System Architecture
 
 ### **1. Shift Management System**
-*Complete redesign: Operational management and documentation based on new job requirements*
+*Primary focus: Operational management and documentation*
 
-#### **NEW Requirements Analysis**
-- [ ] *Document current job operational needs*
-- [ ] *Define what "shift" means in new context*
-- [ ] *Identify documentation requirements*
-- [ ] *Map operational workflows*
-
-#### **Staff Roles & Permissions (To Be Redefined)**
+#### **Staff Roles & Permissions**
 - **Workers**:
-  - [ ] *Define shift interaction capabilities based on new requirements*
-  - [ ] *Define operational documentation access*
-  - [ ] *Define workflow participation*
+  - [ ] *Define shift viewing permissions*
+  - [ ] *Define shift assignment capabilities*
+  - [ ] *Define documentation access*
 
 - **Managers**:
-  - [ ] *Define operational oversight capabilities*
-  - [ ] *Define scheduling/planning permissions*
-  - [ ] *Define reporting and analytics access*
+  - [ ] *Define approval workflows*
+  - [ ] *Define scheduling permissions*
+  - [ ] *Define reporting access*
 
-#### **Core Functionality (Clean Slate Design)**
-- [ ] *Design shift creation/definition process*
-- [ ] *Design operational workflow management*
-- [ ] *Design documentation and reporting system*
-- [ ] *Design integration with calendar system*
+#### **Core Functionality**
+- [ ] *Define shift creation process*
+- [ ] *Define assignment workflows*
+- [ ] *Define documentation requirements*
+- [ ] *Define reporting features*
 
-#### **Data Model (New Schema)**
-- [ ] *Design shift data structure for new requirements*
-- [ ] *Design operational tracking relationships*
-- [ ] *Design documentation and reporting schema*
+#### **Data Model**
+- [ ] *Design shift schema*
+- [ ] *Design assignment relationships*
+- [ ] *Design documentation structure*
 
 ---
 
@@ -157,16 +155,52 @@ Course System   | [ ]    | [ ]     | [ ]      | [ ]
 
 ## 🔄 Migration Strategy
 
+### **Database Strategy: Clean New Convex Instance**
+
+**Decision**: Create completely new Convex deployment for V2 to eliminate technical debt at database level.
+
+```bash
+# Create new Convex deployment for V2
+export CONVEX_DEPLOYMENT=kastel-app-v2
+npx convex dev --configure
+```
+
+#### **Benefits of Clean Instance**
+- ✅ **Zero Schema Debt**: No legacy fields, tables, or indexes
+- ✅ **Clean Development**: No conflicts with old schemas during redesign
+- ✅ **True Clean Slate**: Design decisions not influenced by existing data structures
+- ✅ **Controlled Migration**: Selectively import only desired data
+
+#### **Migration Phases**
+
+**Phase 1: Clean Build**
+- [ ] Create new Convex deployment (`kastel-app-v2`)
+- [ ] Implement V2 schemas (users, shifts, tools, courses only)
+- [ ] Fresh user accounts for development and testing
+- [ ] Build new shift management system
+
+**Phase 2: Selective Data Migration**
+- [ ] Export tool rental data from original instance
+- [ ] Export course data from original instance
+- [ ] Export core user data (excluding unused role fields)
+- [ ] Import data into V2 instance with clean schemas
+
+**Phase 3: Production Cutover**
+- [ ] Switch production environment to V2 instance
+- [ ] Archive original instance as backup
+- [ ] Update deployment configurations
+
 ### **Data Migration**
-- [ ] *Plan user data preservation*
-- [ ] *Plan tool rental data preservation*
-- [ ] *Plan course data preservation*
-- [ ] *Plan shift data migration/rebuild*
+- [ ] **Users**: Core authentication data only (clean role structure)
+- [ ] **Tool Rentals**: Complete preservation with V2 schema
+- [ ] **Courses**: Complete preservation with V2 schema
+- [ ] **Shifts**: Complete rebuild - no migration from old system
 
 ### **Feature Migration**
-- [ ] *Document what functionality to preserve*
-- [ ] *Document what to rebuild from scratch*
-- [ ] *Document what to completely remove*
+- [x] **Keep**: Tool rental functionality (migrate data + refine code)
+- [x] **Keep**: Course management functionality (migrate data + refine code)
+- [x] **Rebuild**: Shift management (new requirements, no old data)
+- ❌ **Remove**: Events, suggestions, pro-services (no migration)
 
 ---
 
