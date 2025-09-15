@@ -149,6 +149,24 @@ Course System   | [ ]   | [ ]      | [ ]         | [ ]             | [ ]
 - **Staff + Worker + Instructor + Manager** (full staff access)
 - **Customer** (external service access)
 
+### **Future Challenge: Staff as Customer**
+⚠️ **Known Issue to Address Later**: Staff members may need Customer access for personal use
+
+**Scenarios Requiring Special Handling:**
+- **Worker renting tools** for personal use (not work-related)
+- **Instructor enrolling in courses** as a student
+- **Staff members booking services** for personal needs
+- **Billing and payment** separation between work and personal
+
+**Implementation Considerations:**
+- [ ] Design dual-role switching mechanism
+- [ ] Separate personal vs. work transaction tracking
+- [ ] Handle billing/payment context switching
+- [ ] UI/UX for role context awareness
+- [ ] Permission boundary management between Staff and Customer contexts
+
+*Note: This is a complex edge case that will require dedicated design work in future phases.*
+
 ---
 
 ## 🗂️ Database Schema V2
