@@ -1,188 +1,203 @@
 # Kastel App V2 Redesign Document
 
-## 🎯 Redesign Goals
+## 🎯 Redesign Overview
 
-### **Primary Objectives**
-1. **Technical Debt Elimination**: Remove mountains of legacy code from schema evolution
-2. **Code Consolidation**: Eliminate duplicate functions and redundant implementations
-3. **Architecture Simplification**: Clean, maintainable codebase with clear patterns
-4. **Shift System Overhaul**: Complete reimplementation based on stakeholder feedback
-5. **Developer Experience**: Easy navigation, predictable patterns, minimal bugs
+### **Critical Decision: Major Simplification**
+⚠️ **BREAKING CHANGE**: This redesign will remove most existing functionality and rebuild from ground up with three core focuses.
 
-### **Core Problems Being Solved**
-- **Legacy Code Accumulation**: Multiple schema migrations left dead/redundant code
-- **Function Duplication**: Similar functionality scattered across multiple files
-- **Complex Navigation**: Hard to find and understand TSX component relationships
-- **Bug-Prone Development**: New features break due to unclear dependencies
-- **Shift System Issues**: Current shift implementation doesn't meet real-world needs
+### **What We're KEEPING**
+- Tool Rental System
+- Course Management System
+- Core Authentication & Roles
+- Calendar Interface (simplified)
 
-## 🏗️ Technical Architecture V2
-
-### **Clean Slate Principles**
-1. **Single Source of Truth**: One function per responsibility, no duplicates
-2. **Predictable Patterns**: Consistent file structure and naming conventions
-3. **Minimal Abstractions**: Only abstract when there's clear benefit
-4. **Type Safety First**: Leverage TypeScript to prevent runtime errors
-5. **Component Clarity**: Clear component hierarchy and data flow
-
-### **Core Systems Redesign**
-
-#### **1. Calendar System (Keep & Simplify)**
-- **Status**: KEEP - proven successful, needs refinement
-- **Changes**:
-  - Consolidate calendar logic into single hook
-  - Remove redundant positioning functions
-  - Simplify event rendering pipeline
-  - Clean up drag & drop implementation
-
-#### **2. Shift System (Complete Redesign)**
-- **Status**: REDESIGN - stakeholder feedback requires changes
-- **New Requirements**: [TO BE DEFINED based on stakeholder meeting]
-- **Current Issues**: Complex assignment logic, confusing UI patterns
-- **V2 Approach**: Clean slate implementation with simplified data model
-
-#### **3. Role System (Simplify)**
-- **Status**: SIMPLIFY - current tag system works but over-engineered
-- **Changes**:
-  - Reduce role complexity
-  - Clear permission hierarchy
-  - Single role switching mechanism
-
-#### **4. Event Management (Consolidate)**
-- **Status**: CONSOLIDATE - too many similar functions
-- **Changes**:
-  - Single event CRUD API
-  - Unified approval workflow
-  - Remove redundant event types
-
-#### **5. Tool Rentals (Keep)**
-- **Status**: KEEP - working well, minimal changes needed
-
-#### **6. Courses (Keep)**
-- **Status**: KEEP - recently validated, stable implementation
-
-## 📋 Implementation Strategy
-
-### **Phase 1: Analysis & Planning (This Session)**
-- [ ] Document current code complexity issues
-- [ ] Identify all duplicate functions
-- [ ] Map component dependencies
-- [ ] Define new shift requirements
-- [ ] Create migration strategy
-
-### **Phase 2: Schema Redesign**
-- [ ] Design clean V2 schema
-- [ ] Plan data migration approach
-- [ ] Identify breaking changes
-- [ ] Create migration scripts
-
-### **Phase 3: Core Systems Rebuild**
-- [ ] Implement unified calendar hooks
-- [ ] Rebuild shift system from scratch
-- [ ] Consolidate event management
-- [ ] Simplify role system
-
-### **Phase 4: Component Cleanup**
-- [ ] Standardize component patterns
-- [ ] Remove duplicate components
-- [ ] Create clear component hierarchy
-- [ ] Implement consistent styling
-
-### **Phase 5: Migration & Testing**
-- [ ] Progressive migration strategy
-- [ ] Comprehensive testing plan
-- [ ] Performance validation
-- [ ] User acceptance testing
-
-## 🔥 Specific Technical Debt to Address
-
-### **Function Duplication Examples**
-- Multiple event creation functions
-- Redundant approval workflows
-- Duplicate positioning calculations
-- Similar role checking logic
-
-### **Schema Evolution Issues**
-- Old fields still in database
-- Unused indexes
-- Conflicting validation rules
-- Migration artifacts
-
-### **Component Complexity**
-- Overly complex component trees
-- Unclear prop drilling
-- Mixed concerns in single components
-- Hard-to-follow state management
-
-## 📝 Stakeholder Requirements
-
-### **Shift System Changes**
-*[TO BE FILLED BASED ON MEETING FEEDBACK]*
-- Current issues with shift functionality
-- New requirements for shift management
-- User workflow improvements needed
-- Integration requirements
-
-### **Architecture Changes**
-*[TO BE FILLED BASED ON MEETING FEEDBACK]*
-- Performance requirements
-- New feature requests
-- Integration needs
-- User experience priorities
-
-## 🎨 Development Standards V2
-
-### **File Organization**
-```
-src/
-├── hooks/           # Single-purpose hooks
-├── components/      # Reusable UI components
-├── pages/          # Route components
-├── lib/            # Utility functions
-├── types/          # TypeScript definitions
-└── constants/      # App constants
-```
-
-### **Naming Conventions**
-- **Hooks**: `use{Feature}{Action}` (e.g., `useEventCreate`)
-- **Components**: `{Feature}{Type}` (e.g., `EventCard`, `ShiftModal`)
-- **Functions**: `{verb}{Noun}` (e.g., `createEvent`, `updateShift`)
-- **Types**: `{Feature}{Type}` (e.g., `EventData`, `ShiftConfig`)
-
-### **Code Quality Rules**
-1. **No Duplicate Logic**: If code exists twice, extract to utility
-2. **Single Responsibility**: Each function/component does one thing
-3. **Clear Dependencies**: Explicit imports, no deep prop drilling
-4. **Type Everything**: No `any` types, complete TypeScript coverage
-5. **Test Coverage**: Unit tests for all business logic
-
-## 🚀 Success Metrics
-
-### **Developer Experience**
-- [ ] 50% reduction in lines of code
-- [ ] 90% elimination of duplicate functions
-- [ ] Clear component hierarchy with max 3 levels deep
-- [ ] 100% TypeScript coverage with no `any` types
-
-### **Maintainability**
-- [ ] New features don't break existing functionality
-- [ ] Clear debugging and error tracking
-- [ ] Predictable code patterns across codebase
-- [ ] Easy onboarding for new developers
-
-### **Performance**
-- [ ] Faster build times
-- [ ] Reduced bundle size
-- [ ] Improved runtime performance
-- [ ] Better Core Web Vitals scores
-
-## 📅 Timeline
-
-**Target: 2-3 focused development sessions**
-- Session 1: Analysis, planning, schema design
-- Session 2: Core system implementation
-- Session 3: Migration, testing, polish
+### **What We're REMOVING**
+- Event Management System
+- Professional Services (Pro Help)
+- Suggestion Box System
+- Advanced Calendar Features (drag/drop, complex approvals)
+- Current Complex Shift System
+- Multi-role emulation
+- Homepage/Landing pages
 
 ---
 
-*This document will be updated throughout the redesign process with specific implementation details and stakeholder feedback.*
+## 🏗️ V2 Core System Architecture
+
+### **1. Shift Management System**
+*Primary focus: Operational management and documentation*
+
+#### **Staff Roles & Permissions**
+- **Workers**:
+  - [ ] *Define shift viewing permissions*
+  - [ ] *Define shift assignment capabilities*
+  - [ ] *Define documentation access*
+
+- **Managers**:
+  - [ ] *Define approval workflows*
+  - [ ] *Define scheduling permissions*
+  - [ ] *Define reporting access*
+
+#### **Core Functionality**
+- [ ] *Define shift creation process*
+- [ ] *Define assignment workflows*
+- [ ] *Define documentation requirements*
+- [ ] *Define reporting features*
+
+#### **Data Model**
+- [ ] *Design shift schema*
+- [ ] *Design assignment relationships*
+- [ ] *Design documentation structure*
+
+---
+
+### **2. Tool Rental System**
+*Keeping existing implementation with refinements*
+
+#### **Customer Roles & Permissions**
+- **Customers**:
+  - [ ] *Define rental browsing permissions*
+  - [ ] *Define booking capabilities*
+  - [ ] *Define account management*
+
+- **Staff**:
+  - [ ] *Define inventory management permissions*
+  - [ ] *Define rental processing workflows*
+
+#### **Core Functionality**
+- [x] **KEEP**: Existing rental booking system
+- [x] **KEEP**: Inventory management
+- [ ] *Define any needed simplifications*
+
+---
+
+### **3. Educational Meetings (Courses)**
+*Keeping existing implementation with refinements*
+
+#### **Customer/Student Roles & Permissions**
+- **Students**:
+  - [ ] *Define course browsing permissions*
+  - [ ] *Define enrollment capabilities*
+  - [ ] *Define progress tracking*
+
+- **Instructors**:
+  - [ ] *Define course management permissions*
+  - [ ] *Define student management capabilities*
+
+#### **Core Functionality**
+- [x] **KEEP**: Existing course enrollment system
+- [x] **KEEP**: Course management
+- [ ] *Define any needed simplifications*
+
+---
+
+## 👥 Simplified Role System
+
+### **Base Roles**
+- [ ] *Define worker role scope*
+- [ ] *Define manager role scope*
+- [ ] *Define customer role scope*
+- [ ] *Define instructor role scope*
+
+### **Permission Matrix**
+```
+Feature          | Worker | Manager | Customer | Instructor
+----------------|--------|---------|----------|------------
+Shift Management| [ ]    | [ ]     | [ ]      | [ ]
+Tool Rentals    | [ ]    | [ ]     | [ ]      | [ ]
+Course System   | [ ]    | [ ]     | [ ]      | [ ]
+```
+
+---
+
+## 🗂️ Database Schema V2
+
+### **Core Tables**
+- [ ] **Users**: *Define simplified user schema*
+- [ ] **Shifts**: *Design new shift data model*
+- [ ] **Tools**: *Keep existing, document any changes*
+- [ ] **Courses**: *Keep existing, document any changes*
+
+### **Removed Tables**
+- ❌ **Events**: Complete removal
+- ❌ **Suggestions**: Complete removal
+- ❌ **Professional Services**: Complete removal
+
+---
+
+## 🎨 User Interface Design
+
+### **Navigation Structure**
+- [ ] *Define main navigation*
+- [ ] *Define role-based menu items*
+- [ ] *Define mobile navigation*
+
+### **Page Structure**
+- [ ] **Dashboard**: *Define what each role sees on login*
+- [ ] **Shifts**: *Design shift management interface*
+- [ ] **Tools**: *Keep existing, note any changes*
+- [ ] **Courses**: *Keep existing, note any changes*
+
+### **Removed Pages**
+- ❌ Events page
+- ❌ Pro Help page
+- ❌ Suggestions page
+- ❌ Complex landing pages
+
+---
+
+## 🔄 Migration Strategy
+
+### **Data Migration**
+- [ ] *Plan user data preservation*
+- [ ] *Plan tool rental data preservation*
+- [ ] *Plan course data preservation*
+- [ ] *Plan shift data migration/rebuild*
+
+### **Feature Migration**
+- [ ] *Document what functionality to preserve*
+- [ ] *Document what to rebuild from scratch*
+- [ ] *Document what to completely remove*
+
+---
+
+## 📋 Implementation Planning
+
+### **Phase 1: Foundation**
+- [ ] *Define new role system implementation*
+- [ ] *Define database schema changes*
+- [ ] *Define authentication flow*
+
+### **Phase 2: Core Features**
+- [ ] *Implement shift management system*
+- [ ] *Refine tool rental system*
+- [ ] *Refine course system*
+
+### **Phase 3: Integration**
+- [ ] *Integrate all systems*
+- [ ] *Implement simplified calendar*
+- [ ] *Implement reporting features*
+
+### **Phase 4: Polish**
+- [ ] *UI/UX refinements*
+- [ ] *Performance optimization*
+- [ ] *Testing and validation*
+
+---
+
+## 📝 Stakeholder Requirements
+
+### **Shift System Specific Needs**
+- [ ] *Document operational management requirements*
+- [ ] *Document documentation needs*
+- [ ] *Document reporting requirements*
+- [ ] *Document workflow requirements*
+
+### **Integration Requirements**
+- [ ] *Document tool rental integration needs*
+- [ ] *Document course integration needs*
+- [ ] *Document calendar integration needs*
+
+---
+
+*This document is a template to be filled out collaboratively before any implementation begins.*
