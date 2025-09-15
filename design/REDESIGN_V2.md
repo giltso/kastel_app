@@ -16,14 +16,14 @@
 ### **What We're COMPLETELY REDESIGNING**
 
 - Shift Management System (complete rebuild to fit new job requirements)
-- Calendar Interface (simplified to support new shift system)
+- Calendar Interface (simplified to support new shift system via LUZ tab)
+- Event Management System (integrated into LUZ unified scheduling hub)
+- Advanced Calendar Features (simplified for LUZ system)
 
 ### **What We're REMOVING**
 
-- Event Management System
 - Professional Services (Pro Help)
 - Suggestion Box System
-- Advanced Calendar Features (drag/drop, complex approvals)
 - Current Complex Shift System (replaced with redesigned version)
 
 
@@ -31,26 +31,93 @@
 
 ## 🏗️ V2 Core System Architecture
 
-### **1. Shift Management System**
+### **1. LUZ System - Unified Scheduling Hub**
 
-*Primary focus: Operational management and documentation*
-the goal of this tool is to allow workers to ask for shifts during the coming week or 2. for this the tool needs to present the available shifts, handle work requests, and assigments by managers if needed. 
+*Primary focus: All event scheduling through single interface*
 
+**LUZ System Scope & Priority:**
+- **V2 Primary**: Shift Management (operational scheduling and documentation)
+- **V2 Secondary**: Tool rentals and course integration (existing systems)
+- **Future**: Vanilla events (general scheduling after core systems proven)
+
+**Core Goals:**
+- Present available shifts to workers
+- Handle shift requests and assignments
+- Provide unified interface for all time-based activities
+- Allow managers to oversee and approve scheduling 
 
 #### **Staff Roles & Permissions**
 - **Staff (All)**:
-  - [ ] *Define basic shift system access*
+  - [ ] *Define basic shift system access* 
+    - all staff interacts with the shift systme through the same tab on the site, called LUZ.
+    - this is the main hub for all actions regarding staff schedualing. 
+    - the tab has 3 main features:
+      - **top** filter field on that marks what is seen by the current user
+      - **left** a overview section that shows schedualed events depending on the filtration
+      - **right** a calander that visually allows for work assigment.  
+    - **Permission Model**: Staff members see "public" (permissionless) information within staff context
+      - Base Staff (no tags): See shift times and basic details, but not assignments or private info
+      - Future extensibility: New staff tags can unlock specific LUZ functions (maintenance, security, reception, accounting staff)
+      - Access is modular - each piece of information has its own permission requirement   
 
 - **Workers**:
+  - [ ] *Define available shift viewing* 
+    - workers can see the shifts and see the population status for them
+    - workers see by default their own status on shifts, meaning the main way for them to interact is see all available shifts and click on the shift they wanna join and make a reuqest to join.
+    - workers have permission to check who is on every shift, but that is not the base interacion. 
   - [ ] *Define shift request capabilities*
-  - [ ] *Define available shift viewing*
+    - Workers request assignment to shifts via simple action requiring authorization
+    - **Empty Shift Request**: Direct to manager for approval
+    - **Worker Switch Request**:
+      - Worker A requests to switch with Worker B
+      - Request queues in system (no in-app notifications in V2)
+      - External notification: DM sent to Worker B outside the site
+      - Worker B checks LUZ for pending requests
+      - If Worker B approves → goes to manager for final approval
+      - If Worker B denies → request ends immediately (no manager involvement)
   - [ ] *Define own assignment status*
 
 - **Managers** (inherits Worker permissions +):
   - [ ] *Define shift assignment approval workflows*
+    - shifts requests are collected for a few days, and the approval needs to be handled either on singular basis or with bulk actions
+    - there should be a warning system in place to prevent overbooking 
+    - the filteration system should be rubust and allow the manager to check the assignments easly on multiple parameters such as specific worker or time period
   - [ ] *Define worker assignment capabilities*
+    - should allow a manager to assign a worker to a shift. in this case the worker needs to approve the assignment. 
+    - after approval should interact 
   - [ ] *Define shift scheduling permissions*
+    - managers can create and edit shifts as a basic tool. most shifts should be a recuring event that should be created and populated with minimal interfacing
+    - in special cases, one time shfts can occur and they need to be easy to manage.
+      - a non recurring shift can be made by editing an instance of an existing shift, by changing some parameter like number of workers or start time. in this case it should not affetct the recurring shift. 
+      - it is not yet decided if the ability to change shifts is manager only. 
   - [ ] *Define reporting access*
+    - the shift tool should create reports on hours worked. the reports can be made for each worker, for any specified time period. the formating and styling will be handeled later.
+
+#### **LUZ Interface Design (Detailed Specifications)**
+
+**Filter System (Question 2):**
+- **V2 Minimum**: Basic tag system to differentiate Shifts, Education (courses), and Rentals
+- **Future Phase**: Comprehensive filtering model to be designed separately
+- **Implementation**: Simple tag-based filtering for now
+
+**Manager Approval Workflow (Question 5):**
+- Checkbox selection system for each pending request
+- "Select All" button for bulk operations
+- Mixed-mode approval: select specific requests for bulk processing
+- Individual approval remains available
+
+**Recurring Shift Modifications (Question 6):**
+- **Edit Dialog Options**:
+  - "Edit this occurrence only" (creates exception)
+  - "Edit this and all future occurrences" (modifies pattern going forward)
+- **Temporal Rule**: Past shifts are immutable for reporting integrity
+- **Design Principle**: Shifts exist for action (present/future), become historical records (past)
+
+**Worker Switch Request Flow (Question 4):**
+- Request queues in system (no in-app notifications in V2)
+- External communication for notifications (DM outside site)
+- Worker B denial ends request immediately
+- Worker B approval sends to manager for final decision 
 
 - **Instructors**:
   - [ ] *Define course-related shift access*
@@ -109,7 +176,7 @@ the goal of this tool is to allow workers to ask for shifts during the coming we
 
 ---
 
-## 👥 Simplified Role System
+## 👥 redifined Role System
 
 ### **Role Structure: Base + Tags**
 ```
