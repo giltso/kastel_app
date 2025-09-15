@@ -6,8 +6,9 @@
 ⚠️ **BREAKING CHANGE**: This redesign will remove most existing functionality and rebuild from ground up with three core focuses.
 
 ### **What We're KEEPING**
+
 - landing page, sign in, and the basic role structure including emualtion
-- UI decitions such as styling and color
+- UI decitions such as styling and color and basic tab layout
 - Tool Rental System
 - Course Management System
 - Core Authentication & Roles
@@ -15,7 +16,6 @@
 ### **What We're COMPLETELY REDESIGNING**
 
 - Shift Management System (complete rebuild to fit new job requirements)
-
 - Calendar Interface (simplified to support new shift system)
 
 ### **What We're REMOVING**
@@ -32,18 +32,29 @@
 ## 🏗️ V2 Core System Architecture
 
 ### **1. Shift Management System**
+
 *Primary focus: Operational management and documentation*
+the goal of this tool is to allow workers to ask for shifts during the coming week or 2. for this the tool needs to present the available shifts, handle work requests, and assigments by managers if needed. 
+
 
 #### **Staff Roles & Permissions**
-- **Workers**:
-  - [ ] *Define shift viewing permissions*
-  - [ ] *Define shift assignment capabilities*
-  - [ ] *Define documentation access*
+- **Staff (All)**:
+  - [ ] *Define basic shift system access*
 
-- **Managers**:
-  - [ ] *Define approval workflows*
-  - [ ] *Define scheduling permissions*
+- **Workers**:
+  - [ ] *Define shift request capabilities*
+  - [ ] *Define available shift viewing*
+  - [ ] *Define own assignment status*
+
+- **Managers** (inherits Worker permissions +):
+  - [ ] *Define shift assignment approval workflows*
+  - [ ] *Define worker assignment capabilities*
+  - [ ] *Define shift scheduling permissions*
   - [ ] *Define reporting access*
+
+- **Instructors**:
+  - [ ] *Define course-related shift access*
+  - [ ] *Define if instructor can also request worker shifts*
 
 #### **Core Functionality**
 - [ ] *Define shift creation process*
@@ -100,20 +111,38 @@
 
 ## 👥 Simplified Role System
 
-### **Base Roles**
-- [ ] *Define worker role scope*
-- [ ] *Define manager role scope*
-- [ ] *Define customer role scope*
-- [ ] *Define instructor role scope*
+### **Role Hierarchy**
+```
+├── Staff (internal users)
+│   ├── Worker (base operational staff)
+│   │   └── Manager (worker + management permissions)
+│   └── Instructor (specialized staff, may also be worker)
+└── Customer (external users)
+```
+
+### **Role Definitions**
+- **Staff**: Internal team members with system access
+  - **Worker**: Base operational staff level
+  - **Manager**: Worker + approval/oversight capabilities
+  - **Instructor**: Teaching staff (may also have worker permissions)
+- **Customer**: External users accessing services
 
 ### **Permission Matrix**
 ```
-Feature          | Worker | Manager | Customer | Instructor
-----------------|--------|---------|----------|------------
-Shift Management| [ ]    | [ ]     | [ ]      | [ ]
-Tool Rentals    | [ ]    | [ ]     | [ ]      | [ ]
-Course System   | [ ]    | [ ]     | [ ]      | [ ]
+Feature          | Staff        | Staff        | Staff        | Customer
+                | Worker       | Manager      | Instructor   |
+----------------|--------------|--------------|--------------|----------
+Shift Management| [ ]          | [ ]          | [ ]          | [ ]
+Tool Rentals    | [ ]          | [ ]          | [ ]          | [ ]
+Course System   | [ ]          | [ ]          | [ ]          | [ ]
 ```
+
+### **Role Combinations**
+- **Worker**: Base staff permissions
+- **Manager**: Worker permissions + management capabilities
+- **Instructor**: Teaching permissions + optional worker permissions
+- **Instructor+Worker**: Combined teaching and operational staff
+- **Customer**: External service access only
 
 ---
 
@@ -155,52 +184,16 @@ Course System   | [ ]    | [ ]     | [ ]      | [ ]
 
 ## 🔄 Migration Strategy
 
-### **Database Strategy: Clean New Convex Instance**
-
-**Decision**: Create completely new Convex deployment for V2 to eliminate technical debt at database level.
-
-```bash
-# Create new Convex deployment for V2
-export CONVEX_DEPLOYMENT=kastel-app-v2
-npx convex dev --configure
-```
-
-#### **Benefits of Clean Instance**
-- ✅ **Zero Schema Debt**: No legacy fields, tables, or indexes
-- ✅ **Clean Development**: No conflicts with old schemas during redesign
-- ✅ **True Clean Slate**: Design decisions not influenced by existing data structures
-- ✅ **Controlled Migration**: Selectively import only desired data
-
-#### **Migration Phases**
-
-**Phase 1: Clean Build**
-- [ ] Create new Convex deployment (`kastel-app-v2`)
-- [ ] Implement V2 schemas (users, shifts, tools, courses only)
-- [ ] Fresh user accounts for development and testing
-- [ ] Build new shift management system
-
-**Phase 2: Selective Data Migration**
-- [ ] Export tool rental data from original instance
-- [ ] Export course data from original instance
-- [ ] Export core user data (excluding unused role fields)
-- [ ] Import data into V2 instance with clean schemas
-
-**Phase 3: Production Cutover**
-- [ ] Switch production environment to V2 instance
-- [ ] Archive original instance as backup
-- [ ] Update deployment configurations
-
 ### **Data Migration**
-- [ ] **Users**: Core authentication data only (clean role structure)
-- [ ] **Tool Rentals**: Complete preservation with V2 schema
-- [ ] **Courses**: Complete preservation with V2 schema
-- [ ] **Shifts**: Complete rebuild - no migration from old system
+- [ ] *Plan user data preservation*
+- [ ] *Plan tool rental data preservation*
+- [ ] *Plan course data preservation*
+- [ ] *Plan shift data migration/rebuild*
 
 ### **Feature Migration**
-- [x] **Keep**: Tool rental functionality (migrate data + refine code)
-- [x] **Keep**: Course management functionality (migrate data + refine code)
-- [x] **Rebuild**: Shift management (new requirements, no old data)
-- ❌ **Remove**: Events, suggestions, pro-services (no migration)
+- [ ] *Document what functionality to preserve*
+- [ ] *Document what to rebuild from scratch*
+- [ ] *Document what to completely remove*
 
 ---
 
