@@ -9,14 +9,17 @@
 - Tool Rental System
 - Course Management System
 - Core Authentication & Roles
-- Calendar Interface (simplified)
+
+### **What We're COMPLETELY REDESIGNING**
+- Shift Management System (complete rebuild to fit new job requirements)
+- Calendar Interface (simplified to support new shift system)
 
 ### **What We're REMOVING**
 - Event Management System
 - Professional Services (Pro Help)
 - Suggestion Box System
 - Advanced Calendar Features (drag/drop, complex approvals)
-- Current Complex Shift System
+- Current Complex Shift System (replaced with redesigned version)
 - Multi-role emulation
 - Homepage/Landing pages
 
@@ -25,29 +28,35 @@
 ## 🏗️ V2 Core System Architecture
 
 ### **1. Shift Management System**
-*Primary focus: Operational management and documentation*
+*Complete redesign: Operational management and documentation based on new job requirements*
 
-#### **Staff Roles & Permissions**
+#### **NEW Requirements Analysis**
+- [ ] *Document current job operational needs*
+- [ ] *Define what "shift" means in new context*
+- [ ] *Identify documentation requirements*
+- [ ] *Map operational workflows*
+
+#### **Staff Roles & Permissions (To Be Redefined)**
 - **Workers**:
-  - [ ] *Define shift viewing permissions*
-  - [ ] *Define shift assignment capabilities*
-  - [ ] *Define documentation access*
+  - [ ] *Define shift interaction capabilities based on new requirements*
+  - [ ] *Define operational documentation access*
+  - [ ] *Define workflow participation*
 
 - **Managers**:
-  - [ ] *Define approval workflows*
-  - [ ] *Define scheduling permissions*
-  - [ ] *Define reporting access*
+  - [ ] *Define operational oversight capabilities*
+  - [ ] *Define scheduling/planning permissions*
+  - [ ] *Define reporting and analytics access*
 
-#### **Core Functionality**
-- [ ] *Define shift creation process*
-- [ ] *Define assignment workflows*
-- [ ] *Define documentation requirements*
-- [ ] *Define reporting features*
+#### **Core Functionality (Clean Slate Design)**
+- [ ] *Design shift creation/definition process*
+- [ ] *Design operational workflow management*
+- [ ] *Design documentation and reporting system*
+- [ ] *Design integration with calendar system*
 
-#### **Data Model**
-- [ ] *Design shift schema*
-- [ ] *Design assignment relationships*
-- [ ] *Design documentation structure*
+#### **Data Model (New Schema)**
+- [ ] *Design shift data structure for new requirements*
+- [ ] *Design operational tracking relationships*
+- [ ] *Design documentation and reporting schema*
 
 ---
 
