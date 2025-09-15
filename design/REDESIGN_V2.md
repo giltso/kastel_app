@@ -111,38 +111,43 @@ the goal of this tool is to allow workers to ask for shifts during the coming we
 
 ## 👥 Simplified Role System
 
-### **Role Hierarchy**
+### **Role Structure: Base + Tags**
 ```
-├── Staff (internal users)
-│   ├── Worker (base operational staff)
-│   │   └── Manager (worker + management permissions)
-│   └── Instructor (specialized staff, may also be worker)
-└── Customer (external users)
+├── Staff (base role for internal users)
+│   └── Tags (additive, can combine):
+│       ├── Worker (operational staff capabilities)
+│       ├── Instructor (teaching capabilities)
+│       └── Manager (requires Worker tag, adds management)
+└── Customer (base role for external users)
 ```
 
 ### **Role Definitions**
-- **Staff**: Internal team members with system access
-  - **Worker**: Base operational staff level
-  - **Manager**: Worker + approval/oversight capabilities
-  - **Instructor**: Teaching staff (may also have worker permissions)
-- **Customer**: External users accessing services
+- **Staff**: Base internal team member role
+- **Customer**: Base external user role
+
+### **Staff Tags (Additive & Combinable)**
+- **Worker**: Operational staff capabilities (can be added to Staff)
+- **Instructor**: Teaching and course management capabilities (can be added to Staff)
+- **Manager**: Management and approval capabilities (requires Worker tag first)
 
 ### **Permission Matrix**
 ```
-Feature          | Staff        | Staff        | Staff        | Customer
-                | Worker       | Manager      | Instructor   |
-----------------|--------------|--------------|--------------|----------
-Shift Management| [ ]          | [ ]          | [ ]          | [ ]
-Tool Rentals    | [ ]          | [ ]          | [ ]          | [ ]
-Course System   | [ ]          | [ ]          | [ ]          | [ ]
+Feature          | Staff | Staff    | Staff       | Staff           | Customer
+                | Base  | +Worker  | +Instructor | +Worker+Manager |
+----------------|-------|----------|-------------|-----------------|----------
+Shift Management| [ ]   | [ ]      | [ ]         | [ ]             | [ ]
+Tool Rentals    | [ ]   | [ ]      | [ ]         | [ ]             | [ ]
+Course System   | [ ]   | [ ]      | [ ]         | [ ]             | [ ]
 ```
 
-### **Role Combinations**
-- **Worker**: Base staff permissions
-- **Manager**: Worker permissions + management capabilities
-- **Instructor**: Teaching permissions + optional worker permissions
-- **Instructor+Worker**: Combined teaching and operational staff
-- **Customer**: External service access only
+### **Valid Role Combinations**
+- **Staff** (base access only)
+- **Staff + Worker** (operational capabilities)
+- **Staff + Instructor** (teaching capabilities)
+- **Staff + Worker + Instructor** (both operational and teaching)
+- **Staff + Worker + Manager** (operational + management)
+- **Staff + Worker + Instructor + Manager** (full staff access)
+- **Customer** (external service access)
 
 ---
 
