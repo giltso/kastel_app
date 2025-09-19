@@ -11,9 +11,9 @@
 // Import Routes
 
 import { Route as rootRoute } from './routes/__root'
+import { Route as V1Import } from './routes/v1'
 import { Route as UnauthorizedImport } from './routes/unauthorized'
 import { Route as ToolsImport } from './routes/tools'
-import { Route as SuggestionsImport } from './routes/suggestions'
 import { Route as ShiftsImport } from './routes/shifts'
 import { Route as ProHelpImport } from './routes/pro-help'
 import { Route as FormsImport } from './routes/forms'
@@ -24,6 +24,12 @@ import { Route as IndexImport } from './routes/index'
 
 // Create/Update Routes
 
+const V1Route = V1Import.update({
+  id: '/v1',
+  path: '/v1',
+  getParentRoute: () => rootRoute,
+} as any)
+
 const UnauthorizedRoute = UnauthorizedImport.update({
   id: '/unauthorized',
   path: '/unauthorized',
@@ -33,12 +39,6 @@ const UnauthorizedRoute = UnauthorizedImport.update({
 const ToolsRoute = ToolsImport.update({
   id: '/tools',
   path: '/tools',
-  getParentRoute: () => rootRoute,
-} as any)
-
-const SuggestionsRoute = SuggestionsImport.update({
-  id: '/suggestions',
-  path: '/suggestions',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -137,13 +137,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ShiftsImport
       parentRoute: typeof rootRoute
     }
-    '/suggestions': {
-      id: '/suggestions'
-      path: '/suggestions'
-      fullPath: '/suggestions'
-      preLoaderRoute: typeof SuggestionsImport
-      parentRoute: typeof rootRoute
-    }
     '/tools': {
       id: '/tools'
       path: '/tools'
@@ -156,6 +149,13 @@ declare module '@tanstack/react-router' {
       path: '/unauthorized'
       fullPath: '/unauthorized'
       preLoaderRoute: typeof UnauthorizedImport
+      parentRoute: typeof rootRoute
+    }
+    '/v1': {
+      id: '/v1'
+      path: '/v1'
+      fullPath: '/v1'
+      preLoaderRoute: typeof V1Import
       parentRoute: typeof rootRoute
     }
   }
@@ -171,9 +171,9 @@ export interface FileRoutesByFullPath {
   '/forms': typeof FormsRoute
   '/pro-help': typeof ProHelpRoute
   '/shifts': typeof ShiftsRoute
-  '/suggestions': typeof SuggestionsRoute
   '/tools': typeof ToolsRoute
   '/unauthorized': typeof UnauthorizedRoute
+  '/v1': typeof V1Route
 }
 
 export interface FileRoutesByTo {
@@ -184,9 +184,9 @@ export interface FileRoutesByTo {
   '/forms': typeof FormsRoute
   '/pro-help': typeof ProHelpRoute
   '/shifts': typeof ShiftsRoute
-  '/suggestions': typeof SuggestionsRoute
   '/tools': typeof ToolsRoute
   '/unauthorized': typeof UnauthorizedRoute
+  '/v1': typeof V1Route
 }
 
 export interface FileRoutesById {
@@ -198,9 +198,9 @@ export interface FileRoutesById {
   '/forms': typeof FormsRoute
   '/pro-help': typeof ProHelpRoute
   '/shifts': typeof ShiftsRoute
-  '/suggestions': typeof SuggestionsRoute
   '/tools': typeof ToolsRoute
   '/unauthorized': typeof UnauthorizedRoute
+  '/v1': typeof V1Route
 }
 
 export interface FileRouteTypes {
@@ -213,9 +213,9 @@ export interface FileRouteTypes {
     | '/forms'
     | '/pro-help'
     | '/shifts'
-    | '/suggestions'
     | '/tools'
     | '/unauthorized'
+    | '/v1'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -225,9 +225,9 @@ export interface FileRouteTypes {
     | '/forms'
     | '/pro-help'
     | '/shifts'
-    | '/suggestions'
     | '/tools'
     | '/unauthorized'
+    | '/v1'
   id:
     | '__root__'
     | '/'
@@ -237,9 +237,9 @@ export interface FileRouteTypes {
     | '/forms'
     | '/pro-help'
     | '/shifts'
-    | '/suggestions'
     | '/tools'
     | '/unauthorized'
+    | '/v1'
   fileRoutesById: FileRoutesById
 }
 
@@ -251,9 +251,9 @@ export interface RootRouteChildren {
   FormsRoute: typeof FormsRoute
   ProHelpRoute: typeof ProHelpRoute
   ShiftsRoute: typeof ShiftsRoute
-  SuggestionsRoute: typeof SuggestionsRoute
   ToolsRoute: typeof ToolsRoute
   UnauthorizedRoute: typeof UnauthorizedRoute
+  V1Route: typeof V1Route
 }
 
 const rootRouteChildren: RootRouteChildren = {
@@ -264,9 +264,9 @@ const rootRouteChildren: RootRouteChildren = {
   FormsRoute: FormsRoute,
   ProHelpRoute: ProHelpRoute,
   ShiftsRoute: ShiftsRoute,
-  SuggestionsRoute: SuggestionsRoute,
   ToolsRoute: ToolsRoute,
   UnauthorizedRoute: UnauthorizedRoute,
+  V1Route: V1Route,
 }
 
 export const routeTree = rootRoute
@@ -286,9 +286,9 @@ export const routeTree = rootRoute
         "/forms",
         "/pro-help",
         "/shifts",
-        "/suggestions",
         "/tools",
-        "/unauthorized"
+        "/unauthorized",
+        "/v1"
       ]
     },
     "/": {
@@ -312,14 +312,14 @@ export const routeTree = rootRoute
     "/shifts": {
       "filePath": "shifts.tsx"
     },
-    "/suggestions": {
-      "filePath": "suggestions.tsx"
-    },
     "/tools": {
       "filePath": "tools.tsx"
     },
     "/unauthorized": {
       "filePath": "unauthorized.tsx"
+    },
+    "/v1": {
+      "filePath": "v1.tsx"
     }
   }
 }

@@ -1,291 +1,194 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
-// The schema defines your data model for the database.
-// For more information, see https://docs.convex.dev/database/schema
+// V2 Schema - Clean implementation from REDESIGN_V2.md and SHIFT_REDESIGN.md
 export default defineSchema({
+  // V2 Users - Tag-based role system
   users: defineTable({
     clerkId: v.string(),
     name: v.string(),
-    email: v.optional(v.string()), // Made optional to handle existing data
-    
-    // NEW: Base roles (hierarchical - each builds on previous)
-    baseRole: v.optional(v.union(
-      v.literal("guest"),    // Can view public services, make basic requests
-      v.literal("customer"), // Guest + access customer portal, paid services
-      v.literal("worker")    // Customer + handle requests, create events, access staff tools
-    )),
-    
-    // Permission tags that enhance the base role
-    tags: v.optional(v.array(v.union(
-      v.literal("manager"),    // Worker + approve events, manage users, see all operations
-      v.literal("pro"),        // Advanced worker capabilities (golden time, etc.)
-      v.literal("instructor"), // Can create and manage courses
-      v.literal("lead"),       // Team coordination and mentoring
-      v.literal("specialist")  // Domain expertise recognition
-    ))),
-    
-    // Interface preference (auto-determined from role + tags, but can be overridden)
-    preferredInterface: v.optional(v.union(
-      v.literal("staff"),    // Calendar-centric for workers (with/without manager tag)
-      v.literal("customer"), // Service-focused for customers
-      v.literal("guest")     // Public interface for guests
-    )),
-    
-    // LEGACY: Keep for backward compatibility during transition
-    role: v.optional(v.union(
-      v.literal("dev"), 
-      v.literal("guest"), 
-      v.literal("customer"), 
-      v.literal("worker"), 
-      v.literal("manager")
-    )),
-    
-    // For dev role - which role they're currently emulating (NEW hierarchical system)
-    emulatingBaseRole: v.optional(v.union(
-      v.literal("guest"), 
-      v.literal("customer"), 
-      v.literal("worker")
-    )),
-    emulatingTags: v.optional(v.array(v.union(
-      v.literal("manager"),
-      v.literal("pro"),
-      v.literal("instructor"),
-      v.literal("lead"),
-      v.literal("specialist")
-    ))),
-    
-    // LEGACY: For dev role - which role they're currently emulating (old system)
-    emulatingRole: v.optional(v.union(
-      v.literal("guest"), 
-      v.literal("customer"), 
-      v.literal("worker"), 
-      v.literal("manager")
-    )),
-    
-    // LEGACY: Pro tag - can be applied to any user role (migrate to tags array)
-    proTag: v.optional(v.boolean()),
-  }).index("by_clerkId", ["clerkId"]).index("by_role", ["role"]),
+    email: v.optional(v.string()),
 
-  // Professional profiles for users with 'pro' role
-  pro_profiles: defineTable({
-    userId: v.id("users"),
-    title: v.string(), // e.g., "Master Carpenter", "Plumbing Expert"
-    description: v.string(), // Bio/description of services
-    specialties: v.array(v.string()), // e.g., ["Carpentry", "Electrical", "Plumbing"]
-    experience: v.optional(v.string()), // Years of experience
-    contactPhone: v.optional(v.string()),
-    contactEmail: v.optional(v.string()),
-    hourlyRate: v.optional(v.number()),
-    availability: v.optional(v.string()), // e.g., "Weekdays 9-5", "Flexible"
-    certifications: v.optional(v.array(v.string())), // Professional certifications
-    portfolioImages: v.optional(v.array(v.id("_storage"))), // Image file IDs
-    isActive: v.boolean(), // Can be toggled on/off
-  })
-  .index("by_userId", ["userId"])
-  .index("by_isActive", ["isActive"]),
+    // V2 Tag-based role system from REDESIGN_V2.md
+    isStaff: v.optional(v.boolean()), // Base role: Staff vs Customer
+    workerTag: v.optional(v.boolean()), // Staff + Worker tag: operational capabilities
+    instructorTag: v.optional(v.boolean()), // Staff + Instructor tag: course management
+    managerTag: v.optional(v.boolean()), // Staff + Manager tag: approvals (requires workerTag)
+    rentalApprovedTag: v.optional(v.boolean()), // Customer + Rental Approved: can request tool rentals
 
-  // Requests: Service-oriented items
-  requests: defineTable({
-    title: v.string(),
+    // Dev role emulation for V2 system
+    role: v.optional(v.literal("dev")), // Only dev role for testing
+    emulatingIsStaff: v.optional(v.boolean()),
+    emulatingWorkerTag: v.optional(v.boolean()),
+    emulatingInstructorTag: v.optional(v.boolean()),
+    emulatingManagerTag: v.optional(v.boolean()),
+    emulatingRentalApprovedTag: v.optional(v.boolean()),
+  }).index("by_clerkId", ["clerkId"]),
+
+  // V2 Shift Templates - Population-based from SHIFT_REDESIGN.md
+  shifts: defineTable({
+    name: v.string(), // "Daily Operations", "Weekend Coverage"
     description: v.optional(v.string()),
-    type: v.union(v.literal("guest"), v.literal("customer")),
-    status: v.union(v.literal("pending"), v.literal("approved"), v.literal("assigned"), v.literal("completed"), v.literal("rejected")),
-    priority: v.union(v.literal("low"), v.literal("medium"), v.literal("high"), v.literal("urgent")),
-    createdBy: v.id("users"),
-    approvedBy: v.optional(v.id("users")), // Manager who approved
-    assignedTo: v.optional(v.id("users")), // Worker assigned to handle
-    requestData: v.optional(v.object({})), // Flexible data structure for different request types
-  })
-  .index("by_createdBy", ["createdBy"])
-  .index("by_assignedTo", ["assignedTo"])
-  .index("by_status", ["status"])
-  .index("by_type", ["type"]),
+    type: v.union(v.literal("operational"), v.literal("maintenance"), v.literal("educational"), v.literal("special")),
 
-  // Events: Operational scheduling
-  events: defineTable({
-    title: v.string(),
-    description: v.optional(v.string()),
-    // Date and time fields for scheduled events
-    startDate: v.string(), // ISO date string (YYYY-MM-DD)
-    endDate: v.string(), // ISO date string (YYYY-MM-DD)
-    startTime: v.string(), // Time string (HH:MM)
-    endTime: v.string(), // Time string (HH:MM)
-    // Legacy fields for backward compatibility
-    startTime_legacy: v.optional(v.number()),
-    endTime_legacy: v.optional(v.number()),
-    // Event properties
-    type: v.union(v.literal("work"), v.literal("meeting"), v.literal("maintenance"), v.literal("team"), v.literal("educational"), v.literal("shift"), v.literal("tool_rental")),
-    status: v.union(v.literal("pending_approval"), v.literal("approved"), v.literal("in_progress"), v.literal("completed"), v.literal("cancelled")),
-    // Repetition settings
-    isRecurring: v.boolean(),
-    recurringType: v.optional(v.union(v.literal("weekly"))), // Currently only weekly, can expand later
-    recurringDays: v.optional(v.array(v.union(
+    // Store Operation Hours
+    storeHours: v.object({
+      openTime: v.string(), // "08:00"
+      closeTime: v.string(), // "20:00"
+    }),
+
+    // Hourly Population Requirements (KEY V2 FEATURE)
+    hourlyRequirements: v.array(v.object({
+      hour: v.string(), // "14:00" (24-hour format)
+      minWorkers: v.number(), // Minimum required workers
+      optimalWorkers: v.number(), // Ideal staffing level
+      notes: v.optional(v.string()), // "Peak customer period", "Opening procedures"
+    })),
+
+    // Recurrence Pattern
+    recurringDays: v.array(v.union(
       v.literal("monday"),
-      v.literal("tuesday"), 
+      v.literal("tuesday"),
       v.literal("wednesday"),
       v.literal("thursday"),
       v.literal("friday"),
       v.literal("saturday"),
       v.literal("sunday")
-    ))), // Days of the week for weekly repetition
-    // User references
-    createdBy: v.id("users"), // Worker who created
-    approvedBy: v.optional(v.id("users")), // Manager who approved
-    assignedTo: v.optional(v.id("users")),
-    participants: v.optional(v.array(v.id("users"))), // Event participants (default includes creator)
-    
-    // Shift-specific fields (only used when type === "shift")
-    requiredWorkers: v.optional(v.number()), // Target number of workers for shifts
-    maxWorkers: v.optional(v.number()), // Maximum workers allowed for shifts
-    parentShiftId: v.optional(v.id("events")), // If this is a one-time replacement for a recurring shift
-    replacesDate: v.optional(v.string()), // ISO date this replaces in the recurring pattern
-    // Manual nesting override for drag-in/drag-out functionality
-    manualNestingOverride: v.optional(v.object({
-      shiftId: v.optional(v.id("events")), // Which shift this was manually nested in (null if unnested)
-      date: v.string(), // Date for which the override applies
-      action: v.union(v.literal("nested"), v.literal("unnested")), // What action was taken
-      overriddenBy: v.id("users"), // Who made the manual override
-      overriddenAt: v.number(), // Timestamp when override was made
-    }))
-  })
-  .index("by_createdBy", ["createdBy"])
-  .index("by_approvedBy", ["approvedBy"])
-  .index("by_assignedTo", ["assignedTo"])
-  .index("by_startDate", ["startDate"])
-  .index("by_status", ["status"])
-  .index("by_type", ["type"])
-  .index("by_parentShiftId", ["parentShiftId"])
-  .index("by_replacesDate", ["replacesDate"]),
-
-  // Tickets: Problem resolution system  
-  tickets: defineTable({
-    title: v.string(),
-    description: v.string(),
-    priority: v.union(v.literal("low"), v.literal("medium"), v.literal("high"), v.literal("critical")),
-    status: v.union(v.literal("open"), v.literal("in_progress"), v.literal("resolved"), v.literal("closed")),
-    category: v.optional(v.string()), // equipment, scheduling, customer, etc.
-    createdBy: v.id("users"), // Worker who reported
-    assignedTo: v.optional(v.id("users")), // Worker or manager handling
-    closedBy: v.optional(v.id("users")), // Only managers can close
-  })
-  .index("by_createdBy", ["createdBy"])
-  .index("by_assignedTo", ["assignedTo"])
-  .index("by_status", ["status"])
-  .index("by_priority", ["priority"]),
-
-  // Comments for tickets (collaborative resolution)
-  ticket_comments: defineTable({
-    ticketId: v.id("tickets"),
-    comment: v.string(),
-    createdBy: v.id("users"),
-  })
-  .index("by_ticketId", ["ticketId"])
-  .index("by_createdBy", ["createdBy"]),
-
-  // Notifications for approvals and updates
-  notifications: defineTable({
-    type: v.union(v.literal("event_approval"), v.literal("request_approval"), v.literal("assignment"), v.literal("status_update")),
-    title: v.string(),
-    message: v.string(),
-    targetUserId: v.id("users"), // Who should see this notification
-    relatedItemId: v.optional(v.string()), // ID of event/request/ticket
-    relatedItemType: v.optional(v.union(v.literal("event"), v.literal("request"), v.literal("ticket"))),
-    isRead: v.boolean(),
-    actionRequired: v.boolean(), // True if this requires user action (approval, etc.)
-  })
-  .index("by_targetUserId", ["targetUserId"])
-  .index("by_isRead", ["isRead"])
-  .index("by_actionRequired", ["actionRequired"]),
-
-  forms: defineTable({
-    title: v.string(),
-    description: v.optional(v.string()),
-    type: v.union(v.literal("work_hours"), v.literal("team_report"), v.literal("custom")),
-    createdBy: v.id("users"),
+    )),
     isActive: v.boolean(),
-    fields: v.array(v.object({
-      id: v.string(),
-      label: v.string(),
-      type: v.union(v.literal("text"), v.literal("number"), v.literal("date"), v.literal("select")),
-      required: v.boolean(),
-      options: v.optional(v.array(v.string())),
-    })),
+
+    // Management
+    createdBy: v.id("users"), // Manager who created template
+    lastModified: v.number(),
+    color: v.optional(v.string()), // Hex color for calendar display
   })
   .index("by_createdBy", ["createdBy"])
   .index("by_isActive", ["isActive"]),
 
-  form_submissions: defineTable({
-    formId: v.id("forms"),
-    submittedBy: v.id("users"),
-    data: v.object({}), // Dynamic data based on form fields
-    submittedAt: v.number(),
-  })
-  .index("by_formId", ["formId"])
-  .index("by_submittedBy", ["submittedBy"]),
+  // V2 Shift Assignments - Flexible Hours from SHIFT_REDESIGN.md
+  shift_assignments: defineTable({
+    shiftTemplateId: v.id("shifts"), // Reference to population template
+    workerId: v.id("users"), // Assigned worker
+    date: v.string(), // "2025-09-16" (specific date)
 
-  // Tools: Inventory management for rental system
+    // Flexible Hour Assignment (KEY V2 FEATURE)
+    assignedHours: v.array(v.object({
+      startTime: v.string(), // "08:00"
+      endTime: v.string(), // "14:00" - Manager assigns flexible ranges
+    })),
+
+    // Break Management (Optional)
+    breakPeriods: v.optional(v.array(v.object({
+      startTime: v.string(), // "12:00"
+      endTime: v.string(), // "13:00"
+      isPaid: v.boolean(), // true/false for paid breaks
+    }))),
+
+    // Assignment Metadata
+    assignedBy: v.id("users"), // Manager who made assignment
+    assignedAt: v.number(),
+
+    // Simple Status (scheduling only)
+    status: v.union(v.literal("assigned"), v.literal("confirmed"), v.literal("cancelled")),
+
+    // Notes
+    assignmentNotes: v.optional(v.string()), // Manager's assignment notes
+  })
+  .index("by_shiftTemplateId", ["shiftTemplateId"])
+  .index("by_workerId", ["workerId"])
+  .index("by_date", ["date"])
+  .index("by_assignedBy", ["assignedBy"]),
+
+  // V2 Worker Hour Requests - Self-Service from SHIFT_REDESIGN.md
+  worker_hour_requests: defineTable({
+    workerId: v.id("users"), // Worker making request
+    shiftTemplateId: v.id("shifts"), // Which operational template
+    date: v.string(), // "2025-09-16"
+
+    // Request Type and Hours
+    requestType: v.union(v.literal("extra_hours"), v.literal("time_off"), v.literal("schedule_change")),
+    requestedHours: v.optional(v.object({
+      startTime: v.string(), // "12:00" - for extra hours
+      endTime: v.string(), // "18:00"
+    })),
+
+    // Request Context
+    reason: v.optional(v.string()), // "Need overtime", "Doctor appointment"
+    priority: v.union(v.literal("low"), v.literal("normal"), v.literal("urgent")),
+
+    // Approval Status
+    status: v.union(v.literal("pending"), v.literal("approved"), v.literal("denied"), v.literal("cancelled")),
+    reviewedBy: v.optional(v.id("users")), // Manager who reviewed
+    reviewedAt: v.optional(v.number()),
+    reviewNotes: v.optional(v.string()), // Manager's response notes
+
+    // Auto-created assignment (if approved)
+    createdAssignmentId: v.optional(v.id("shift_assignments")),
+  })
+  .index("by_workerId", ["workerId"])
+  .index("by_shiftTemplateId", ["shiftTemplateId"])
+  .index("by_date", ["date"])
+  .index("by_status", ["status"])
+  .index("by_reviewedBy", ["reviewedBy"]),
+
+  // Keep existing Tools system (V2 will integrate later)
   tools: defineTable({
     name: v.string(),
     description: v.optional(v.string()),
-    category: v.string(), // drill, saw, hammer, etc.
-    type: v.optional(v.union(v.literal("rental"), v.literal("educational"))), // Type of tool usage
+    category: v.string(),
     brand: v.optional(v.string()),
     model: v.optional(v.string()),
     serialNumber: v.optional(v.string()),
     condition: v.union(v.literal("excellent"), v.literal("good"), v.literal("fair"), v.literal("needs_repair")),
-    rentalPricePerDay: v.number(), // 0 for free tools
+    rentalPricePerDay: v.number(),
     isAvailable: v.boolean(),
-    location: v.optional(v.string()), // where in the shop
-    addedBy: v.id("users"), // worker who added the tool
+    location: v.optional(v.string()),
+    addedBy: v.id("users"),
     notes: v.optional(v.string()),
   })
   .index("by_category", ["category"])
   .index("by_isAvailable", ["isAvailable"])
   .index("by_addedBy", ["addedBy"]),
 
-  // Tool Rentals: Track who has what tools and when
+  // Keep existing Tool Rentals system (V2 will integrate later)
   tool_rentals: defineTable({
     toolId: v.id("tools"),
-    renterUserId: v.id("users"), // customer or worker renting
-    rentalStartDate: v.string(), // ISO date string
-    rentalEndDate: v.string(), // Expected return date
-    actualReturnDate: v.optional(v.string()), // When actually returned
-    dailyRate: v.number(), // Rate at time of rental
-    totalCost: v.number(), // calculated cost
+    renterUserId: v.id("users"),
+    rentalStartDate: v.string(),
+    rentalEndDate: v.string(),
+    actualReturnDate: v.optional(v.string()),
+    dailyRate: v.number(),
+    totalCost: v.number(),
     status: v.union(v.literal("pending"), v.literal("approved"), v.literal("active"), v.literal("returned"), v.literal("overdue"), v.literal("cancelled")),
-    approvedBy: v.optional(v.id("users")), // worker who approved
-    createdBy: v.id("users"), // who created the rental request
+    approvedBy: v.optional(v.id("users")),
+    createdBy: v.id("users"),
     notes: v.optional(v.string()),
-    eventId: v.optional(v.id("events")), // linked calendar event
   })
   .index("by_toolId", ["toolId"])
   .index("by_renterUserId", ["renterUserId"])
   .index("by_status", ["status"])
   .index("by_approvedBy", ["approvedBy"])
-  .index("by_rentalStartDate", ["rentalStartDate"])
-  .index("by_eventId", ["eventId"]),
+  .index("by_rentalStartDate", ["rentalStartDate"]),
 
-  // Courses: Educational offerings
+  // Keep existing Courses system (V2 will integrate later)
   courses: defineTable({
     title: v.string(),
     description: v.string(),
-    syllabus: v.array(v.string()), // list of topics covered
-    instructorId: v.id("users"), // staff member organizing
-    assistantIds: v.optional(v.array(v.id("users"))), // workers involved
-    startDate: v.string(), // ISO date string
+    syllabus: v.array(v.string()),
+    instructorId: v.id("users"),
+    assistantIds: v.optional(v.array(v.id("users"))),
+    startDate: v.string(),
     endDate: v.string(),
-    startTime: v.string(), // HH:MM
+    startTime: v.string(),
     endTime: v.string(),
     maxParticipants: v.number(),
     currentParticipants: v.number(),
     skillLevel: v.union(v.literal("beginner"), v.literal("intermediate"), v.literal("advanced")),
-    category: v.string(), // plumbing, electrical, carpentry, etc.
-    price: v.number(), // course fee
-    location: v.string(), // where in the shop/classroom
-    isActive: v.boolean(), // can people still sign up
-    materials: v.optional(v.array(v.string())), // what materials are provided/needed
-    eventId: v.optional(v.id("events")), // linked calendar event
+    category: v.string(),
+    price: v.number(),
+    location: v.string(),
+    isActive: v.boolean(),
+    materials: v.optional(v.array(v.string())),
     createdBy: v.id("users"),
   })
   .index("by_instructorId", ["instructorId"])
@@ -294,13 +197,13 @@ export default defineSchema({
   .index("by_category", ["category"])
   .index("by_isActive", ["isActive"]),
 
-  // Course Enrollments: Track who signed up for what courses
+  // Keep existing Course Enrollments system (V2 will integrate later)
   course_enrollments: defineTable({
     courseId: v.id("courses"),
-    studentId: v.id("users"), // customer enrolling
-    enrollmentDate: v.string(), // when they signed up
+    studentId: v.id("users"),
+    enrollmentDate: v.string(),
     status: v.union(v.literal("pending"), v.literal("approved"), v.literal("confirmed"), v.literal("completed"), v.literal("cancelled"), v.literal("no_show")),
-    approvedBy: v.optional(v.id("users")), // staff member who approved
+    approvedBy: v.optional(v.id("users")),
     paymentStatus: v.union(v.literal("pending"), v.literal("paid"), v.literal("refunded")),
     notes: v.optional(v.string()),
   })
@@ -308,166 +211,4 @@ export default defineSchema({
   .index("by_studentId", ["studentId"])
   .index("by_status", ["status"])
   .index("by_approvedBy", ["approvedBy"]),
-
-  // Suggestions: User feedback and improvement suggestions
-  suggestions: defineTable({
-    createdBy: v.id("users"), // user who made the suggestion
-    location: v.string(), // URL where suggestion was made
-    pageContext: v.string(), // description of what user was seeing
-    problem: v.string(), // what is wrong / problem description
-    solution: v.string(), // suggested solution
-    status: v.union(v.literal("pending"), v.literal("reviewed"), v.literal("implemented"), v.literal("rejected")),
-    // For grouping similar suggestions
-    similarityHash: v.optional(v.string()), // hash for detecting similar content
-    relatedSuggestions: v.optional(v.array(v.id("suggestions"))), // array of related suggestion IDs
-    // Admin/developer fields
-    reviewedBy: v.optional(v.id("users")), // developer who reviewed
-    reviewNotes: v.optional(v.string()), // internal notes from review
-    implementationDate: v.optional(v.string()), // when implemented (if applicable)
-  })
-  .index("by_createdBy", ["createdBy"])
-  .index("by_status", ["status"])
-  .index("by_location", ["location"])
-  .index("by_similarityHash", ["similarityHash"])
-  .index("by_reviewedBy", ["reviewedBy"]),
-
-  // Shifts: Recurring and non-recurring operational schedules
-  shifts: defineTable({
-    name: v.string(), // e.g., "Morning Shift", "Evening Shift"
-    description: v.optional(v.string()),
-    type: v.optional(v.union(v.literal("operational"), v.literal("maintenance"), v.literal("educational"))), // Type of shift
-    startTime: v.string(), // HH:MM format
-    endTime: v.string(), // HH:MM format
-    // NEW: Recurring vs non-recurring support
-    isRecurring: v.optional(v.boolean()), // true for recurring, false for one-time shifts (defaults to true for existing records)
-    // Recurring pattern (only for recurring shifts)
-    recurringDays: v.optional(v.array(v.union(
-      v.literal("monday"),
-      v.literal("tuesday"),
-      v.literal("wednesday"),
-      v.literal("thursday"),
-      v.literal("friday"),
-      v.literal("saturday"),
-      v.literal("sunday")
-    ))), // Which days this shift runs (null for non-recurring)
-    // Non-recurring support
-    specificDate: v.optional(v.string()), // ISO date for non-recurring shifts (YYYY-MM-DD)
-    parentShiftId: v.optional(v.id("shifts")), // Reference to original shift if this is an edited instance
-    instanceTag: v.optional(v.string()), // Unique identifier for edited instances
-    // Capacity management
-    requiredWorkers: v.number(), // Target number of workers
-    maxWorkers: v.optional(v.number()), // Optional maximum (defaults to requiredWorkers + 2)
-    // Metadata
-    isActive: v.boolean(), // Can be enabled/disabled
-    createdBy: v.id("users"), // Manager who created
-    color: v.optional(v.string()), // Hex color for calendar display
-  })
-  .index("by_createdBy", ["createdBy"])
-  .index("by_isActive", ["isActive"])
-  .index("by_specificDate", ["specificDate"])
-  .index("by_parentShiftId", ["parentShiftId"])
-  .index("by_isRecurring", ["isRecurring"]),
-
-  // Event Assignments: Who is assigned to specific event/shift instances (unified system)
-  event_assignments: defineTable({
-    eventId: v.id("events"), // References either a recurring event or specific event instance
-    workerId: v.id("users"),
-    date: v.string(), // ISO date string (YYYY-MM-DD) for the specific day
-    // Assignment method
-    assignmentType: v.union(
-      v.literal("manager_assigned"), // Assigned by manager
-      v.literal("self_signed") // Worker signed themselves up
-    ),
-    assignedBy: v.id("users"), // Manager who assigned or worker who self-assigned
-    // Status
-    status: v.union(
-      v.literal("assigned"), 
-      v.literal("confirmed"), 
-      v.literal("completed"),
-      v.literal("no_show"),
-      v.literal("cancelled")
-    ),
-    // Optional notes
-    notes: v.optional(v.string()),
-  })
-  .index("by_eventId", ["eventId"])
-  .index("by_workerId", ["workerId"])
-  .index("by_date", ["date"])
-  .index("by_status", ["status"]),
-  
-  // Legacy: Keep shift_assignments for backward compatibility during transition
-  shift_assignments: defineTable({
-    shiftId: v.id("shifts"),
-    workerId: v.id("users"),
-    date: v.string(), // ISO date string (YYYY-MM-DD) for the specific day
-    // Assignment method
-    assignmentType: v.union(
-      v.literal("manager_assigned"), // Assigned by manager
-      v.literal("self_signed") // Worker signed themselves up
-    ),
-    assignedBy: v.id("users"), // Manager who assigned or worker who self-assigned
-    // Status
-    status: v.union(
-      v.literal("assigned"), 
-      v.literal("confirmed"), 
-      v.literal("completed"),
-      v.literal("no_show"),
-      v.literal("cancelled")
-    ),
-    // Optional notes
-    notes: v.optional(v.string()),
-  })
-  .index("by_shiftId", ["shiftId"])
-  .index("by_workerId", ["workerId"])
-  .index("by_date", ["date"])
-  .index("by_shift_date", ["shiftId", "date"])
-  .index("by_worker_date", ["workerId", "date"]),
-
-  // Shift Swaps: Worker-to-worker shift exchanges
-  shift_swaps: defineTable({
-    // The two assignments being swapped
-    assignment1Id: v.id("shift_assignments"),
-    assignment2Id: v.id("shift_assignments"),
-    // Workers involved
-    worker1Id: v.id("users"),
-    worker2Id: v.id("users"),
-    // Swap details
-    initiatedBy: v.id("users"), // Who requested the swap
-    status: v.union(
-      v.literal("pending"), // Waiting for other worker to accept
-      v.literal("approved"), // Both workers agreed
-      v.literal("rejected"), // Other worker declined
-      v.literal("cancelled") // Initiator cancelled
-    ),
-    reason: v.optional(v.string()), // Why they want to swap
-    // Notifications sent
-    notificationSent: v.boolean(),
-  })
-  .index("by_worker1", ["worker1Id"])
-  .index("by_worker2", ["worker2Id"])
-  .index("by_assignment1", ["assignment1Id"])
-  .index("by_assignment2", ["assignment2Id"])
-  .index("by_status", ["status"]),
-
-  // Golden Time Requests: Pro workers can leave overpopulated shifts
-  golden_time_requests: defineTable({
-    shiftAssignmentId: v.id("shift_assignments"),
-    requestedBy: v.id("users"), // Pro worker making the request
-    date: v.string(), // ISO date string for the specific day
-    reason: v.string(), // What personal project they want to work on
-    status: v.union(
-      v.literal("pending"), // Waiting for manager approval
-      v.literal("approved"), // Manager approved
-      v.literal("rejected"), // Manager denied
-      v.literal("cancelled") // Worker cancelled
-    ),
-    reviewedBy: v.optional(v.id("users")), // Manager who reviewed
-    reviewNotes: v.optional(v.string()), // Manager's notes
-    // Automatic validation
-    shiftOverpopulated: v.boolean(), // Was shift actually overpopulated when requested
-  })
-  .index("by_requestedBy", ["requestedBy"])
-  .index("by_date", ["date"])
-  .index("by_status", ["status"])
-  .index("by_reviewedBy", ["reviewedBy"]),
 });

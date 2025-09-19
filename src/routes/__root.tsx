@@ -24,10 +24,9 @@ import { ConvexProviderWithClerk } from "convex/react-clerk";
 import { Menu } from "lucide-react";
 import { useEffect, useState } from "react";
 import { api } from "../../convex/_generated/api";
-import { RoleSwitcher } from "@/components/RoleSwitcher";
+import { RoleEmulator } from "@/components/RoleEmulator";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { UserRoleDebug } from "@/components/UserRoleDebug";
-import { SuggestionBoxTrigger } from "@/components/SuggestionBoxTrigger";
 import { KastelLogo } from "@/components/KastelLogo";
 import { usePermissions, useIsDev } from "@/hooks/usePermissions";
 
@@ -134,16 +133,18 @@ function NavigationLinks({ onLinkClick }: { onLinkClick: () => void }) {
           Pro Help
         </Link>
       )}
-      <Link
-        to="/suggestions"
-        className="btn btn-ghost"
-        activeProps={{
-          className: "btn btn-ghost btn-active",
-        }}
-        onClick={onLinkClick}
-      >
-        Suggestions
-      </Link>
+      {isDev && (
+        <Link
+          to="/v1"
+          className="btn btn-ghost btn-warning"
+          activeProps={{
+            className: "btn btn-ghost btn-active",
+          }}
+          onClick={onLinkClick}
+        >
+          V1 Legacy
+        </Link>
+      )}
     </>
   );
 }
@@ -260,18 +261,20 @@ function MobileNavigationLinks({ onLinkClick }: { onLinkClick: () => void }) {
           </Link>
         </li>
       )}
-      <li>
-        <Link
-          to="/suggestions"
-          onClick={onLinkClick}
-          activeProps={{
-            className: "active",
-          }}
-          className="flex items-center p-2"
-        >
-          Suggestions
-        </Link>
-      </li>
+      {isDev && (
+        <li>
+          <Link
+            to="/v1"
+            onClick={onLinkClick}
+            activeProps={{
+              className: "active",
+            }}
+            className="flex items-center p-2"
+          >
+            V1 Legacy
+          </Link>
+        </li>
+      )}
     </>
   );
 }
@@ -328,10 +331,16 @@ function RootComponent() {
                     </div>
                     <div className="navbar-end gap-2">
                       <UserRoleDebug />
-                      <SuggestionBoxTrigger />
                       <ThemeToggle />
-                      <RoleSwitcher />
-                      <UserButton />
+                      <RoleEmulator />
+                      <UserButton
+                        afterSignOutUrl="/"
+                        appearance={{
+                          elements: {
+                            userButtonAvatarBox: "w-8 h-8",
+                          }
+                        }}
+                      />
                     </div>
                   </header>
                   {/* Main content */}
@@ -359,14 +368,22 @@ function RootComponent() {
                     <div className="mt-auto py-4 border-t border-base-300 flex flex-col gap-2 items-center">
                       <UserRoleDebug />
                       <ThemeToggle />
-                      <RoleSwitcher />
-                      <UserButton />
+                      <RoleEmulator />
+                      <UserButton
+                        afterSignOutUrl="/"
+                        appearance={{
+                          elements: {
+                            userButtonAvatarBox: "w-8 h-8",
+                          }
+                        }}
+                      />
                     </div>
                   </div>
                 </div>
               </div>
             </Authenticated>
             <Unauthenticated>
+              <AuthStatusDebug />
               <header className="navbar bg-base-100 shadow-sm border-b border-base-300">
                 <div className="flex justify-between w-full px-4">
                   <div className="navbar-start">
@@ -406,7 +423,7 @@ function RootComponent() {
 
 function EnsureUser() {
   const { isLoaded, isSignedIn, user } = useUser();
-  const ensureUser = useMutation(api.users.ensureUser);
+  const ensureUser = useMutation(api.users_v2.ensureUser);
 
   useEffect(() => {
     if (isLoaded && isSignedIn && user) {
@@ -415,4 +432,21 @@ function EnsureUser() {
   }, [isLoaded, isSignedIn, user, ensureUser]);
 
   return null;
+}
+
+function AuthStatusDebug() {
+  const { isLoaded, isSignedIn, user } = useUser();
+  const { isAuthenticated } = useClerkAuth();
+
+  if (import.meta.env.PROD) return null;
+
+  return (
+    <div className="bg-info text-info-content p-2 text-xs font-mono">
+      <strong>Auth Debug:</strong> Clerk Loaded: {isLoaded ? "✓" : "✗"} |
+      Signed In: {isSignedIn ? "✓" : "✗"} |
+      User: {user ? user.fullName || user.primaryEmailAddress?.emailAddress : "None"} |
+      Convex Auth: {isAuthenticated ? "✓" : "✗"} |
+      Clerk Key: {import.meta.env.VITE_CLERK_PUBLISHABLE_KEY ? "✓" : "✗"}
+    </div>
+  );
 }

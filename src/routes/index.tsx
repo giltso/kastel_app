@@ -1,588 +1,283 @@
-import { SignInButton } from "@clerk/clerk-react";
-import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
-import { Authenticated, Unauthenticated } from "convex/react";
-import { usePermissions } from "@/hooks/usePermissions";
-import { KastelLogo } from "@/components/KastelLogo";
-import { 
-  Calendar, 
-  FileText, 
-  Settings, 
-  Wrench, 
-  Hammer, 
-  GraduationCap, 
-  Clock, 
-  Phone, 
-  MapPin, 
-  Mail,
-  Users,
-  ArrowRight,
-  Star,
-  Shield
-} from "lucide-react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { usePermissionsV2 } from "@/hooks/usePermissionsV2";
+import { RoleEmulator } from "@/components/RoleEmulator";
+import { UserRoleDebugV2 } from "@/components/UserRoleDebugV2";
+import { EnsureUserV2 } from "@/components/EnsureUserV2";
 
 export const Route = createFileRoute("/")({
-  component: HomePage,
+  component: V2HomePage,
 });
 
-function HomePage() {
-  return (
-    <div>
-      <Unauthenticated>
-        {/* Hero Section */}
-        <div className="hero bg-gradient-to-br from-primary/10 to-accent/10 py-20">
-          <div className="hero-content text-center">
-            <div className="max-w-4xl">
-              <div className="not-prose flex justify-center mb-6">
-                <KastelLogo size={80} />
-              </div>
-              <h1 className="text-5xl font-bold">Welcome to Kastel Hardware</h1>
-              <p className="text-xl opacity-80 py-6">
-                Your trusted partner for tools, education, and professional services
-              </p>
-              <p className="text-lg opacity-70 pb-6">
-                Sign in for instant tool bookings, course enrollment, and personalized project support
-              </p>
-              
-              <div className="not-prose">
-                <SignInButton mode="modal">
-                  <button className="btn btn-primary btn-lg gap-2">
-                    Get Started - Free Account <ArrowRight className="w-5 h-5" />
-                  </button>
-                </SignInButton>
-              </div>
-            </div>
-          </div>
-        </div>
+function V2HomePage() {
+  const {
+    user,
+    hasPermission,
+    isLoading,
+    isGuest,
+    isStaff,
+    isCustomer,
+    canEmulateRoles
+  } = usePermissionsV2();
 
-        {/* Main Content */}
-        <div className="container mx-auto px-4 py-12">
-          <PublicHomePage />
-        </div>
-      </Unauthenticated>
-      
-      <Authenticated>
-        <OperationalUserRedirect />
-      </Authenticated>
-    </div>
-  );
-}
-
-function OperationalUserRedirect() {
-  const { hasPermission, isLoading } = usePermissions();
-  
-  // Show loading while permissions are being checked
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="loading loading-spinner loading-lg"></div>
+      <div className="flex items-center justify-center min-h-64">
+        <span className="loading loading-spinner loading-lg"></span>
       </div>
     );
   }
-  
-  // If user has worker portal access (worker, manager, dev), redirect to LUZ
-  if (hasPermission("access_worker_portal")) {
-    return <Navigate to="/calendar" replace />;
-  }
-  
-  // Check if user is a customer (has account) vs guest (unregistered user equivalent)
-  const isCustomer = hasPermission("access_customer_portal");
-  
-  if (isCustomer) {
-    // Customers: Show personalized experience without sign-up prompts
-    return <CustomerHomePage />;
-  } else {
-    // Guests: Show full marketing experience with sign-up prompts
+
+  // Guest (Unauthenticated) Interface
+  if (isGuest) {
     return <GuestHomePage />;
   }
+
+  // Authenticated user interface with role emulation for dev
+  return (
+    <div className="max-w-4xl mx-auto">
+      <EnsureUserV2 />
+
+      {/* Development Tools (dev only) */}
+      {canEmulateRoles && (
+        <div className="card bg-base-100 shadow-xl mb-6">
+          <div className="card-body">
+            <h2 className="card-title">V2 Development Tools</h2>
+            <div className="flex gap-4 items-center">
+              <UserRoleDebugV2 />
+              <RoleEmulator />
+            </div>
+            <div className="mt-4">
+              <Link to="/v1" className="btn btn-outline btn-sm">
+                View V1 Legacy System →
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Staff Interface */}
+      {isStaff && <StaffHomePage user={user} hasPermission={hasPermission} />}
+
+      {/* Customer Interface */}
+      {isCustomer && <CustomerHomePage user={user} hasPermission={hasPermission} />}
+    </div>
+  );
 }
 
-// Guest Home Page - Full marketing experience for unregistered users
+// Guest (Unauthenticated) Home Page
 function GuestHomePage() {
   return (
-    <div>
-      {/* Hero Section - same as unauthenticated users */}
-      <div className="hero bg-gradient-to-br from-primary/10 to-accent/10 py-20">
+    <div className="max-w-4xl mx-auto">
+      {/* Hero Section */}
+      <div className="hero bg-base-200 rounded-lg mb-8">
         <div className="hero-content text-center">
-          <div className="max-w-4xl">
-            <div className="not-prose flex justify-center mb-6">
-              <KastelLogo size={80} />
-            </div>
+          <div className="max-w-2xl">
             <h1 className="text-5xl font-bold">Welcome to Kastel Hardware</h1>
-            <p className="text-xl opacity-80 py-6">
-              Your trusted partner for tools, education, and professional services
+            <p className="py-6 text-lg">
+              Your trusted partner for professional tools, educational workshops, and expert services.
+              Discover quality tools, learn new skills, and grow your expertise with us.
             </p>
-            <p className="text-lg opacity-70 pb-6">
-              Sign in for instant tool bookings, course enrollment, and personalized project support
-            </p>
-            
-            <div className="not-prose">
-              <SignInButton mode="modal">
-                <button className="btn btn-primary btn-lg gap-2">
-                  Get Started - Free Account <ArrowRight className="w-5 h-5" />
-                </button>
-              </SignInButton>
+            <div className="not-prose space-x-4">
+              <Link to="/tools" className="btn btn-primary">
+                Browse Our Tools
+              </Link>
+              <Link to="/courses" className="btn btn-secondary">
+                View Courses
+              </Link>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="container mx-auto px-4 py-12">
-        <PublicHomePage />
+      {/* Service Preview */}
+      <div className="grid md:grid-cols-3 gap-6 mb-8">
+        <div className="card bg-base-100 shadow-xl">
+          <div className="card-body text-center">
+            <h2 className="card-title justify-center">🔧 Tool Rental</h2>
+            <p>Professional-grade tools for your projects. From basic hand tools to specialized equipment.</p>
+            <div className="card-actions justify-center">
+              <Link to="/tools" className="btn btn-primary btn-sm">Browse Tools</Link>
+            </div>
+          </div>
+        </div>
+
+        <div className="card bg-base-100 shadow-xl">
+          <div className="card-body text-center">
+            <h2 className="card-title justify-center">📚 Educational Courses</h2>
+            <p>Learn from experts with hands-on workshops covering woodworking, electrical, and more.</p>
+            <div className="card-actions justify-center">
+              <Link to="/courses" className="btn btn-secondary btn-sm">View Courses</Link>
+            </div>
+          </div>
+        </div>
+
+        <div className="card bg-base-100 shadow-xl">
+          <div className="card-body text-center">
+            <h2 className="card-title justify-center">🏪 About Us</h2>
+            <p>Family-owned hardware shop serving the community with quality tools and knowledge.</p>
+            <div className="card-actions justify-center">
+              <button className="btn btn-accent btn-sm" disabled>Learn More</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Business Information */}
+      <div className="card bg-base-100 shadow-xl">
+        <div className="card-body">
+          <h2 className="card-title">Store Information</h2>
+          <div className="grid md:grid-cols-2 gap-6">
+            <div>
+              <h3 className="font-semibold mb-2">Hours</h3>
+              <p>Monday - Friday: 8:00 AM - 6:00 PM</p>
+              <p>Saturday: 9:00 AM - 5:00 PM</p>
+              <p>Sunday: 10:00 AM - 4:00 PM</p>
+            </div>
+            <div>
+              <h3 className="font-semibold mb-2">Contact</h3>
+              <p>📞 (555) 123-4567</p>
+              <p>📧 info@kastelhardware.com</p>
+              <p>📍 123 Main Street, Hardware City</p>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
 }
 
-// Customer Home Page - Personalized experience for account holders
-function CustomerHomePage() {
+// Staff Home Page
+function StaffHomePage({ user, hasPermission }: { user: any, hasPermission: (p: string) => boolean }) {
   return (
-    <div>
-      {/* Hero Section - personalized for customers */}
-      <div className="hero bg-gradient-to-br from-primary/10 to-accent/10 py-20">
+    <>
+      {/* Staff Welcome */}
+      <div className="hero bg-primary text-primary-content rounded-lg mb-8">
         <div className="hero-content text-center">
-          <div className="max-w-4xl">
-            <div className="not-prose flex justify-center mb-6">
-              <KastelLogo size={80} />
+          <div className="max-w-md">
+            <h1 className="text-4xl font-bold">Staff Portal</h1>
+            <p className="py-4">Welcome back, {user?.name}! Access your operational tools and manage daily tasks.</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Staff Navigation */}
+      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+        <div className="card bg-base-100 shadow-xl">
+          <div className="card-body">
+            <h2 className="card-title">🔧 Tool Management</h2>
+            <p>Manage inventory, process rentals, and track tool status.</p>
+            <div className="card-actions">
+              <Link to="/tools" className="btn btn-primary">Manage Tools</Link>
             </div>
-            <h1 className="text-5xl font-bold">Welcome Back to Kastel Hardware</h1>
-            <p className="text-xl opacity-80 py-6">
-              Your trusted partner for tools, education, and professional services
+          </div>
+        </div>
+
+        <div className="card bg-base-100 shadow-xl">
+          <div className="card-body">
+            <h2 className="card-title">📚 Course Management</h2>
+            <p>Create courses, manage enrollments, and track student progress.</p>
+            <div className="card-actions">
+              <Link to="/courses" className="btn btn-secondary">Manage Courses</Link>
+            </div>
+          </div>
+        </div>
+
+        {hasPermission("request_shifts") && (
+          <div className="card bg-base-100 shadow-xl">
+            <div className="card-body">
+              <h2 className="card-title">📅 Shift Planning</h2>
+              <p>View schedules, request shifts, and manage work assignments.</p>
+              <div className="card-actions">
+                <button className="btn btn-accent" disabled>Coming Soon</button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Staff Capabilities */}
+      <div className="card bg-base-100 shadow-xl">
+        <div className="card-body">
+          <h2 className="card-title">Your Capabilities</h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+            {hasPermission("access_staff_features") && (
+              <div className="badge badge-primary">Staff Access</div>
+            )}
+            {hasPermission("request_shifts") && (
+              <div className="badge badge-info">Request Shifts</div>
+            )}
+            {hasPermission("approve_shifts") && (
+              <div className="badge badge-warning">Approve Shifts</div>
+            )}
+            {hasPermission("manage_courses") && (
+              <div className="badge badge-secondary">Manage Courses</div>
+            )}
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
+// Customer Home Page
+function CustomerHomePage({ user, hasPermission }: { user: any, hasPermission: (p: string) => boolean }) {
+  return (
+    <>
+      {/* Customer Welcome */}
+      <div className="hero bg-secondary text-secondary-content rounded-lg mb-8">
+        <div className="hero-content text-center">
+          <div className="max-w-md">
+            <h1 className="text-4xl font-bold">Welcome Back!</h1>
+            <p className="py-4">Hi {user?.name}! Explore our tools and courses, manage your bookings and enrollments.</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Customer Services */}
+      <div className="grid md:grid-cols-2 gap-6 mb-8">
+        <div className="card bg-base-100 shadow-xl">
+          <div className="card-body">
+            <h2 className="card-title">🔧 Tool Rental</h2>
+            <p>Browse our professional tool collection and make rental requests.</p>
+            <div className="card-actions">
+              <Link to="/tools" className="btn btn-primary">Browse Tools</Link>
+            </div>
+            {hasPermission("request_tool_rentals") && (
+              <div className="badge badge-success">Rental Approved</div>
+            )}
+          </div>
+        </div>
+
+        <div className="card bg-base-100 shadow-xl">
+          <div className="card-body">
+            <h2 className="card-title">📚 Educational Courses</h2>
+            <p>Discover workshops and educational opportunities to expand your skills.</p>
+            <div className="card-actions">
+              <Link to="/courses" className="btn btn-secondary">View Courses</Link>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Account Status */}
+      <div className="card bg-base-100 shadow-xl">
+        <div className="card-body">
+          <h2 className="card-title">Account Status</h2>
+          <div className="flex gap-2">
+            <div className="badge badge-primary">Customer</div>
+            {hasPermission("request_tool_rentals") ? (
+              <div className="badge badge-success">Rental Approved</div>
+            ) : (
+              <div className="badge badge-warning">Rental Pending Approval</div>
+            )}
+          </div>
+          {!hasPermission("request_tool_rentals") && (
+            <p className="text-sm opacity-70 mt-2">
+              Contact staff to get approved for tool rentals
             </p>
-            <p className="text-lg opacity-70 pb-6">
-              Ready to book tools, enroll in courses, or explore our services
-            </p>
-          </div>
+          )}
         </div>
       </div>
-
-      {/* Main Content - Skip "Unlock More" section for customers */}
-      <div className="container mx-auto px-4 py-12">
-        <CustomerHomeSections />
-      </div>
-    </div>
+    </>
   );
 }
-
-// Shared sections for customers (without "Unlock More")
-function CustomerHomeSections() {
-  return (
-    <div className="space-y-16">
-      {/* Work Hours Section */}
-      <section className="text-center">
-        <h2 className="text-3xl font-bold mb-8">Store Hours & Contact</h2>
-        <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-          {/* Work Hours */}
-          <div className="card bg-base-200 shadow-lg">
-            <div className="card-body">
-              <h3 className="card-title justify-center">
-                <Clock className="w-6 h-6 text-primary" />
-                Business Hours
-              </h3>
-              <div className="space-y-2 text-left">
-                <div className="flex justify-between">
-                  <span>Monday - Friday</span>
-                  <span className="font-medium">7:00 AM - 6:00 PM</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Saturday</span>
-                  <span className="font-medium">8:00 AM - 4:00 PM</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Sunday</span>
-                  <span className="font-medium">Closed</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Contact Info */}
-          <div className="card bg-base-200 shadow-lg">
-            <div className="card-body">
-              <h3 className="card-title justify-center">
-                <Phone className="w-6 h-6 text-primary" />
-                Contact Us
-              </h3>
-              <div className="space-y-3">
-                <div className="flex items-center gap-3">
-                  <Phone className="w-5 h-5 text-accent" />
-                  <span>(555) 123-TOOL</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Mail className="w-5 h-5 text-accent" />
-                  <span>info@kastelhardware.com</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <MapPin className="w-5 h-5 text-accent" />
-                  <span>123 Hardware St, Tool City</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Services Preview */}
-      <ServicesPreviewSection />
-
-      {/* Trust Indicators */}
-      <TrustIndicatorsSection />
-    </div>
-  );
-}
-
-// Public Home Page for Guests/Customers - includes "Unlock More" section
-function PublicHomePage() {
-  return (
-    <div className="space-y-16">
-      {/* Work Hours Section */}
-      <section className="text-center">
-        <h2 className="text-3xl font-bold mb-8">Store Hours & Contact</h2>
-        <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-          {/* Work Hours */}
-          <div className="card bg-base-200 shadow-lg">
-            <div className="card-body">
-              <h3 className="card-title justify-center">
-                <Clock className="w-6 h-6 text-primary" />
-                Business Hours
-              </h3>
-              <div className="space-y-2 text-left">
-                <div className="flex justify-between">
-                  <span>Monday - Friday</span>
-                  <span className="font-medium">7:00 AM - 6:00 PM</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Saturday</span>
-                  <span className="font-medium">8:00 AM - 4:00 PM</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Sunday</span>
-                  <span className="font-medium">Closed</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Contact Info */}
-          <div className="card bg-base-200 shadow-lg">
-            <div className="card-body">
-              <h3 className="card-title justify-center">
-                <Phone className="w-6 h-6 text-primary" />
-                Contact Us
-              </h3>
-              <div className="space-y-3">
-                <div className="flex items-center gap-3">
-                  <Phone className="w-5 h-5 text-accent" />
-                  <span>(555) 123-TOOL</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Mail className="w-5 h-5 text-accent" />
-                  <span>info@kastelhardware.com</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <MapPin className="w-5 h-5 text-accent" />
-                  <span>123 Hardware St, Tool City</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Sign-in Benefits Section */}
-      <section className="bg-gradient-to-r from-primary/5 to-secondary/5 rounded-xl p-8">
-        <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold mb-4">Unlock More with Your Account</h2>
-          <p className="text-lg opacity-80">Sign in to access exclusive features and personalized services</p>
-        </div>
-        
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="text-center p-4">
-            <div className="not-prose bg-primary/10 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
-              <Hammer className="w-8 h-8 text-primary" />
-            </div>
-            <h4 className="font-bold mb-2">Book Tools Instantly</h4>
-            <p className="text-sm opacity-70">Reserve equipment online and track your rentals</p>
-          </div>
-          
-          <div className="text-center p-4">
-            <div className="not-prose bg-secondary/10 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
-              <GraduationCap className="w-8 h-8 text-secondary" />
-            </div>
-            <h4 className="font-bold mb-2">Join Training Courses</h4>
-            <p className="text-sm opacity-70">Enroll in professional training and certification programs</p>
-          </div>
-          
-          
-          <div className="text-center p-4">
-            <div className="not-prose bg-success/10 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
-              <Star className="w-8 h-8 text-success" />
-            </div>
-            <h4 className="font-bold mb-2">Personalized Experience</h4>
-            <p className="text-sm opacity-70">Get recommendations based on your project needs</p>
-          </div>
-        </div>
-        
-        <div className="text-center not-prose">
-          <SignInButton mode="modal">
-            <button className="btn btn-primary btn-lg gap-2">
-              <ArrowRight className="w-5 h-5" />
-              Sign In Now - It's Free
-            </button>
-          </SignInButton>
-        </div>
-      </section>
-
-      {/* Services Preview */}
-      <section>
-        <h2 className="text-3xl font-bold text-center mb-12">Our Services</h2>
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-          
-          {/* Tool Rental Preview */}
-          <div className="card bg-base-100 shadow-xl">
-            <div className="card-body">
-              <h3 className="card-title">
-                <Hammer className="w-6 h-6 text-primary" />
-                Tool Rental
-              </h3>
-              <p>Professional-grade tools for every project</p>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span>• Power Tools</span>
-                  <span className="badge badge-primary">Available</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>• Heavy Equipment</span>
-                  <span className="badge badge-primary">Available</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>• Hand Tools</span>
-                  <span className="badge badge-primary">Available</span>
-                </div>
-              </div>
-              <div className="card-actions">
-                <Link to="/tools" className="btn btn-primary btn-sm">
-                  Browse Tools <ArrowRight className="w-4 h-4" />
-                </Link>
-              </div>
-            </div>
-          </div>
-
-          {/* Educational Courses Preview */}
-          <div className="card bg-base-100 shadow-xl">
-            <div className="card-body">
-              <h3 className="card-title">
-                <GraduationCap className="w-6 h-6 text-primary" />
-                Training & Education
-              </h3>
-              <p>Learn from certified professionals</p>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span>• Safety Training</span>
-                  <span className="badge badge-secondary">Next Week</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>• Tool Operation</span>
-                  <span className="badge badge-secondary">Available</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>• Maintenance</span>
-                  <span className="badge badge-secondary">Monthly</span>
-                </div>
-              </div>
-              <div className="card-actions">
-                <Link to="/courses" className="btn btn-primary btn-sm">
-                  View Courses <ArrowRight className="w-4 h-4" />
-                </Link>
-              </div>
-            </div>
-          </div>
-
-          {/* Hired Help Services */}
-          <div className="card bg-base-100 shadow-xl">
-            <div className="card-body">
-              <h3 className="card-title">
-                <Users className="w-6 h-6 text-primary" />
-                Professional Services
-              </h3>
-              <p>Expert help when you need it most</p>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span>• Installation</span>
-                  <span className="badge badge-accent">Coming Soon</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>• Repairs</span>
-                  <span className="badge badge-accent">Coming Soon</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>• Consultation</span>
-                  <span className="badge badge-accent">Coming Soon</span>
-                </div>
-              </div>
-              <div className="card-actions">
-                <button className="btn btn-outline btn-sm" disabled>
-                  Coming Soon
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Trust Indicators */}
-      <section className="bg-base-200 rounded-xl p-8">
-        <div className="text-center mb-8">
-          <h3 className="text-2xl font-bold">Why Choose Kastel Hardware?</h3>
-        </div>
-        <div className="grid md:grid-cols-3 gap-6">
-          <div className="text-center">
-            <Shield className="w-12 h-12 text-primary mx-auto mb-4" />
-            <h4 className="font-bold">Trusted & Reliable</h4>
-            <p className="text-sm opacity-70">Over 20 years serving our community</p>
-          </div>
-          <div className="text-center">
-            <Star className="w-12 h-12 text-primary mx-auto mb-4" />
-            <h4 className="font-bold">Quality Equipment</h4>
-            <p className="text-sm opacity-70">Professional-grade tools you can depend on</p>
-          </div>
-          <div className="text-center">
-            <Users className="w-12 h-12 text-primary mx-auto mb-4" />
-            <h4 className="font-bold">Expert Support</h4>
-            <p className="text-sm opacity-70">Knowledgeable staff ready to help</p>
-          </div>
-        </div>
-      </section>
-    </div>
-  );
-}
-
-// Shared Services Preview Section
-function ServicesPreviewSection() {
-  return (
-    <section>
-      <h2 className="text-3xl font-bold text-center mb-12">Our Services</h2>
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-        
-        {/* Tool Rental Preview */}
-        <div className="card bg-base-100 shadow-xl">
-          <div className="card-body">
-            <h3 className="card-title">
-              <Hammer className="w-6 h-6 text-primary" />
-              Tool Rental
-            </h3>
-            <p>Professional-grade tools for every project</p>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span>• Power Tools</span>
-                <span className="badge badge-primary">Available</span>
-              </div>
-              <div className="flex justify-between">
-                <span>• Heavy Equipment</span>
-                <span className="badge badge-primary">Available</span>
-              </div>
-              <div className="flex justify-between">
-                <span>• Hand Tools</span>
-                <span className="badge badge-primary">Available</span>
-              </div>
-            </div>
-            <div className="card-actions">
-              <Link to="/tools" className="btn btn-primary btn-sm">
-                Browse Tools <ArrowRight className="w-4 h-4" />
-              </Link>
-            </div>
-          </div>
-        </div>
-
-        {/* Educational Courses Preview */}
-        <div className="card bg-base-100 shadow-xl">
-          <div className="card-body">
-            <h3 className="card-title">
-              <GraduationCap className="w-6 h-6 text-primary" />
-              Training & Education
-            </h3>
-            <p>Learn from certified professionals</p>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span>• Safety Training</span>
-                <span className="badge badge-secondary">Next Week</span>
-              </div>
-              <div className="flex justify-between">
-                <span>• Tool Operation</span>
-                <span className="badge badge-secondary">Available</span>
-              </div>
-              <div className="flex justify-between">
-                <span>• Maintenance</span>
-                <span className="badge badge-secondary">Monthly</span>
-              </div>
-            </div>
-            <div className="card-actions">
-              <Link to="/courses" className="btn btn-primary btn-sm">
-                View Courses <ArrowRight className="w-4 h-4" />
-              </Link>
-            </div>
-          </div>
-        </div>
-
-        {/* Hired Help Services */}
-        <div className="card bg-base-100 shadow-xl">
-          <div className="card-body">
-            <h3 className="card-title">
-              <Users className="w-6 h-6 text-primary" />
-              Professional Services
-            </h3>
-            <p>Expert help when you need it most</p>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span>• Installation</span>
-                <span className="badge badge-accent">Coming Soon</span>
-              </div>
-              <div className="flex justify-between">
-                <span>• Repairs</span>
-                <span className="badge badge-accent">Coming Soon</span>
-              </div>
-              <div className="flex justify-between">
-                <span>• Consultation</span>
-                <span className="badge badge-accent">Coming Soon</span>
-              </div>
-            </div>
-            <div className="card-actions">
-              <button className="btn btn-outline btn-sm" disabled>
-                Coming Soon
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-// Shared Trust Indicators Section
-function TrustIndicatorsSection() {
-  return (
-    <section className="bg-base-200 rounded-xl p-8">
-      <div className="text-center mb-8">
-        <h3 className="text-2xl font-bold">Why Choose Kastel Hardware?</h3>
-      </div>
-      <div className="grid md:grid-cols-3 gap-6">
-        <div className="text-center">
-          <Shield className="w-12 h-12 text-primary mx-auto mb-4" />
-          <h4 className="font-bold">Trusted & Reliable</h4>
-          <p className="text-sm opacity-70">Over 20 years serving our community</p>
-        </div>
-        <div className="text-center">
-          <Star className="w-12 h-12 text-primary mx-auto mb-4" />
-          <h4 className="font-bold">Quality Equipment</h4>
-          <p className="text-sm opacity-70">Professional-grade tools you can depend on</p>
-        </div>
-        <div className="text-center">
-          <Users className="w-12 h-12 text-primary mx-auto mb-4" />
-          <h4 className="font-bold">Expert Support</h4>
-          <p className="text-sm opacity-70">Knowledgeable staff ready to help</p>
-        </div>
-      </div>
-    </section>
-  );
-}
-

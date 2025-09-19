@@ -26,7 +26,6 @@
 - Suggestion Box System
 - Current Complex Shift System (replaced with redesigned version)
 
-
 ---
 
 ## 🏗️ V2 Core System Architecture
@@ -93,7 +92,22 @@
   - [ ] *Define reporting access*
     - the shift tool should create reports on hours worked. the reports can be made for each worker, for any specified time period. the formating and styling will be handeled later.
 
-#### **LUZ Interface Design (Detailed Specifications)**
+#### **LUZ Interface Design Progress**
+
+**Detailed Specifications Created** (documented in `LUZ_CALENDAR_REDESIGN.md`):
+- **70/30 Layout Architecture**: Overview section (30%) + Calendar timeline (70%) specified
+- **Three-View System**: Daily (tool rental focus) → Weekly (shift planning) → Monthly (strategic planning) designed
+- **Role-Based Interactions**: Complete specifications for Base Staff, Workers, Instructors, and Managers across all views
+- **Visual Design System**: Color coding, typography, spacing, and responsive design specifications defined
+- **Drag-and-Drop Logic**: Manager assignment workflows with real-time updates and validation designed
+- **Coverage Gap Indicators**: Visual status system for staffing analysis specified
+
+**Key Design Decisions Made:**
+- **View-Specific Priorities**: Each view optimized for specific user tasks and time horizons
+- **Cumulative Role Permissions**: Base Staff → Workers → Instructors → Managers with additive capabilities
+- **Dual Approval System**: Manager assignments require worker approval for autonomy
+- **Course Writer Hierarchy**: Owner vs helper instructor distinction with appropriate permissions
+- **Mobile Responsiveness**: Touch-friendly interactions and stacked layouts specified
 
 **Filter System (Question 2):**
 - **V2 Minimum**: Basic tag system to differentiate Shifts, Education (courses), and Rentals
@@ -121,18 +135,62 @@
 
 - **Instructors**:
   - [ ] *Define course-related shift access*
+    - courses are events that are not shifts. therefor they should show on the LUZ. courses have public information such as time and enrollment status, and have protected info such as who is enrolled and where is the course.  
   - [ ] *Define if instructor can also request worker shifts*
+    - Instructor role provides course management permissions only
+    - If instructor also has Worker tag: gains full worker shift permissions (additive system)
+    - Base Instructor (no Worker tag): sees only public shift timing for course scheduling context
 
 #### **Core Functionality**
-- [ ] *Define shift creation process*
-- [ ] *Define assignment workflows*
-- [ ] *Define documentation requirements*
-- [ ] *Define reporting features*
+
+**Shift System Specifications Designed** (documented in `SHIFT_REDESIGN.md`):
+
+- **Define shift**: Population-based hourly requirements specified instead of fixed shift types
+  - Flexible worker accommodations (full-day, split-shift, partial, offset workers)
+  - Hourly staffing requirements with min/optimal worker counts designed
+  - Human oversight with information-driven manager decisions specified
+
+- **Define shift creation process**: Template-based system designed for recurring operations
+  - Manager creation of shift templates with hourly population requirements
+  - Recurring day patterns (monday-sunday flexibility) specified
+  - Store hours integration with operational requirements designed
+
+- **Define assignment workflows**: Dual approval system with worker autonomy designed
+  - Manager assignment of workers to flexible hour ranges
+  - Worker approval requirement for all assignments (dual consent) specified
+  - Worker self-service opportunities for additional hours designed
+  - Swap system with peer approval workflows specified
+
+- **Define documentation requirements**: Simplified scheduling focus designed
+  - Assignment tracking without complex time tracking
+  - Break period management (paid/unpaid) specified
+  - Assignment notes and metadata designed
+  - Manager assignment history tracking planned
+
+- **Define reporting features**: Basic operational reporting designed
+  - Weekly/monthly work hours reports by worker
+  - Coverage analysis and gap identification specified
+  - Assignment status tracking designed
+  - Future: Time tracking integration separate from scheduling
 
 #### **Data Model**
-- [ ] *Design shift schema*
-- [ ] *Design assignment relationships*
-- [ ] *Design documentation structure*
+
+**Schema Design Specifications** (documented in `SHIFT_REDESIGN.md`):
+
+- **Design shift schema**: `shifts_v2` table with population-based requirements designed
+  - Hourly requirements array (hour, minWorkers, optimalWorkers) specified
+  - Store hours integration and recurrence patterns designed
+  - Template-based approach for operational consistency specified
+
+- **Design assignment relationships**: `shift_assignments_v2` with flexible hours designed
+  - Worker-template-date relationships specified
+  - Flexible hour ranges (startTime/endTime arrays) designed
+  - Break period management and assignment metadata specified
+
+- **Design documentation structure**: `worker_hour_requests_v2` for self-service designed
+  - Worker-initiated requests for additional hours specified
+  - Manager review and approval workflows designed
+  - Request status tracking and opportunity matching specified
 
 ---
 
@@ -142,18 +200,44 @@
 #### **Customer Roles & Permissions**
 - **Customers**:
   - [ ] *Define rental browsing permissions*
+  - customers should be able to view the whole collection based on public info and search specific tools by parameters.
+  - customers should see the price of items, but the site does not work with money at all and they wont be able to pay on the site.
+  - tools have public data, like current availability, and private data such as problems or history of rentals that is not public. 
   - [ ] *Define booking capabilities*
+    - customers should be able to request a booking for a tool, the request is pending manager approval
+    - after permission is granted, the customer is allowed to take the tool and the manager can start a rental ,that has both the customer and all workers have access to.
+    - while the tool is not returned, the site calculates the cost.
+    - after returning the tool and setteling the cost the rental is over and stored as history for both the tool and the customer.  
   - [ ] *Define account management*
+    - customer needs to put private info into account to create acountability in case of theft. 
+    - customer manager approval *on account* in order to be allowed to make rentals at all **important- treat as customer role tag**
 
 - **Staff**:
+  - [ ] *tool management permissions*
+      - Tool management actions currently part of Worker permissions
+      - Future: Specific tool handler role may be added (TBD in tool rental design work) 
   - [ ] *Define inventory management permissions*
+    - staff/tool permission role is allowed to see all tools a status and be create tickets for tool issues and fixes needed
+    - workers can view rental events and filter by approvla level if needed. 
   - [ ] *Define rental processing workflows*
+    - rental uccurs when customer chooses a tool and request use for an allotted time slot, through a form in the site.
+    - the request is processed and checked to see if it colides with other approved requests.
+      - if theres a collide, help find a solution via constraining time slot to allow.
+      -  if there is no collide, move to manger aproval.
+    - manager reviews the request and approves or denies 
+      - if apporves the user takes the tool, when taken a worker should interact with a rental event to show that it started.
+      - if not approved, trminate the process. 
+    - after the tool is used and returned, a worker marks as returned and the rental event stops. 
+
+
 
 #### **Core Functionality**
 - [x] **KEEP**: Existing rental booking system
 - [x] **KEEP**: Inventory management
 - [ ] *Define any needed simplifications*
-
+    - tools have owners, when damage uccurs to a tool the owner is informed. 
+    - if a tool is late or reported to be damaged by otehr users, notify owner.
+    - if tool reported late or out of commission, notify staff and show on site. 
 ---
 
 ### **3. Educational Meetings (Courses)**
@@ -162,11 +246,23 @@
 #### **Customer/Student Roles & Permissions**
 - **Students**:
   - [ ] *Define course browsing permissions*
+    - students are just normal customers, no need for special permissions. 
+
+ 
   - [ ] *Define enrollment capabilities*
+      - students can see all courses (for now) and can request enrollement to any course.
+      
   - [ ] *Define progress tracking*
+    - not a main feature. should keep what courses were done for user for future feture development.
 
 - **Instructors**:
   - [ ] *Define course management permissions*
+    - Every course has a writer (owner) and optional helpers, all are instructors
+    - Course writer: Instructor who creates the course (gains writer permissions automatically)
+    - Helper instructors: Additional instructors assigned to assist with course
+    - Only course writer can edit course details and manage helper instructors
+    - Any instructor for the specific course can approve enrollments
+
   - [ ] *Define student management capabilities*
 
 #### **Core Functionality**
@@ -180,59 +276,84 @@
 
 ### **Role Structure: Base + Tags**
 ```
+├── Guest (unauthenticated users)
+│   └── Permissions: Home page access only, can view service offerings, can sign up
 ├── Staff (base role for internal users)
 │   └── Tags (additive, can combine):
 │       ├── Worker (operational staff capabilities)
 │       ├── Instructor (teaching capabilities)
+│       │   └── Course Writer (per-course: extends Instructor with ownership)
+│       ├── Tool Handler (future: may absorb tool handling from Worker)
 │       └── Manager (requires Worker tag, adds management)
 └── Customer (base role for external users)
+    └── Temporary Access Tags (per-item basis):
+        ├── Student (per-class: access to enrolled course details)
+        └── Tool Renter (per-tool: access to rental tool actions)
 ```
 
 ### **Role Definitions**
-- **Staff**: Base internal team member role
-- **Customer**: Base external user role
+- **Guest**: Unauthenticated users with minimal access (home page, service preview, sign-up only)
+- **Staff**: Base internal team member role (authenticated)
+- **Customer**: Base external user role (authenticated)
 
 ### **Staff Tags (Additive & Combinable)**
 - **Worker**: Operational staff capabilities (can be added to Staff)
 - **Instructor**: Teaching and course management capabilities (can be added to Staff)
-- **Manager**: Management and approval capabilities (requires Worker tag first)
+  - **Course Writer**: Per-course extension of Instructor with ownership permissions (gained when creating a course)
+- **Tool Handler**: *Future role* - May absorb tool handling responsibilities from Worker (not yet implemented)
+- **Manager**: Management and approval capabilities (requires Worker tag, always additive)
+
+### **Customer Tags (Temporary & Item-Specific)**
+- **Student**: Per-class temporary access to enrolled course details (gained after successful enrollment)
+- **Tool Renter**: Per-tool temporary access to rental actions (gained after successful booking approval)
 
 ### **Permission Matrix**
 ```
-Feature          | Staff | Staff    | Staff       | Staff           | Customer
-                | Base  | +Worker  | +Instructor | +Worker+Manager |
-----------------|-------|----------|-------------|-----------------|----------
-Shift Management| [ ]   | [ ]      | [ ]         | [ ]             | [ ]
-Tool Rentals    | [ ]   | [ ]      | [ ]         | [ ]             | [ ]
-Course System   | [ ]   | [ ]      | [ ]         | [ ]             | [ ]
+Feature          | Guest | Staff | Staff    | Staff       | Staff           | Customer
+                |       | Base  | +Worker  | +Instructor | +Worker+Manager |
+----------------|-------|-------|----------|-------------|-----------------|----------
+Home Page       | ✓     | ✓     | ✓        | ✓           | ✓               | ✓
+Service Preview | ✓     | ✓     | ✓        | ✓           | ✓               | ✓
+Sign Up         | ✓     | -     | -        | -           | -               | -
+Tool Browsing   | ✗     | ✓     | ✓        | ✓           | ✓               | ✓
+Course Browsing | ✗     | ✓     | ✓        | ✓           | ✓               | ✓
+Shift Management| ✗     | [ ]   | [ ]      | [ ]         | [ ]             | ✗
+Tool Rentals    | ✗     | [ ]   | [ ]      | [ ]         | [ ]             | [ ]
+Course System   | ✗     | [ ]   | [ ]      | [ ]         | [ ]             | [ ]
 ```
 
-### **Valid Role Combinations**
-- **Staff** (base access only)
-- **Staff + Worker** (operational capabilities)
-- **Staff + Instructor** (teaching capabilities)
-- **Staff + Worker + Instructor** (both operational and teaching)
-- **Staff + Worker + Manager** (operational + management)
-- **Staff + Worker + Instructor + Manager** (full staff access)
-- **Customer** (external service access)
+### **Role Requirements & Conditionals**
 
-### **Future Challenge: Staff as Customer**
-⚠️ **Known Issue to Address Later**: Staff members may need Customer access for personal use
+**Base Roles (no conditionals):**
+- **Guest**: No authentication required (unauthenticated state)
+- **Staff**: Requires authentication
+- **Customer**: Requires authentication
 
-**Scenarios Requiring Special Handling:**
-- **Worker renting tools** for personal use (not work-related)
-- **Instructor enrolling in courses** as a student
-- **Staff members booking services** for personal needs
-- **Billing and payment** separation between work and personal
+**Staff Tags (conditional requirements):**
+- **Worker**: Requires Staff
+- **Instructor**: Requires Staff
+- **Course Writer**: Requires Instructor (which requires Staff)
+- **Tool Handler**: Requires Staff (*future role*)
+- **Manager**: Requires Worker (which requires Staff)
 
-**Implementation Considerations:**
-- [ ] Design dual-role switching mechanism
-- [ ] Separate personal vs. work transaction tracking
-- [ ] Handle billing/payment context switching
-- [ ] UI/UX for role context awareness
-- [ ] Permission boundary management between Staff and Customer contexts
+**Customer Tags (conditional requirements):**
+- **Student**: Requires Customer + successful enrollment in specific course
+- **Tool Renter**: Requires Customer + successful booking approval for specific tool
 
-*Note: This is a complex edge case that will require dedicated design work in future phases.*
+### **Future Consideration: Staff as Customer**
+**Edge Case for Future Implementation**: Staff members may need Customer access for personal use
+
+**Additive Permission Approach:**
+- Customer + Staff + Worker: Should have access to both staff and customer functions
+- No role restrictions, only additive permissions
+- System design supports multiple role combinations
+
+**Future Scenarios:**
+- Worker renting tools for personal use
+- Instructor enrolling in courses as a student
+- Staff members booking services for personal needs
+
+*Note: Additive permission system should handle this naturally without special restrictions.*
 
 ---
 
@@ -240,7 +361,7 @@ Course System   | [ ]   | [ ]      | [ ]         | [ ]             | [ ]
 
 ### **Core Tables**
 - [ ] **Users**: *Define simplified user schema*
-- [ ] **Shifts**: *Design new shift data model*
+- [ ] **Shifts**: *Design new shift data model (will be "shifts" after migration)*
 - [ ] **Tools**: *Keep existing, document any changes*
 - [ ] **Courses**: *Keep existing, document any changes*
 
@@ -289,10 +410,55 @@ Course System   | [ ]   | [ ]      | [ ]         | [ ]             | [ ]
 
 ## 📋 Implementation Planning
 
-### **Phase 1: Foundation**
-- [ ] *Define new role system implementation*
-- [ ] *Define database schema changes*
-- [ ] *Define authentication flow*
+### **Phase 1: Foundation** ⚠️ **PARTIAL COMPLETION WITH ISSUES**
+- [x] *Define new role system implementation*
+  - [x] *Implement additive permission framework*
+  - [x] *Build role conditional validation system*
+  - [x] *Design data-level permission integration: Most data objects will include permission fields to reflect the role system at the database level*
+- [x] *Define database schema changes*
+- [x] *Define authentication flow*
+
+#### **Phase 1 Implementation Status & Critical Issues**
+
+**✅ COMPLETED FEATURES:**
+- **V2 Role System**: Tag-based permissions fully implemented with `isStaff + workerTag/instructorTag/managerTag/rentalApprovedTag`
+- **Permission Framework**: `usePermissionsV2` hook with comprehensive permission checking
+- **Role Emulator**: Toggle-based role switching interface for testing
+- **Clean Navigation**: Removed all suggestions functionality for clean slate
+- **Database Schema**: V2 users table with role tags and emulation fields
+
+**⚠️ CRITICAL UNRESOLVED ISSUES:**
+
+1. **Backend Function Mapping Issue**:
+   - `RoleEmulator` calls `api.users_v2.switchV2Role` correctly
+   - Backend shows errors: `Could not find public function for 'users:switchEmulatingRole'`
+   - V2 function exists but not being recognized by Convex runtime
+   - **Impact**: Role switching completely non-functional
+
+2. **Schema Validation Conflicts**:
+   - `ArgumentValidationError: Object contains extra field 'role' that is not in the validator`
+   - V2 createOrUpdateUserV2 function rejects user objects with legacy `role` field
+   - **Impact**: User creation/updates failing
+
+3. **Orphaned File References**:
+   - TypeScript errors for deleted `suggestions.ts` file still appearing
+   - Backend trying to access non-existent suggestion functions
+   - **Impact**: Build failures and runtime errors
+
+4. **Role Display Inconsistencies**:
+   - Toggle switches work but don't persist role changes
+   - Debug info shows correct values but effective role reverts
+   - UI state management conflicts between V1 and V2 systems
+   - **Impact**: User confusion, testing impossible
+
+**🔧 REQUIRED FIXES:**
+- [ ] Resolve Convex function registration issues for V2 mutations
+- [ ] Fix schema validation for user creation with V2 fields
+- [ ] Clean up all orphaned references to deleted suggestion system
+- [ ] Debug role persistence and state management conflicts
+- [ ] Verify all V2 functions are properly exported and accessible
+
+**STATUS**: Phase 1 foundation is structurally complete but functionally broken due to backend integration issues.
 
 ### **Phase 2: Core Features**
 - [ ] *Implement shift management system*
