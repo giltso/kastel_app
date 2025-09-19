@@ -33,8 +33,10 @@ export function usePermissionsV2() {
   const { user, isLoading, isAuthenticated } = useCurrentUserV2();
 
   const checkPermission = (permission: V2Permission): boolean => {
-    // Guest permissions (unauthenticated users)
-    if (!isAuthenticated) {
+    // Guest permissions (unauthenticated users OR Guest emulation)
+    const isGuestMode = !isAuthenticated || (user?.effectiveRole && !user.effectiveRole.isStaff && !user.effectiveRole.rentalApprovedTag);
+
+    if (isGuestMode) {
       switch (permission) {
         case "view_home_page":
         case "view_service_preview":
@@ -45,7 +47,7 @@ export function usePermissionsV2() {
       }
     }
 
-    // Authenticated user permissions
+    // Authenticated user permissions (non-Guest)
     if (!user || !user.effectiveRole) return false;
     const effective = user.effectiveRole;
 
