@@ -56,12 +56,15 @@ export function RoleEmulator() {
       updates.workerTag = false;
       updates.instructorTag = false;
       updates.managerTag = false;
+      // When switching from Staff to Customer, preserve authentication
+      // Customer state will be handled by the UI logic
     }
 
-    // When switching to staff, don't automatically reset customer tags
+    // When switching to staff, reset customer tags
     if (field === 'isStaff' && value) {
       updates.rentalApprovedTag = false; // Staff can't have rental approval
     }
+
 
     try {
       await switchRole(updates);
@@ -71,16 +74,32 @@ export function RoleEmulator() {
   };
 
   const getRoleDisplayText = () => {
-    if (!effective.isStaff) {
-      return effective.rentalApprovedTag ? "Customer+" : "Guest";
+    // Not authenticated (shouldn't happen in V2 dev system, but handle gracefully)
+    if (!user?.isAuthenticated) {
+      return "Guest";
     }
 
-    const tags = [];
-    if (effective.workerTag) tags.push("W");
-    if (effective.instructorTag) tags.push("I");
-    if (effective.managerTag) tags.push("M");
+    // Staff base role
+    if (effective.isStaff) {
+      const staffTags = [];
+      if (effective.workerTag) staffTags.push("W");
+      if (effective.instructorTag) staffTags.push("I");
+      if (effective.managerTag) staffTags.push("M");
 
-    return `Staff${tags.length > 0 ? `+${tags.join("")}` : ""}`;
+      return `Staff${staffTags.length > 0 ? `+${staffTags.join("")}` : ""}`;
+    }
+
+    // Customer base role
+    if (effective.rentalApprovedTag) {
+      const customerTags = [];
+      if (effective.rentalApprovedTag) customerTags.push("R"); // Tool Renter
+      // TODO: Add student tag when implemented
+
+      return `Customer${customerTags.length > 0 ? `+${customerTags.join("")}` : ""}`;
+    }
+
+    // Guest (authenticated but no permissions)
+    return "Guest";
   };
 
   return (
@@ -105,27 +124,62 @@ export function RoleEmulator() {
               Toggle individual role attributes to test permissions
             </p>
 
-            {/* Base Role Toggle */}
+            {/* Base Role Selection */}
             <div className="space-y-3">
-              <div className="flex items-center justify-between p-2 rounded bg-base-200">
-                <div className="flex items-center gap-2">
-                  <Building2 className="h-4 w-4 text-primary" />
-                  <div>
-                    <div className="text-sm font-medium">Staff Access</div>
-                    <div className="text-xs opacity-70">Base staff permissions</div>
-                  </div>
+              {/* Guest/Customer/Staff Toggle */}
+              <div className="p-2 rounded bg-base-200">
+                <div className="text-sm font-medium mb-2">Base Role</div>
+                <div className="join w-full">
+                  <input
+                    className="join-item btn btn-sm flex-1"
+                    type="radio"
+                    name="baseRole"
+                    aria-label="Guest"
+                    checked={user?.isAuthenticated && !effective.isStaff && !effective.rentalApprovedTag}
+                    onChange={async () => {
+                      // Guest = authenticated but no permissions
+                      await switchRole({
+                        isStaff: false,
+                        workerTag: false,
+                        instructorTag: false,
+                        managerTag: false,
+                        rentalApprovedTag: false,
+                      });
+                    }}
+                  />
+                  <input
+                    className="join-item btn btn-sm flex-1"
+                    type="radio"
+                    name="baseRole"
+                    aria-label="Customer"
+                    checked={user?.isAuthenticated && !effective.isStaff}
+                    onChange={async () => {
+                      // Customer = authenticated, not staff, with rental approval
+                      await switchRole({
+                        isStaff: false,
+                        workerTag: false,
+                        instructorTag: false,
+                        managerTag: false,
+                        rentalApprovedTag: true, // Customer needs rental approval
+                      });
+                    }}
+                  />
+                  <input
+                    className="join-item btn btn-sm flex-1"
+                    type="radio"
+                    name="baseRole"
+                    aria-label="Staff"
+                    checked={effective.isStaff}
+                    onChange={() => handleToggle('isStaff', true)}
+                  />
                 </div>
-                <input
-                  type="checkbox"
-                  className="toggle toggle-primary toggle-sm"
-                  checked={effective.isStaff}
-                  onChange={(e) => handleToggle('isStaff', e.target.checked)}
-                />
               </div>
 
-              {/* Staff-only tags */}
+              {/* Staff Sub-tags */}
               {effective.isStaff && (
                 <div className="ml-4 space-y-2 border-l-2 border-primary/20 pl-3">
+                  <div className="text-xs font-medium opacity-70 mb-2">Staff Tags:</div>
+
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <User className="h-3 w-3 text-info" />
@@ -177,22 +231,43 @@ export function RoleEmulator() {
                 </div>
               )}
 
-              {/* Customer-only tags */}
-              {!effective.isStaff && (
-                <div className="flex items-center justify-between p-2 rounded bg-base-200">
-                  <div className="flex items-center gap-2">
-                    <ShoppingBag className="h-4 w-4 text-accent" />
-                    <div>
-                      <div className="text-sm">Rental Approved</div>
-                      <div className="text-xs opacity-70">Can request tool rentals</div>
+              {/* Customer Sub-tags */}
+              {user?.isAuthenticated && !effective.isStaff && (
+                <div className="ml-4 space-y-2 border-l-2 border-accent/20 pl-3">
+                  <div className="text-xs font-medium opacity-70 mb-2">Customer Tags:</div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <ShoppingBag className="h-3 w-3 text-accent" />
+                      <div>
+                        <div className="text-sm">Tool Renter</div>
+                        <div className="text-xs opacity-70">Approved for tool rentals</div>
+                      </div>
                     </div>
+                    <input
+                      type="checkbox"
+                      className="toggle toggle-accent toggle-sm"
+                      checked={effective.rentalApprovedTag}
+                      onChange={(e) => handleToggle('rentalApprovedTag', e.target.checked)}
+                    />
                   </div>
-                  <input
-                    type="checkbox"
-                    className="toggle toggle-accent toggle-sm"
-                    checked={effective.rentalApprovedTag}
-                    onChange={(e) => handleToggle('rentalApprovedTag', e.target.checked)}
-                  />
+
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <GraduationCap className="h-3 w-3 text-info" />
+                      <div>
+                        <div className="text-sm">Student</div>
+                        <div className="text-xs opacity-70">Access to enrolled course details</div>
+                      </div>
+                    </div>
+                    <input
+                      type="checkbox"
+                      className="toggle toggle-info toggle-sm"
+                      checked={false} // TODO: Add student tag to schema
+                      disabled={true} // Disabled until student tag is implemented
+                      onChange={(e) => {}} // TODO: Implement student tag handling
+                    />
+                  </div>
                 </div>
               )}
 
