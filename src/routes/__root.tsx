@@ -28,7 +28,7 @@ import { RoleEmulator } from "@/components/RoleEmulator";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { UserRoleDebug } from "@/components/UserRoleDebug";
 import { KastelLogo } from "@/components/KastelLogo";
-import { usePermissions, useIsDev } from "@/hooks/usePermissions";
+import { usePermissionsV2 } from "@/hooks/usePermissionsV2";
 
 export const Route = createRootRouteWithContext<{
   queryClient: QueryClient;
@@ -38,8 +38,8 @@ export const Route = createRootRouteWithContext<{
 });
 
 function NavigationLinks({ onLinkClick }: { onLinkClick: () => void }) {
-  const { hasPermission } = usePermissions();
-  const isDev = useIsDev();
+  const { checkPermission, user } = usePermissionsV2();
+  const isDev = user?.role === "dev";
   
   return (
     <>
@@ -53,7 +53,7 @@ function NavigationLinks({ onLinkClick }: { onLinkClick: () => void }) {
       >
         Home
       </Link>
-      {hasPermission("access_worker_portal") && (
+      {checkPermission("access_worker_portal") && (
         <Link
           to="/calendar"
           className="btn btn-ghost"
@@ -65,7 +65,7 @@ function NavigationLinks({ onLinkClick }: { onLinkClick: () => void }) {
           LUZ
         </Link>
       )}
-      {hasPermission("access_worker_portal") && (
+      {checkPermission("access_worker_portal") && (
         <Link
           to="/events"
           className="btn btn-ghost"
@@ -77,7 +77,7 @@ function NavigationLinks({ onLinkClick }: { onLinkClick: () => void }) {
           Events
         </Link>
       )}
-      {hasPermission("access_worker_portal") && (
+      {checkPermission("access_worker_portal") && (
         <Link
           to="/shifts"
           className="btn btn-ghost"
@@ -89,27 +89,31 @@ function NavigationLinks({ onLinkClick }: { onLinkClick: () => void }) {
           Shifts
         </Link>
       )}
-      <Link
-        to="/tools"
-        className="btn btn-ghost"
-        activeProps={{
-          className: "btn btn-ghost btn-active",
-        }}
-        onClick={onLinkClick}
-      >
-        Tool Rental
-      </Link>
-      <Link
-        to="/courses"
-        className="btn btn-ghost"
-        activeProps={{
-          className: "btn btn-ghost btn-active",
-        }}
-        onClick={onLinkClick}
-      >
-        Courses
-      </Link>
-      {hasPermission("access_worker_portal") && (
+      {checkPermission("request_tool_rentals") && (
+        <Link
+          to="/tools"
+          className="btn btn-ghost"
+          activeProps={{
+            className: "btn btn-ghost btn-active",
+          }}
+          onClick={onLinkClick}
+        >
+          Tool Rental
+        </Link>
+      )}
+      {checkPermission("browse_courses") && (
+        <Link
+          to="/courses"
+          className="btn btn-ghost"
+          activeProps={{
+            className: "btn btn-ghost btn-active",
+          }}
+          onClick={onLinkClick}
+        >
+          Courses
+        </Link>
+      )}
+      {checkPermission("access_worker_portal") && (
         <Link
           to="/forms"
           className="btn btn-ghost"
@@ -121,7 +125,7 @@ function NavigationLinks({ onLinkClick }: { onLinkClick: () => void }) {
           Forms
         </Link>
       )}
-      {hasPermission("access_pro_help") && (
+      {checkPermission("access_worker_portal") && (
         <Link
           to="/pro-help"
           className="btn btn-ghost"
@@ -150,8 +154,8 @@ function NavigationLinks({ onLinkClick }: { onLinkClick: () => void }) {
 }
 
 function MobileNavigationLinks({ onLinkClick }: { onLinkClick: () => void }) {
-  const { hasPermission } = usePermissions();
-  const isDev = useIsDev();
+  const { checkPermission, user } = usePermissionsV2();
+  const isDev = user?.role === "dev";
   
   return (
     <>
@@ -167,7 +171,7 @@ function MobileNavigationLinks({ onLinkClick }: { onLinkClick: () => void }) {
           Home
         </Link>
       </li>
-      {hasPermission("access_worker_portal") && (
+      {checkPermission("access_worker_portal") && (
         <li>
           <Link
             to="/events"
@@ -181,7 +185,7 @@ function MobileNavigationLinks({ onLinkClick }: { onLinkClick: () => void }) {
           </Link>
         </li>
       )}
-      {hasPermission("access_worker_portal") && (
+      {checkPermission("access_worker_portal") && (
         <li>
           <Link
             to="/calendar"
@@ -195,7 +199,7 @@ function MobileNavigationLinks({ onLinkClick }: { onLinkClick: () => void }) {
           </Link>
         </li>
       )}
-      {hasPermission("access_worker_portal") && (
+      {checkPermission("access_worker_portal") && (
         <li>
           <Link
             to="/shifts"
@@ -209,31 +213,35 @@ function MobileNavigationLinks({ onLinkClick }: { onLinkClick: () => void }) {
           </Link>
         </li>
       )}
-      <li>
-        <Link
-          to="/tools"
-          onClick={onLinkClick}
-          activeProps={{
-            className: "active",
-          }}
-          className="flex items-center p-2"
-        >
-          Tool Rental
-        </Link>
-      </li>
-      <li>
-        <Link
-          to="/courses"
-          onClick={onLinkClick}
-          activeProps={{
-            className: "active",
-          }}
-          className="flex items-center p-2"
-        >
-          Courses
-        </Link>
-      </li>
-      {hasPermission("access_worker_portal") && (
+      {checkPermission("request_tool_rentals") && (
+        <li>
+          <Link
+            to="/tools"
+            onClick={onLinkClick}
+            activeProps={{
+              className: "active",
+            }}
+            className="flex items-center p-2"
+          >
+            Tool Rental
+          </Link>
+        </li>
+      )}
+      {checkPermission("browse_courses") && (
+        <li>
+          <Link
+            to="/courses"
+            onClick={onLinkClick}
+            activeProps={{
+              className: "active",
+            }}
+            className="flex items-center p-2"
+          >
+            Courses
+          </Link>
+        </li>
+      )}
+      {checkPermission("access_worker_portal") && (
         <li>
           <Link
             to="/forms"
@@ -247,7 +255,7 @@ function MobileNavigationLinks({ onLinkClick }: { onLinkClick: () => void }) {
           </Link>
         </li>
       )}
-      {hasPermission("access_pro_help") && (
+      {checkPermission("access_worker_portal") && (
         <li>
           <Link
             to="/pro-help"
