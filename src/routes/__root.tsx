@@ -64,30 +64,6 @@ function NavigationLinks({ onLinkClick }: { onLinkClick: () => void }) {
           LUZ
         </Link>
       )}
-      {checkPermission("access_worker_portal") && (
-        <Link
-          to="/events"
-          className="btn btn-ghost"
-          activeProps={{
-            className: "btn btn-ghost btn-active",
-          }}
-          onClick={onLinkClick}
-        >
-          Events
-        </Link>
-      )}
-      {checkPermission("access_worker_portal") && (
-        <Link
-          to="/shifts"
-          className="btn btn-ghost"
-          activeProps={{
-            className: "btn btn-ghost btn-active",
-          }}
-          onClick={onLinkClick}
-        >
-          Shifts
-        </Link>
-      )}
       {checkPermission("request_tool_rentals") && (
         <Link
           to="/tools"
@@ -160,20 +136,6 @@ function MobileNavigationLinks({ onLinkClick }: { onLinkClick: () => void }) {
       {checkPermission("access_worker_portal") && (
         <li>
           <Link
-            to="/events"
-            onClick={onLinkClick}
-            activeProps={{
-              className: "active",
-            }}
-            className="flex items-center p-2"
-          >
-            Events
-          </Link>
-        </li>
-      )}
-      {checkPermission("access_worker_portal") && (
-        <li>
-          <Link
             to="/calendar"
             onClick={onLinkClick}
             activeProps={{
@@ -182,20 +144,6 @@ function MobileNavigationLinks({ onLinkClick }: { onLinkClick: () => void }) {
             className="flex items-center p-2"
           >
             LUZ
-          </Link>
-        </li>
-      )}
-      {checkPermission("access_worker_portal") && (
-        <li>
-          <Link
-            to="/shifts"
-            onClick={onLinkClick}
-            activeProps={{
-              className: "active",
-            }}
-            className="flex items-center p-2"
-          >
-            Shifts
           </Link>
         </li>
       )}

@@ -274,64 +274,6 @@ export function RoleEmulator() {
                 </div>
               )}
 
-              {/* Quick Presets */}
-              <div className="pt-2 border-t border-base-300 space-y-2">
-                <div className="text-xs font-medium opacity-70">Quick Presets:</div>
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    className="btn btn-ghost btn-xs"
-                    onClick={() => switchRole({
-                      isStaff: false,
-                      workerTag: false,
-                      instructorTag: false,
-                      toolHandlerTag: false,
-                      managerTag: false,
-                      rentalApprovedTag: true,
-                    })}
-                  >
-                    Customer+
-                  </button>
-                  <button
-                    className="btn btn-ghost btn-xs"
-                    onClick={() => switchRole({
-                      isStaff: true,
-                      workerTag: true,
-                      instructorTag: false,
-                      toolHandlerTag: false,
-                      managerTag: false,
-                      rentalApprovedTag: false,
-                    })}
-                  >
-                    Worker
-                  </button>
-                  <button
-                    className="btn btn-ghost btn-xs"
-                    onClick={() => switchRole({
-                      isStaff: true,
-                      workerTag: false,
-                      instructorTag: false,
-                      toolHandlerTag: true,
-                      managerTag: false,
-                      rentalApprovedTag: false,
-                    })}
-                  >
-                    Tool Handler
-                  </button>
-                  <button
-                    className="btn btn-ghost btn-xs"
-                    onClick={() => switchRole({
-                      isStaff: true,
-                      workerTag: true,
-                      instructorTag: false,
-                      toolHandlerTag: false,
-                      managerTag: true,
-                      rentalApprovedTag: false,
-                    })}
-                  >
-                    Manager
-                  </button>
-                </div>
-              </div>
             </div>
           </div>
         </div>
