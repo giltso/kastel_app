@@ -148,6 +148,8 @@ function GuestHomePage() {
 
 // Staff Home Page
 function StaffHomePage({ user, hasPermission }: { user: any, hasPermission: (p: string) => boolean }) {
+  const effective = user?.effectiveRole;
+
   return (
     <>
       {/* Staff Welcome */}
@@ -156,6 +158,12 @@ function StaffHomePage({ user, hasPermission }: { user: any, hasPermission: (p: 
           <div className="max-w-md">
             <h1 className="text-4xl font-bold">Staff Portal</h1>
             <p className="py-4">Welcome back, {user?.name}! Access your operational tools and manage daily tasks.</p>
+            <div className="flex justify-center gap-2 flex-wrap">
+              <div className="badge badge-primary">Staff</div>
+              {effective?.workerTag && <div className="badge badge-info">Worker</div>}
+              {effective?.instructorTag && <div className="badge badge-secondary">Instructor</div>}
+              {effective?.managerTag && <div className="badge badge-warning">Manager</div>}
+            </div>
           </div>
         </div>
       </div>
@@ -169,6 +177,9 @@ function StaffHomePage({ user, hasPermission }: { user: any, hasPermission: (p: 
             <div className="card-actions">
               <Link to="/tools" className="btn btn-primary">Manage Tools</Link>
             </div>
+            {effective?.workerTag && (
+              <div className="badge badge-info badge-sm">Worker Access</div>
+            )}
           </div>
         </div>
 
@@ -177,8 +188,13 @@ function StaffHomePage({ user, hasPermission }: { user: any, hasPermission: (p: 
             <h2 className="card-title">📚 Course Management</h2>
             <p>Create courses, manage enrollments, and track student progress.</p>
             <div className="card-actions">
-              <Link to="/courses" className="btn btn-secondary">Manage Courses</Link>
+              <Link to="/courses" className="btn btn-secondary">
+                {hasPermission("manage_courses") ? "Manage Courses" : "View Courses"}
+              </Link>
             </div>
+            {effective?.instructorTag && (
+              <div className="badge badge-secondary badge-sm">Instructor Access</div>
+            )}
           </div>
         </div>
 
@@ -190,28 +206,121 @@ function StaffHomePage({ user, hasPermission }: { user: any, hasPermission: (p: 
               <div className="card-actions">
                 <button className="btn btn-accent" disabled>Coming Soon</button>
               </div>
+              <div className="badge badge-info badge-sm">Worker Access</div>
+            </div>
+          </div>
+        )}
+
+        {hasPermission("approve_shifts") && (
+          <div className="card bg-base-100 shadow-xl">
+            <div className="card-body">
+              <h2 className="card-title">⚡ Management Tools</h2>
+              <p>Approve requests, manage staff, and oversee operations.</p>
+              <div className="card-actions">
+                <button className="btn btn-warning" disabled>Management Portal</button>
+              </div>
+              <div className="badge badge-warning badge-sm">Manager Access</div>
             </div>
           </div>
         )}
       </div>
 
-      {/* Staff Capabilities */}
-      <div className="card bg-base-100 shadow-xl">
-        <div className="card-body">
-          <h2 className="card-title">Your Capabilities</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-            {hasPermission("access_staff_features") && (
-              <div className="badge badge-primary">Staff Access</div>
-            )}
-            {hasPermission("request_shifts") && (
-              <div className="badge badge-info">Request Shifts</div>
-            )}
-            {hasPermission("approve_shifts") && (
-              <div className="badge badge-warning">Approve Shifts</div>
-            )}
-            {hasPermission("manage_courses") && (
-              <div className="badge badge-secondary">Manage Courses</div>
-            )}
+      {/* Tag-Based Capabilities Breakdown */}
+      <div className="grid md:grid-cols-2 gap-6">
+        <div className="card bg-base-100 shadow-xl">
+          <div className="card-body">
+            <h2 className="card-title">Your Active Tags</h2>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="font-medium">Staff Access</div>
+                  <div className="text-xs opacity-70">Base staff permissions</div>
+                </div>
+                <div className="badge badge-primary">Active</div>
+              </div>
+
+              {effective?.workerTag ? (
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="font-medium">Worker Tag</div>
+                    <div className="text-xs opacity-70">Operational capabilities, shift requests</div>
+                  </div>
+                  <div className="badge badge-info">Active</div>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between opacity-50">
+                  <div>
+                    <div className="font-medium">Worker Tag</div>
+                    <div className="text-xs opacity-70">Operational capabilities</div>
+                  </div>
+                  <div className="badge badge-ghost">Inactive</div>
+                </div>
+              )}
+
+              {effective?.instructorTag ? (
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="font-medium">Instructor Tag</div>
+                    <div className="text-xs opacity-70">Course creation and management</div>
+                  </div>
+                  <div className="badge badge-secondary">Active</div>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between opacity-50">
+                  <div>
+                    <div className="font-medium">Instructor Tag</div>
+                    <div className="text-xs opacity-70">Course management</div>
+                  </div>
+                  <div className="badge badge-ghost">Inactive</div>
+                </div>
+              )}
+
+              {effective?.managerTag ? (
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="font-medium">Manager Tag</div>
+                    <div className="text-xs opacity-70">Approval permissions, staff oversight</div>
+                  </div>
+                  <div className="badge badge-warning">Active</div>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between opacity-50">
+                  <div>
+                    <div className="font-medium">Manager Tag</div>
+                    <div className="text-xs opacity-70">Approval permissions</div>
+                  </div>
+                  <div className="badge badge-ghost">Inactive</div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="card bg-base-100 shadow-xl">
+          <div className="card-body">
+            <h2 className="card-title">Available Actions</h2>
+            <div className="space-y-2">
+              <div className={`flex items-center gap-2 ${hasPermission("browse_tools") ? "" : "opacity-50"}`}>
+                <div className={`w-2 h-2 rounded-full ${hasPermission("browse_tools") ? "bg-success" : "bg-error"}`}></div>
+                <span className="text-sm">Browse and manage tools</span>
+              </div>
+              <div className={`flex items-center gap-2 ${hasPermission("browse_courses") ? "" : "opacity-50"}`}>
+                <div className={`w-2 h-2 rounded-full ${hasPermission("browse_courses") ? "bg-success" : "bg-error"}`}></div>
+                <span className="text-sm">View course information</span>
+              </div>
+              <div className={`flex items-center gap-2 ${hasPermission("manage_courses") ? "" : "opacity-50"}`}>
+                <div className={`w-2 h-2 rounded-full ${hasPermission("manage_courses") ? "bg-success" : "bg-error"}`}></div>
+                <span className="text-sm">Create and manage courses</span>
+              </div>
+              <div className={`flex items-center gap-2 ${hasPermission("request_shifts") ? "" : "opacity-50"}`}>
+                <div className={`w-2 h-2 rounded-full ${hasPermission("request_shifts") ? "bg-success" : "bg-error"}`}></div>
+                <span className="text-sm">Request shift assignments</span>
+              </div>
+              <div className={`flex items-center gap-2 ${hasPermission("approve_shifts") ? "" : "opacity-50"}`}>
+                <div className={`w-2 h-2 rounded-full ${hasPermission("approve_shifts") ? "bg-success" : "bg-error"}`}></div>
+                <span className="text-sm">Approve shift requests</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -221,6 +330,8 @@ function StaffHomePage({ user, hasPermission }: { user: any, hasPermission: (p: 
 
 // Customer Home Page
 function CustomerHomePage({ user, hasPermission }: { user: any, hasPermission: (p: string) => boolean }) {
+  const effective = user?.effectiveRole;
+
   return (
     <>
       {/* Customer Welcome */}
@@ -229,6 +340,10 @@ function CustomerHomePage({ user, hasPermission }: { user: any, hasPermission: (
           <div className="max-w-md">
             <h1 className="text-4xl font-bold">Welcome Back!</h1>
             <p className="py-4">Hi {user?.name}! Explore our tools and courses, manage your bookings and enrollments.</p>
+            <div className="flex justify-center gap-2 flex-wrap">
+              <div className="badge badge-secondary">Customer</div>
+              {effective?.rentalApprovedTag && <div className="badge badge-success">Rental Approved</div>}
+            </div>
           </div>
         </div>
       </div>
@@ -240,11 +355,17 @@ function CustomerHomePage({ user, hasPermission }: { user: any, hasPermission: (
             <h2 className="card-title">🔧 Tool Rental</h2>
             <p>Browse our professional tool collection and make rental requests.</p>
             <div className="card-actions">
-              <Link to="/tools" className="btn btn-primary">Browse Tools</Link>
+              <Link to="/tools" className="btn btn-primary">
+                {hasPermission("request_tool_rentals") ? "Request Rentals" : "Browse Tools"}
+              </Link>
             </div>
-            {hasPermission("request_tool_rentals") && (
-              <div className="badge badge-success">Rental Approved</div>
-            )}
+            <div className="mt-2">
+              {hasPermission("request_tool_rentals") ? (
+                <div className="badge badge-success badge-sm">Can Request Rentals</div>
+              ) : (
+                <div className="badge badge-warning badge-sm">View Only</div>
+              )}
+            </div>
           </div>
         </div>
 
@@ -255,27 +376,88 @@ function CustomerHomePage({ user, hasPermission }: { user: any, hasPermission: (
             <div className="card-actions">
               <Link to="/courses" className="btn btn-secondary">View Courses</Link>
             </div>
+            <div className="badge badge-info badge-sm">Enrollment Available</div>
           </div>
         </div>
       </div>
 
-      {/* Account Status */}
-      <div className="card bg-base-100 shadow-xl">
-        <div className="card-body">
-          <h2 className="card-title">Account Status</h2>
-          <div className="flex gap-2">
-            <div className="badge badge-primary">Customer</div>
-            {hasPermission("request_tool_rentals") ? (
-              <div className="badge badge-success">Rental Approved</div>
-            ) : (
-              <div className="badge badge-warning">Rental Pending Approval</div>
+      {/* Customer Capabilities */}
+      <div className="grid md:grid-cols-2 gap-6">
+        <div className="card bg-base-100 shadow-xl">
+          <div className="card-body">
+            <h2 className="card-title">Account Status</h2>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="font-medium">Customer Access</div>
+                  <div className="text-xs opacity-70">Browse services and make requests</div>
+                </div>
+                <div className="badge badge-secondary">Active</div>
+              </div>
+
+              {effective?.rentalApprovedTag ? (
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="font-medium">Tool Rental Access</div>
+                    <div className="text-xs opacity-70">Approved to request tool rentals</div>
+                  </div>
+                  <div className="badge badge-success">Approved</div>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="font-medium">Tool Rental Access</div>
+                    <div className="text-xs opacity-70">Contact staff for rental approval</div>
+                  </div>
+                  <div className="badge badge-warning">Pending</div>
+                </div>
+              )}
+
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="font-medium">Course Enrollment</div>
+                  <div className="text-xs opacity-70">Can enroll in available courses</div>
+                </div>
+                <div className="badge badge-info">Available</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="card bg-base-100 shadow-xl">
+          <div className="card-body">
+            <h2 className="card-title">Available Services</h2>
+            <div className="space-y-2">
+              <div className={`flex items-center gap-2 ${hasPermission("browse_tools") ? "" : "opacity-50"}`}>
+                <div className={`w-2 h-2 rounded-full ${hasPermission("browse_tools") ? "bg-success" : "bg-error"}`}></div>
+                <span className="text-sm">Browse tool catalog</span>
+              </div>
+              <div className={`flex items-center gap-2 ${hasPermission("request_tool_rentals") ? "" : "opacity-50"}`}>
+                <div className={`w-2 h-2 rounded-full ${hasPermission("request_tool_rentals") ? "bg-success" : "bg-error"}`}></div>
+                <span className="text-sm">Request tool rentals</span>
+              </div>
+              <div className={`flex items-center gap-2 ${hasPermission("browse_courses") ? "" : "opacity-50"}`}>
+                <div className={`w-2 h-2 rounded-full ${hasPermission("browse_courses") ? "bg-success" : "bg-error"}`}></div>
+                <span className="text-sm">View course information</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-success"></div>
+                <span className="text-sm">Enroll in courses</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-success"></div>
+                <span className="text-sm">Contact support</span>
+              </div>
+            </div>
+
+            {!hasPermission("request_tool_rentals") && (
+              <div className="mt-4 p-3 rounded bg-warning/10 border border-warning/20">
+                <p className="text-sm">
+                  <strong>Get Rental Access:</strong> Contact our staff to get approved for tool rental requests.
+                </p>
+              </div>
             )}
           </div>
-          {!hasPermission("request_tool_rentals") && (
-            <p className="text-sm opacity-70 mt-2">
-              Contact staff to get approved for tool rentals
-            </p>
-          )}
         </div>
       </div>
     </>

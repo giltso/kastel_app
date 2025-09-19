@@ -29,16 +29,38 @@ export function RoleEmulator() {
   const effective = user.effectiveRole;
 
   const handleToggle = async (field: string, value: boolean) => {
-    const updates: Record<string, boolean> = { [field]: value };
+    // Start with current state to preserve other fields
+    const currentState = {
+      isStaff: effective.isStaff,
+      workerTag: effective.workerTag,
+      instructorTag: effective.instructorTag,
+      managerTag: effective.managerTag,
+      rentalApprovedTag: effective.rentalApprovedTag,
+    };
+
+    // Apply the specific change
+    const updates = { ...currentState, [field]: value };
 
     // Enforce business rule: Manager tag requires Worker tag
-    if (field === 'managerTag' && value && !effective.workerTag) {
+    if (field === 'managerTag' && value && !updates.workerTag) {
       updates.workerTag = true;
     }
 
     // If removing worker tag, also remove manager tag
-    if (field === 'workerTag' && !value && effective.managerTag) {
+    if (field === 'workerTag' && !value && updates.managerTag) {
       updates.managerTag = false;
+    }
+
+    // Special handling for Staff toggle - reset tags when becoming non-staff
+    if (field === 'isStaff' && !value) {
+      updates.workerTag = false;
+      updates.instructorTag = false;
+      updates.managerTag = false;
+    }
+
+    // When switching to staff, don't automatically reset customer tags
+    if (field === 'isStaff' && value) {
+      updates.rentalApprovedTag = false; // Staff can't have rental approval
     }
 
     try {
@@ -174,14 +196,59 @@ export function RoleEmulator() {
                 </div>
               )}
 
-              {/* Quick Reset */}
-              <div className="pt-2 border-t border-base-300">
-                <button
-                  className="btn btn-ghost btn-sm w-full text-xs"
-                  onClick={() => handleToggle('isStaff', false)}
-                >
-                  Reset to Guest
-                </button>
+              {/* Quick Presets */}
+              <div className="pt-2 border-t border-base-300 space-y-2">
+                <div className="text-xs font-medium opacity-70">Quick Presets:</div>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    className="btn btn-ghost btn-xs"
+                    onClick={() => switchRole({
+                      isStaff: false,
+                      workerTag: false,
+                      instructorTag: false,
+                      managerTag: false,
+                      rentalApprovedTag: false,
+                    })}
+                  >
+                    Guest
+                  </button>
+                  <button
+                    className="btn btn-ghost btn-xs"
+                    onClick={() => switchRole({
+                      isStaff: false,
+                      workerTag: false,
+                      instructorTag: false,
+                      managerTag: false,
+                      rentalApprovedTag: true,
+                    })}
+                  >
+                    Customer+
+                  </button>
+                  <button
+                    className="btn btn-ghost btn-xs"
+                    onClick={() => switchRole({
+                      isStaff: true,
+                      workerTag: true,
+                      instructorTag: false,
+                      managerTag: false,
+                      rentalApprovedTag: false,
+                    })}
+                  >
+                    Worker
+                  </button>
+                  <button
+                    className="btn btn-ghost btn-xs"
+                    onClick={() => switchRole({
+                      isStaff: true,
+                      workerTag: true,
+                      instructorTag: false,
+                      managerTag: true,
+                      rentalApprovedTag: false,
+                    })}
+                  >
+                    Manager
+                  </button>
+                </div>
               </div>
             </div>
           </div>
