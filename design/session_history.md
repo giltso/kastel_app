@@ -2,6 +2,40 @@
 
 detailed history of all sessions. to be updated on new session
 
+### Session 25 - September 19, 2025
+
+**Goals**: Fix site access based on role permissions with clean V2 interface
+
+**Major Work Completed**:
+- ✅ **Fixed Customer Sub-tags in Role Emulator**: Resolved authentication property access issue
+  - Problem: Customer sub-tags section not appearing due to incorrect `user?.isAuthenticated` check
+  - Solution: Updated to use `isAuthenticated` property from `usePermissionsV2` hook directly
+  - Result: Customer Tags section now displays with Tool Renter toggle working correctly
+- ✅ **Removed All V1 System References**: Cleaned V2 interface completely
+  - Removed "V1 Legacy" navigation links from both desktop and mobile
+  - Removed "View V1 Legacy System →" button from homepage
+  - Pure V2 experience now available for all role emulations
+- ✅ **Navigation Permission System**: Updated to use V2 permission checks
+  - Tool Rental link requires `request_tool_rentals` permission
+  - Courses link requires `browse_courses` permission
+  - Guest users now see only Home navigation as intended
+
+**Current Role System Status**:
+- Customer role emulation: ✅ Working with rental approval toggle
+- Guest role emulation: ✅ Working with clean minimal interface
+- Staff role emulation: ✅ Working with tag-based permissions
+- Navigation access control: ✅ Fully functional based on V2 permissions
+
+**Pending for Next Session**:
+- ❌ **Staff+Worker Tool Rental Access**: Need to add tool rental permission for Staff+Worker combination
+  - Current: Only Customers with rental approval can access tool rental
+  - Required: Staff+Worker should also have access as operational entity
+
+**Technical Notes**:
+- Authentication property access pattern established: Use `isAuthenticated` from hook, not `user?.isAuthenticated`
+- V2 permission system working correctly for navigation control
+- Role emulator UI fully functional for testing all permission combinations
+
 ### Session 24 - September 18, 2025
 
 **Goals**: Complete suggestion system removal and fix role emulation system for V2 implementation

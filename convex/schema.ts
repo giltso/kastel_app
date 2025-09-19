@@ -13,6 +13,7 @@ export default defineSchema({
     isStaff: v.optional(v.boolean()), // Base role: Staff vs Customer
     workerTag: v.optional(v.boolean()), // Staff + Worker tag: operational capabilities
     instructorTag: v.optional(v.boolean()), // Staff + Instructor tag: course management
+    toolHandlerTag: v.optional(v.boolean()), // Staff + Tool Handler tag: tool rental management
     managerTag: v.optional(v.boolean()), // Staff + Manager tag: approvals (requires workerTag)
     rentalApprovedTag: v.optional(v.boolean()), // Customer + Rental Approved: can request tool rentals
 
@@ -21,6 +22,7 @@ export default defineSchema({
     emulatingIsStaff: v.optional(v.boolean()),
     emulatingWorkerTag: v.optional(v.boolean()),
     emulatingInstructorTag: v.optional(v.boolean()),
+    emulatingToolHandlerTag: v.optional(v.boolean()),
     emulatingManagerTag: v.optional(v.boolean()),
     emulatingRentalApprovedTag: v.optional(v.boolean()),
   }).index("by_clerkId", ["clerkId"]),

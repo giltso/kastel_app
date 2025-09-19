@@ -8,7 +8,8 @@
 ## 🎯 LUZ SYSTEM OVERVIEW
 
 ### **LUZ = Unified Scheduling Hub**
-The LUZ (Light/Luz in Spanish) system provides a single interface for all time-based activities: shifts, courses, and tool rentals. The name symbolizes "bringing light" to complex scheduling challenges.
+The LUZ (Light/Luz in Spanish) system provides a single interface for all time-based activities: shifts, courses, and tool rentals. The name symbolizes "bringing light" to complex scheduling challenges. 
+
 
 ### **Core Architecture: 70/30 Split Interface**
 ```

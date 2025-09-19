@@ -5,7 +5,7 @@ import { api } from "../../convex/_generated/api";
 import { usePermissionsV2 } from "@/hooks/usePermissionsV2";
 
 export function RoleEmulator() {
-  const { user, canEmulateRoles } = usePermissionsV2();
+  const { user, canEmulateRoles, isAuthenticated } = usePermissionsV2();
   const switchRole = useMutation(api.users_v2.switchV2Role);
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -34,6 +34,7 @@ export function RoleEmulator() {
       isStaff: effective.isStaff,
       workerTag: effective.workerTag,
       instructorTag: effective.instructorTag,
+      toolHandlerTag: effective.toolHandlerTag,
       managerTag: effective.managerTag,
       rentalApprovedTag: effective.rentalApprovedTag,
     };
@@ -55,6 +56,7 @@ export function RoleEmulator() {
     if (field === 'isStaff' && !value) {
       updates.workerTag = false;
       updates.instructorTag = false;
+      updates.toolHandlerTag = false;
       updates.managerTag = false;
       // When switching from Staff to Customer, preserve authentication
       // Customer state will be handled by the UI logic
@@ -75,7 +77,7 @@ export function RoleEmulator() {
 
   const getRoleDisplayText = () => {
     // Not authenticated (shouldn't happen in V2 dev system, but handle gracefully)
-    if (!user?.isAuthenticated) {
+    if (!isAuthenticated) {
       return "Guest";
     }
 
@@ -84,13 +86,14 @@ export function RoleEmulator() {
       const staffTags = [];
       if (effective.workerTag) staffTags.push("W");
       if (effective.instructorTag) staffTags.push("I");
+      if (effective.toolHandlerTag) staffTags.push("T");
       if (effective.managerTag) staffTags.push("M");
 
       return `Staff${staffTags.length > 0 ? `+${staffTags.join("")}` : ""}`;
     }
 
-    // Customer base role
-    if (effective.rentalApprovedTag) {
+    // Customer base role (authenticated, not staff)
+    if (isAuthenticated && !effective.isStaff) {
       const customerTags = [];
       if (effective.rentalApprovedTag) customerTags.push("R"); // Tool Renter
       // TODO: Add student tag when implemented
@@ -126,7 +129,7 @@ export function RoleEmulator() {
 
             {/* Base Role Selection */}
             <div className="space-y-3">
-              {/* Guest/Customer/Staff Toggle */}
+              {/* Customer/Staff Toggle */}
               <div className="p-2 rounded bg-base-200">
                 <div className="text-sm font-medium mb-2">Base Role</div>
                 <div className="join w-full">
@@ -134,31 +137,15 @@ export function RoleEmulator() {
                     className="join-item btn btn-sm flex-1"
                     type="radio"
                     name="baseRole"
-                    aria-label="Guest"
-                    checked={user?.isAuthenticated && !effective.isStaff && !effective.rentalApprovedTag}
-                    onChange={async () => {
-                      // Guest = authenticated but no permissions
-                      await switchRole({
-                        isStaff: false,
-                        workerTag: false,
-                        instructorTag: false,
-                        managerTag: false,
-                        rentalApprovedTag: false,
-                      });
-                    }}
-                  />
-                  <input
-                    className="join-item btn btn-sm flex-1"
-                    type="radio"
-                    name="baseRole"
                     aria-label="Customer"
-                    checked={user?.isAuthenticated && !effective.isStaff}
+                    checked={isAuthenticated && !effective.isStaff}
                     onChange={async () => {
                       // Customer = authenticated, not staff, with rental approval
                       await switchRole({
                         isStaff: false,
                         workerTag: false,
                         instructorTag: false,
+                        toolHandlerTag: false,
                         managerTag: false,
                         rentalApprovedTag: true, // Customer needs rental approval
                       });
@@ -214,6 +201,22 @@ export function RoleEmulator() {
 
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
+                      <ShoppingBag className="h-3 w-3 text-accent" />
+                      <div>
+                        <div className="text-sm">Tool Handler Tag</div>
+                        <div className="text-xs opacity-70">Tool rental management</div>
+                      </div>
+                    </div>
+                    <input
+                      type="checkbox"
+                      className="toggle toggle-accent toggle-sm"
+                      checked={effective.toolHandlerTag}
+                      onChange={(e) => handleToggle('toolHandlerTag', e.target.checked)}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
                       <Crown className="h-3 w-3 text-warning" />
                       <div>
                         <div className="text-sm">Manager Tag</div>
@@ -232,7 +235,7 @@ export function RoleEmulator() {
               )}
 
               {/* Customer Sub-tags */}
-              {user?.isAuthenticated && !effective.isStaff && (
+              {isAuthenticated && !effective.isStaff && (
                 <div className="ml-4 space-y-2 border-l-2 border-accent/20 pl-3">
                   <div className="text-xs font-medium opacity-70 mb-2">Customer Tags:</div>
 
@@ -281,18 +284,7 @@ export function RoleEmulator() {
                       isStaff: false,
                       workerTag: false,
                       instructorTag: false,
-                      managerTag: false,
-                      rentalApprovedTag: false,
-                    })}
-                  >
-                    Guest
-                  </button>
-                  <button
-                    className="btn btn-ghost btn-xs"
-                    onClick={() => switchRole({
-                      isStaff: false,
-                      workerTag: false,
-                      instructorTag: false,
+                      toolHandlerTag: false,
                       managerTag: false,
                       rentalApprovedTag: true,
                     })}
@@ -305,6 +297,7 @@ export function RoleEmulator() {
                       isStaff: true,
                       workerTag: true,
                       instructorTag: false,
+                      toolHandlerTag: false,
                       managerTag: false,
                       rentalApprovedTag: false,
                     })}
@@ -315,8 +308,22 @@ export function RoleEmulator() {
                     className="btn btn-ghost btn-xs"
                     onClick={() => switchRole({
                       isStaff: true,
+                      workerTag: false,
+                      instructorTag: false,
+                      toolHandlerTag: true,
+                      managerTag: false,
+                      rentalApprovedTag: false,
+                    })}
+                  >
+                    Tool Handler
+                  </button>
+                  <button
+                    className="btn btn-ghost btn-xs"
+                    onClick={() => switchRole({
+                      isStaff: true,
                       workerTag: true,
                       instructorTag: false,
+                      toolHandlerTag: false,
                       managerTag: true,
                       rentalApprovedTag: false,
                     })}

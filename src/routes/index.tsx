@@ -46,11 +46,6 @@ function V2HomePage() {
               <UserRoleDebugV2 />
               <RoleEmulator />
             </div>
-            <div className="mt-4">
-              <Link to="/v1" className="btn btn-outline btn-sm">
-                View V1 Legacy System →
-              </Link>
-            </div>
           </div>
         </div>
       )}

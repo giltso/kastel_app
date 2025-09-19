@@ -13,7 +13,8 @@ export type V2Permission =
   | "request_shifts"           // isStaff + workerTag
   | "approve_shifts"           // isStaff + workerTag + managerTag
   | "manage_courses"           // isStaff + instructorTag
-  | "request_tool_rentals"     // !isStaff + rentalApprovedTag
+  | "manage_tools"             // isStaff + toolHandlerTag
+  | "request_tool_rentals"     // (!isStaff + rentalApprovedTag) OR (isStaff + toolHandlerTag)
   | "access_worker_portal"     // isStaff + workerTag (for compatibility)
   | "access_manager_portal"    // isStaff + workerTag + managerTag (for compatibility)
   | "emulate_roles";           // role === "dev"
@@ -34,7 +35,14 @@ export function usePermissionsV2() {
 
   const checkPermission = (permission: V2Permission): boolean => {
     // Guest permissions (unauthenticated users OR Guest emulation)
-    const isGuestMode = !isAuthenticated || (user?.effectiveRole && !user.effectiveRole.isStaff && !user.effectiveRole.rentalApprovedTag);
+    // Guest emulation = authenticated but no staff role AND no customer permissions
+    const isGuestMode = !isAuthenticated || (user?.effectiveRole &&
+      !user.effectiveRole.isStaff &&
+      !user.effectiveRole.rentalApprovedTag &&
+      !user.effectiveRole.workerTag &&
+      !user.effectiveRole.instructorTag &&
+      !user.effectiveRole.toolHandlerTag &&
+      !user.effectiveRole.managerTag);
 
     if (isGuestMode) {
       switch (permission) {
@@ -79,8 +87,13 @@ export function usePermissionsV2() {
       case "manage_courses":
         return effective.isStaff && effective.instructorTag;
 
+      case "manage_tools":
+        return effective.isStaff && effective.toolHandlerTag;
+
       case "request_tool_rentals":
-        return !effective.isStaff && effective.rentalApprovedTag;
+        // Tool rental access: Staff+ToolHandler OR Customer+RentalApproved
+        return (effective.isStaff && effective.toolHandlerTag) ||
+               (!effective.isStaff && effective.rentalApprovedTag);
 
       // Legacy compatibility permissions
       case "access_worker_portal":
@@ -109,6 +122,7 @@ export function usePermissionsV2() {
     isCustomer: isAuthenticated && !(user?.effectiveRole?.isStaff ?? false),
     hasWorkerTag: user?.effectiveRole?.workerTag ?? false,
     hasInstructorTag: user?.effectiveRole?.instructorTag ?? false,
+    hasToolHandlerTag: user?.effectiveRole?.toolHandlerTag ?? false,
     hasManagerTag: user?.effectiveRole?.managerTag ?? false,
     hasRentalApprovedTag: user?.effectiveRole?.rentalApprovedTag ?? false,
     canEmulateRoles: user?.role === "dev",
@@ -162,6 +176,11 @@ export function useHasManagerTagV2() {
 export function useHasInstructorTagV2() {
   const { hasInstructorTag } = usePermissionsV2();
   return hasInstructorTag;
+}
+
+export function useHasToolHandlerTagV2() {
+  const { hasToolHandlerTag } = usePermissionsV2();
+  return hasToolHandlerTag;
 }
 
 export function useIsDevV2() {

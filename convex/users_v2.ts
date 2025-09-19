@@ -12,6 +12,7 @@ export function getEffectiveV2Role(user: Doc<"users">) {
       isStaff: user.emulatingIsStaff ?? false,
       workerTag: user.emulatingWorkerTag ?? false,
       instructorTag: user.emulatingInstructorTag ?? false,
+      toolHandlerTag: user.emulatingToolHandlerTag ?? false,
       managerTag: user.emulatingManagerTag ?? false,
       rentalApprovedTag: user.emulatingRentalApprovedTag ?? false,
     };
@@ -22,6 +23,7 @@ export function getEffectiveV2Role(user: Doc<"users">) {
     isStaff: user.isStaff ?? false,
     workerTag: user.workerTag ?? false,
     instructorTag: user.instructorTag ?? false,
+    toolHandlerTag: user.toolHandlerTag ?? false,
     managerTag: user.managerTag ?? false,
     rentalApprovedTag: user.rentalApprovedTag ?? false,
   };
@@ -38,10 +40,16 @@ export function hasV2Permission(user: Doc<"users">, permission: string): boolean
       return effective.isStaff && effective.workerTag;
     case "instructor":
       return effective.isStaff && effective.instructorTag;
+    case "tool_handler":
+      return effective.isStaff && effective.toolHandlerTag;
     case "manager":
       return effective.isStaff && effective.workerTag && effective.managerTag;
     case "rental_approved":
       return !effective.isStaff && effective.rentalApprovedTag;
+    case "tool_rentals":
+      // Tool rental access: Staff+ToolHandler OR Customer+RentalApproved
+      return (effective.isStaff && effective.toolHandlerTag) ||
+             (!effective.isStaff && effective.rentalApprovedTag);
     default:
       return false;
   }
@@ -76,6 +84,7 @@ export const switchV2Role = mutation({
     isStaff: v.optional(v.boolean()),
     workerTag: v.optional(v.boolean()),
     instructorTag: v.optional(v.boolean()),
+    toolHandlerTag: v.optional(v.boolean()),
     managerTag: v.optional(v.boolean()),
     rentalApprovedTag: v.optional(v.boolean()),
   },
@@ -101,6 +110,7 @@ export const switchV2Role = mutation({
       emulatingIsStaff: args.isStaff,
       emulatingWorkerTag: args.workerTag,
       emulatingInstructorTag: args.instructorTag,
+      emulatingToolHandlerTag: args.toolHandlerTag,
       emulatingManagerTag: args.managerTag,
       emulatingRentalApprovedTag: args.rentalApprovedTag,
     });
@@ -117,6 +127,7 @@ export const createOrUpdateUserV2 = mutation({
     isStaff: v.optional(v.boolean()),
     workerTag: v.optional(v.boolean()),
     instructorTag: v.optional(v.boolean()),
+    toolHandlerTag: v.optional(v.boolean()),
     managerTag: v.optional(v.boolean()),
     rentalApprovedTag: v.optional(v.boolean()),
   },
@@ -134,6 +145,7 @@ export const createOrUpdateUserV2 = mutation({
         isStaff: args.isStaff,
         workerTag: args.workerTag,
         instructorTag: args.instructorTag,
+        toolHandlerTag: args.toolHandlerTag,
         managerTag: args.managerTag,
         rentalApprovedTag: args.rentalApprovedTag,
       });
@@ -147,6 +159,7 @@ export const createOrUpdateUserV2 = mutation({
         isStaff: args.isStaff,
         workerTag: args.workerTag,
         instructorTag: args.instructorTag,
+        toolHandlerTag: args.toolHandlerTag,
         managerTag: args.managerTag,
         rentalApprovedTag: args.rentalApprovedTag,
       });
@@ -179,6 +192,7 @@ export const ensureUser = mutation({
         isStaff: true,
         workerTag: true,
         instructorTag: false,
+        toolHandlerTag: false,
         managerTag: false,
         rentalApprovedTag: false,
       });

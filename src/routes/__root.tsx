@@ -38,8 +38,7 @@ export const Route = createRootRouteWithContext<{
 });
 
 function NavigationLinks({ onLinkClick }: { onLinkClick: () => void }) {
-  const { checkPermission, user } = usePermissionsV2();
-  const isDev = user?.role === "dev";
+  const { checkPermission } = usePermissionsV2();
   
   return (
     <>
@@ -137,25 +136,12 @@ function NavigationLinks({ onLinkClick }: { onLinkClick: () => void }) {
           Pro Help
         </Link>
       )}
-      {isDev && (
-        <Link
-          to="/v1"
-          className="btn btn-ghost btn-warning"
-          activeProps={{
-            className: "btn btn-ghost btn-active",
-          }}
-          onClick={onLinkClick}
-        >
-          V1 Legacy
-        </Link>
-      )}
     </>
   );
 }
 
 function MobileNavigationLinks({ onLinkClick }: { onLinkClick: () => void }) {
-  const { checkPermission, user } = usePermissionsV2();
-  const isDev = user?.role === "dev";
+  const { checkPermission } = usePermissionsV2();
   
   return (
     <>
@@ -266,20 +252,6 @@ function MobileNavigationLinks({ onLinkClick }: { onLinkClick: () => void }) {
             className="flex items-center p-2"
           >
             Pro Help
-          </Link>
-        </li>
-      )}
-      {isDev && (
-        <li>
-          <Link
-            to="/v1"
-            onClick={onLinkClick}
-            activeProps={{
-              className: "active",
-            }}
-            className="flex items-center p-2"
-          >
-            V1 Legacy
           </Link>
         </li>
       )}

@@ -276,14 +276,14 @@
 
 ### **Role Structure: Base + Tags**
 ```
-├── Guest (unauthenticated users)
+├── Guest (unauthenticated users - handled by logout, not emulator)
 │   └── Permissions: Home page access only, can view service offerings, can sign up
 ├── Staff (base role for internal users)
 │   └── Tags (additive, can combine):
 │       ├── Worker (operational staff capabilities)
 │       ├── Instructor (teaching capabilities)
 │       │   └── Course Writer (per-course: extends Instructor with ownership)
-│       ├── Tool Handler (future: may absorb tool handling from Worker)
+│       ├── Tool Handler (tool management and rental operations)
 │       └── Manager (requires Worker tag, adds management)
 └── Customer (base role for external users)
     └── Temporary Access Tags (per-item basis):
@@ -292,7 +292,7 @@
 ```
 
 ### **Role Definitions**
-- **Guest**: Unauthenticated users with minimal access (home page, service preview, sign-up only)
+- **Guest**: Unauthenticated users with minimal access (emulated via logout, not role switcher)
 - **Staff**: Base internal team member role (authenticated)
 - **Customer**: Base external user role (authenticated)
 
@@ -300,7 +300,7 @@
 - **Worker**: Operational staff capabilities (can be added to Staff)
 - **Instructor**: Teaching and course management capabilities (can be added to Staff)
   - **Course Writer**: Per-course extension of Instructor with ownership permissions (gained when creating a course)
-- **Tool Handler**: *Future role* - May absorb tool handling responsibilities from Worker (not yet implemented)
+- **Tool Handler**: Tool management and rental processing capabilities (required for tool rental access)
 - **Manager**: Management and approval capabilities (requires Worker tag, always additive)
 
 ### **Customer Tags (Temporary & Item-Specific)**
@@ -309,17 +309,17 @@
 
 ### **Permission Matrix**
 ```
-Feature          | Guest | Staff | Staff    | Staff       | Staff           | Customer
-                |       | Base  | +Worker  | +Instructor | +Worker+Manager |
-----------------|-------|-------|----------|-------------|-----------------|----------
-Home Page       | ✓     | ✓     | ✓        | ✓           | ✓               | ✓
-Service Preview | ✓     | ✓     | ✓        | ✓           | ✓               | ✓
-Sign Up         | ✓     | -     | -        | -           | -               | -
-Tool Browsing   | ✗     | ✓     | ✓        | ✓           | ✓               | ✓
-Course Browsing | ✗     | ✓     | ✓        | ✓           | ✓               | ✓
-Shift Management| ✗     | [ ]   | [ ]      | [ ]         | [ ]             | ✗
-Tool Rentals    | ✗     | [ ]   | [ ]      | [ ]         | [ ]             | [ ]
-Course System   | ✗     | [ ]   | [ ]      | [ ]         | [ ]             | [ ]
+Feature          | Guest | Staff | Staff    | Staff       | Staff         | Staff           | Customer
+                |       | Base  | +Worker  | +Instructor | +ToolHandler  | +Worker+Manager |
+----------------|-------|-------|----------|-------------|---------------|-----------------|----------
+Home Page       | ✓     | ✓     | ✓        | ✓           | ✓             | ✓               | ✓
+Service Preview | ✓     | ✓     | ✓        | ✓           | ✓             | ✓               | ✓
+Sign Up         | ✓     | -     | -        | -           | -             | -               | -
+Tool Browsing   | ✗     | ✓     | ✓        | ✓           | ✓             | ✓               | ✓
+Course Browsing | ✗     | ✓     | ✓        | ✓           | ✓             | ✓               | ✓
+Shift Management| ✗     | [ ]   | [ ]      | [ ]         | [ ]           | [ ]             | ✗
+Tool Rentals    | ✗     | ✗     | ✗        | ✗           | ✓             | ✓               | [ ]
+Course System   | ✗     | [ ]   | [ ]      | [ ]         | [ ]           | [ ]             | [ ]
 ```
 
 ### **Role Requirements & Conditionals**
@@ -333,7 +333,7 @@ Course System   | ✗     | [ ]   | [ ]      | [ ]         | [ ]             | [
 - **Worker**: Requires Staff
 - **Instructor**: Requires Staff
 - **Course Writer**: Requires Instructor (which requires Staff)
-- **Tool Handler**: Requires Staff (*future role*)
+- **Tool Handler**: Requires Staff (required for tool rental access)
 - **Manager**: Requires Worker (which requires Staff)
 
 **Customer Tags (conditional requirements):**
@@ -408,7 +408,7 @@ Course System   | ✗     | [ ]   | [ ]      | [ ]         | [ ]             | [
 
 ---
 
-## 📋 Implementation Planning
+## 📋 Implementation Planning (not updated)
 
 ### **Phase 1: Foundation** ⚠️ **PARTIAL COMPLETION WITH ISSUES**
 - [x] *Define new role system implementation*
