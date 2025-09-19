@@ -311,7 +311,6 @@ function RootComponent() {
               </div>
             </Authenticated>
             <Unauthenticated>
-              <AuthStatusDebug />
               <header className="navbar bg-base-100 shadow-sm border-b border-base-300">
                 <div className="flex justify-between w-full px-4">
                   <div className="navbar-start">
@@ -362,19 +361,3 @@ function EnsureUser() {
   return null;
 }
 
-function AuthStatusDebug() {
-  const { isLoaded, isSignedIn, user } = useUser();
-  const { isAuthenticated } = useClerkAuth();
-
-  if (import.meta.env.PROD) return null;
-
-  return (
-    <div className="bg-info text-info-content p-2 text-xs font-mono">
-      <strong>Auth Debug:</strong> Clerk Loaded: {isLoaded ? "✓" : "✗"} |
-      Signed In: {isSignedIn ? "✓" : "✗"} |
-      User: {user ? user.fullName || user.primaryEmailAddress?.emailAddress : "None"} |
-      Convex Auth: {isAuthenticated ? "✓" : "✗"} |
-      Clerk Key: {import.meta.env.VITE_CLERK_PUBLISHABLE_KEY ? "✓" : "✗"}
-    </div>
-  );
-}

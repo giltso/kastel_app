@@ -1,7 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { usePermissionsV2 } from "@/hooks/usePermissionsV2";
-import { RoleEmulator } from "@/components/RoleEmulator";
-import { UserRoleDebugV2 } from "@/components/UserRoleDebugV2";
 import { EnsureUserV2 } from "@/components/EnsureUserV2";
 import { KastelLogo } from "@/components/KastelLogo";
 
@@ -16,8 +14,7 @@ function V2HomePage() {
     isLoading,
     isGuest,
     isStaff,
-    isCustomer,
-    canEmulateRoles
+    isCustomer
   } = usePermissionsV2();
 
   if (isLoading) {
@@ -33,30 +30,17 @@ function V2HomePage() {
     return <GuestHomePage />;
   }
 
-  // Authenticated user interface with role emulation for dev
+  // Authenticated user interface
   return (
-    <div className="max-w-4xl mx-auto">
+    <>
       <EnsureUserV2 />
-
-      {/* Development Tools (dev only) */}
-      {canEmulateRoles && (
-        <div className="card bg-base-100 shadow-xl mb-6">
-          <div className="card-body">
-            <h2 className="card-title">V2 Development Tools</h2>
-            <div className="flex gap-4 items-center">
-              <UserRoleDebugV2 />
-              <RoleEmulator />
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Staff Interface */}
       {isStaff && <StaffHomePage user={user} hasPermission={hasPermission} />}
 
       {/* Customer Interface */}
       {isCustomer && <CustomerHomePage user={user} hasPermission={hasPermission} />}
-    </div>
+    </>
   );
 }
 
