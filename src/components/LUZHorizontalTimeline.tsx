@@ -105,8 +105,8 @@ export function LUZHorizontalTimeline({
                         key={assignment._id}
                         className={`absolute rounded px-2 py-1 ${
                           assignment.status === 'confirmed'
-                            ? 'bg-success/40 border border-success text-success-content'
-                            : 'bg-warning/40 border border-warning text-warning-content'
+                            ? 'bg-success/30 border border-success'
+                            : 'bg-warning/30 border border-warning'
                         }`}
                         style={{
                           left: `${(workerStartCol / shiftSpan) * 100}%`,
