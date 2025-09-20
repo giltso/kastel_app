@@ -130,11 +130,15 @@ export function LUZVerticalTimeline({
                             {/* Shift content can go here */}
                           </div>
 
-                          {/* Capacity indicators - embedded in shift, aligned with timeline */}
-                          <div className="absolute right-2 top-12" style={{ width: '40px', height: `${duration * 64}px` }}>
+                          {/* Capacity indicators - aligned with global timeline grid */}
+                          <div className="absolute right-2" style={{ width: '40px', top: '75px', height: `${duration * 64}px` }}>
                             {shift.hourlyRequirements?.map((hourReq, hourIndex) => {
                               const hourInt = parseInt(hourReq.hour.split(':')[0]);
-                              const rowPosition = (hourInt - startHour) * 64; // Align with 64px row height
+                              // Calculate position relative to global timeline (8AM = 0, each hour = 64px)
+                              const globalRowPosition = (hourInt - 8) * 64; // Global position from 8AM
+                              const shiftStartGlobal = (startHour - 8) * 64; // Shift start in global timeline
+                              const relativePosition = globalRowPosition - shiftStartGlobal; // Position within shift
+
                               const currentWorkers = assignmentsForDate?.filter(assignment => {
                                 const assignStart = parseInt(assignment.assignedHours[0]?.startTime.split(':')[0] || '0');
                                 const assignEnd = parseInt(assignment.assignedHours[0]?.endTime.split(':')[0] || '0');
@@ -155,7 +159,7 @@ export function LUZVerticalTimeline({
                                   key={hourReq.hour}
                                   className={`absolute ${hourColor} rounded text-center`}
                                   style={{
-                                    top: `${rowPosition + 32}px`, // Center in the hour row
+                                    top: `${relativePosition + 32}px`, // Align with timeline grid + center in row
                                     left: '0px',
                                     right: '0px',
                                     height: '20px',

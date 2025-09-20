@@ -166,11 +166,17 @@ export function LUZHorizontalTimeline({
                     );
                   })}
 
-                  {/* Capacity indicators - embedded in shift, aligned with timeline grid */}
+                  {/* Capacity indicators - aligned with global timeline grid */}
                   <div className="absolute bottom-2 left-0 right-0" style={{ height: '24px' }}>
                     {shift.hourlyRequirements?.map((hourReq, hourIndex) => {
                       const hourInt = parseInt(hourReq.hour.split(':')[0]);
-                      const hourPosition = ((hourInt - startHour) / (endHour - startHour)) * 100;
+                      // Calculate position relative to global 8AM-8PM grid (12 hours)
+                      const globalHourPosition = ((hourInt - 8) / 12) * 100; // Position in global timeline
+                      // Adjust to be relative to shift container position
+                      const shiftStartGlobal = ((startHour - 8) / 12) * 100;
+                      const shiftWidthGlobal = ((endHour - startHour) / 12) * 100;
+                      const relativePosition = ((globalHourPosition - shiftStartGlobal) / shiftWidthGlobal) * 100;
+
                       const currentWorkers = shiftWorkers.filter(assignment => {
                         const assignStart = parseInt(assignment.assignedHours[0]?.startTime.split(':')[0] || '0');
                         const assignEnd = parseInt(assignment.assignedHours[0]?.endTime.split(':')[0] || '0');
@@ -191,7 +197,7 @@ export function LUZHorizontalTimeline({
                           key={hourReq.hour}
                           className={`absolute ${hourColor} rounded text-center`}
                           style={{
-                            left: `${hourPosition}%`,
+                            left: `${relativePosition}%`,
                             top: '2px',
                             width: '32px',
                             height: '20px',
