@@ -106,16 +106,16 @@ export function LUZVerticalTimeline({
                           <div className={`${headerColorClasses} px-2 py-1 rounded-t`}>
                             <div className="flex justify-between items-center">
                               <div>
-                                <div className="font-medium text-sm">{shift.name}</div>
-                                <div className="text-xs text-base-content/70">
+                                <div className="font-medium text-sm text-base-content">{shift.name}</div>
+                                <div className="text-xs text-base-content/80">
                                   {shift.storeHours.openTime} - {shift.storeHours.closeTime}
                                 </div>
                               </div>
                               <div className="text-right">
-                                <div className="text-xs font-bold">
+                                <div className="text-xs font-bold text-base-content">
                                   {staffingStatus.currentWorkers}/{staffingStatus.minWorkers} workers
                                 </div>
-                                <div className={`badge badge-xs ${
+                                <div className={`badge badge-xs text-base-content ${
                                   staffingStatus.status === 'understaffed' ? 'badge-error' :
                                   staffingStatus.status === 'staffed' ? 'badge-success' : 'badge-warning'
                                 }`}>
@@ -125,9 +125,44 @@ export function LUZVerticalTimeline({
                             </div>
                           </div>
 
-                          {/* Workers area below header */}
-                          <div className="relative" style={{ height: `${duration * 64}px`, top: '0px' }}>
-                            {/* Worker content will be positioned in this area */}
+                          {/* Hourly capacity breakdown below header */}
+                          <div className="relative px-2 py-1" style={{ height: `${duration * 64}px` }}>
+                            {shift.hourlyRequirements?.map((hourReq, hourIndex) => {
+                              const hourInt = parseInt(hourReq.hour.split(':')[0]);
+                              const rowPosition = (hourInt - startHour) * 64;
+                              const currentWorkers = assignmentsForDate?.filter(assignment => {
+                                const assignStart = parseInt(assignment.assignedHours[0]?.startTime.split(':')[0] || '0');
+                                const assignEnd = parseInt(assignment.assignedHours[0]?.endTime.split(':')[0] || '0');
+                                return hourInt >= assignStart && hourInt < assignEnd && assignment.status === 'confirmed';
+                              }).length || 0;
+
+                              const hourStatus = currentWorkers < hourReq.minWorkers ? 'understaffed' :
+                                               currentWorkers === hourReq.minWorkers ? 'staffed' : 'overstaffed';
+
+                              const hourColor = {
+                                understaffed: 'bg-error/40 text-base-content',
+                                staffed: 'bg-success/40 text-base-content',
+                                overstaffed: 'bg-warning/40 text-base-content'
+                              }[hourStatus];
+
+                              return (
+                                <div
+                                  key={hourReq.hour}
+                                  className={`absolute left-1 right-1 ${hourColor} rounded px-1`}
+                                  style={{
+                                    top: `${rowPosition + 10}px`,
+                                    height: '20px',
+                                    fontSize: '10px',
+                                    lineHeight: '20px'
+                                  }}
+                                >
+                                  <div className="flex justify-between items-center">
+                                    <span>{hourReq.hour}</span>
+                                    <span>{currentWorkers}/{hourReq.minWorkers}</span>
+                                  </div>
+                                </div>
+                              );
+                            })}
                           </div>
                         </div>
                       );
@@ -159,8 +194,8 @@ export function LUZVerticalTimeline({
                         >
                           {/* Tab-style Header - Protected area at top */}
                           <div className="bg-secondary/30 border-b border-secondary/50 px-2 py-1 rounded-t">
-                            <div className="font-medium text-sm">{course.title}</div>
-                            <div className="text-xs text-base-content/70">
+                            <div className="font-medium text-sm text-base-content">{course.title}</div>
+                            <div className="text-xs text-base-content/80">
                               {course.schedule.startTime} - {course.schedule.endTime} • {course.enrolledStudents?.length || 0} students • {course.instructor?.name}
                             </div>
                           </div>
@@ -178,7 +213,7 @@ export function LUZVerticalTimeline({
                                   height: '22px',
                                 }}
                               >
-                                <div className="text-xs font-medium truncate">
+                                <div className="text-xs font-medium truncate text-base-content">
                                   {student.name}
                                 </div>
                               </div>
@@ -202,14 +237,17 @@ export function LUZVerticalTimeline({
             const topPos = 32 + (startRow * 64) + 50 + 8; // Account for protected header area (50px) + offset
             const height = duration * 64 - 16; // Smaller than shift blocks
 
-            // Calculate dynamic positioning within shift area
+            // Calculate dynamic positioning within shift area - match the column system above
             const hasShifts = shiftsForDate && shiftsForDate.length > 0;
             const hasCourses = coursesForDate && coursesForDate.length > 0;
-            const shiftAreaWidth = hasShifts && hasCourses ? 66.67 : 100; // 2/3 when courses present, 100% when shifts only
+            const totalColumns = hasShifts && hasCourses ? 3 : 1;
+            const shiftColumns = hasShifts ? (hasCourses ? 2 : 1) : 0;
+            const shiftAreaWidthPercent = hasShifts ? (shiftColumns / totalColumns) * 100 : 0;
 
-            // Distribute workers evenly within the shift area
-            const workerWidth = Math.min(shiftAreaWidth / assignmentsForDate.length, 25); // Max 25% width per worker
-            const leftOffset = 8 + (assignmentIndex * (shiftAreaWidth / assignmentsForDate.length)); // Dynamic spacing
+            // Distribute workers evenly within the shift area with proper padding
+            const totalWorkers = assignmentsForDate.length;
+            const workerWidthPercent = Math.min((shiftAreaWidthPercent - 4) / totalWorkers, 20); // Max 20% width per worker, -4% for padding
+            const leftOffsetPercent = 2 + (assignmentIndex * ((shiftAreaWidthPercent - 4) / totalWorkers)); // Start with 2% padding
 
             return (
               <div
@@ -222,13 +260,13 @@ export function LUZVerticalTimeline({
                 style={{
                   top: `${topPos}px`,
                   height: `${height}px`,
-                  left: `${leftOffset}%`,
-                  width: `${workerWidth}%`,
+                  left: `${leftOffsetPercent}%`,
+                  width: `${workerWidthPercent}%`,
                 }}
               >
-                <div className="text-xs font-medium">{assignment.worker?.name}</div>
-                <div className="text-xs">{assignment.assignedHours[0]?.startTime} - {assignment.assignedHours[0]?.endTime}</div>
-                <div className={`text-xs mt-1 px-1 rounded ${
+                <div className="text-xs font-medium text-base-content">{assignment.worker?.name}</div>
+                <div className="text-xs text-base-content">{assignment.assignedHours[0]?.startTime} - {assignment.assignedHours[0]?.endTime}</div>
+                <div className={`text-xs mt-1 px-1 rounded text-base-content ${
                   assignment.status === 'confirmed' ? 'bg-success/50' : 'bg-warning/50'
                 }`}>
                   {assignment.status}
