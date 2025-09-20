@@ -118,8 +118,8 @@ function LUZPage() {
       <div className="max-w-[1600px] mx-auto p-4">
         {/* LUZ Header */}
         <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <Nut className="w-8 h-8 text-amber-600" />
+          <div className="flex items-start gap-2">
+            <Nut className="w-6 h-6 text-amber-600 mt-1" />
             <div>
               <h1 className="text-3xl font-bold">LUZ</h1>
               <p className="text-base-content/70">Unified Scheduling Hub</p>
