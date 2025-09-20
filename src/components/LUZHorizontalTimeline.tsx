@@ -185,8 +185,8 @@ export function LUZHorizontalTimeline({
                   <div className="absolute bottom-2 left-2 right-2 h-6">
                     {shift.hourlyRequirements?.map((hourReq, hourIndex) => {
                       const hourInt = parseInt(hourReq.hour.split(':')[0]);
-                      // Position relative to shift duration only
-                      const relativePosition = ((hourInt - startHour) / (endHour - startHour)) * 100;
+                      // Position relative to shift duration, centered around +5% offset
+                      const relativePosition = ((hourInt - startHour) / (endHour - startHour)) * 100 + 5;
 
                       const currentWorkers = shiftWorkers.filter(assignment => {
                         const assignStart = parseInt(assignment.assignedHours[0]?.startTime.split(':')[0] || '0');

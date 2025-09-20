@@ -277,53 +277,6 @@ export function LUZVerticalTimeline({
             );
           })()}
 
-          {/* Worker Assignments */}
-          {assignmentsForDate && assignmentsForDate.map((assignment, assignmentIndex) => {
-            const startHour = parseInt(assignment.assignedHours[0]?.startTime.split(':')[0] || '9');
-            const endHour = parseInt(assignment.assignedHours[0]?.endTime.split(':')[0] || '17');
-            const startRow = Math.max(0, startHour - 8);
-            const duration = endHour - startHour;
-            const topPos = 32 + (startRow * 64) + 75 + 8; // Account for protruding tab header (75px) + offset
-            const height = duration * 64 - 16; // Smaller than shift blocks
-
-            // Calculate dynamic positioning within shift area - match the column system above
-            const hasShifts = shiftsForDate && shiftsForDate.length > 0;
-            const hasCourses = coursesForDate && coursesForDate.length > 0;
-            const totalColumns = hasShifts && hasCourses ? 3 : 1;
-            const shiftColumns = hasShifts ? (hasCourses ? 2 : 1) : 0;
-            const shiftAreaWidthPercent = hasShifts ? (shiftColumns / totalColumns) * 100 : 0;
-
-            // Distribute workers evenly within the shift area with proper padding, leave space for capacity bar
-            const totalWorkers = assignmentsForDate.length;
-            const availableWidthPercent = shiftAreaWidthPercent - 14; // Leave 14% for capacity bar (56px out of ~400px)
-            const workerWidthPercent = Math.min((availableWidthPercent - 4) / totalWorkers, 18); // Max 18% width per worker, -4% for padding
-            const leftOffsetPercent = 2 + (assignmentIndex * ((availableWidthPercent - 4) / totalWorkers)); // Start with 2% padding
-
-            return (
-              <div
-                key={assignment._id}
-                className={`absolute rounded p-2 ${
-                  assignment.status === 'confirmed'
-                    ? 'bg-success/30 border border-success'
-                    : 'bg-warning/30 border border-warning'
-                }`}
-                style={{
-                  top: `${topPos}px`,
-                  height: `${height}px`,
-                  left: `${leftOffsetPercent}%`,
-                  width: `${workerWidthPercent}%`,
-                }}
-              >
-                <div className="text-xs font-medium text-base-content">{assignment.worker?.name}</div>
-                <div className="text-xs text-base-content">{assignment.assignedHours[0]?.startTime} - {assignment.assignedHours[0]?.endTime}</div>
-                <div className={`text-xs mt-1 px-1 rounded text-base-content ${
-                  assignment.status === 'confirmed' ? 'bg-success/50' : 'bg-warning/50'
-                }`}>
-                  {assignment.status}
-                </div>
-              </div>
-            );
-          })}
         </div>
 
         {/* Empty State */}
