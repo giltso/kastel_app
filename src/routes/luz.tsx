@@ -5,7 +5,7 @@ import { EnsureUserV2 } from "@/components/EnsureUserV2";
 import { LUZOverview } from "@/components/LUZOverview";
 import { LUZVerticalTimeline } from "@/components/LUZVerticalTimeline";
 import { LUZHorizontalTimeline } from "@/components/LUZHorizontalTimeline";
-import { Calendar, Filter, Plus } from "lucide-react";
+import { Calendar, Filter, Plus, Nut } from "lucide-react";
 
 export const Route = createFileRoute("/luz")({
   component: LUZPage,
@@ -118,9 +118,12 @@ function LUZPage() {
       <div className="max-w-[1600px] mx-auto p-4">
         {/* LUZ Header */}
         <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-3xl font-bold">LUZ</h1>
-            <p className="text-base-content/70">Unified Scheduling Hub</p>
+          <div className="flex items-center gap-3">
+            <Nut className="w-8 h-8 text-amber-600" />
+            <div>
+              <h1 className="text-3xl font-bold">LUZ</h1>
+              <p className="text-base-content/70">Unified Scheduling Hub</p>
+            </div>
           </div>
           <div className="flex items-center gap-4">
             <input
