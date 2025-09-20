@@ -38,7 +38,7 @@ export function LUZHorizontalTimeline({
         {/* Timeline Grid - Dynamic height based on shifts */}
         <div className="relative" style={{ minHeight: `${Math.max(400, shiftsForDate?.reduce((totalHeight, shift, index) => {
           const shiftWorkers = assignmentsForDate?.filter(assignment => true) || [];
-          const shiftHeight = Math.max(80, 50 + shiftWorkers.length * 28);
+          const shiftHeight = Math.max(80, 50 + 50 + shiftWorkers.length * 28); // 50px header + 50px base + workers
           return totalHeight + shiftHeight + 20; // Add spacing between shifts
         }, 0) || 400)}px` }}>
           {/* Hour Grid Lines */}
@@ -66,10 +66,10 @@ export function LUZHorizontalTimeline({
             let cumulativeTop = 0;
             for (let i = 0; i < shiftIndex; i++) {
               const prevShiftWorkers = assignmentsForDate?.filter(assignment => true) || [];
-              cumulativeTop += Math.max(80, 50 + prevShiftWorkers.length * 28) + 20;
+              cumulativeTop += Math.max(80, 50 + 50 + prevShiftWorkers.length * 28) + 20; // 50px header + 50px base + workers
             }
 
-            const shiftHeight = Math.max(80, 50 + shiftWorkers.length * 28);
+            const shiftHeight = Math.max(80, 50 + 50 + shiftWorkers.length * 28); // 50px header + 50px base + workers
 
             return (
               <div

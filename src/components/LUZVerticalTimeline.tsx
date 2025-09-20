@@ -52,7 +52,7 @@ export function LUZVerticalTimeline({
             const startRow = Math.max(0, startHour - 8);
             const duration = endHour - startHour;
             const topPos = 32 + (startRow * 64); // 32px for header + row height
-            const height = duration * 64;
+            const height = duration * 64 + 50; // Add 50px for protected header space
 
             return (
               <div
@@ -72,7 +72,7 @@ export function LUZVerticalTimeline({
                 </div>
 
                 {/* Workers area below header */}
-                <div className="relative" style={{ height: `${height - 50}px`, top: '0px' }}>
+                <div className="relative" style={{ height: `${duration * 64}px`, top: '0px' }}>
                   {/* Worker content will be positioned in this area */}
                 </div>
               </div>
