@@ -40,16 +40,16 @@ const mockShifts = [
     type: "operational",
     storeHours: { openTime: "08:00", closeTime: "18:00" },
     hourlyRequirements: [
-      { hour: "08:00", minWorkers: 2, optimalWorkers: 3 },
-      { hour: "09:00", minWorkers: 1, optimalWorkers: 2 },
-      { hour: "10:00", minWorkers: 1, optimalWorkers: 2 },
-      { hour: "11:00", minWorkers: 1, optimalWorkers: 2 },
-      { hour: "12:00", minWorkers: 2, optimalWorkers: 3 },
-      { hour: "13:00", minWorkers: 2, optimalWorkers: 3 },
-      { hour: "14:00", minWorkers: 2, optimalWorkers: 3 },
-      { hour: "15:00", minWorkers: 3, optimalWorkers: 4 },
-      { hour: "16:00", minWorkers: 2, optimalWorkers: 3 },
-      { hour: "17:00", minWorkers: 1, optimalWorkers: 2 }
+      { hour: "08:00", minWorkers: 1, optimalWorkers: 2 }, // Opening - light staffing
+      { hour: "09:00", minWorkers: 2, optimalWorkers: 3 }, // Morning rush
+      { hour: "10:00", minWorkers: 3, optimalWorkers: 4 }, // Peak morning
+      { hour: "11:00", minWorkers: 2, optimalWorkers: 3 }, // Mid-morning
+      { hour: "12:00", minWorkers: 4, optimalWorkers: 5 }, // Lunch rush - PEAK
+      { hour: "13:00", minWorkers: 3, optimalWorkers: 4 }, // Post-lunch
+      { hour: "14:00", minWorkers: 2, optimalWorkers: 3 }, // Afternoon
+      { hour: "15:00", minWorkers: 3, optimalWorkers: 4 }, // After-school rush
+      { hour: "16:00", minWorkers: 2, optimalWorkers: 3 }, // Late afternoon
+      { hour: "17:00", minWorkers: 1, optimalWorkers: 2 }  // Closing - minimal
     ]
   }
 ];

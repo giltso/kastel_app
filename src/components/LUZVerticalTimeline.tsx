@@ -49,13 +49,20 @@ export function LUZVerticalTimeline({
 
         {/* Content Area */}
         <div className="ml-16 relative min-h-[800px]">
-          {/* Calculate column widths based on content */}
+          {/* Calculate proper column layout for overlapping events */}
           {(() => {
             const hasShifts = shiftsForDate && shiftsForDate.length > 0;
             const hasCourses = coursesForDate && coursesForDate.length > 0;
-            const shiftWidth = hasShifts && hasCourses ? '50%' : '100%';
-            const courseWidth = hasShifts && hasCourses ? '50%' : '100%';
-            const courseLeft = hasShifts && hasCourses ? '50%' : '0%';
+
+            // Use a more flexible column system
+            const totalColumns = hasShifts && hasCourses ? 3 : 1; // 3 columns when both present, 1 when only one type
+            const shiftColumns = hasShifts ? (hasCourses ? 2 : 1) : 0; // Shifts get 2/3 width when courses present
+            const courseColumns = hasCourses ? 1 : 0; // Courses get 1/3 width when shifts present
+
+            const columnWidth = 100 / totalColumns;
+            const shiftWidth = hasShifts ? `${shiftColumns * columnWidth}%` : '0%';
+            const courseWidth = hasCourses ? `${courseColumns * columnWidth}%` : '0%';
+            const courseLeft = hasShifts ? `${shiftColumns * columnWidth}%` : '0%';
 
             return (
               <>
@@ -194,7 +201,15 @@ export function LUZVerticalTimeline({
             const duration = endHour - startHour;
             const topPos = 32 + (startRow * 64) + 50 + 8; // Account for protected header area (50px) + offset
             const height = duration * 64 - 16; // Smaller than shift blocks
-            const leftOffset = 120 + (assignmentIndex * 140); // Space them horizontally
+
+            // Calculate dynamic positioning within shift area
+            const hasShifts = shiftsForDate && shiftsForDate.length > 0;
+            const hasCourses = coursesForDate && coursesForDate.length > 0;
+            const shiftAreaWidth = hasShifts && hasCourses ? 66.67 : 100; // 2/3 when courses present, 100% when shifts only
+
+            // Distribute workers evenly within the shift area
+            const workerWidth = Math.min(shiftAreaWidth / assignmentsForDate.length, 25); // Max 25% width per worker
+            const leftOffset = 8 + (assignmentIndex * (shiftAreaWidth / assignmentsForDate.length)); // Dynamic spacing
 
             return (
               <div
@@ -207,8 +222,8 @@ export function LUZVerticalTimeline({
                 style={{
                   top: `${topPos}px`,
                   height: `${height}px`,
-                  left: `${leftOffset}px`,
-                  width: '120px',
+                  left: `${leftOffset}%`,
+                  width: `${workerWidth}%`,
                 }}
               >
                 <div className="text-xs font-medium">{assignment.worker?.name}</div>
