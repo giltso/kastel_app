@@ -125,48 +125,53 @@ export function LUZVerticalTimeline({
                             </div>
                           </div>
 
-                          {/* Main shift content area - leave space for capacity bar at bottom */}
-                          <div className="relative px-2 py-1 pb-8" style={{ height: `${duration * 64 - 32}px` }}>
+                          {/* Main shift content area - leave space for capacity bar on right */}
+                          <div className="relative px-2 py-1 pr-16" style={{ height: `${duration * 64}px` }}>
                             {/* Shift content can go here */}
                           </div>
 
-                          {/* Capacity Management Bar - Bottom */}
-                          <div className="absolute bottom-0 left-0 right-0 h-8 border-t border-base-300/50 bg-base-50/30">
-                            <div className="flex items-center justify-between h-full px-2">
-                              <div className="text-xs font-medium text-base-content">Capacity:</div>
-                              <div className="flex gap-1 flex-wrap">
-                                {shift.hourlyRequirements?.map((hourReq, hourIndex) => {
-                                  const hourInt = parseInt(hourReq.hour.split(':')[0]);
-                                  const currentWorkers = assignmentsForDate?.filter(assignment => {
-                                    const assignStart = parseInt(assignment.assignedHours[0]?.startTime.split(':')[0] || '0');
-                                    const assignEnd = parseInt(assignment.assignedHours[0]?.endTime.split(':')[0] || '0');
-                                    return hourInt >= assignStart && hourInt < assignEnd && assignment.status === 'confirmed';
-                                  }).length || 0;
+                          {/* Capacity Management Bar - Right Side */}
+                          <div className="absolute top-0 right-0 w-14 h-full border-l border-base-300/50 bg-base-50/30">
+                            <div className="text-xs font-medium text-center py-1 border-b border-base-300/50 bg-base-100/50">
+                              Capacity
+                            </div>
+                            <div className="relative h-full pt-6">
+                              {shift.hourlyRequirements?.map((hourReq, hourIndex) => {
+                                const hourInt = parseInt(hourReq.hour.split(':')[0]);
+                                const rowPosition = ((hourInt - startHour) / (endHour - startHour)) * 100;
+                                const currentWorkers = assignmentsForDate?.filter(assignment => {
+                                  const assignStart = parseInt(assignment.assignedHours[0]?.startTime.split(':')[0] || '0');
+                                  const assignEnd = parseInt(assignment.assignedHours[0]?.endTime.split(':')[0] || '0');
+                                  return hourInt >= assignStart && hourInt < assignEnd && assignment.status === 'confirmed';
+                                }).length || 0;
 
-                                  const hourStatus = currentWorkers < hourReq.minWorkers ? 'understaffed' :
-                                                   currentWorkers === hourReq.minWorkers ? 'staffed' : 'overstaffed';
+                                const hourStatus = currentWorkers < hourReq.minWorkers ? 'understaffed' :
+                                                 currentWorkers === hourReq.minWorkers ? 'staffed' : 'overstaffed';
 
-                                  const hourColor = {
-                                    understaffed: 'bg-error/40 text-base-content',
-                                    staffed: 'bg-success/40 text-base-content',
-                                    overstaffed: 'bg-warning/40 text-base-content'
-                                  }[hourStatus];
+                                const hourColor = {
+                                  understaffed: 'bg-error/40 text-base-content',
+                                  staffed: 'bg-success/40 text-base-content',
+                                  overstaffed: 'bg-warning/40 text-base-content'
+                                }[hourStatus];
 
-                                  return (
-                                    <div
-                                      key={hourReq.hour}
-                                      className={`${hourColor} rounded px-1 text-center`}
-                                      style={{
-                                        fontSize: '9px',
-                                        lineHeight: '16px',
-                                        minWidth: '32px'
-                                      }}
-                                    >
-                                      {hourInt}h:{currentWorkers}/{hourReq.minWorkers}
-                                    </div>
-                                  );
-                                })}
-                              </div>
+                                return (
+                                  <div
+                                    key={hourReq.hour}
+                                    className={`absolute ${hourColor} rounded text-center mx-1`}
+                                    style={{
+                                      top: `${rowPosition}%`,
+                                      left: '2px',
+                                      right: '2px',
+                                      height: '18px',
+                                      fontSize: '9px',
+                                      lineHeight: '18px',
+                                      transform: 'translateY(-50%)'
+                                    }}
+                                  >
+                                    {currentWorkers}/{hourReq.minWorkers}
+                                  </div>
+                                );
+                              })}
                             </div>
                           </div>
                         </div>
@@ -240,7 +245,7 @@ export function LUZVerticalTimeline({
             const startRow = Math.max(0, startHour - 8);
             const duration = endHour - startHour;
             const topPos = 32 + (startRow * 64) + 50 + 8; // Account for protected header area (50px) + offset
-            const height = duration * 64 - 16 - 32; // Smaller than shift blocks, leave space for capacity bar
+            const height = duration * 64 - 16; // Smaller than shift blocks
 
             // Calculate dynamic positioning within shift area - match the column system above
             const hasShifts = shiftsForDate && shiftsForDate.length > 0;
@@ -249,10 +254,11 @@ export function LUZVerticalTimeline({
             const shiftColumns = hasShifts ? (hasCourses ? 2 : 1) : 0;
             const shiftAreaWidthPercent = hasShifts ? (shiftColumns / totalColumns) * 100 : 0;
 
-            // Distribute workers evenly within the shift area with proper padding
+            // Distribute workers evenly within the shift area with proper padding, leave space for capacity bar
             const totalWorkers = assignmentsForDate.length;
-            const workerWidthPercent = Math.min((shiftAreaWidthPercent - 4) / totalWorkers, 20); // Max 20% width per worker, -4% for padding
-            const leftOffsetPercent = 2 + (assignmentIndex * ((shiftAreaWidthPercent - 4) / totalWorkers)); // Start with 2% padding
+            const availableWidthPercent = shiftAreaWidthPercent - 14; // Leave 14% for capacity bar (56px out of ~400px)
+            const workerWidthPercent = Math.min((availableWidthPercent - 4) / totalWorkers, 18); // Max 18% width per worker, -4% for padding
+            const leftOffsetPercent = 2 + (assignmentIndex * ((availableWidthPercent - 4) / totalWorkers)); // Start with 2% padding
 
             return (
               <div
