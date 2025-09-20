@@ -125,45 +125,49 @@ export function LUZVerticalTimeline({
                             </div>
                           </div>
 
-                          {/* Hourly capacity breakdown below header */}
-                          <div className="relative px-2 py-1" style={{ height: `${duration * 64}px` }}>
-                            {shift.hourlyRequirements?.map((hourReq, hourIndex) => {
-                              const hourInt = parseInt(hourReq.hour.split(':')[0]);
-                              const rowPosition = (hourInt - startHour) * 64;
-                              const currentWorkers = assignmentsForDate?.filter(assignment => {
-                                const assignStart = parseInt(assignment.assignedHours[0]?.startTime.split(':')[0] || '0');
-                                const assignEnd = parseInt(assignment.assignedHours[0]?.endTime.split(':')[0] || '0');
-                                return hourInt >= assignStart && hourInt < assignEnd && assignment.status === 'confirmed';
-                              }).length || 0;
+                          {/* Main shift content area - leave space for capacity bar at bottom */}
+                          <div className="relative px-2 py-1 pb-8" style={{ height: `${duration * 64 - 32}px` }}>
+                            {/* Shift content can go here */}
+                          </div>
 
-                              const hourStatus = currentWorkers < hourReq.minWorkers ? 'understaffed' :
-                                               currentWorkers === hourReq.minWorkers ? 'staffed' : 'overstaffed';
+                          {/* Capacity Management Bar - Bottom */}
+                          <div className="absolute bottom-0 left-0 right-0 h-8 border-t border-base-300/50 bg-base-50/30">
+                            <div className="flex items-center justify-between h-full px-2">
+                              <div className="text-xs font-medium text-base-content">Capacity:</div>
+                              <div className="flex gap-1 flex-wrap">
+                                {shift.hourlyRequirements?.map((hourReq, hourIndex) => {
+                                  const hourInt = parseInt(hourReq.hour.split(':')[0]);
+                                  const currentWorkers = assignmentsForDate?.filter(assignment => {
+                                    const assignStart = parseInt(assignment.assignedHours[0]?.startTime.split(':')[0] || '0');
+                                    const assignEnd = parseInt(assignment.assignedHours[0]?.endTime.split(':')[0] || '0');
+                                    return hourInt >= assignStart && hourInt < assignEnd && assignment.status === 'confirmed';
+                                  }).length || 0;
 
-                              const hourColor = {
-                                understaffed: 'bg-error/40 text-base-content',
-                                staffed: 'bg-success/40 text-base-content',
-                                overstaffed: 'bg-warning/40 text-base-content'
-                              }[hourStatus];
+                                  const hourStatus = currentWorkers < hourReq.minWorkers ? 'understaffed' :
+                                                   currentWorkers === hourReq.minWorkers ? 'staffed' : 'overstaffed';
 
-                              return (
-                                <div
-                                  key={hourReq.hour}
-                                  className={`absolute ${hourColor} rounded px-1`}
-                                  style={{
-                                    top: `${rowPosition + 10}px`,
-                                    right: '8px',
-                                    width: '50px',
-                                    height: '20px',
-                                    fontSize: '10px',
-                                    lineHeight: '20px'
-                                  }}
-                                >
-                                  <div className="text-center font-medium">
-                                    {currentWorkers}/{hourReq.minWorkers}
-                                  </div>
-                                </div>
-                              );
-                            })}
+                                  const hourColor = {
+                                    understaffed: 'bg-error/40 text-base-content',
+                                    staffed: 'bg-success/40 text-base-content',
+                                    overstaffed: 'bg-warning/40 text-base-content'
+                                  }[hourStatus];
+
+                                  return (
+                                    <div
+                                      key={hourReq.hour}
+                                      className={`${hourColor} rounded px-1 text-center`}
+                                      style={{
+                                        fontSize: '9px',
+                                        lineHeight: '16px',
+                                        minWidth: '32px'
+                                      }}
+                                    >
+                                      {hourInt}h:{currentWorkers}/{hourReq.minWorkers}
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
                           </div>
                         </div>
                       );
@@ -236,7 +240,7 @@ export function LUZVerticalTimeline({
             const startRow = Math.max(0, startHour - 8);
             const duration = endHour - startHour;
             const topPos = 32 + (startRow * 64) + 50 + 8; // Account for protected header area (50px) + offset
-            const height = duration * 64 - 16; // Smaller than shift blocks
+            const height = duration * 64 - 16 - 32; // Smaller than shift blocks, leave space for capacity bar
 
             // Calculate dynamic positioning within shift area - match the column system above
             const hasShifts = shiftsForDate && shiftsForDate.length > 0;
