@@ -130,49 +130,43 @@ export function LUZVerticalTimeline({
                             {/* Shift content can go here */}
                           </div>
 
-                          {/* Capacity Management Bar - Right Side */}
-                          <div className="absolute right-0 w-14 border-l border-base-300/50 bg-base-50/30" style={{ top: '75px', height: `${duration * 64}px` }}>
-                            <div className="text-xs font-medium text-center py-1 border-b border-base-300/50 bg-base-100/50">
-                              Capacity
-                            </div>
-                            <div className="relative h-full pt-6">
-                              {shift.hourlyRequirements?.map((hourReq, hourIndex) => {
-                                const hourInt = parseInt(hourReq.hour.split(':')[0]);
-                                const rowPosition = ((hourInt - startHour) / (endHour - startHour)) * 100;
-                                const currentWorkers = assignmentsForDate?.filter(assignment => {
-                                  const assignStart = parseInt(assignment.assignedHours[0]?.startTime.split(':')[0] || '0');
-                                  const assignEnd = parseInt(assignment.assignedHours[0]?.endTime.split(':')[0] || '0');
-                                  return hourInt >= assignStart && hourInt < assignEnd && assignment.status === 'confirmed';
-                                }).length || 0;
+                          {/* Capacity indicators - embedded in shift, aligned with timeline */}
+                          <div className="absolute right-2 top-12" style={{ width: '40px', height: `${duration * 64}px` }}>
+                            {shift.hourlyRequirements?.map((hourReq, hourIndex) => {
+                              const hourInt = parseInt(hourReq.hour.split(':')[0]);
+                              const rowPosition = (hourInt - startHour) * 64; // Align with 64px row height
+                              const currentWorkers = assignmentsForDate?.filter(assignment => {
+                                const assignStart = parseInt(assignment.assignedHours[0]?.startTime.split(':')[0] || '0');
+                                const assignEnd = parseInt(assignment.assignedHours[0]?.endTime.split(':')[0] || '0');
+                                return hourInt >= assignStart && hourInt < assignEnd && assignment.status === 'confirmed';
+                              }).length || 0;
 
-                                const hourStatus = currentWorkers < hourReq.minWorkers ? 'understaffed' :
-                                                 currentWorkers === hourReq.minWorkers ? 'staffed' : 'overstaffed';
+                              const hourStatus = currentWorkers < hourReq.minWorkers ? 'understaffed' :
+                                               currentWorkers === hourReq.minWorkers ? 'staffed' : 'overstaffed';
 
-                                const hourColor = {
-                                  understaffed: 'bg-error/40 text-base-content',
-                                  staffed: 'bg-success/40 text-base-content',
-                                  overstaffed: 'bg-warning/40 text-base-content'
-                                }[hourStatus];
+                              const hourColor = {
+                                understaffed: 'bg-error/40 text-base-content',
+                                staffed: 'bg-success/40 text-base-content',
+                                overstaffed: 'bg-warning/40 text-base-content'
+                              }[hourStatus];
 
-                                return (
-                                  <div
-                                    key={hourReq.hour}
-                                    className={`absolute ${hourColor} rounded text-center mx-1`}
-                                    style={{
-                                      top: `${rowPosition}%`,
-                                      left: '2px',
-                                      right: '2px',
-                                      height: '18px',
-                                      fontSize: '9px',
-                                      lineHeight: '18px',
-                                      transform: 'translateY(-50%)'
-                                    }}
-                                  >
-                                    {currentWorkers}/{hourReq.minWorkers}
-                                  </div>
-                                );
-                              })}
-                            </div>
+                              return (
+                                <div
+                                  key={hourReq.hour}
+                                  className={`absolute ${hourColor} rounded text-center`}
+                                  style={{
+                                    top: `${rowPosition + 32}px`, // Center in the hour row
+                                    left: '0px',
+                                    right: '0px',
+                                    height: '20px',
+                                    fontSize: '10px',
+                                    lineHeight: '20px'
+                                  }}
+                                >
+                                  {currentWorkers}/{hourReq.minWorkers}
+                                </div>
+                              );
+                            })}
                           </div>
                         </div>
                       );
