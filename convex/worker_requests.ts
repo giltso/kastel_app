@@ -401,18 +401,19 @@ export const respondToSwitchRequest = mutation({
       targetWorkerResponse: args.response,
     };
 
-    let newStatus = request.status;
-
+    // Update request status
     if (args.response === "denied") {
       // If target worker denies, request is finished
-      newStatus = "denied";
+      await ctx.db.patch(args.requestId, {
+        switchDetails: updatedSwitchDetails,
+        status: "denied",
+      });
+    } else {
+      // If approved, request stays pending for manager review
+      await ctx.db.patch(args.requestId, {
+        switchDetails: updatedSwitchDetails,
+      });
     }
-    // If approved, request stays pending for manager review
-
-    await ctx.db.patch(args.requestId, {
-      switchDetails: updatedSwitchDetails,
-      status: newStatus,
-    });
 
     return args.requestId;
   },

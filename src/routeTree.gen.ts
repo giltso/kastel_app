@@ -15,6 +15,7 @@ import { Route as V1Import } from './routes/v1'
 import { Route as UnauthorizedImport } from './routes/unauthorized'
 import { Route as ToolsV2Import } from './routes/tools-v2'
 import { Route as ToolsImport } from './routes/tools'
+import { Route as TestShiftsImport } from './routes/test-shifts'
 import { Route as ShiftsImport } from './routes/shifts'
 import { Route as ProHelpImport } from './routes/pro-help'
 import { Route as LuzImport } from './routes/luz'
@@ -48,6 +49,12 @@ const ToolsV2Route = ToolsV2Import.update({
 const ToolsRoute = ToolsImport.update({
   id: '/tools',
   path: '/tools',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const TestShiftsRoute = TestShiftsImport.update({
+  id: '/test-shifts',
+  path: '/test-shifts',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -172,6 +179,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ShiftsImport
       parentRoute: typeof rootRoute
     }
+    '/test-shifts': {
+      id: '/test-shifts'
+      path: '/test-shifts'
+      fullPath: '/test-shifts'
+      preLoaderRoute: typeof TestShiftsImport
+      parentRoute: typeof rootRoute
+    }
     '/tools': {
       id: '/tools'
       path: '/tools'
@@ -215,6 +229,7 @@ export interface FileRoutesByFullPath {
   '/luz': typeof LuzRoute
   '/pro-help': typeof ProHelpRoute
   '/shifts': typeof ShiftsRoute
+  '/test-shifts': typeof TestShiftsRoute
   '/tools': typeof ToolsRoute
   '/tools-v2': typeof ToolsV2Route
   '/unauthorized': typeof UnauthorizedRoute
@@ -231,6 +246,7 @@ export interface FileRoutesByTo {
   '/luz': typeof LuzRoute
   '/pro-help': typeof ProHelpRoute
   '/shifts': typeof ShiftsRoute
+  '/test-shifts': typeof TestShiftsRoute
   '/tools': typeof ToolsRoute
   '/tools-v2': typeof ToolsV2Route
   '/unauthorized': typeof UnauthorizedRoute
@@ -248,6 +264,7 @@ export interface FileRoutesById {
   '/luz': typeof LuzRoute
   '/pro-help': typeof ProHelpRoute
   '/shifts': typeof ShiftsRoute
+  '/test-shifts': typeof TestShiftsRoute
   '/tools': typeof ToolsRoute
   '/tools-v2': typeof ToolsV2Route
   '/unauthorized': typeof UnauthorizedRoute
@@ -266,6 +283,7 @@ export interface FileRouteTypes {
     | '/luz'
     | '/pro-help'
     | '/shifts'
+    | '/test-shifts'
     | '/tools'
     | '/tools-v2'
     | '/unauthorized'
@@ -281,6 +299,7 @@ export interface FileRouteTypes {
     | '/luz'
     | '/pro-help'
     | '/shifts'
+    | '/test-shifts'
     | '/tools'
     | '/tools-v2'
     | '/unauthorized'
@@ -296,6 +315,7 @@ export interface FileRouteTypes {
     | '/luz'
     | '/pro-help'
     | '/shifts'
+    | '/test-shifts'
     | '/tools'
     | '/tools-v2'
     | '/unauthorized'
@@ -313,6 +333,7 @@ export interface RootRouteChildren {
   LuzRoute: typeof LuzRoute
   ProHelpRoute: typeof ProHelpRoute
   ShiftsRoute: typeof ShiftsRoute
+  TestShiftsRoute: typeof TestShiftsRoute
   ToolsRoute: typeof ToolsRoute
   ToolsV2Route: typeof ToolsV2Route
   UnauthorizedRoute: typeof UnauthorizedRoute
@@ -329,6 +350,7 @@ const rootRouteChildren: RootRouteChildren = {
   LuzRoute: LuzRoute,
   ProHelpRoute: ProHelpRoute,
   ShiftsRoute: ShiftsRoute,
+  TestShiftsRoute: TestShiftsRoute,
   ToolsRoute: ToolsRoute,
   ToolsV2Route: ToolsV2Route,
   UnauthorizedRoute: UnauthorizedRoute,
@@ -354,6 +376,7 @@ export const routeTree = rootRoute
         "/luz",
         "/pro-help",
         "/shifts",
+        "/test-shifts",
         "/tools",
         "/tools-v2",
         "/unauthorized",
@@ -386,6 +409,9 @@ export const routeTree = rootRoute
     },
     "/shifts": {
       "filePath": "shifts.tsx"
+    },
+    "/test-shifts": {
+      "filePath": "test-shifts.tsx"
     },
     "/tools": {
       "filePath": "tools.tsx"
