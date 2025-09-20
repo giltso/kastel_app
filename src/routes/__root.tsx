@@ -76,6 +76,18 @@ function NavigationLinks({ onLinkClick }: { onLinkClick: () => void }) {
           Educational
         </Link>
       )}
+      {checkPermission("manage_staff_roles") && (
+        <Link
+          to="/roles"
+          className="btn btn-ghost"
+          activeProps={{
+            className: "btn btn-ghost btn-active",
+          }}
+          onClick={onLinkClick}
+        >
+          Roles
+        </Link>
+      )}
     </>
   );
 }
@@ -122,6 +134,20 @@ function MobileNavigationLinks({ onLinkClick }: { onLinkClick: () => void }) {
             className="flex items-center p-2"
           >
             Educational
+          </Link>
+        </li>
+      )}
+      {checkPermission("manage_staff_roles") && (
+        <li>
+          <Link
+            to="/roles"
+            onClick={onLinkClick}
+            activeProps={{
+              className: "active",
+            }}
+            className="flex items-center p-2"
+          >
+            Roles
           </Link>
         </li>
       )}

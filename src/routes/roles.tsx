@@ -1,0 +1,277 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { usePermissionsV2 } from "@/hooks/usePermissionsV2";
+import { EnsureUserV2 } from "@/components/EnsureUserV2";
+import { Users, Shield, UserPlus, Settings } from "lucide-react";
+
+export const Route = createFileRoute("/roles")({
+  component: RolesPage,
+});
+
+function RolesPage() {
+  const { checkPermission, isLoading, isAuthenticated } = usePermissionsV2();
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-64">
+        <span className="loading loading-spinner loading-lg"></span>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="text-center py-12">
+        <h1 className="text-2xl font-bold mb-4">Access Denied</h1>
+        <p>Please sign in to access role management.</p>
+      </div>
+    );
+  }
+
+  if (!checkPermission("manage_staff_roles")) {
+    return (
+      <div className="text-center py-12">
+        <h1 className="text-2xl font-bold mb-4">Manager Access Required</h1>
+        <p>Role management is only accessible to staff members with manager permissions.</p>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <EnsureUserV2 />
+      <div className="max-w-7xl mx-auto p-4">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <Shield className="w-8 h-8 text-primary" />
+            <div>
+              <h1 className="text-3xl font-bold">Role Management</h1>
+              <p className="text-base-content/70">Manage staff roles and permissions</p>
+            </div>
+          </div>
+          <button className="btn btn-primary">
+            <UserPlus className="w-4 h-4" />
+            Add Staff Member
+          </button>
+        </div>
+
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+          <div className="stat bg-base-100 rounded-lg border border-base-300">
+            <div className="stat-figure text-primary">
+              <Users className="w-8 h-8" />
+            </div>
+            <div className="stat-title">Total Staff</div>
+            <div className="stat-value text-primary">12</div>
+            <div className="stat-desc">Active members</div>
+          </div>
+
+          <div className="stat bg-base-100 rounded-lg border border-base-300">
+            <div className="stat-figure text-success">
+              <Shield className="w-8 h-8" />
+            </div>
+            <div className="stat-title">Managers</div>
+            <div className="stat-value text-success">3</div>
+            <div className="stat-desc">With manager tag</div>
+          </div>
+
+          <div className="stat bg-base-100 rounded-lg border border-base-300">
+            <div className="stat-figure text-info">
+              <Users className="w-8 h-8" />
+            </div>
+            <div className="stat-title">Workers</div>
+            <div className="stat-value text-info">8</div>
+            <div className="stat-desc">With worker tag</div>
+          </div>
+
+          <div className="stat bg-base-100 rounded-lg border border-base-300">
+            <div className="stat-figure text-warning">
+              <Settings className="w-8 h-8" />
+            </div>
+            <div className="stat-title">Instructors</div>
+            <div className="stat-value text-warning">4</div>
+            <div className="stat-desc">With instructor tag</div>
+          </div>
+        </div>
+
+        {/* Main Content */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Staff List */}
+          <div className="lg:col-span-2">
+            <div className="bg-base-100 border border-base-300 rounded-lg">
+              <div className="p-4 border-b border-base-300">
+                <h2 className="text-xl font-semibold flex items-center gap-2">
+                  <Users className="w-5 h-5" />
+                  Staff Members
+                </h2>
+              </div>
+              <div className="p-4">
+                {/* Search and Filter */}
+                <div className="flex flex-col sm:flex-row gap-4 mb-4">
+                  <input
+                    type="text"
+                    placeholder="Search staff members..."
+                    className="input input-bordered flex-1"
+                  />
+                  <select className="select select-bordered">
+                    <option value="">All Roles</option>
+                    <option value="manager">Managers</option>
+                    <option value="worker">Workers</option>
+                    <option value="instructor">Instructors</option>
+                    <option value="toolHandler">Tool Handlers</option>
+                  </select>
+                </div>
+
+                {/* Staff Table */}
+                <div className="overflow-x-auto">
+                  <table className="table table-zebra w-full">
+                    <thead>
+                      <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Roles</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {/* Sample Data - Replace with real data */}
+                      <tr>
+                        <td>
+                          <div className="flex items-center gap-3">
+                            <div className="avatar">
+                              <div className="mask mask-squircle w-12 h-12">
+                                <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=96&h=96&fit=crop&crop=face" alt="Avatar" />
+                              </div>
+                            </div>
+                            <div>
+                              <div className="font-bold">John Doe</div>
+                              <div className="text-sm opacity-50">Staff ID: #001</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td>john.doe@kastel.com</td>
+                        <td>
+                          <div className="flex gap-1 flex-wrap">
+                            <span className="badge badge-primary badge-sm">Manager</span>
+                            <span className="badge badge-secondary badge-sm">Worker</span>
+                          </div>
+                        </td>
+                        <td>
+                          <span className="badge badge-success badge-sm">Active</span>
+                        </td>
+                        <td>
+                          <button className="btn btn-ghost btn-xs">Edit</button>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td>
+                          <div className="flex items-center gap-3">
+                            <div className="avatar">
+                              <div className="mask mask-squircle w-12 h-12">
+                                <img src="https://images.unsplash.com/photo-1494790108755-2616b612b47c?w=96&h=96&fit=crop&crop=face" alt="Avatar" />
+                              </div>
+                            </div>
+                            <div>
+                              <div className="font-bold">Jane Smith</div>
+                              <div className="text-sm opacity-50">Staff ID: #002</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td>jane.smith@kastel.com</td>
+                        <td>
+                          <div className="flex gap-1 flex-wrap">
+                            <span className="badge badge-info badge-sm">Instructor</span>
+                            <span className="badge badge-secondary badge-sm">Worker</span>
+                          </div>
+                        </td>
+                        <td>
+                          <span className="badge badge-success badge-sm">Active</span>
+                        </td>
+                        <td>
+                          <button className="btn btn-ghost btn-xs">Edit</button>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td>
+                          <div className="flex items-center gap-3">
+                            <div className="avatar">
+                              <div className="mask mask-squircle w-12 h-12">
+                                <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=96&h=96&fit=crop&crop=face" alt="Avatar" />
+                              </div>
+                            </div>
+                            <div>
+                              <div className="font-bold">Mike Johnson</div>
+                              <div className="text-sm opacity-50">Staff ID: #003</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td>mike.johnson@kastel.com</td>
+                        <td>
+                          <div className="flex gap-1 flex-wrap">
+                            <span className="badge badge-warning badge-sm">Tool Handler</span>
+                            <span className="badge badge-secondary badge-sm">Worker</span>
+                          </div>
+                        </td>
+                        <td>
+                          <span className="badge badge-success badge-sm">Active</span>
+                        </td>
+                        <td>
+                          <button className="btn btn-ghost btn-xs">Edit</button>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Role Information Panel */}
+          <div className="lg:col-span-1">
+            <div className="bg-base-100 border border-base-300 rounded-lg">
+              <div className="p-4 border-b border-base-300">
+                <h2 className="text-xl font-semibold flex items-center gap-2">
+                  <Shield className="w-5 h-5" />
+                  Role Information
+                </h2>
+              </div>
+              <div className="p-4 space-y-4">
+                <div className="card bg-primary/10 border border-primary/20">
+                  <div className="card-body p-4">
+                    <h3 className="card-title text-primary text-sm">Manager Tag</h3>
+                    <p className="text-sm">Full system access including role management and shift approval.</p>
+                    <div className="text-xs text-primary/70 mt-2">
+                      Requires: Staff + Worker Tag
+                    </div>
+                  </div>
+                </div>
+
+                <div className="card bg-secondary/10 border border-secondary/20">
+                  <div className="card-body p-4">
+                    <h3 className="card-title text-secondary text-sm">Worker Tag</h3>
+                    <p className="text-sm">Access to LUZ system and shift management features.</p>
+                  </div>
+                </div>
+
+                <div className="card bg-info/10 border border-info/20">
+                  <div className="card-body p-4">
+                    <h3 className="card-title text-info text-sm">Instructor Tag</h3>
+                    <p className="text-sm">Course management and educational content creation.</p>
+                  </div>
+                </div>
+
+                <div className="card bg-warning/10 border border-warning/20">
+                  <div className="card-body p-4">
+                    <h3 className="card-title text-warning text-sm">Tool Handler Tag</h3>
+                    <p className="text-sm">Tool inventory management and rental processing.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}

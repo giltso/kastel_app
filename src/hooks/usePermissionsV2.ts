@@ -18,6 +18,7 @@ export type V2Permission =
   | "request_tool_rentals"     // (!isStaff + rentalApprovedTag) OR (isStaff + toolHandlerTag)
   | "access_worker_portal"     // isStaff + workerTag (for compatibility)
   | "access_manager_portal"    // isStaff + workerTag + managerTag (for compatibility)
+  | "manage_staff_roles"       // isStaff + workerTag + managerTag
   | "emulate_roles";           // role === "dev"
 
 export function useCurrentUserV2() {
@@ -104,6 +105,9 @@ export function usePermissionsV2() {
         return effective.isStaff && effective.workerTag;
 
       case "access_manager_portal":
+        return effective.isStaff && effective.workerTag && effective.managerTag;
+
+      case "manage_staff_roles":
         return effective.isStaff && effective.workerTag && effective.managerTag;
 
       case "emulate_roles":

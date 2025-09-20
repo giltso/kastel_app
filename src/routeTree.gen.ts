@@ -16,6 +16,7 @@ import { Route as UnauthorizedImport } from './routes/unauthorized'
 import { Route as ToolsV2Import } from './routes/tools-v2'
 import { Route as ToolsImport } from './routes/tools'
 import { Route as ShiftsImport } from './routes/shifts'
+import { Route as RolesImport } from './routes/roles'
 import { Route as ProHelpImport } from './routes/pro-help'
 import { Route as LuzImport } from './routes/luz'
 import { Route as FormsImport } from './routes/forms'
@@ -54,6 +55,12 @@ const ToolsRoute = ToolsImport.update({
 const ShiftsRoute = ShiftsImport.update({
   id: '/shifts',
   path: '/shifts',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const RolesRoute = RolesImport.update({
+  id: '/roles',
+  path: '/roles',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -165,6 +172,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProHelpImport
       parentRoute: typeof rootRoute
     }
+    '/roles': {
+      id: '/roles'
+      path: '/roles'
+      fullPath: '/roles'
+      preLoaderRoute: typeof RolesImport
+      parentRoute: typeof rootRoute
+    }
     '/shifts': {
       id: '/shifts'
       path: '/shifts'
@@ -214,6 +228,7 @@ export interface FileRoutesByFullPath {
   '/forms': typeof FormsRoute
   '/luz': typeof LuzRoute
   '/pro-help': typeof ProHelpRoute
+  '/roles': typeof RolesRoute
   '/shifts': typeof ShiftsRoute
   '/tools': typeof ToolsRoute
   '/tools-v2': typeof ToolsV2Route
@@ -230,6 +245,7 @@ export interface FileRoutesByTo {
   '/forms': typeof FormsRoute
   '/luz': typeof LuzRoute
   '/pro-help': typeof ProHelpRoute
+  '/roles': typeof RolesRoute
   '/shifts': typeof ShiftsRoute
   '/tools': typeof ToolsRoute
   '/tools-v2': typeof ToolsV2Route
@@ -247,6 +263,7 @@ export interface FileRoutesById {
   '/forms': typeof FormsRoute
   '/luz': typeof LuzRoute
   '/pro-help': typeof ProHelpRoute
+  '/roles': typeof RolesRoute
   '/shifts': typeof ShiftsRoute
   '/tools': typeof ToolsRoute
   '/tools-v2': typeof ToolsV2Route
@@ -265,6 +282,7 @@ export interface FileRouteTypes {
     | '/forms'
     | '/luz'
     | '/pro-help'
+    | '/roles'
     | '/shifts'
     | '/tools'
     | '/tools-v2'
@@ -280,6 +298,7 @@ export interface FileRouteTypes {
     | '/forms'
     | '/luz'
     | '/pro-help'
+    | '/roles'
     | '/shifts'
     | '/tools'
     | '/tools-v2'
@@ -295,6 +314,7 @@ export interface FileRouteTypes {
     | '/forms'
     | '/luz'
     | '/pro-help'
+    | '/roles'
     | '/shifts'
     | '/tools'
     | '/tools-v2'
@@ -312,6 +332,7 @@ export interface RootRouteChildren {
   FormsRoute: typeof FormsRoute
   LuzRoute: typeof LuzRoute
   ProHelpRoute: typeof ProHelpRoute
+  RolesRoute: typeof RolesRoute
   ShiftsRoute: typeof ShiftsRoute
   ToolsRoute: typeof ToolsRoute
   ToolsV2Route: typeof ToolsV2Route
@@ -328,6 +349,7 @@ const rootRouteChildren: RootRouteChildren = {
   FormsRoute: FormsRoute,
   LuzRoute: LuzRoute,
   ProHelpRoute: ProHelpRoute,
+  RolesRoute: RolesRoute,
   ShiftsRoute: ShiftsRoute,
   ToolsRoute: ToolsRoute,
   ToolsV2Route: ToolsV2Route,
@@ -353,6 +375,7 @@ export const routeTree = rootRoute
         "/forms",
         "/luz",
         "/pro-help",
+        "/roles",
         "/shifts",
         "/tools",
         "/tools-v2",
@@ -383,6 +406,9 @@ export const routeTree = rootRoute
     },
     "/pro-help": {
       "filePath": "pro-help.tsx"
+    },
+    "/roles": {
+      "filePath": "roles.tsx"
     },
     "/shifts": {
       "filePath": "shifts.tsx"
