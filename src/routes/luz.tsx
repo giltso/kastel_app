@@ -66,6 +66,40 @@ const mockPendingAssignments = [
   }
 ];
 
+const mockCourses = [
+  {
+    _id: "course1",
+    title: "Basic Safety Training",
+    description: "Essential safety protocols for all staff members",
+    schedule: {
+      startTime: "10:00",
+      endTime: "12:00"
+    },
+    instructor: { _id: "instructor1", name: "Dr. Smith" },
+    enrolledStudents: [
+      { _id: "student1", name: "Emma Wilson" },
+      { _id: "student2", name: "James Brown" }
+    ],
+    status: "confirmed",
+    category: "safety"
+  },
+  {
+    _id: "course2",
+    title: "Advanced Equipment Use",
+    description: "Training on specialized equipment operation",
+    schedule: {
+      startTime: "14:00",
+      endTime: "16:30"
+    },
+    instructor: { _id: "instructor2", name: "Prof. Johnson" },
+    enrolledStudents: [
+      { _id: "student3", name: "Sarah Davis" }
+    ],
+    status: "confirmed",
+    category: "technical"
+  }
+];
+
 function LUZPage() {
   const { user, isLoading, isAuthenticated, hasWorkerTag, hasManagerTag } = usePermissionsV2();
   const [selectedDate, setSelectedDate] = useState(getTodayString());
@@ -78,9 +112,10 @@ function LUZPage() {
 
   // Mock data (replace with actual queries later)
   const shifts = mockShifts;
-  const shiftsForDate = mockShifts; // For demo, show all shifts
+  const shiftsForDate = filters.shifts ? mockShifts : []; // Respect shifts filter
   const assignmentsForDate = mockAssignments;
   const pendingAssignments = mockPendingAssignments;
+  const coursesForDate = filters.courses ? mockCourses : [];
 
   if (isLoading) {
     return (
@@ -228,6 +263,7 @@ function LUZPage() {
               <LUZVerticalTimeline
                 assignmentsForDate={assignmentsForDate}
                 shiftsForDate={shiftsForDate}
+                coursesForDate={coursesForDate}
                 selectedDate={selectedDate}
                 hasManagerTag={hasManagerTag}
               />
@@ -235,6 +271,7 @@ function LUZPage() {
               <LUZHorizontalTimeline
                 assignmentsForDate={assignmentsForDate}
                 shiftsForDate={shiftsForDate}
+                coursesForDate={coursesForDate}
                 selectedDate={selectedDate}
                 hasManagerTag={hasManagerTag}
               />

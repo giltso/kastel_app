@@ -3,6 +3,7 @@ import { Calendar } from "lucide-react";
 interface LUZVerticalTimelineProps {
   assignmentsForDate: any[];
   shiftsForDate: any[];
+  coursesForDate: any[];
   selectedDate: string;
   hasManagerTag: boolean;
 }
@@ -10,6 +11,7 @@ interface LUZVerticalTimelineProps {
 export function LUZVerticalTimeline({
   assignmentsForDate,
   shiftsForDate,
+  coursesForDate,
   selectedDate,
   hasManagerTag
 }: LUZVerticalTimelineProps) {
@@ -45,39 +47,111 @@ export function LUZVerticalTimeline({
 
         {/* Content Area */}
         <div className="ml-16 relative min-h-[800px]">
-          {/* Shift Templates */}
-          {shiftsForDate && shiftsForDate.map((shift, shiftIndex) => {
-            const startHour = parseInt(shift.storeHours.openTime.split(':')[0]);
-            const endHour = parseInt(shift.storeHours.closeTime.split(':')[0]);
-            const startRow = Math.max(0, startHour - 8);
-            const duration = endHour - startHour;
-            const topPos = 32 + (startRow * 64); // 32px for header + row height
-            const height = duration * 64 + 50; // Add 50px for protected header space
+          {/* Calculate column widths based on content */}
+          {(() => {
+            const hasShifts = shiftsForDate && shiftsForDate.length > 0;
+            const hasCourses = coursesForDate && coursesForDate.length > 0;
+            const shiftWidth = hasShifts && hasCourses ? '50%' : '100%';
+            const courseWidth = hasShifts && hasCourses ? '50%' : '100%';
+            const courseLeft = hasShifts && hasCourses ? '50%' : '0%';
 
             return (
-              <div
-                key={shift._id}
-                className="absolute bg-primary/20 border-2 border-primary rounded left-2 right-2"
-                style={{
-                  top: `${topPos}px`,
-                  height: `${height}px`,
-                }}
-              >
-                {/* Tab-style Header - Protected area at top */}
-                <div className="bg-primary/30 border-b border-primary/50 px-2 py-1 rounded-t">
-                  <div className="font-medium text-sm">{shift.name}</div>
-                  <div className="text-xs text-base-content/70">
-                    {shift.storeHours.openTime} - {shift.storeHours.closeTime} • {shift.hourlyRequirements.reduce((sum, req) => sum + req.minWorkers, 0)} workers needed
-                  </div>
-                </div>
+              <>
+                {/* Shift Templates */}
+                {hasShifts && (
+                  <div className="absolute left-0" style={{ width: shiftWidth }}>
+                    {shiftsForDate.map((shift, shiftIndex) => {
+                      const startHour = parseInt(shift.storeHours.openTime.split(':')[0]);
+                      const endHour = parseInt(shift.storeHours.closeTime.split(':')[0]);
+                      const startRow = Math.max(0, startHour - 8);
+                      const duration = endHour - startHour;
+                      const topPos = 32 + (startRow * 64); // 32px for header + row height
+                      const height = duration * 64 + 50; // Add 50px for protected header space
 
-                {/* Workers area below header */}
-                <div className="relative" style={{ height: `${duration * 64}px`, top: '0px' }}>
-                  {/* Worker content will be positioned in this area */}
-                </div>
-              </div>
+                      return (
+                        <div
+                          key={shift._id}
+                          className="absolute bg-primary/20 border-2 border-primary rounded left-2 right-2"
+                          style={{
+                            top: `${topPos}px`,
+                            height: `${height}px`,
+                          }}
+                        >
+                          {/* Tab-style Header - Protected area at top */}
+                          <div className="bg-primary/30 border-b border-primary/50 px-2 py-1 rounded-t">
+                            <div className="font-medium text-sm">{shift.name}</div>
+                            <div className="text-xs text-base-content/70">
+                              {shift.storeHours.openTime} - {shift.storeHours.closeTime} • {shift.hourlyRequirements.reduce((sum, req) => sum + req.minWorkers, 0)} workers needed
+                            </div>
+                          </div>
+
+                          {/* Workers area below header */}
+                          <div className="relative" style={{ height: `${duration * 64}px`, top: '0px' }}>
+                            {/* Worker content will be positioned in this area */}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* Course Templates */}
+                {hasCourses && (
+                  <div className="absolute" style={{ left: courseLeft, width: courseWidth }}>
+                    {coursesForDate.map((course, courseIndex) => {
+                      const startHour = parseInt(course.schedule.startTime.split(':')[0]);
+                      const endTime = course.schedule.endTime.split(':');
+                      const endHour = parseInt(endTime[0]);
+                      const endMinutes = parseInt(endTime[1]);
+                      const startRow = Math.max(0, startHour - 8);
+                      const duration = endHour - startHour + (endMinutes > 0 ? 0.5 : 0); // Account for partial hours
+                      const topPos = 32 + (startRow * 64);
+                      const height = duration * 64 + 50;
+
+                      return (
+                        <div
+                          key={course._id}
+                          className="absolute bg-secondary/20 border-2 border-secondary rounded left-2 right-2"
+                          style={{
+                            top: `${topPos}px`,
+                            height: `${height}px`,
+                          }}
+                        >
+                          {/* Tab-style Header - Protected area at top */}
+                          <div className="bg-secondary/30 border-b border-secondary/50 px-2 py-1 rounded-t">
+                            <div className="font-medium text-sm">{course.title}</div>
+                            <div className="text-xs text-base-content/70">
+                              {course.schedule.startTime} - {course.schedule.endTime} • {course.enrolledStudents?.length || 0} students • {course.instructor?.name}
+                            </div>
+                          </div>
+
+                          {/* Students area below header */}
+                          <div className="relative px-2 py-1" style={{ height: `${duration * 64}px` }}>
+                            {course.enrolledStudents?.map((student, studentIndex) => (
+                              <div
+                                key={student._id}
+                                className="absolute bg-info/30 border border-info rounded px-2 py-1"
+                                style={{
+                                  top: `${studentIndex * 25}px`,
+                                  left: '4px',
+                                  right: '4px',
+                                  height: '22px',
+                                }}
+                              >
+                                <div className="text-xs font-medium truncate">
+                                  {student.name}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </>
             );
-          })}
+          })()}
 
           {/* Worker Assignments */}
           {assignmentsForDate && assignmentsForDate.map((assignment, assignmentIndex) => {
@@ -117,14 +191,14 @@ export function LUZVerticalTimeline({
         </div>
 
         {/* Empty State */}
-        {(!shiftsForDate || shiftsForDate.length === 0) && (
+        {(!shiftsForDate || shiftsForDate.length === 0) && (!coursesForDate || coursesForDate.length === 0) && (
           <div className="flex items-center justify-center h-full text-base-content/50 absolute inset-0">
             <div className="text-center">
               <Calendar className="w-12 h-12 mx-auto mb-2 opacity-50" />
-              <p>No shifts scheduled for {selectedDate}</p>
+              <p>No events scheduled for {selectedDate}</p>
               {hasManagerTag && (
                 <button className="btn btn-sm btn-primary mt-2">
-                  Create First Shift
+                  Create First Event
                 </button>
               )}
             </div>
