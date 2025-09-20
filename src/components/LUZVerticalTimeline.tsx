@@ -57,18 +57,23 @@ export function LUZVerticalTimeline({
             return (
               <div
                 key={shift._id}
-                className="absolute bg-primary/20 border-2 border-primary rounded p-2 left-2 right-2"
+                className="absolute bg-primary/20 border-2 border-primary rounded left-2 right-2"
                 style={{
                   top: `${topPos}px`,
                   height: `${height}px`,
                 }}
               >
-                <div className="font-medium text-sm">{shift.name}</div>
-                <div className="text-xs text-base-content/70">
-                  {shift.storeHours.openTime} - {shift.storeHours.closeTime}
+                {/* Tab-style Header - Protected area at top */}
+                <div className="bg-primary/30 border-b border-primary/50 px-2 py-1 rounded-t">
+                  <div className="font-medium text-sm">{shift.name}</div>
+                  <div className="text-xs text-base-content/70">
+                    {shift.storeHours.openTime} - {shift.storeHours.closeTime} • {shift.hourlyRequirements.reduce((sum, req) => sum + req.minWorkers, 0)} workers needed
+                  </div>
                 </div>
-                <div className="text-xs text-base-content/70">
-                  {shift.hourlyRequirements.reduce((sum, req) => sum + req.minWorkers, 0)} workers needed
+
+                {/* Workers area below header */}
+                <div className="relative" style={{ height: `${height - 50}px`, top: '0px' }}>
+                  {/* Worker content will be positioned in this area */}
                 </div>
               </div>
             );
@@ -80,7 +85,7 @@ export function LUZVerticalTimeline({
             const endHour = parseInt(assignment.assignedHours[0]?.endTime.split(':')[0] || '17');
             const startRow = Math.max(0, startHour - 8);
             const duration = endHour - startHour;
-            const topPos = 32 + (startRow * 64) + 8; // Offset slightly from shift blocks
+            const topPos = 32 + (startRow * 64) + 50 + 8; // Account for protected header area (50px) + offset
             const height = duration * 64 - 16; // Smaller than shift blocks
             const leftOffset = 120 + (assignmentIndex * 140); // Space them horizontally
 

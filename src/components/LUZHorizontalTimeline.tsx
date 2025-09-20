@@ -35,8 +35,12 @@ export function LUZHorizontalTimeline({
           })}
         </div>
 
-        {/* Timeline Grid */}
-        <div className="relative min-h-[400px]">
+        {/* Timeline Grid - Dynamic height based on shifts */}
+        <div className="relative" style={{ minHeight: `${Math.max(400, shiftsForDate?.reduce((totalHeight, shift, index) => {
+          const shiftWorkers = assignmentsForDate?.filter(assignment => true) || [];
+          const shiftHeight = Math.max(80, 50 + shiftWorkers.length * 28);
+          return totalHeight + shiftHeight + 20; // Add spacing between shifts
+        }, 0) || 400)}px` }}>
           {/* Hour Grid Lines */}
           <div className="absolute inset-0 grid grid-cols-12 gap-1">
             {Array.from({ length: 12 }, (_, i) => (
@@ -58,52 +62,66 @@ export function LUZHorizontalTimeline({
               return true;
             }) || [];
 
+            // Calculate cumulative top position
+            let cumulativeTop = 0;
+            for (let i = 0; i < shiftIndex; i++) {
+              const prevShiftWorkers = assignmentsForDate?.filter(assignment => true) || [];
+              cumulativeTop += Math.max(80, 50 + prevShiftWorkers.length * 28) + 20;
+            }
+
+            const shiftHeight = Math.max(80, 50 + shiftWorkers.length * 28);
+
             return (
               <div
                 key={shift._id}
-                className="absolute bg-primary/20 border-2 border-primary rounded p-2"
+                className="absolute bg-primary/20 border-2 border-primary rounded"
                 style={{
                   left: `${((startCol - 1) / 12) * 100}%`,
                   width: `${(span / 12) * 100}%`,
-                  top: `${shiftIndex * 120}px`,
-                  height: `${Math.max(60, 30 + shiftWorkers.length * 25)}px`, // Dynamic height based on workers
+                  top: `${cumulativeTop}px`,
+                  height: `${shiftHeight}px`,
                 }}
               >
-                {/* Shift Header */}
-                <div className="font-medium text-sm">{shift.name}</div>
-                <div className="text-xs text-base-content/70 mb-2">
-                  {shift.storeHours.openTime} - {shift.storeHours.closeTime} • {shift.hourlyRequirements.reduce((sum, req) => sum + req.minWorkers, 0)} workers needed
+                {/* Shift Header - Protected area at top */}
+                <div className="bg-primary/30 border-b border-primary/50 px-2 py-1 rounded-t">
+                  <div className="font-medium text-sm">{shift.name}</div>
+                  <div className="text-xs text-base-content/70">
+                    {shift.storeHours.openTime} - {shift.storeHours.closeTime} • {shift.hourlyRequirements.reduce((sum, req) => sum + req.minWorkers, 0)} workers needed
+                  </div>
                 </div>
 
-                {/* Nested Workers within Shift */}
-                {shiftWorkers.map((assignment, workerIndex) => {
-                  const workerStartHour = parseInt(assignment.assignedHours[0]?.startTime.split(':')[0] || '9');
-                  const workerEndHour = parseInt(assignment.assignedHours[0]?.endTime.split(':')[0] || '17');
-                  const workerStartCol = Math.max(0, workerStartHour - startHour); // Relative to shift start
-                  const workerSpan = workerEndHour - workerStartHour;
-                  const shiftSpan = endHour - startHour;
+                {/* Workers Area */}
+                <div className="relative px-2 py-1" style={{ height: `${shiftHeight - 50}px` }}>
+                  {/* Nested Workers within Shift */}
+                  {shiftWorkers.map((assignment, workerIndex) => {
+                    const workerStartHour = parseInt(assignment.assignedHours[0]?.startTime.split(':')[0] || '9');
+                    const workerEndHour = parseInt(assignment.assignedHours[0]?.endTime.split(':')[0] || '17');
+                    const workerStartCol = Math.max(0, workerStartHour - startHour); // Relative to shift start
+                    const workerSpan = workerEndHour - workerStartHour;
+                    const shiftSpan = endHour - startHour;
 
-                  return (
-                    <div
-                      key={assignment._id}
-                      className={`absolute rounded px-2 py-1 ${
-                        assignment.status === 'confirmed'
-                          ? 'bg-success/40 border border-success text-success-content'
-                          : 'bg-warning/40 border border-warning text-warning-content'
-                      }`}
-                      style={{
-                        left: `${(workerStartCol / shiftSpan) * 100}%`,
-                        width: `${(workerSpan / shiftSpan) * 100}%`,
-                        top: `${30 + workerIndex * 25}px`,
-                        height: '22px',
-                      }}
-                    >
-                      <div className="text-xs font-medium truncate">
-                        {assignment.worker?.name} ({assignment.assignedHours[0]?.startTime}-{assignment.assignedHours[0]?.endTime})
+                    return (
+                      <div
+                        key={assignment._id}
+                        className={`absolute rounded px-2 py-1 ${
+                          assignment.status === 'confirmed'
+                            ? 'bg-success/40 border border-success text-success-content'
+                            : 'bg-warning/40 border border-warning text-warning-content'
+                        }`}
+                        style={{
+                          left: `${(workerStartCol / shiftSpan) * 100}%`,
+                          width: `${(workerSpan / shiftSpan) * 100}%`,
+                          top: `${workerIndex * 28}px`,
+                          height: '26px',
+                        }}
+                      >
+                        <div className="text-xs font-medium truncate">
+                          {assignment.worker?.name} ({assignment.assignedHours[0]?.startTime}-{assignment.assignedHours[0]?.endTime})
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
               </div>
             );
           })}
