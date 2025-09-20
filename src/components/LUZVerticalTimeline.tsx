@@ -102,11 +102,11 @@ export function LUZVerticalTimeline({
                             height: `${height}px`,
                           }}
                         >
-                          {/* Header - Floats above timeline, doesn't affect positioning */}
+                          {/* Header - Connected to shift body */}
                           <div
                             className={`absolute ${headerColorClasses} px-2 py-1 rounded-t left-0 right-0`}
                             style={{
-                              top: '-40px', // Float above the timeline container
+                              top: '-35px', // Connected to shift body
                               height: '35px',
                               zIndex: 10
                             }}
@@ -134,7 +134,7 @@ export function LUZVerticalTimeline({
 
                           {/* Main shift body - Time-constrained area */}
                           <div
-                            className={`absolute ${shiftColorClasses} rounded left-0 right-0`}
+                            className={`absolute ${shiftColorClasses} rounded-b left-0 right-0`}
                             style={{
                               top: '0px', // Aligned with timeline grid
                               height: `${duration * 64}px`, // Exact time span
@@ -177,8 +177,8 @@ export function LUZVerticalTimeline({
                             <div className="absolute right-2 top-0 w-10 h-full">
                               {shift.hourlyRequirements?.map((hourReq, hourIndex) => {
                                 const hourInt = parseInt(hourReq.hour.split(':')[0]);
-                                // Position relative to shift duration only
-                                const relativePosition = ((hourInt - startHour) / duration) * 100;
+                                // Position relative to shift duration with +5% offset for better alignment
+                                const relativePosition = ((hourInt - startHour) / duration) * 100 + 5;
 
                                 const currentWorkers = assignmentsForDate?.filter(assignment => {
                                   const assignStart = parseInt(assignment.assignedHours[0]?.startTime.split(':')[0] || '0');
