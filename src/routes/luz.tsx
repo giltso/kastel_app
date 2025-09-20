@@ -32,96 +32,11 @@ const getShiftStaffingStatus = (shift: any, assignedWorkers: any[]) => {
   }
 };
 
-// Mock data for frontend-only testing
-const mockShifts = [
-  {
-    _id: "shift1",
-    name: "Daily Operations",
-    type: "operational",
-    storeHours: { openTime: "08:00", closeTime: "18:00" },
-    hourlyRequirements: [
-      { hour: "08:00", minWorkers: 1, optimalWorkers: 2 }, // Opening - light staffing
-      { hour: "09:00", minWorkers: 2, optimalWorkers: 3 }, // Morning rush
-      { hour: "10:00", minWorkers: 3, optimalWorkers: 4 }, // Peak morning
-      { hour: "11:00", minWorkers: 2, optimalWorkers: 3 }, // Mid-morning
-      { hour: "12:00", minWorkers: 4, optimalWorkers: 5 }, // Lunch rush - PEAK
-      { hour: "13:00", minWorkers: 3, optimalWorkers: 4 }, // Post-lunch
-      { hour: "14:00", minWorkers: 2, optimalWorkers: 3 }, // Afternoon
-      { hour: "15:00", minWorkers: 3, optimalWorkers: 4 }, // After-school rush
-      { hour: "16:00", minWorkers: 2, optimalWorkers: 3 }, // Late afternoon
-      { hour: "17:00", minWorkers: 1, optimalWorkers: 2 }  // Closing - minimal
-    ]
-  }
-];
-
-const mockAssignments = [
-  {
-    _id: "assignment1",
-    worker: { _id: "worker1", name: "Alice Johnson" },
-    shift: { _id: "shift1", name: "Daily Operations", type: "operational" },
-    assignedHours: [{ startTime: "08:00", endTime: "14:00" }],
-    status: "confirmed"
-  },
-  {
-    _id: "assignment2",
-    worker: { _id: "worker2", name: "Bob Smith" },
-    shift: { _id: "shift1", name: "Daily Operations", type: "operational" },
-    assignedHours: [{ startTime: "12:00", endTime: "18:00" }],
-    status: "confirmed"  // Changed to confirmed to test staffing status
-  },
-  // Additional worker to test "properly staffed" scenario (3 workers for max requirement of 3)
-  {
-    _id: "assignment3",
-    worker: { _id: "worker3", name: "Carol Davis" },
-    shift: { _id: "shift1", name: "Daily Operations", type: "operational" },
-    assignedHours: [{ startTime: "09:00", endTime: "15:00" }],
-    status: "confirmed"
-  }
-];
-
-const mockPendingAssignments = [
-  {
-    _id: "pending1",
-    worker: { _id: "worker3", name: "Carol Davis" },
-    shift: { _id: "shift2", name: "Weekend Coverage", type: "operational" },
-    assignedHours: [{ startTime: "10:00", endTime: "16:00" }],
-    status: "pending_manager_approval"
-  }
-];
-
-const mockCourses = [
-  {
-    _id: "course1",
-    title: "Basic Safety Training",
-    description: "Essential safety protocols for all staff members",
-    schedule: {
-      startTime: "10:00",
-      endTime: "12:00"
-    },
-    instructor: { _id: "instructor1", name: "Dr. Smith" },
-    enrolledStudents: [
-      { _id: "student1", name: "Emma Wilson" },
-      { _id: "student2", name: "James Brown" }
-    ],
-    status: "confirmed",
-    category: "safety"
-  },
-  {
-    _id: "course2",
-    title: "Advanced Equipment Use",
-    description: "Training on specialized equipment operation",
-    schedule: {
-      startTime: "14:00",
-      endTime: "16:30"
-    },
-    instructor: { _id: "instructor2", name: "Prof. Johnson" },
-    enrolledStudents: [
-      { _id: "student3", name: "Sarah Davis" }
-    ],
-    status: "confirmed",
-    category: "technical"
-  }
-];
+// Empty data arrays - ready for backend integration
+const mockShifts: any[] = [];
+const mockAssignments: any[] = [];
+const mockPendingAssignments: any[] = [];
+const mockCourses: any[] = [];
 
 function LUZPage() {
   const { user, isLoading, isAuthenticated, hasWorkerTag, hasManagerTag } = usePermissionsV2();
@@ -133,9 +48,9 @@ function LUZPage() {
     rentals: false,
   });
 
-  // Mock data (replace with actual queries later)
+  // Data arrays - ready for backend integration
   const shifts = mockShifts;
-  const shiftsForDate = filters.shifts ? mockShifts : []; // Respect shifts filter
+  const shiftsForDate = filters.shifts ? mockShifts : [];
   const assignmentsForDate = mockAssignments;
   const pendingAssignments = mockPendingAssignments;
   const coursesForDate = filters.courses ? mockCourses : [];
