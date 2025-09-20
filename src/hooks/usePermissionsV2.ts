@@ -10,6 +10,7 @@ export type V2Permission =
   | "browse_tools"             // Authenticated users only
   | "browse_courses"           // Authenticated users only
   | "access_staff_features"    // isStaff = true
+  | "access_luz"               // isStaff = true (all staff can access LUZ)
   | "request_shifts"           // isStaff + workerTag
   | "approve_shifts"           // isStaff + workerTag + managerTag
   | "manage_courses"           // isStaff + instructorTag
@@ -76,6 +77,9 @@ export function usePermissionsV2() {
         return true; // All authenticated users
 
       case "access_staff_features":
+        return effective.isStaff;
+
+      case "access_luz":
         return effective.isStaff;
 
       case "request_shifts":

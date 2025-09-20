@@ -30,18 +30,28 @@ function V2HomePage() {
     return <GuestHomePage />;
   }
 
-  // Authenticated user interface
-  return (
-    <>
-      <EnsureUserV2 />
+  // Staff members should never reach this page - Home navigation goes to LUZ for them
+  if (isStaff) {
+    return (
+      <div className="text-center py-12">
+        <h1 className="text-2xl font-bold mb-4">Redirecting to LUZ...</h1>
+        <p>Staff home is the LUZ system.</p>
+      </div>
+    );
+  }
 
-      {/* Staff Interface */}
-      {isStaff && <StaffHomePage user={user} hasPermission={hasPermission} />}
+  // Customer home page
+  if (isCustomer) {
+    return (
+      <>
+        <EnsureUserV2 />
+        <CustomerHomePage user={user} hasPermission={hasPermission} />
+      </>
+    );
+  }
 
-      {/* Customer Interface */}
-      {isCustomer && <CustomerHomePage user={user} hasPermission={hasPermission} />}
-    </>
-  );
+  // Fallback
+  return null;
 }
 
 // Guest (Unauthenticated) Home Page

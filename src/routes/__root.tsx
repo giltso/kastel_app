@@ -38,12 +38,12 @@ export const Route = createRootRouteWithContext<{
 });
 
 function NavigationLinks({ onLinkClick }: { onLinkClick: () => void }) {
-  const { checkPermission } = usePermissionsV2();
-  
+  const { checkPermission, isStaff } = usePermissionsV2();
+
   return (
     <>
       <Link
-        to="/"
+        to={isStaff ? "/luz" : "/"}
         className="btn btn-ghost"
         activeProps={{
           className: "btn btn-ghost btn-active",
@@ -52,64 +52,28 @@ function NavigationLinks({ onLinkClick }: { onLinkClick: () => void }) {
       >
         Home
       </Link>
-      {checkPermission("access_worker_portal") && (
-        <Link
-          to="/calendar"
-          className="btn btn-ghost"
-          activeProps={{
-            className: "btn btn-ghost btn-active",
-          }}
-          onClick={onLinkClick}
-        >
-          LUZ
-        </Link>
-      )}
       {checkPermission("request_tool_rentals") && (
         <Link
-          to="/tools"
+          to="/tools-v2"
           className="btn btn-ghost"
           activeProps={{
             className: "btn btn-ghost btn-active",
           }}
           onClick={onLinkClick}
         >
-          Tool Rental
+          Tools
         </Link>
       )}
       {checkPermission("browse_courses") && (
         <Link
-          to="/courses"
+          to="/educational"
           className="btn btn-ghost"
           activeProps={{
             className: "btn btn-ghost btn-active",
           }}
           onClick={onLinkClick}
         >
-          Courses
-        </Link>
-      )}
-      {checkPermission("access_worker_portal") && (
-        <Link
-          to="/forms"
-          className="btn btn-ghost"
-          activeProps={{
-            className: "btn btn-ghost btn-active",
-          }}
-          onClick={onLinkClick}
-        >
-          Forms
-        </Link>
-      )}
-      {checkPermission("access_worker_portal") && (
-        <Link
-          to="/pro-help"
-          className="btn btn-ghost"
-          activeProps={{
-            className: "btn btn-ghost btn-active",
-          }}
-          onClick={onLinkClick}
-        >
-          Pro Help
+          Educational
         </Link>
       )}
     </>
@@ -117,13 +81,13 @@ function NavigationLinks({ onLinkClick }: { onLinkClick: () => void }) {
 }
 
 function MobileNavigationLinks({ onLinkClick }: { onLinkClick: () => void }) {
-  const { checkPermission } = usePermissionsV2();
-  
+  const { checkPermission, isStaff } = usePermissionsV2();
+
   return (
     <>
       <li>
         <Link
-          to="/"
+          to={isStaff ? "/luz" : "/"}
           onClick={onLinkClick}
           activeProps={{
             className: "active",
@@ -133,73 +97,31 @@ function MobileNavigationLinks({ onLinkClick }: { onLinkClick: () => void }) {
           Home
         </Link>
       </li>
-      {checkPermission("access_worker_portal") && (
-        <li>
-          <Link
-            to="/calendar"
-            onClick={onLinkClick}
-            activeProps={{
-              className: "active",
-            }}
-            className="flex items-center p-2"
-          >
-            LUZ
-          </Link>
-        </li>
-      )}
       {checkPermission("request_tool_rentals") && (
         <li>
           <Link
-            to="/tools"
+            to="/tools-v2"
             onClick={onLinkClick}
             activeProps={{
               className: "active",
             }}
             className="flex items-center p-2"
           >
-            Tool Rental
+            Tools
           </Link>
         </li>
       )}
       {checkPermission("browse_courses") && (
         <li>
           <Link
-            to="/courses"
+            to="/educational"
             onClick={onLinkClick}
             activeProps={{
               className: "active",
             }}
             className="flex items-center p-2"
           >
-            Courses
-          </Link>
-        </li>
-      )}
-      {checkPermission("access_worker_portal") && (
-        <li>
-          <Link
-            to="/forms"
-            onClick={onLinkClick}
-            activeProps={{
-              className: "active",
-            }}
-            className="flex items-center p-2"
-          >
-            Forms
-          </Link>
-        </li>
-      )}
-      {checkPermission("access_worker_portal") && (
-        <li>
-          <Link
-            to="/pro-help"
-            onClick={onLinkClick}
-            activeProps={{
-              className: "active",
-            }}
-            className="flex items-center p-2"
-          >
-            Pro Help
+            Educational
           </Link>
         </li>
       )}

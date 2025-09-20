@@ -90,8 +90,18 @@ export default defineSchema({
     assignedBy: v.id("users"), // Manager who made assignment
     assignedAt: v.number(),
 
-    // Simple Status (scheduling only)
-    status: v.union(v.literal("assigned"), v.literal("confirmed"), v.literal("cancelled")),
+    // Dual Approval Status System
+    status: v.union(
+      v.literal("pending_worker_approval"), // Manager assigned, waiting for worker
+      v.literal("pending_manager_approval"), // Worker requested, waiting for manager
+      v.literal("confirmed"), // Both parties approved
+      v.literal("rejected"), // Either party rejected
+      v.literal("completed") // Shift completed
+    ),
+
+    // Approval Tracking
+    workerApprovedAt: v.optional(v.number()),
+    managerApprovedAt: v.optional(v.number()),
 
     // Notes
     assignmentNotes: v.optional(v.string()), // Manager's assignment notes
@@ -108,10 +118,25 @@ export default defineSchema({
     date: v.string(), // "2025-09-16"
 
     // Request Type and Hours
-    requestType: v.union(v.literal("extra_hours"), v.literal("time_off"), v.literal("schedule_change")),
+    requestType: v.union(
+      v.literal("join_shift"), // Worker wants to join available shift
+      v.literal("switch_request"), // Worker wants to switch with another
+      v.literal("extra_hours"), // Worker requesting additional hours
+      v.literal("time_off"), // Worker requesting time off
+      v.literal("schedule_change") // Worker requesting schedule modification
+    ),
     requestedHours: v.optional(v.object({
-      startTime: v.string(), // "12:00" - for extra hours
+      startTime: v.string(), // "12:00" - for requested hours
       endTime: v.string(), // "18:00"
+    })),
+
+    // Switch Request Details (if requestType is "switch_request")
+    switchDetails: v.optional(v.object({
+      targetWorkerId: v.id("users"), // Worker they want to switch with
+      currentAssignmentId: v.id("shift_assignments"), // Their current assignment
+      targetAssignmentId: v.id("shift_assignments"), // Target worker's assignment
+      externalNotificationSent: v.boolean(), // Did we notify target worker externally?
+      targetWorkerResponse: v.optional(v.union(v.literal("approved"), v.literal("denied")))
     })),
 
     // Request Context

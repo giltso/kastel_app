@@ -1,0 +1,407 @@
+import { ConvexError, v } from "convex/values";
+import { mutation, query } from "./_generated/server";
+import { Doc, Id } from "./_generated/dataModel";
+
+// Helper function to validate manager permissions
+async function validateManagerPermissions(ctx: any, userId: Id<"users">) {
+  const user = await ctx.db.get(userId);
+  if (!user) {
+    throw new ConvexError("User not found");
+  }
+
+  const isStaff = user.emulatingIsStaff ?? user.isStaff ?? false;
+  const hasWorkerTag = user.emulatingWorkerTag ?? user.workerTag ?? false;
+  const hasManagerTag = user.emulatingManagerTag ?? user.managerTag ?? false;
+
+  if (!isStaff || !hasWorkerTag || !hasManagerTag) {
+    throw new ConvexError("Only managers can perform this action");
+  }
+
+  return user;
+}
+
+// Helper function to validate worker permissions
+async function validateWorkerPermissions(ctx: any, userId: Id<"users">) {
+  const user = await ctx.db.get(userId);
+  if (!user) {
+    throw new ConvexError("User not found");
+  }
+
+  const isStaff = user.emulatingIsStaff ?? user.isStaff ?? false;
+  const hasWorkerTag = user.emulatingWorkerTag ?? user.workerTag ?? false;
+
+  if (!isStaff || !hasWorkerTag) {
+    throw new ConvexError("Only workers can perform this action");
+  }
+
+  return user;
+}
+
+// Query: Get assignments for a specific date
+export const getAssignmentsForDate = query({
+  args: { date: v.string() },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new ConvexError("Not authenticated");
+    }
+
+    const assignments = await ctx.db
+      .query("shift_assignments")
+      .withIndex("by_date", (q) => q.eq("date", args.date))
+      .collect();
+
+    // Enrich with user and shift data
+    const enrichedAssignments = await Promise.all(
+      assignments.map(async (assignment) => {
+        const worker = await ctx.db.get(assignment.workerId);
+        const shift = await ctx.db.get(assignment.shiftTemplateId);
+        const assignedBy = await ctx.db.get(assignment.assignedBy);
+
+        return {
+          ...assignment,
+          worker: worker ? { _id: worker._id, name: worker.name } : null,
+          shift: shift ? { _id: shift._id, name: shift.name, type: shift.type } : null,
+          assignedBy: assignedBy ? { _id: assignedBy._id, name: assignedBy.name } : null,
+        };
+      })
+    );
+
+    return enrichedAssignments;
+  },
+});
+
+// Query: Get assignments for a worker
+export const getAssignmentsForWorker = query({
+  args: {
+    workerId: v.id("users"),
+    startDate: v.optional(v.string()),
+    endDate: v.optional(v.string())
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new ConvexError("Not authenticated");
+    }
+
+    let assignments = await ctx.db
+      .query("shift_assignments")
+      .withIndex("by_workerId", (q) => q.eq("workerId", args.workerId))
+      .collect();
+
+    // Filter by date range if provided
+    if (args.startDate || args.endDate) {
+      assignments = assignments.filter(assignment => {
+        if (args.startDate && assignment.date < args.startDate) return false;
+        if (args.endDate && assignment.date > args.endDate) return false;
+        return true;
+      });
+    }
+
+    // Enrich with shift data
+    const enrichedAssignments = await Promise.all(
+      assignments.map(async (assignment) => {
+        const shift = await ctx.db.get(assignment.shiftTemplateId);
+        const assignedBy = await ctx.db.get(assignment.assignedBy);
+
+        return {
+          ...assignment,
+          shift: shift ? { _id: shift._id, name: shift.name, type: shift.type } : null,
+          assignedBy: assignedBy ? { _id: assignedBy._id, name: assignedBy.name } : null,
+        };
+      })
+    );
+
+    return enrichedAssignments;
+  },
+});
+
+// Query: Get pending assignments requiring approval
+export const getPendingAssignments = query({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new ConvexError("Not authenticated");
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+
+    if (!user) {
+      throw new ConvexError("User not found");
+    }
+
+    const isStaff = user.emulatingIsStaff ?? user.isStaff ?? false;
+    const hasWorkerTag = user.emulatingWorkerTag ?? user.workerTag ?? false;
+    const hasManagerTag = user.emulatingManagerTag ?? user.managerTag ?? false;
+
+    let assignments;
+
+    if (isStaff && hasWorkerTag && hasManagerTag) {
+      // Manager sees all pending assignments
+      assignments = await ctx.db
+        .query("shift_assignments")
+        .filter((q) =>
+          q.or(
+            q.eq(q.field("status"), "pending_worker_approval"),
+            q.eq(q.field("status"), "pending_manager_approval")
+          )
+        )
+        .collect();
+    } else if (isStaff && hasWorkerTag) {
+      // Worker sees only assignments pending their approval
+      assignments = await ctx.db
+        .query("shift_assignments")
+        .withIndex("by_workerId", (q) => q.eq("workerId", user._id))
+        .filter((q) => q.eq(q.field("status"), "pending_worker_approval"))
+        .collect();
+    } else {
+      return [];
+    }
+
+    // Enrich with related data
+    const enrichedAssignments = await Promise.all(
+      assignments.map(async (assignment) => {
+        const worker = await ctx.db.get(assignment.workerId);
+        const shift = await ctx.db.get(assignment.shiftTemplateId);
+        const assignedBy = await ctx.db.get(assignment.assignedBy);
+
+        return {
+          ...assignment,
+          worker: worker ? { _id: worker._id, name: worker.name } : null,
+          shift: shift ? { _id: shift._id, name: shift.name, type: shift.type } : null,
+          assignedBy: assignedBy ? { _id: assignedBy._id, name: assignedBy.name } : null,
+        };
+      })
+    );
+
+    return enrichedAssignments;
+  },
+});
+
+// Mutation: Manager assigns worker to shift
+export const assignWorkerToShift = mutation({
+  args: {
+    shiftTemplateId: v.id("shifts"),
+    workerId: v.id("users"),
+    date: v.string(),
+    assignedHours: v.array(v.object({
+      startTime: v.string(),
+      endTime: v.string(),
+    })),
+    breakPeriods: v.optional(v.array(v.object({
+      startTime: v.string(),
+      endTime: v.string(),
+      isPaid: v.boolean(),
+    }))),
+    assignmentNotes: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new ConvexError("Not authenticated");
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+
+    if (!user) {
+      throw new ConvexError("User not found");
+    }
+
+    // Validate manager permissions
+    await validateManagerPermissions(ctx, user._id);
+
+    // Validate the worker exists and has worker permissions
+    await validateWorkerPermissions(ctx, args.workerId);
+
+    // Validate shift template exists
+    const shift = await ctx.db.get(args.shiftTemplateId);
+    if (!shift || !shift.isActive) {
+      throw new ConvexError("Shift template not found or inactive");
+    }
+
+    // Check for existing assignment
+    const existingAssignment = await ctx.db
+      .query("shift_assignments")
+      .withIndex("by_workerId", (q) => q.eq("workerId", args.workerId))
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("shiftTemplateId"), args.shiftTemplateId),
+          q.eq(q.field("date"), args.date)
+        )
+      )
+      .unique();
+
+    if (existingAssignment) {
+      throw new ConvexError("Worker already has an assignment for this shift on this date");
+    }
+
+    // Validate hours are within shift bounds
+    for (const hourRange of args.assignedHours) {
+      if (hourRange.startTime >= hourRange.endTime) {
+        throw new ConvexError("Invalid hour range: start time must be before end time");
+      }
+    }
+
+    // Create assignment pending worker approval
+    return await ctx.db.insert("shift_assignments", {
+      shiftTemplateId: args.shiftTemplateId,
+      workerId: args.workerId,
+      date: args.date,
+      assignedHours: args.assignedHours,
+      breakPeriods: args.breakPeriods,
+      assignedBy: user._id,
+      assignedAt: Date.now(),
+      status: "pending_worker_approval",
+      managerApprovedAt: Date.now(), // Manager already approved by assigning
+      assignmentNotes: args.assignmentNotes,
+    });
+  },
+});
+
+// Mutation: Worker approves assignment
+export const approveAssignment = mutation({
+  args: { assignmentId: v.id("shift_assignments") },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new ConvexError("Not authenticated");
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+
+    if (!user) {
+      throw new ConvexError("User not found");
+    }
+
+    const assignment = await ctx.db.get(args.assignmentId);
+    if (!assignment) {
+      throw new ConvexError("Assignment not found");
+    }
+
+    // Check if user is the assigned worker or a manager
+    const isStaff = user.emulatingIsStaff ?? user.isStaff ?? false;
+    const hasWorkerTag = user.emulatingWorkerTag ?? user.workerTag ?? false;
+    const hasManagerTag = user.emulatingManagerTag ?? user.managerTag ?? false;
+    const isAssignedWorker = assignment.workerId === user._id;
+    const isManager = isStaff && hasWorkerTag && hasManagerTag;
+
+    if (!isAssignedWorker && !isManager) {
+      throw new ConvexError("Only the assigned worker or a manager can approve this assignment");
+    }
+
+    // Update based on current status and who is approving
+    let updates: Partial<Doc<"shift_assignments">> = {};
+
+    if (assignment.status === "pending_worker_approval" && isAssignedWorker) {
+      updates.status = "confirmed";
+      updates.workerApprovedAt = Date.now();
+    } else if (assignment.status === "pending_manager_approval" && isManager) {
+      updates.status = "confirmed";
+      updates.managerApprovedAt = Date.now();
+    } else {
+      throw new ConvexError("Assignment is not pending your approval");
+    }
+
+    await ctx.db.patch(args.assignmentId, updates);
+    return args.assignmentId;
+  },
+});
+
+// Mutation: Reject assignment
+export const rejectAssignment = mutation({
+  args: {
+    assignmentId: v.id("shift_assignments"),
+    reason: v.optional(v.string())
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new ConvexError("Not authenticated");
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+
+    if (!user) {
+      throw new ConvexError("User not found");
+    }
+
+    const assignment = await ctx.db.get(args.assignmentId);
+    if (!assignment) {
+      throw new ConvexError("Assignment not found");
+    }
+
+    // Check if user is the assigned worker or a manager
+    const isStaff = user.emulatingIsStaff ?? user.isStaff ?? false;
+    const hasWorkerTag = user.emulatingWorkerTag ?? user.workerTag ?? false;
+    const hasManagerTag = user.emulatingManagerTag ?? user.managerTag ?? false;
+    const isAssignedWorker = assignment.workerId === user._id;
+    const isManager = isStaff && hasWorkerTag && hasManagerTag;
+
+    if (!isAssignedWorker && !isManager) {
+      throw new ConvexError("Only the assigned worker or a manager can reject this assignment");
+    }
+
+    // Only pending assignments can be rejected
+    if (!assignment.status.includes("pending")) {
+      throw new ConvexError("Only pending assignments can be rejected");
+    }
+
+    await ctx.db.patch(args.assignmentId, {
+      status: "rejected",
+      assignmentNotes: args.reason ? `${assignment.assignmentNotes || ''}\nRejected: ${args.reason}` : assignment.assignmentNotes,
+    });
+
+    return args.assignmentId;
+  },
+});
+
+// Mutation: Complete assignment (for future time tracking)
+export const completeAssignment = mutation({
+  args: { assignmentId: v.id("shift_assignments") },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new ConvexError("Not authenticated");
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+
+    if (!user) {
+      throw new ConvexError("User not found");
+    }
+
+    // Validate manager permissions
+    await validateManagerPermissions(ctx, user._id);
+
+    const assignment = await ctx.db.get(args.assignmentId);
+    if (!assignment) {
+      throw new ConvexError("Assignment not found");
+    }
+
+    if (assignment.status !== "confirmed") {
+      throw new ConvexError("Only confirmed assignments can be completed");
+    }
+
+    await ctx.db.patch(args.assignmentId, {
+      status: "completed",
+    });
+
+    return args.assignmentId;
+  },
+});
