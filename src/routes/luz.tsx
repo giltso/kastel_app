@@ -17,6 +17,21 @@ const getTodayString = () => {
   return today.toISOString().split('T')[0];
 };
 
+// Calculate staffing status for a shift
+const getShiftStaffingStatus = (shift: any, assignedWorkers: any[]) => {
+  // Use maximum concurrent workers needed rather than sum of all hours
+  const minWorkers = Math.max(...shift.hourlyRequirements.map((req: any) => req.minWorkers));
+  const currentWorkers = assignedWorkers.filter(worker => worker.status === 'confirmed').length;
+
+  if (currentWorkers < minWorkers) {
+    return { status: 'understaffed', currentWorkers, minWorkers, severity: 'error' };
+  } else if (currentWorkers === minWorkers) {
+    return { status: 'staffed', currentWorkers, minWorkers, severity: 'success' };
+  } else {
+    return { status: 'overstaffed', currentWorkers, minWorkers, severity: 'warning' };
+  }
+};
+
 // Mock data for frontend-only testing
 const mockShifts = [
   {
@@ -52,7 +67,15 @@ const mockAssignments = [
     worker: { _id: "worker2", name: "Bob Smith" },
     shift: { _id: "shift1", name: "Daily Operations", type: "operational" },
     assignedHours: [{ startTime: "12:00", endTime: "18:00" }],
-    status: "pending_worker_approval"
+    status: "confirmed"  // Changed to confirmed to test staffing status
+  },
+  // Additional worker to test "properly staffed" scenario (3 workers for max requirement of 3)
+  {
+    _id: "assignment3",
+    worker: { _id: "worker3", name: "Carol Davis" },
+    shift: { _id: "shift1", name: "Daily Operations", type: "operational" },
+    assignedHours: [{ startTime: "09:00", endTime: "15:00" }],
+    status: "confirmed"
   }
 ];
 
@@ -266,6 +289,7 @@ function LUZPage() {
                 coursesForDate={coursesForDate}
                 selectedDate={selectedDate}
                 hasManagerTag={hasManagerTag}
+                getShiftStaffingStatus={getShiftStaffingStatus}
               />
             ) : (
               <LUZHorizontalTimeline
@@ -274,6 +298,7 @@ function LUZPage() {
                 coursesForDate={coursesForDate}
                 selectedDate={selectedDate}
                 hasManagerTag={hasManagerTag}
+                getShiftStaffingStatus={getShiftStaffingStatus}
               />
             )}
           </div>

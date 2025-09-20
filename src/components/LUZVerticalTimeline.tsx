@@ -6,6 +6,7 @@ interface LUZVerticalTimelineProps {
   coursesForDate: any[];
   selectedDate: string;
   hasManagerTag: boolean;
+  getShiftStaffingStatus: (shift: any, assignedWorkers: any[]) => any;
 }
 
 export function LUZVerticalTimeline({
@@ -13,7 +14,8 @@ export function LUZVerticalTimeline({
   shiftsForDate,
   coursesForDate,
   selectedDate,
-  hasManagerTag
+  hasManagerTag,
+  getShiftStaffingStatus
 }: LUZVerticalTimelineProps) {
   return (
     <div className="bg-base-100 border border-base-300 rounded-lg p-4">
@@ -68,20 +70,51 @@ export function LUZVerticalTimeline({
                       const topPos = 32 + (startRow * 64); // 32px for header + row height
                       const height = duration * 64 + 50; // Add 50px for protected header space
 
+                      // Calculate staffing status for color determination
+                      const shiftWorkers = assignmentsForDate?.filter(assignment => true) || [];
+                      const staffingStatus = getShiftStaffingStatus(shift, shiftWorkers);
+
+                      const shiftColorClasses = {
+                        understaffed: 'bg-error/20 border-2 border-error',
+                        staffed: 'bg-success/20 border-2 border-success',
+                        overstaffed: 'bg-warning/20 border-2 border-warning'
+                      }[staffingStatus.status];
+
+                      const headerColorClasses = {
+                        understaffed: 'bg-error/30 border-b border-error/50',
+                        staffed: 'bg-success/30 border-b border-success/50',
+                        overstaffed: 'bg-warning/30 border-b border-warning/50'
+                      }[staffingStatus.status];
+
                       return (
                         <div
                           key={shift._id}
-                          className="absolute bg-primary/20 border-2 border-primary rounded left-2 right-2"
+                          className={`absolute ${shiftColorClasses} rounded left-2 right-2`}
                           style={{
                             top: `${topPos}px`,
                             height: `${height}px`,
                           }}
                         >
                           {/* Tab-style Header - Protected area at top */}
-                          <div className="bg-primary/30 border-b border-primary/50 px-2 py-1 rounded-t">
-                            <div className="font-medium text-sm">{shift.name}</div>
-                            <div className="text-xs text-base-content/70">
-                              {shift.storeHours.openTime} - {shift.storeHours.closeTime} • {shift.hourlyRequirements.reduce((sum, req) => sum + req.minWorkers, 0)} workers needed
+                          <div className={`${headerColorClasses} px-2 py-1 rounded-t`}>
+                            <div className="flex justify-between items-center">
+                              <div>
+                                <div className="font-medium text-sm">{shift.name}</div>
+                                <div className="text-xs text-base-content/70">
+                                  {shift.storeHours.openTime} - {shift.storeHours.closeTime}
+                                </div>
+                              </div>
+                              <div className="text-right">
+                                <div className="text-xs font-bold">
+                                  {staffingStatus.currentWorkers}/{staffingStatus.minWorkers} workers
+                                </div>
+                                <div className={`badge badge-xs ${
+                                  staffingStatus.status === 'understaffed' ? 'badge-error' :
+                                  staffingStatus.status === 'staffed' ? 'badge-success' : 'badge-warning'
+                                }`}>
+                                  {staffingStatus.status}
+                                </div>
+                              </div>
                             </div>
                           </div>
 
