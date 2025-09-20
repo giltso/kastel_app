@@ -74,8 +74,8 @@ export function LUZVerticalTimeline({
                       const endHour = parseInt(shift.storeHours.closeTime.split(':')[0]);
                       const startRow = Math.max(0, startHour - 8);
                       const duration = endHour - startHour;
-                      const topPos = 32 + (startRow * 64) - 25; // Start 25px above timeline to create tab protrusion
-                      const height = duration * 64 + 50 + 25; // Add 50px for protected header + 25px for tab protrusion
+                      const topPos = 32 + (startRow * 64); // Align with timeline grid
+                      const height = duration * 64; // Exact duration height
 
                       // Calculate staffing status for color determination
                       const shiftWorkers = assignmentsForDate?.filter(assignment => true) || [];
@@ -102,23 +102,25 @@ export function LUZVerticalTimeline({
                             height: `${height}px`,
                           }}
                         >
-                          {/* Header - Extends beyond time boundaries */}
-                          <div className={`${headerColorClasses} px-2 py-1 rounded-t-lg absolute left-0 right-0`}
-                               style={{
-                                 height: '50px',
-                                 top: '0px', // Header starts at top of container
-                                 zIndex: 10
-                               }}>
-                            <div className="flex justify-between items-center">
+                          {/* Header - Floats above timeline, doesn't affect positioning */}
+                          <div
+                            className={`absolute ${headerColorClasses} px-2 py-1 rounded-t left-0 right-0`}
+                            style={{
+                              top: '-40px', // Float above the timeline container
+                              height: '35px',
+                              zIndex: 10
+                            }}
+                          >
+                            <div className="flex justify-between items-center h-full">
                               <div>
-                                <div className="font-medium text-sm text-base-content">{shift.name}</div>
+                                <div className="font-medium text-xs text-base-content">{shift.name}</div>
                                 <div className="text-xs text-base-content/80">
                                   {shift.storeHours.openTime} - {shift.storeHours.closeTime}
                                 </div>
                               </div>
                               <div className="text-right">
                                 <div className="text-xs font-bold text-base-content">
-                                  {staffingStatus.currentWorkers}/{staffingStatus.minWorkers} workers
+                                  {staffingStatus.currentWorkers}/{staffingStatus.minWorkers}
                                 </div>
                                 <div className={`badge badge-xs text-base-content ${
                                   staffingStatus.status === 'understaffed' ? 'badge-error' :
@@ -132,9 +134,9 @@ export function LUZVerticalTimeline({
 
                           {/* Main shift body - Time-constrained area */}
                           <div
-                            className={`absolute ${shiftColorClasses} rounded-b left-0 right-0`}
+                            className={`absolute ${shiftColorClasses} rounded left-0 right-0`}
                             style={{
-                              top: '50px', // Start after header
+                              top: '0px', // Aligned with timeline grid
                               height: `${duration * 64}px`, // Exact time span
                             }}
                           >
