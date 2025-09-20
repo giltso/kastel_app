@@ -201,89 +201,10 @@ function RolesPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {/* Sample Data - Replace with real data */}
+                      {/* Empty state - will be populated with real data */}
                       <tr>
-                        <td>
-                          <div className="flex items-center gap-3">
-                            <div className="avatar">
-                              <div className="mask mask-squircle w-12 h-12">
-                                <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=96&h=96&fit=crop&crop=face" alt="Avatar" />
-                              </div>
-                            </div>
-                            <div>
-                              <div className="font-bold">John Doe</div>
-                              <div className="text-sm opacity-50">Staff ID: #001</div>
-                            </div>
-                          </div>
-                        </td>
-                        <td>john.doe@kastel.com</td>
-                        <td>
-                          <div className="flex gap-1 flex-wrap">
-                            <span className="badge badge-primary badge-sm">Manager</span>
-                            <span className="badge badge-secondary badge-sm">Worker</span>
-                          </div>
-                        </td>
-                        <td>
-                          <span className="badge badge-success badge-sm">Active</span>
-                        </td>
-                        <td>
-                          <button className="btn btn-ghost btn-xs">Edit</button>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>
-                          <div className="flex items-center gap-3">
-                            <div className="avatar">
-                              <div className="mask mask-squircle w-12 h-12">
-                                <img src="https://images.unsplash.com/photo-1494790108755-2616b612b47c?w=96&h=96&fit=crop&crop=face" alt="Avatar" />
-                              </div>
-                            </div>
-                            <div>
-                              <div className="font-bold">Jane Smith</div>
-                              <div className="text-sm opacity-50">Staff ID: #002</div>
-                            </div>
-                          </div>
-                        </td>
-                        <td>jane.smith@kastel.com</td>
-                        <td>
-                          <div className="flex gap-1 flex-wrap">
-                            <span className="badge badge-info badge-sm">Instructor</span>
-                            <span className="badge badge-secondary badge-sm">Worker</span>
-                          </div>
-                        </td>
-                        <td>
-                          <span className="badge badge-success badge-sm">Active</span>
-                        </td>
-                        <td>
-                          <button className="btn btn-ghost btn-xs">Edit</button>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>
-                          <div className="flex items-center gap-3">
-                            <div className="avatar">
-                              <div className="mask mask-squircle w-12 h-12">
-                                <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=96&h=96&fit=crop&crop=face" alt="Avatar" />
-                              </div>
-                            </div>
-                            <div>
-                              <div className="font-bold">Mike Johnson</div>
-                              <div className="text-sm opacity-50">Staff ID: #003</div>
-                            </div>
-                          </div>
-                        </td>
-                        <td>mike.johnson@kastel.com</td>
-                        <td>
-                          <div className="flex gap-1 flex-wrap">
-                            <span className="badge badge-warning badge-sm">Tool Handler</span>
-                            <span className="badge badge-secondary badge-sm">Worker</span>
-                          </div>
-                        </td>
-                        <td>
-                          <span className="badge badge-success badge-sm">Active</span>
-                        </td>
-                        <td>
-                          <button className="btn btn-ghost btn-xs">Edit</button>
+                        <td colSpan={5} className="text-center py-8 text-base-content/60">
+                          No staff members found. Staff data will be loaded from the backend.
                         </td>
                       </tr>
                     </tbody>
