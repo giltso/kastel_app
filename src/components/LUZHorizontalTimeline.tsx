@@ -103,7 +103,7 @@ export function LUZHorizontalTimeline({
             return (
               <div
                 key={shift._id}
-                className={`absolute ${shiftColorClasses} rounded`}
+                className="absolute"
                 style={{
                   left: `${((startCol - 1) / 12) * 100}%`,
                   width: `${(span / 12) * 100}%`,
@@ -111,20 +111,25 @@ export function LUZHorizontalTimeline({
                   height: `${shiftHeight}px`,
                 }}
               >
-                {/* Shift Header - Protected area at top */}
-                <div className={`${headerColorClasses} px-2 py-1 rounded-t`}>
+                {/* Header - Extends beyond time boundaries */}
+                <div className={`absolute ${headerColorClasses} px-2 py-1 rounded-t left-0 right-0`}
+                     style={{
+                       height: '50px',
+                       top: '0px',
+                       zIndex: 10
+                     }}>
                   <div className="flex justify-between items-center">
                     <div>
-                      <div className="font-medium text-sm">{shift.name}</div>
+                      <div className="font-medium text-sm text-base-content">{shift.name}</div>
                       <div className="text-xs text-base-content/70">
                         {shift.storeHours.openTime} - {shift.storeHours.closeTime}
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="text-xs font-bold">
+                      <div className="text-xs font-bold text-base-content">
                         {staffingStatus.currentWorkers}/{staffingStatus.minWorkers} workers
                       </div>
-                      <div className={`badge badge-xs ${
+                      <div className={`badge badge-xs text-base-content ${
                         staffingStatus.status === 'understaffed' ? 'badge-error' :
                         staffingStatus.status === 'staffed' ? 'badge-success' : 'badge-warning'
                       }`}>
@@ -134,48 +139,54 @@ export function LUZHorizontalTimeline({
                   </div>
                 </div>
 
-                {/* Workers Area - Leave space for capacity bar at bottom */}
-                <div className="relative px-2 py-1 pb-8" style={{ height: `${shiftHeight - 50 - 32}px` }}>
-                  {/* Nested Workers within Shift */}
-                  {shiftWorkers.map((assignment, workerIndex) => {
-                    const workerStartHour = parseInt(assignment.assignedHours[0]?.startTime.split(':')[0] || '9');
-                    const workerEndHour = parseInt(assignment.assignedHours[0]?.endTime.split(':')[0] || '17');
-                    const workerStartCol = Math.max(0, workerStartHour - startHour); // Relative to shift start
-                    const workerSpan = workerEndHour - workerStartHour;
-                    const shiftSpan = endHour - startHour;
+                {/* Main shift body - Time-constrained area */}
+                <div
+                  className={`absolute ${shiftColorClasses} rounded-b left-0 right-0`}
+                  style={{
+                    top: '50px', // Start after header
+                    height: `${shiftHeight - 50}px`, // Remaining space after header
+                  }}
+                >
+                  {/* Worker assignments within shift body */}
+                  <div className="relative w-full h-full px-2 py-1 pb-8">
+                    {/* Workers positioned relative to shift time */}
+                    {shiftWorkers.map((assignment, workerIndex) => {
+                      const workerStartHour = parseInt(assignment.assignedHours[0]?.startTime.split(':')[0] || startHour.toString());
+                      const workerEndHour = parseInt(assignment.assignedHours[0]?.endTime.split(':')[0] || endHour.toString());
 
-                    return (
-                      <div
-                        key={assignment._id}
-                        className={`absolute rounded px-2 py-1 ${
-                          assignment.status === 'confirmed'
-                            ? 'bg-success/30 border border-success'
-                            : 'bg-warning/30 border border-warning'
-                        }`}
-                        style={{
-                          left: `${(workerStartCol / shiftSpan) * 100}%`,
-                          width: `${(workerSpan / shiftSpan) * 100}%`,
-                          top: `${workerIndex * 28}px`,
-                          height: '26px',
-                        }}
-                      >
-                        <div className="text-xs font-medium truncate">
-                          {assignment.worker?.name} ({assignment.assignedHours[0]?.startTime}-{assignment.assignedHours[0]?.endTime})
+                      // Position relative to shift duration
+                      const relativeStart = ((workerStartHour - startHour) / (endHour - startHour)) * 100;
+                      const relativeWidth = ((workerEndHour - workerStartHour) / (endHour - startHour)) * 100;
+
+                      return (
+                        <div
+                          key={assignment._id}
+                          className={`absolute rounded px-2 py-1 ${
+                            assignment.status === 'confirmed'
+                              ? 'bg-success/30 border border-success'
+                              : 'bg-warning/30 border border-warning'
+                          }`}
+                          style={{
+                            left: `${relativeStart}%`,
+                            width: `${relativeWidth}%`,
+                            top: `${workerIndex * 28}px`,
+                            height: '26px',
+                          }}
+                        >
+                          <div className="text-xs font-medium truncate text-base-content">
+                            {assignment.worker?.name} ({assignment.assignedHours[0]?.startTime}-{assignment.assignedHours[0]?.endTime})
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </div>
 
-                  {/* Capacity indicators - aligned with global timeline grid */}
-                  <div className="absolute bottom-2 left-0 right-0" style={{ height: '24px' }}>
+                  {/* Capacity indicators - Bottom, relative to shift time */}
+                  <div className="absolute bottom-2 left-2 right-2 h-6">
                     {shift.hourlyRequirements?.map((hourReq, hourIndex) => {
                       const hourInt = parseInt(hourReq.hour.split(':')[0]);
-                      // Calculate position relative to global 8AM-8PM grid (12 hours)
-                      const globalHourPosition = ((hourInt - 8) / 12) * 100; // Position in global timeline
-                      // Adjust to be relative to shift container position
-                      const shiftStartGlobal = ((startHour - 8) / 12) * 100;
-                      const shiftWidthGlobal = ((endHour - startHour) / 12) * 100;
-                      const relativePosition = ((globalHourPosition - shiftStartGlobal) / shiftWidthGlobal) * 100;
+                      // Position relative to shift duration only
+                      const relativePosition = ((hourInt - startHour) / (endHour - startHour)) * 100;
 
                       const currentWorkers = shiftWorkers.filter(assignment => {
                         const assignStart = parseInt(assignment.assignedHours[0]?.startTime.split(':')[0] || '0');
@@ -187,9 +198,9 @@ export function LUZHorizontalTimeline({
                                        currentWorkers === hourReq.minWorkers ? 'staffed' : 'overstaffed';
 
                       const hourColor = {
-                        understaffed: 'bg-error/40 text-base-content',
-                        staffed: 'bg-success/40 text-base-content',
-                        overstaffed: 'bg-warning/40 text-base-content'
+                        understaffed: 'bg-error/60 text-white',
+                        staffed: 'bg-success/60 text-white',
+                        overstaffed: 'bg-warning/60 text-black'
                       }[hourStatus];
 
                       return (

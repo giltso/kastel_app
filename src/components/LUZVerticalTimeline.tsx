@@ -96,14 +96,19 @@ export function LUZVerticalTimeline({
                       return (
                         <div
                           key={shift._id}
-                          className={`absolute ${shiftColorClasses} rounded left-2 right-2`}
+                          className={`absolute left-2 right-2`}
                           style={{
                             top: `${topPos}px`,
                             height: `${height}px`,
                           }}
                         >
-                          {/* Tab-style Header - Protruding above timeline like Chrome tab */}
-                          <div className={`${headerColorClasses} px-2 py-1 rounded-t-lg relative`} style={{ height: '50px', marginTop: '25px', borderTopLeftRadius: '8px', borderTopRightRadius: '8px' }}>
+                          {/* Header - Extends beyond time boundaries */}
+                          <div className={`${headerColorClasses} px-2 py-1 rounded-t-lg absolute left-0 right-0`}
+                               style={{
+                                 height: '50px',
+                                 top: '0px', // Header starts at top of container
+                                 zIndex: 10
+                               }}>
                             <div className="flex justify-between items-center">
                               <div>
                                 <div className="font-medium text-sm text-base-content">{shift.name}</div>
@@ -125,52 +130,88 @@ export function LUZVerticalTimeline({
                             </div>
                           </div>
 
-                          {/* Main shift content area - leave space for capacity bar on right */}
-                          <div className="relative px-2 py-1 pr-16" style={{ height: `${duration * 64}px`, marginTop: '0px' }}>
-                            {/* Shift content can go here */}
-                          </div>
+                          {/* Main shift body - Time-constrained area */}
+                          <div
+                            className={`absolute ${shiftColorClasses} rounded-b left-0 right-0`}
+                            style={{
+                              top: '50px', // Start after header
+                              height: `${duration * 64}px`, // Exact time span
+                            }}
+                          >
+                            {/* Worker assignments within shift body */}
+                            <div className="relative w-full h-full px-2 py-1 pr-12">
+                              {/* Workers positioned relative to shift time */}
+                              {assignmentsForDate?.filter(assignment => true).map((assignment, workerIndex) => {
+                                const workerStartHour = parseInt(assignment.assignedHours[0]?.startTime.split(':')[0] || startHour.toString());
+                                const workerEndHour = parseInt(assignment.assignedHours[0]?.endTime.split(':')[0] || endHour.toString());
 
-                          {/* Capacity indicators - aligned with global timeline grid */}
-                          <div className="absolute right-2" style={{ width: '40px', top: '75px', height: `${duration * 64}px` }}>
-                            {shift.hourlyRequirements?.map((hourReq, hourIndex) => {
-                              const hourInt = parseInt(hourReq.hour.split(':')[0]);
-                              // Calculate position relative to global timeline (8AM = 0, each hour = 64px)
-                              const globalRowPosition = (hourInt - 8) * 64; // Global position from 8AM
-                              const shiftStartGlobal = (startHour - 8) * 64; // Shift start in global timeline
-                              const relativePosition = globalRowPosition - shiftStartGlobal; // Position within shift
+                                // Position relative to shift duration
+                                const relativeStart = ((workerStartHour - startHour) / duration) * 100;
+                                const relativeHeight = ((workerEndHour - workerStartHour) / duration) * 100;
 
-                              const currentWorkers = assignmentsForDate?.filter(assignment => {
-                                const assignStart = parseInt(assignment.assignedHours[0]?.startTime.split(':')[0] || '0');
-                                const assignEnd = parseInt(assignment.assignedHours[0]?.endTime.split(':')[0] || '0');
-                                return hourInt >= assignStart && hourInt < assignEnd && assignment.status === 'confirmed';
-                              }).length || 0;
+                                return (
+                                  <div
+                                    key={assignment._id}
+                                    className={`absolute rounded px-2 py-1 ${
+                                      assignment.status === 'confirmed'
+                                        ? 'bg-success/30 border border-success'
+                                        : 'bg-warning/30 border border-warning'
+                                    }`}
+                                    style={{
+                                      top: `${relativeStart}%`,
+                                      height: `${relativeHeight}%`,
+                                      left: `${workerIndex * 25}%`,
+                                      width: '20%',
+                                    }}
+                                  >
+                                    <div className="text-xs font-medium text-base-content">{assignment.worker?.name}</div>
+                                    <div className="text-xs text-base-content">{assignment.assignedHours[0]?.startTime} - {assignment.assignedHours[0]?.endTime}</div>
+                                  </div>
+                                );
+                              })}
+                            </div>
 
-                              const hourStatus = currentWorkers < hourReq.minWorkers ? 'understaffed' :
-                                               currentWorkers === hourReq.minWorkers ? 'staffed' : 'overstaffed';
+                            {/* Capacity indicators - Right side, relative to shift time */}
+                            <div className="absolute right-2 top-0 w-10 h-full">
+                              {shift.hourlyRequirements?.map((hourReq, hourIndex) => {
+                                const hourInt = parseInt(hourReq.hour.split(':')[0]);
+                                // Position relative to shift duration only
+                                const relativePosition = ((hourInt - startHour) / duration) * 100;
 
-                              const hourColor = {
-                                understaffed: 'bg-error/40 text-base-content',
-                                staffed: 'bg-success/40 text-base-content',
-                                overstaffed: 'bg-warning/40 text-base-content'
-                              }[hourStatus];
+                                const currentWorkers = assignmentsForDate?.filter(assignment => {
+                                  const assignStart = parseInt(assignment.assignedHours[0]?.startTime.split(':')[0] || '0');
+                                  const assignEnd = parseInt(assignment.assignedHours[0]?.endTime.split(':')[0] || '0');
+                                  return hourInt >= assignStart && hourInt < assignEnd && assignment.status === 'confirmed';
+                                }).length || 0;
 
-                              return (
-                                <div
-                                  key={hourReq.hour}
-                                  className={`absolute ${hourColor} rounded text-center`}
-                                  style={{
-                                    top: `${relativePosition + 32}px`, // Align with timeline grid + center in row
-                                    left: '0px',
-                                    right: '0px',
-                                    height: '20px',
-                                    fontSize: '10px',
-                                    lineHeight: '20px'
-                                  }}
-                                >
-                                  {currentWorkers}/{hourReq.minWorkers}
-                                </div>
-                              );
-                            })}
+                                const hourStatus = currentWorkers < hourReq.minWorkers ? 'understaffed' :
+                                                 currentWorkers === hourReq.minWorkers ? 'staffed' : 'overstaffed';
+
+                                const hourColor = {
+                                  understaffed: 'bg-error/60 text-white',
+                                  staffed: 'bg-success/60 text-white',
+                                  overstaffed: 'bg-warning/60 text-black'
+                                }[hourStatus];
+
+                                return (
+                                  <div
+                                    key={hourReq.hour}
+                                    className={`absolute ${hourColor} rounded text-center`}
+                                    style={{
+                                      top: `${relativePosition}%`,
+                                      left: '0px',
+                                      right: '0px',
+                                      height: '18px',
+                                      fontSize: '9px',
+                                      lineHeight: '18px',
+                                      transform: 'translateY(-50%)'
+                                    }}
+                                  >
+                                    {currentWorkers}/{hourReq.minWorkers}
+                                  </div>
+                                );
+                              })}
+                            </div>
                           </div>
                         </div>
                       );
