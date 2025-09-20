@@ -167,42 +167,47 @@ export function LUZHorizontalTimeline({
                   })}
 
                   {/* Capacity Management Bar - Bottom */}
-                  <div className="absolute bottom-0 left-2 right-2 h-8 border-t border-base-300/50 bg-base-50/30">
-                    <div className="flex items-center justify-between h-full px-2">
-                      <div className="text-xs font-medium text-base-content">Capacity:</div>
-                      <div className="flex gap-1 flex-wrap">
-                        {shift.hourlyRequirements?.map((hourReq, hourIndex) => {
-                          const hourInt = parseInt(hourReq.hour.split(':')[0]);
-                          const currentWorkers = shiftWorkers.filter(assignment => {
-                            const assignStart = parseInt(assignment.assignedHours[0]?.startTime.split(':')[0] || '0');
-                            const assignEnd = parseInt(assignment.assignedHours[0]?.endTime.split(':')[0] || '0');
-                            return hourInt >= assignStart && hourInt < assignEnd && assignment.status === 'confirmed';
-                          }).length || 0;
-
-                          const hourStatus = currentWorkers < hourReq.minWorkers ? 'understaffed' :
-                                           currentWorkers === hourReq.minWorkers ? 'staffed' : 'overstaffed';
-
-                          const hourColor = {
-                            understaffed: 'bg-error/40 text-base-content',
-                            staffed: 'bg-success/40 text-base-content',
-                            overstaffed: 'bg-warning/40 text-base-content'
-                          }[hourStatus];
-
-                          return (
-                            <div
-                              key={hourReq.hour}
-                              className={`${hourColor} rounded px-1 text-center`}
-                              style={{
-                                fontSize: '9px',
-                                lineHeight: '16px',
-                                minWidth: '32px'
-                              }}
-                            >
-                              {hourInt}h:{currentWorkers}/{hourReq.minWorkers}
-                            </div>
-                          );
-                        })}
+                  <div className="absolute bottom-0 left-0 right-0 h-8 border-t border-base-300/50 bg-base-50/30">
+                    <div className="relative h-full">
+                      <div className="absolute left-2 top-0 h-full flex items-center">
+                        <div className="text-xs font-medium text-base-content">Capacity:</div>
                       </div>
+                      {shift.hourlyRequirements?.map((hourReq, hourIndex) => {
+                        const hourInt = parseInt(hourReq.hour.split(':')[0]);
+                        const hourPosition = ((hourInt - startHour) / (endHour - startHour)) * 100;
+                        const currentWorkers = shiftWorkers.filter(assignment => {
+                          const assignStart = parseInt(assignment.assignedHours[0]?.startTime.split(':')[0] || '0');
+                          const assignEnd = parseInt(assignment.assignedHours[0]?.endTime.split(':')[0] || '0');
+                          return hourInt >= assignStart && hourInt < assignEnd && assignment.status === 'confirmed';
+                        }).length || 0;
+
+                        const hourStatus = currentWorkers < hourReq.minWorkers ? 'understaffed' :
+                                         currentWorkers === hourReq.minWorkers ? 'staffed' : 'overstaffed';
+
+                        const hourColor = {
+                          understaffed: 'bg-error/40 text-base-content',
+                          staffed: 'bg-success/40 text-base-content',
+                          overstaffed: 'bg-warning/40 text-base-content'
+                        }[hourStatus];
+
+                        return (
+                          <div
+                            key={hourReq.hour}
+                            className={`absolute ${hourColor} rounded text-center`}
+                            style={{
+                              left: `${hourPosition}%`,
+                              top: '4px',
+                              width: '30px',
+                              height: '24px',
+                              fontSize: '9px',
+                              lineHeight: '24px',
+                              transform: 'translateX(-50%)'
+                            }}
+                          >
+                            {currentWorkers}/{hourReq.minWorkers}
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 </div>

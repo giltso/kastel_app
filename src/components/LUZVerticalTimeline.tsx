@@ -74,8 +74,8 @@ export function LUZVerticalTimeline({
                       const endHour = parseInt(shift.storeHours.closeTime.split(':')[0]);
                       const startRow = Math.max(0, startHour - 8);
                       const duration = endHour - startHour;
-                      const topPos = 32 + (startRow * 64); // 32px for header + row height
-                      const height = duration * 64 + 50; // Add 50px for protected header space
+                      const topPos = 32 + (startRow * 64) - 25; // Start 25px above timeline to create tab protrusion
+                      const height = duration * 64 + 50 + 25; // Add 50px for protected header + 25px for tab protrusion
 
                       // Calculate staffing status for color determination
                       const shiftWorkers = assignmentsForDate?.filter(assignment => true) || [];
@@ -102,8 +102,8 @@ export function LUZVerticalTimeline({
                             height: `${height}px`,
                           }}
                         >
-                          {/* Tab-style Header - Protected area at top */}
-                          <div className={`${headerColorClasses} px-2 py-1 rounded-t`}>
+                          {/* Tab-style Header - Protruding above timeline like Chrome tab */}
+                          <div className={`${headerColorClasses} px-2 py-1 rounded-t-lg relative`} style={{ height: '50px', marginTop: '25px', borderTopLeftRadius: '8px', borderTopRightRadius: '8px' }}>
                             <div className="flex justify-between items-center">
                               <div>
                                 <div className="font-medium text-sm text-base-content">{shift.name}</div>
@@ -126,12 +126,12 @@ export function LUZVerticalTimeline({
                           </div>
 
                           {/* Main shift content area - leave space for capacity bar on right */}
-                          <div className="relative px-2 py-1 pr-16" style={{ height: `${duration * 64}px` }}>
+                          <div className="relative px-2 py-1 pr-16" style={{ height: `${duration * 64}px`, marginTop: '0px' }}>
                             {/* Shift content can go here */}
                           </div>
 
                           {/* Capacity Management Bar - Right Side */}
-                          <div className="absolute top-0 right-0 w-14 h-full border-l border-base-300/50 bg-base-50/30">
+                          <div className="absolute right-0 w-14 border-l border-base-300/50 bg-base-50/30" style={{ top: '75px', height: `${duration * 64}px` }}>
                             <div className="text-xs font-medium text-center py-1 border-b border-base-300/50 bg-base-100/50">
                               Capacity
                             </div>
@@ -244,7 +244,7 @@ export function LUZVerticalTimeline({
             const endHour = parseInt(assignment.assignedHours[0]?.endTime.split(':')[0] || '17');
             const startRow = Math.max(0, startHour - 8);
             const duration = endHour - startHour;
-            const topPos = 32 + (startRow * 64) + 50 + 8; // Account for protected header area (50px) + offset
+            const topPos = 32 + (startRow * 64) + 75 + 8; // Account for protruding tab header (75px) + offset
             const height = duration * 64 - 16; // Smaller than shift blocks
 
             // Calculate dynamic positioning within shift area - match the column system above
