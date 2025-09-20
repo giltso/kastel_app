@@ -148,17 +148,18 @@ export function LUZVerticalTimeline({
                               return (
                                 <div
                                   key={hourReq.hour}
-                                  className={`absolute left-1 right-1 ${hourColor} rounded px-1`}
+                                  className={`absolute ${hourColor} rounded px-1`}
                                   style={{
                                     top: `${rowPosition + 10}px`,
+                                    right: '8px',
+                                    width: '50px',
                                     height: '20px',
                                     fontSize: '10px',
                                     lineHeight: '20px'
                                   }}
                                 >
-                                  <div className="flex justify-between items-center">
-                                    <span>{hourReq.hour}</span>
-                                    <span>{currentWorkers}/{hourReq.minWorkers}</span>
+                                  <div className="text-center font-medium">
+                                    {currentWorkers}/{hourReq.minWorkers}
                                   </div>
                                 </div>
                               );
