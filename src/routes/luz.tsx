@@ -4,8 +4,11 @@ import { usePermissionsV2 } from "@/hooks/usePermissionsV2";
 import { EnsureUserV2 } from "@/components/EnsureUserV2";
 import { LUZOverview } from "@/components/LUZOverview";
 import { LUZVerticalTimeline } from "@/components/LUZVerticalTimeline";
-import { LUZHorizontalTimeline } from "@/components/LUZHorizontalTimeline";
+import { LUZWeekView } from "@/components/LUZWeekView";
+import { LUZMonthView } from "@/components/LUZMonthView";
 import { Calendar, Filter, Plus, Nut } from "lucide-react";
+import { useQuery, useMutation } from "convex/react";
+import { api } from "../../convex/_generated/api";
 
 export const Route = createFileRoute("/luz")({
   component: LUZPage,
@@ -15,6 +18,51 @@ export const Route = createFileRoute("/luz")({
 const getTodayString = () => {
   const today = new Date();
   return today.toISOString().split('T')[0];
+};
+
+// Generate week dates (Sunday to Saturday) for a given date
+const getWeekDates = (dateString: string) => {
+  const date = new Date(dateString + 'T00:00:00');
+  const dayOfWeek = date.getDay(); // 0 = Sunday, 1 = Monday, etc.
+  const sunday = new Date(date);
+
+  // Calculate days to subtract to get to Sunday (0)
+  sunday.setDate(date.getDate() - dayOfWeek);
+
+  const weekDates = [];
+  for (let i = 0; i < 7; i++) {
+    const currentDate = new Date(sunday);
+    currentDate.setDate(sunday.getDate() + i);
+    weekDates.push(currentDate.toISOString().split('T')[0]);
+  }
+
+  return weekDates;
+};
+
+// Generate month dates for calendar grid (42 days including surrounding weeks)
+const getMonthDates = (dateString: string) => {
+  const date = new Date(dateString + 'T00:00:00');
+  const year = date.getFullYear();
+  const month = date.getMonth();
+
+  // First day of the month
+  const firstDay = new Date(year, month, 1);
+
+  // Calculate start of calendar grid (Sunday of first week)
+  const startDate = new Date(firstDay);
+  const dayOfWeek = firstDay.getDay(); // 0 = Sunday, 1 = Monday, etc.
+  // For Sunday-based weeks, subtract the day of week directly
+  startDate.setDate(firstDay.getDate() - dayOfWeek);
+
+  // Generate 42 days (6 weeks) to cover the entire month view
+  const monthDates = [];
+  for (let i = 0; i < 42; i++) {
+    const currentDate = new Date(startDate);
+    currentDate.setDate(startDate.getDate() + i);
+    monthDates.push(currentDate.toISOString().split('T')[0]);
+  }
+
+  return monthDates;
 };
 
 // Calculate staffing status for a shift
@@ -32,28 +80,78 @@ const getShiftStaffingStatus = (shift: any, assignedWorkers: any[]) => {
   }
 };
 
-// Empty data arrays - ready for backend integration
-const mockShifts: any[] = [];
-const mockAssignments: any[] = [];
-const mockPendingAssignments: any[] = [];
-const mockCourses: any[] = [];
-
 function LUZPage() {
   const { user, isLoading, isAuthenticated, hasWorkerTag, hasManagerTag } = usePermissionsV2();
   const [selectedDate, setSelectedDate] = useState(getTodayString());
-  const [timelineView, setTimelineView] = useState<'vertical' | 'horizontal'>('vertical');
+  const [timelineView, setTimelineView] = useState<'vertical' | 'week' | 'month'>('vertical');
   const [filters, setFilters] = useState({
     shifts: true,
     courses: false,
     rentals: false,
   });
 
-  // Data arrays - ready for backend integration
-  const shifts = mockShifts;
-  const shiftsForDate = filters.shifts ? mockShifts : [];
-  const assignmentsForDate = mockAssignments;
-  const pendingAssignments = mockPendingAssignments;
-  const coursesForDate = filters.courses ? mockCourses : [];
+  // Real data queries
+  const shifts = useQuery(api.shifts.getShiftTemplates) || [];
+  const createSampleShifts = useMutation(api.shifts.createSampleShifts);
+
+  // Real data queries for assignments
+  const assignmentsForDate = useQuery(api.shift_assignments.getAssignmentsForDate, { date: selectedDate }) || [];
+
+  // Week view assignments queries (conditional to avoid unnecessary queries)
+  const weekDates = getWeekDates(selectedDate);
+  const weekAssignmentQueries = weekDates.map(date => {
+    const shouldQuery = timelineView === 'week';
+    return {
+      date,
+      assignments: useQuery(shouldQuery ? api.shift_assignments.getAssignmentsForDate : "skip", shouldQuery ? { date } : "skip") || []
+    };
+  });
+
+  // Month view assignments queries (conditional to avoid unnecessary queries)
+  const monthDates = getMonthDates(selectedDate);
+  const monthAssignmentQueries = monthDates.map(date => {
+    const shouldQuery = timelineView === 'month';
+    return {
+      date,
+      assignments: useQuery(shouldQuery ? api.shift_assignments.getAssignmentsForDate : "skip", shouldQuery ? { date } : "skip") || []
+    };
+  });
+  const pendingAssignments = useQuery(api.shift_assignments.getPendingAssignments) || [];
+
+  // Data arrays filtered by date and filters
+  const shiftsForDate = filters.shifts ? shifts : [];
+  const coursesForDate: any[] = filters.courses ? [] : []; // TODO: Connect to courses query
+
+  // Week view data preparation
+  const shiftsForWeek: { [date: string]: any[] } = {};
+  const coursesForWeek: { [date: string]: any[] } = {};
+  const assignmentsForWeek: { [date: string]: any[] } = {};
+
+  // For week view, organize data by date
+  if (timelineView === 'week') {
+    weekDates.forEach(date => {
+      shiftsForWeek[date] = filters.shifts ? shifts : [];
+      coursesForWeek[date] = filters.courses ? [] : []; // TODO: Connect to courses query
+      // Use the queried assignments for each date
+      const dayAssignments = weekAssignmentQueries.find(q => q.date === date);
+      assignmentsForWeek[date] = dayAssignments ? dayAssignments.assignments : [];
+    });
+  }
+
+  // Month view data preparation
+  const monthData: { [date: string]: { shifts: any[]; courses: any[]; assignments: any[] } } = {};
+
+  // For month view, organize data by date
+  if (timelineView === 'month') {
+    monthDates.forEach(date => {
+      const dayAssignments = monthAssignmentQueries.find(q => q.date === date);
+      monthData[date] = {
+        shifts: filters.shifts ? shifts : [],
+        courses: filters.courses ? [] : [], // TODO: Connect to courses query
+        assignments: dayAssignments ? dayAssignments.assignments : []
+      };
+    });
+  }
 
   if (isLoading) {
     return (
@@ -85,6 +183,15 @@ function LUZPage() {
     setFilters(prev => ({ ...prev, [filterName]: !prev[filterName] }));
   };
 
+  const handleCreateSampleShifts = async () => {
+    try {
+      const result = await createSampleShifts({});
+      console.log("Sample shifts created:", result);
+    } catch (error) {
+      console.error("Error creating sample shifts:", error);
+    }
+  };
+
   return (
     <>
       <EnsureUserV2 />
@@ -109,6 +216,11 @@ function LUZPage() {
               <button className="btn btn-primary">
                 <Plus className="w-4 h-4" />
                 Create Shift
+              </button>
+            )}
+            {shifts.length === 0 && hasManagerTag && (
+              <button className="btn btn-secondary" onClick={handleCreateSampleShifts}>
+                🔧 Create Sample Data
               </button>
             )}
           </div>
@@ -169,15 +281,21 @@ function LUZPage() {
               className={`tab ${timelineView === 'vertical' ? 'tab-active' : ''}`}
               onClick={() => setTimelineView('vertical')}
             >
-              <span className="mr-2">|</span>
-              Vertical View
+              Daily View
             </button>
             <button
-              className={`tab ${timelineView === 'horizontal' ? 'tab-active' : ''}`}
-              onClick={() => setTimelineView('horizontal')}
+              className={`tab ${timelineView === 'week' ? 'tab-active' : ''}`}
+              onClick={() => setTimelineView('week')}
             >
-              <span className="mr-2">—</span>
-              Horizontal View
+              <Calendar className="w-4 h-4 mr-2" />
+              Week View
+            </button>
+            <button
+              className={`tab ${timelineView === 'month' ? 'tab-active' : ''}`}
+              onClick={() => setTimelineView('month')}
+            >
+              <Calendar className="w-4 h-4 mr-2" />
+              Month View
             </button>
           </div>
         </div>
@@ -206,14 +324,22 @@ function LUZPage() {
                 hasManagerTag={hasManagerTag}
                 getShiftStaffingStatus={getShiftStaffingStatus}
               />
-            ) : (
-              <LUZHorizontalTimeline
-                assignmentsForDate={assignmentsForDate}
-                shiftsForDate={shiftsForDate}
-                coursesForDate={coursesForDate}
-                selectedDate={selectedDate}
+            ) : timelineView === 'week' ? (
+              <LUZWeekView
+                weekDates={weekDates}
+                shiftsForWeek={shiftsForWeek}
+                coursesForWeek={coursesForWeek}
+                assignmentsForWeek={assignmentsForWeek}
                 hasManagerTag={hasManagerTag}
                 getShiftStaffingStatus={getShiftStaffingStatus}
+              />
+            ) : (
+              <LUZMonthView
+                selectedDate={selectedDate}
+                monthData={monthData}
+                hasManagerTag={hasManagerTag}
+                getShiftStaffingStatus={getShiftStaffingStatus}
+                onDateClick={(date) => setSelectedDate(date)}
               />
             )}
           </div>

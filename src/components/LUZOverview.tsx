@@ -1,5 +1,27 @@
 import { Users } from "lucide-react";
 
+/**
+ * LUZ Overview Component
+ *
+ * ARCHITECTURE:
+ * - Summary dashboard showing key metrics and pending actions
+ * - Manager-only pending approvals section with action buttons
+ * - Assignment filtering ensures data consistency with timeline views
+ * - Quick stats showing confirmed vs pending assignments
+ *
+ * DATA FILTERING:
+ * - visibleAssignments: filters by shiftsForDate to match timeline data
+ * - pendingAssignments: manager-only workflow for approvals
+ * - Role-based UI: approval buttons only for managers
+ *
+ * CONSISTENCY CRITICAL:
+ * - Must use same assignment filtering logic as timeline components
+ * - Line 62-64: Assignment filtering by shiftsForDate prevents data conflicts
+ *
+ * SEARCH KEYWORDS: overview, dashboard, pending approvals, assignment filtering,
+ * manager permissions, quick stats, data consistency, visible assignments
+ */
+
 interface LUZOverviewProps {
   assignmentsForDate: any[];
   shiftsForDate: any[];
@@ -54,29 +76,36 @@ export function LUZOverview({
         </div>
       )}
 
-      {/* Today's Assignments Summary */}
+      {/* Today's Assignments Summary - Filtered by active shifts only */}
       <div className="mb-6">
         <h3 className="font-medium mb-3">Today's Schedule</h3>
-        {assignmentsForDate && assignmentsForDate.length > 0 ? (
-          <div className="space-y-2">
-            {assignmentsForDate.slice(0, 3).map((assignment) => (
-              <div key={assignment._id} className="p-3 bg-base-200 rounded-lg">
-                <div className="font-medium">{assignment.worker?.name}</div>
-                <div className="text-sm text-base-content/70">
-                  {assignment.shift?.name} • {assignment.assignedHours[0]?.startTime} - {assignment.assignedHours[0]?.endTime}
+        {(() => {
+          // Filter assignments to only show those for shifts that are displayed
+          const visibleAssignments = assignmentsForDate?.filter(assignment =>
+            shiftsForDate?.some(shift => shift._id === assignment.shiftTemplateId)
+          ) || [];
+
+          return visibleAssignments.length > 0 ? (
+            <div className="space-y-2">
+              {visibleAssignments.slice(0, 3).map((assignment) => (
+                <div key={assignment._id} className="p-3 bg-base-200 rounded-lg">
+                  <div className="font-medium">{assignment.worker?.name}</div>
+                  <div className="text-sm text-base-content/70">
+                    {assignment.shift?.name} • {assignment.assignedHours[0]?.startTime} - {assignment.assignedHours[0]?.endTime}
+                  </div>
+                  <div className={`badge badge-sm ${
+                    assignment.status === 'confirmed' ? 'badge-success' :
+                    assignment.status.includes('pending') ? 'badge-warning' : 'badge-neutral'
+                  }`}>
+                    {assignment.status}
+                  </div>
                 </div>
-                <div className={`badge badge-sm ${
-                  assignment.status === 'confirmed' ? 'badge-success' :
-                  assignment.status.includes('pending') ? 'badge-warning' : 'badge-neutral'
-                }`}>
-                  {assignment.status}
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p className="text-base-content/50 text-sm">No assignments for selected date</p>
-        )}
+              ))}
+            </div>
+          ) : (
+            <p className="text-base-content/50 text-sm">No assignments for selected date</p>
+          );
+        })()}
       </div>
 
       {/* Available Shifts */}

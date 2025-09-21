@@ -182,15 +182,14 @@ export const ensureUser = mutation({
     if (existingUser) {
       return existingUser._id;
     } else {
-      // Create new user with default V2 settings
+      // Create new user as customer by default (production behavior)
       return await ctx.db.insert("users", {
         clerkId: identity.subject,
         name: identity.name || identity.email || "Unknown",
         email: identity.email,
-        // Default new users as dev for testing V2 system
-        role: "dev",
-        isStaff: true,
-        workerTag: true,
+        // Default new users as customers (not staff)
+        isStaff: false,
+        workerTag: false,
         instructorTag: false,
         toolHandlerTag: false,
         managerTag: false,
@@ -223,5 +222,207 @@ export const getAllUsersV2 = query({
       ...user,
       effectiveRole: getEffectiveV2Role(user),
     }));
+  },
+});
+
+// Update user role and permissions (for managers)
+export const updateUserRole = mutation({
+  args: {
+    userId: v.id("users"),
+    isStaff: v.optional(v.boolean()),
+    workerTag: v.optional(v.boolean()),
+    instructorTag: v.optional(v.boolean()),
+    toolHandlerTag: v.optional(v.boolean()),
+    managerTag: v.optional(v.boolean()),
+    rentalApprovedTag: v.optional(v.boolean()),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
+    // Get current user and validate permissions
+    const currentUser = await ctx.db
+      .query("users")
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+
+    if (!currentUser) {
+      throw new Error("Current user not found");
+    }
+
+    // Only dev or managers can modify roles
+    const canModifyRoles = currentUser.role === "dev" || hasV2Permission(currentUser, "manager");
+    if (!canModifyRoles) {
+      throw new Error("Only managers can modify user roles");
+    }
+
+    // Get target user
+    const targetUser = await ctx.db.get(args.userId);
+    if (!targetUser) {
+      throw new Error("Target user not found");
+    }
+
+    // Validate manager tag requires worker tag
+    if (args.managerTag && !args.workerTag) {
+      throw new Error("Manager tag requires worker tag");
+    }
+
+    // Build update object with only provided fields
+    const updateFields: any = {};
+    if (args.isStaff !== undefined) updateFields.isStaff = args.isStaff;
+    if (args.workerTag !== undefined) updateFields.workerTag = args.workerTag;
+    if (args.instructorTag !== undefined) updateFields.instructorTag = args.instructorTag;
+    if (args.toolHandlerTag !== undefined) updateFields.toolHandlerTag = args.toolHandlerTag;
+    if (args.managerTag !== undefined) updateFields.managerTag = args.managerTag;
+    if (args.rentalApprovedTag !== undefined) updateFields.rentalApprovedTag = args.rentalApprovedTag;
+
+    await ctx.db.patch(args.userId, updateFields);
+
+    return { success: true };
+  },
+});
+
+// Promote customer to staff (common operation)
+export const promoteToStaff = mutation({
+  args: {
+    userId: v.id("users"),
+    workerTag: v.optional(v.boolean()),
+    instructorTag: v.optional(v.boolean()),
+    toolHandlerTag: v.optional(v.boolean()),
+    managerTag: v.optional(v.boolean()),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
+    // Get current user and validate permissions
+    const currentUser = await ctx.db
+      .query("users")
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+
+    if (!currentUser) {
+      throw new Error("Current user not found");
+    }
+
+    // Only dev or managers can promote users
+    const canPromote = currentUser.role === "dev" || hasV2Permission(currentUser, "manager");
+    if (!canPromote) {
+      throw new Error("Only managers can promote users to staff");
+    }
+
+    // Get target user
+    const targetUser = await ctx.db.get(args.userId);
+    if (!targetUser) {
+      throw new Error("Target user not found");
+    }
+
+    // Validate manager tag requires worker tag
+    if (args.managerTag && !args.workerTag) {
+      throw new Error("Manager tag requires worker tag");
+    }
+
+    await ctx.db.patch(args.userId, {
+      isStaff: true,
+      workerTag: args.workerTag ?? false,
+      instructorTag: args.instructorTag ?? false,
+      toolHandlerTag: args.toolHandlerTag ?? false,
+      managerTag: args.managerTag ?? false,
+      rentalApprovedTag: false, // Clear customer permissions when promoting to staff
+    });
+
+    return { success: true };
+  },
+});
+
+// Get user statistics for role management dashboard
+export const getUserStatistics = query({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return null;
+
+    const currentUser = await ctx.db
+      .query("users")
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+
+    if (!currentUser) return null;
+
+    // Only dev or managers can see statistics
+    const canViewStats = currentUser.role === "dev" || hasV2Permission(currentUser, "manager");
+    if (!canViewStats) return null;
+
+    const allUsers = await ctx.db.query("users").collect();
+
+    // Calculate staff statistics
+    const staffUsers = allUsers.filter(user => getEffectiveV2Role(user).isStaff);
+    const totalStaff = staffUsers.length;
+    const managers = staffUsers.filter(user => getEffectiveV2Role(user).managerTag).length;
+    const workers = staffUsers.filter(user => getEffectiveV2Role(user).workerTag).length;
+    const instructors = staffUsers.filter(user => getEffectiveV2Role(user).instructorTag).length;
+    const toolHandlers = staffUsers.filter(user => getEffectiveV2Role(user).toolHandlerTag).length;
+
+    // Calculate customer statistics
+    const customerUsers = allUsers.filter(user => !getEffectiveV2Role(user).isStaff);
+    const totalCustomers = customerUsers.length;
+    const rentalApproved = customerUsers.filter(user => getEffectiveV2Role(user).rentalApprovedTag).length;
+
+    // Calculate active users (placeholder - would need actual activity tracking)
+    const activeCustomers = 0; // TODO: Implement based on recent activity
+    const pendingCustomers = 0; // TODO: Implement based on pending approvals
+
+    return {
+      staff: {
+        total: totalStaff,
+        managers,
+        workers,
+        instructors,
+        toolHandlers,
+      },
+      customers: {
+        total: totalCustomers,
+        rentalApproved,
+        active: activeCustomers,
+        pending: pendingCustomers,
+      },
+    };
+  },
+});
+
+// Development helper: Convert current user to dev (for testing)
+export const makeCurrentUserDev = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    await ctx.db.patch(user._id, {
+      role: "dev",
+      // Set up dev user with manager permissions for testing
+      emulatingIsStaff: true,
+      emulatingWorkerTag: true,
+      emulatingManagerTag: true,
+      emulatingInstructorTag: false,
+      emulatingToolHandlerTag: false,
+      emulatingRentalApprovedTag: false,
+    });
+
+    return { success: true, message: "User converted to dev with manager permissions" };
   },
 });

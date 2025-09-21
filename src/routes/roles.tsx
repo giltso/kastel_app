@@ -3,6 +3,8 @@ import { useState } from "react";
 import { usePermissionsV2 } from "@/hooks/usePermissionsV2";
 import { EnsureUserV2 } from "@/components/EnsureUserV2";
 import { Users, Shield, UserPlus, Settings } from "lucide-react";
+import { useQuery } from "convex/react";
+import { api } from "../../convex/_generated/api";
 
 export const Route = createFileRoute("/roles")({
   component: RolesPage,
@@ -12,7 +14,11 @@ function RolesPage() {
   const { checkPermission, isLoading, isAuthenticated } = usePermissionsV2();
   const [viewMode, setViewMode] = useState<'staff' | 'customers'>('staff');
 
-  if (isLoading) {
+  // Get real user data from backend
+  const allUsers = useQuery(api.users_v2.getAllUsersV2);
+  const userStats = useQuery(api.users_v2.getUserStatistics);
+
+  if (isLoading || allUsers === undefined || userStats === undefined) {
     return (
       <div className="flex items-center justify-center min-h-64">
         <span className="loading loading-spinner loading-lg"></span>
@@ -37,6 +43,21 @@ function RolesPage() {
       </div>
     );
   }
+
+  // Filter users based on view mode
+  const staffUsers = allUsers?.filter(user => user.effectiveRole.isStaff) || [];
+  const customerUsers = allUsers?.filter(user => !user.effectiveRole.isStaff) || [];
+
+  // Helper function to get role badges for a user
+  const getRoleBadges = (user: any) => {
+    const badges = [];
+    if (user.effectiveRole.workerTag) badges.push('Worker');
+    if (user.effectiveRole.managerTag) badges.push('Manager');
+    if (user.effectiveRole.instructorTag) badges.push('Instructor');
+    if (user.effectiveRole.toolHandlerTag) badges.push('Tool Handler');
+    if (user.effectiveRole.rentalApprovedTag) badges.push('Rental Approved');
+    return badges;
+  };
 
   return (
     <>
@@ -86,7 +107,7 @@ function RolesPage() {
                   <Users className="w-8 h-8" />
                 </div>
                 <div className="stat-title">Total Staff</div>
-                <div className="stat-value text-primary">0</div>
+                <div className="stat-value text-primary">{userStats?.staff.total || 0}</div>
                 <div className="stat-desc">Active members</div>
               </div>
 
@@ -95,7 +116,7 @@ function RolesPage() {
                   <Shield className="w-8 h-8" />
                 </div>
                 <div className="stat-title">Managers</div>
-                <div className="stat-value text-success">0</div>
+                <div className="stat-value text-success">{userStats?.staff.managers || 0}</div>
                 <div className="stat-desc">With manager tag</div>
               </div>
 
@@ -104,7 +125,7 @@ function RolesPage() {
                   <Users className="w-8 h-8" />
                 </div>
                 <div className="stat-title">Workers</div>
-                <div className="stat-value text-info">0</div>
+                <div className="stat-value text-info">{userStats?.staff.workers || 0}</div>
                 <div className="stat-desc">With worker tag</div>
               </div>
 
@@ -113,7 +134,7 @@ function RolesPage() {
                   <Settings className="w-8 h-8" />
                 </div>
                 <div className="stat-title">Instructors</div>
-                <div className="stat-value text-warning">0</div>
+                <div className="stat-value text-warning">{userStats?.staff.instructors || 0}</div>
                 <div className="stat-desc">With instructor tag</div>
               </div>
             </>
@@ -124,7 +145,7 @@ function RolesPage() {
                   <Users className="w-8 h-8" />
                 </div>
                 <div className="stat-title">Total Customers</div>
-                <div className="stat-value text-primary">0</div>
+                <div className="stat-value text-primary">{userStats?.customers.total || 0}</div>
                 <div className="stat-desc">Registered users</div>
               </div>
 
@@ -133,7 +154,7 @@ function RolesPage() {
                   <Shield className="w-8 h-8" />
                 </div>
                 <div className="stat-title">Rental Approved</div>
-                <div className="stat-value text-success">0</div>
+                <div className="stat-value text-success">{userStats?.customers.rentalApproved || 0}</div>
                 <div className="stat-desc">Can rent tools</div>
               </div>
 
@@ -142,7 +163,7 @@ function RolesPage() {
                   <Users className="w-8 h-8" />
                 </div>
                 <div className="stat-title">Active</div>
-                <div className="stat-value text-info">0</div>
+                <div className="stat-value text-info">{userStats?.customers.active || 0}</div>
                 <div className="stat-desc">Last 30 days</div>
               </div>
 
@@ -151,7 +172,7 @@ function RolesPage() {
                   <Settings className="w-8 h-8" />
                 </div>
                 <div className="stat-title">Pending</div>
-                <div className="stat-value text-warning">0</div>
+                <div className="stat-value text-warning">{userStats?.customers.pending || 0}</div>
                 <div className="stat-desc">Awaiting approval</div>
               </div>
             </>
@@ -201,12 +222,42 @@ function RolesPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {/* Empty state - will be populated with real data */}
-                      <tr>
-                        <td colSpan={5} className="text-center py-8 text-base-content/60">
-                          No staff members found. Staff data will be loaded from the backend.
-                        </td>
-                      </tr>
+                      {staffUsers.length === 0 ? (
+                        <tr>
+                          <td colSpan={5} className="text-center py-8 text-base-content/60">
+                            No staff members found.
+                          </td>
+                        </tr>
+                      ) : (
+                        staffUsers.map(user => (
+                          <tr key={user._id}>
+                            <td>
+                              <div className="font-medium">{user.name}</div>
+                            </td>
+                            <td>
+                              <div className="text-sm text-base-content/70">{user.email}</div>
+                            </td>
+                            <td>
+                              <div className="flex flex-wrap gap-1">
+                                {getRoleBadges(user).map(badge => (
+                                  <span key={badge} className="badge badge-primary badge-sm">
+                                    {badge}
+                                  </span>
+                                ))}
+                              </div>
+                            </td>
+                            <td>
+                              <span className="badge badge-success">Active</span>
+                            </td>
+                            <td>
+                              <div className="flex gap-2">
+                                <button className="btn btn-ghost btn-sm">Edit</button>
+                                <button className="btn btn-ghost btn-sm text-error">Remove</button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))
+                      )}
                     </tbody>
                   </table>
                 </div>
@@ -299,12 +350,43 @@ function RolesPage() {
                           </tr>
                         </thead>
                         <tbody>
-                          {/* Empty state - will be populated with real data */}
-                          <tr>
-                            <td colSpan={5} className="text-center py-8 text-base-content/60">
-                              No customers found. Customer data will be loaded from the backend.
-                            </td>
-                          </tr>
+                          {customerUsers.length === 0 ? (
+                            <tr>
+                              <td colSpan={5} className="text-center py-8 text-base-content/60">
+                                No customers found.
+                              </td>
+                            </tr>
+                          ) : (
+                            customerUsers.map(user => (
+                              <tr key={user._id}>
+                                <td>
+                                  <div className="font-medium">{user.name}</div>
+                                </td>
+                                <td>
+                                  <div className="text-sm text-base-content/70">{user.email}</div>
+                                </td>
+                                <td>
+                                  {user.effectiveRole.rentalApprovedTag ? (
+                                    <span className="badge badge-success">Rental Approved</span>
+                                  ) : (
+                                    <span className="badge badge-secondary">Registered</span>
+                                  )}
+                                </td>
+                                <td>
+                                  <div className="text-sm text-base-content/70">
+                                    {/* TODO: Implement last active tracking */}
+                                    Recent
+                                  </div>
+                                </td>
+                                <td>
+                                  <div className="flex gap-2">
+                                    <button className="btn btn-ghost btn-sm">Edit</button>
+                                    <button className="btn btn-ghost btn-sm">Promote</button>
+                                  </div>
+                                </td>
+                              </tr>
+                            ))
+                          )}
                         </tbody>
                       </table>
                     </div>

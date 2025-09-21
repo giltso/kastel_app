@@ -1,4 +1,23 @@
 import { Calendar } from "lucide-react";
+import { calculateTimelinePositions } from "@/utils/timelinePositioning";
+
+/**
+ * LUZ Vertical Timeline Component
+ *
+ * ARCHITECTURE:
+ * - Time-based vertical layout with 64px per hour grid (8 AM baseline)
+ * - Individual events positioned by start/end times with pixel-perfect alignment
+ * - Assignment filtering ensures workers only show in their assigned shifts
+ * - Column layout separates overlapping vs non-overlapping events
+ *
+ * POSITIONING LOGIC:
+ * - Non-overlapping events (like Evening shift 18:00-20:00 vs Daily 08:00-18:00) get full width
+ * - Overlapping events share column space proportionally
+ * - Each shift container filters assignments by shiftTemplateId
+ *
+ * SEARCH KEYWORDS: timeline, vertical, positioning, assignment filtering, overlap detection,
+ * time grid, shift workers, staffing status, Evening shift, Daily Operations
+ */
 
 interface LUZVerticalTimelineProps {
   assignmentsForDate: any[];
@@ -20,9 +39,8 @@ export function LUZVerticalTimeline({
   return (
     <div className="bg-base-100 border border-base-300 rounded-lg p-4">
       <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-        <span className="text-lg">|</span>
         <Calendar className="w-5 h-5" />
-        Schedule Timeline (Vertical)
+        Daily Schedule
       </h2>
 
       {/* Vertical Timeline - Same data as horizontal, different layout */}
@@ -49,27 +67,23 @@ export function LUZVerticalTimeline({
 
         {/* Content Area */}
         <div className="ml-16 relative min-h-[800px]">
-          {/* Calculate proper column layout for overlapping events */}
+          {/* NEW POSITIONING ALGORITHM: Time-based proportional width allocation */}
           {(() => {
-            const hasShifts = shiftsForDate && shiftsForDate.length > 0;
-            const hasCourses = coursesForDate && coursesForDate.length > 0;
-
-            // Use a more flexible column system
-            const totalColumns = hasShifts && hasCourses ? 3 : 1; // 3 columns when both present, 1 when only one type
-            const shiftColumns = hasShifts ? (hasCourses ? 2 : 1) : 0; // Shifts get 2/3 width when courses present
-            const courseColumns = hasCourses ? 1 : 0; // Courses get 1/3 width when shifts present
-
-            const columnWidth = 100 / totalColumns;
-            const shiftWidth = hasShifts ? `${shiftColumns * columnWidth}%` : '0%';
-            const courseWidth = hasCourses ? `${courseColumns * columnWidth}%` : '0%';
-            const courseLeft = hasShifts ? `${shiftColumns * columnWidth}%` : '0%';
+            // Calculate positions using the new algorithm with 5px padding
+            const paddingPx = 5;
+            const { events, positions } = calculateTimelinePositions(
+              shiftsForDate || [],
+              coursesForDate || [],
+              assignmentsForDate || [],
+              paddingPx
+            );
 
             return (
               <>
-                {/* Shift Templates */}
-                {hasShifts && (
-                  <div className="absolute left-0" style={{ width: shiftWidth }}>
-                    {shiftsForDate.map((shift, shiftIndex) => {
+                {/* Render individual shift events using new positioning */}
+                {shiftsForDate?.map((shift, shiftIndex) => {
+                  const position = positions.get(shift._id);
+                  if (!position) return null;
                       const startHour = parseInt(shift.storeHours.openTime.split(':')[0]);
                       const endHour = parseInt(shift.storeHours.closeTime.split(':')[0]);
                       const startRow = Math.max(0, startHour - 8);
@@ -77,8 +91,8 @@ export function LUZVerticalTimeline({
                       const topPos = 32 + (startRow * 64); // Align with timeline grid
                       const height = duration * 64; // Exact duration height
 
-                      // Calculate staffing status for color determination
-                      const shiftWorkers = assignmentsForDate?.filter(assignment => true) || [];
+                      // CRITICAL: Filter assignments by shiftTemplateId to prevent data leakage between shifts
+                      const shiftWorkers = assignmentsForDate?.filter(assignment => assignment.shiftTemplateId === shift._id) || [];
                       const staffingStatus = getShiftStaffingStatus(shift, shiftWorkers);
 
                       const shiftColorClasses = {
@@ -96,17 +110,22 @@ export function LUZVerticalTimeline({
                       return (
                         <div
                           key={shift._id}
-                          className={`absolute left-2 right-2`}
+                          className="absolute"
                           style={{
+                            left: position.left,
+                            width: position.width,
                             top: `${topPos}px`,
                             height: `${height}px`,
+                            padding: '5px'
                           }}
                         >
                           {/* Header - Connected to shift body */}
                           <div
-                            className={`absolute ${headerColorClasses} px-2 py-1 rounded-t left-0 right-0`}
+                            className={`absolute ${headerColorClasses} px-2 py-1 rounded-t`}
                             style={{
                               top: '-35px', // Connected to shift body
+                              left: '5px',
+                              right: '5px',
                               height: '35px',
                               zIndex: 10
                             }}
@@ -134,16 +153,18 @@ export function LUZVerticalTimeline({
 
                           {/* Main shift body - Time-constrained area */}
                           <div
-                            className={`absolute ${shiftColorClasses} rounded-b left-0 right-0`}
+                            className={`absolute ${shiftColorClasses} rounded-b`}
                             style={{
                               top: '0px', // Aligned with timeline grid
+                              left: '5px',
+                              right: '5px',
                               height: `${duration * 64}px`, // Exact time span
                             }}
                           >
                             {/* Worker assignments within shift body */}
-                            <div className="relative w-full h-full px-2 py-1 pr-12">
-                              {/* Workers positioned relative to shift time */}
-                              {assignmentsForDate?.filter(assignment => true).map((assignment, workerIndex) => {
+                            <div className="relative w-full h-full px-3 py-2 pr-12">
+                              {/* WORKER RENDERING: Only show workers assigned to THIS specific shift */}
+                              {assignmentsForDate?.filter(assignment => assignment.shiftTemplateId === shift._id).map((assignment, workerIndex) => {
                                 const workerStartHour = parseInt(assignment.assignedHours[0]?.startTime.split(':')[0] || startHour.toString());
                                 const workerEndHour = parseInt(assignment.assignedHours[0]?.endTime.split(':')[0] || endHour.toString());
 
@@ -218,13 +239,11 @@ export function LUZVerticalTimeline({
                         </div>
                       );
                     })}
-                  </div>
-                )}
 
-                {/* Course Templates */}
-                {hasCourses && (
-                  <div className="absolute" style={{ left: courseLeft, width: courseWidth }}>
-                    {coursesForDate.map((course, courseIndex) => {
+                {/* Render individual course events using new positioning */}
+                {coursesForDate?.map((course, courseIndex) => {
+                  const position = positions.get(course._id);
+                  if (!position) return null;
                       const startHour = parseInt(course.schedule.startTime.split(':')[0]);
                       const endTime = course.schedule.endTime.split(':');
                       const endHour = parseInt(endTime[0]);
@@ -237,10 +256,13 @@ export function LUZVerticalTimeline({
                       return (
                         <div
                           key={course._id}
-                          className="absolute bg-secondary/20 border-2 border-secondary rounded left-2 right-2"
+                          className="absolute bg-secondary/20 border-2 border-secondary rounded"
                           style={{
+                            left: position.left,
+                            width: position.width,
                             top: `${topPos}px`,
                             height: `${height}px`,
+                            padding: '5px'
                           }}
                         >
                           {/* Tab-style Header - Protected area at top */}
@@ -252,7 +274,7 @@ export function LUZVerticalTimeline({
                           </div>
 
                           {/* Students area below header */}
-                          <div className="relative px-2 py-1" style={{ height: `${duration * 64}px` }}>
+                          <div className="relative px-3 py-2" style={{ height: `${duration * 64}px` }}>
                             {course.enrolledStudents?.map((student, studentIndex) => (
                               <div
                                 key={student._id}
@@ -273,8 +295,6 @@ export function LUZVerticalTimeline({
                         </div>
                       );
                     })}
-                  </div>
-                )}
               </>
             );
           })()}

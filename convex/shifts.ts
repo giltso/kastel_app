@@ -53,6 +53,119 @@ export const getShiftTemplates = query({
   },
 });
 
+// Development helper: Create sample shift templates
+export const createSampleShifts = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new ConvexError("Not authenticated");
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+
+    if (!user) {
+      throw new ConvexError("User not found");
+    }
+
+    // Only managers can create shift templates
+    await validateManagerPermissions(ctx, user._id);
+
+    // Clear existing sample shifts (for testing)
+    const existingShifts = await ctx.db.query("shifts").collect();
+    for (const shift of existingShifts) {
+      await ctx.db.delete(shift._id);
+    }
+
+    // Create Daily Operations Shift (Monday-Friday)
+    const dailyOperationsId = await ctx.db.insert("shifts", {
+      name: "Daily Operations",
+      description: "Standard weekday operations covering store hours",
+      type: "operational",
+      storeHours: {
+        openTime: "08:00",
+        closeTime: "18:00",
+      },
+      hourlyRequirements: [
+        { hour: "08:00", minWorkers: 1, optimalWorkers: 2, notes: "Opening procedures, early customers" },
+        { hour: "09:00", minWorkers: 2, optimalWorkers: 3, notes: "Morning rush, tool rentals" },
+        { hour: "10:00", minWorkers: 2, optimalWorkers: 3, notes: "Peak customer period" },
+        { hour: "11:00", minWorkers: 2, optimalWorkers: 3, notes: "Peak customer period" },
+        { hour: "12:00", minWorkers: 2, optimalWorkers: 3, notes: "Lunch coverage needed" },
+        { hour: "13:00", minWorkers: 2, optimalWorkers: 3, notes: "Afternoon operations" },
+        { hour: "14:00", minWorkers: 3, optimalWorkers: 4, notes: "Peak afternoon period" },
+        { hour: "15:00", minWorkers: 3, optimalWorkers: 4, notes: "Peak afternoon period" },
+        { hour: "16:00", minWorkers: 2, optimalWorkers: 3, notes: "Evening operations" },
+        { hour: "17:00", minWorkers: 2, optimalWorkers: 2, notes: "Closing preparations" },
+      ],
+      recurringDays: ["monday", "tuesday", "wednesday", "thursday", "friday"],
+      isActive: true,
+      createdBy: user._id,
+      lastModified: Date.now(),
+      color: "#3B82F6", // Blue
+    });
+
+    // Create Weekend Operations Shift (Saturday-Sunday)
+    const weekendOperationsId = await ctx.db.insert("shifts", {
+      name: "Weekend Operations",
+      description: "Weekend operations with extended Saturday hours",
+      type: "operational",
+      storeHours: {
+        openTime: "09:00",
+        closeTime: "17:00",
+      },
+      hourlyRequirements: [
+        { hour: "09:00", minWorkers: 1, optimalWorkers: 2, notes: "Weekend opening" },
+        { hour: "10:00", minWorkers: 2, optimalWorkers: 3, notes: "Weekend DIY projects" },
+        { hour: "11:00", minWorkers: 2, optimalWorkers: 3, notes: "Peak weekend period" },
+        { hour: "12:00", minWorkers: 2, optimalWorkers: 3, notes: "Lunch coverage" },
+        { hour: "13:00", minWorkers: 2, optimalWorkers: 3, notes: "Weekend projects continue" },
+        { hour: "14:00", minWorkers: 2, optimalWorkers: 3, notes: "Afternoon weekend rush" },
+        { hour: "15:00", minWorkers: 2, optimalWorkers: 2, notes: "Wind down period" },
+        { hour: "16:00", minWorkers: 1, optimalWorkers: 2, notes: "Closing preparations" },
+      ],
+      recurringDays: ["saturday", "sunday"],
+      isActive: true,
+      createdBy: user._id,
+      lastModified: Date.now(),
+      color: "#10B981", // Green
+    });
+
+    // Create Evening Operations Shift (for extended hours)
+    const eveningOperationsId = await ctx.db.insert("shifts", {
+      name: "Evening Operations",
+      description: "Extended evening operations for busy periods",
+      type: "operational",
+      storeHours: {
+        openTime: "18:00",
+        closeTime: "20:00",
+      },
+      hourlyRequirements: [
+        { hour: "18:00", minWorkers: 1, optimalWorkers: 2, notes: "Evening customer service" },
+        { hour: "19:00", minWorkers: 1, optimalWorkers: 2, notes: "Late customer assistance" },
+      ],
+      recurringDays: ["tuesday", "thursday"],
+      isActive: true,
+      createdBy: user._id,
+      lastModified: Date.now(),
+      color: "#F59E0B", // Yellow
+    });
+
+    return {
+      success: true,
+      message: "Created 3 sample shift templates",
+      shiftsCreated: [
+        { id: dailyOperationsId, name: "Daily Operations" },
+        { id: weekendOperationsId, name: "Weekend Operations" },
+        { id: eveningOperationsId, name: "Evening Operations" },
+      ],
+    };
+  },
+});
+
 // Query: Get shift template by ID
 export const getShiftTemplate = query({
   args: { shiftId: v.id("shifts") },
@@ -98,7 +211,7 @@ export const createShiftTemplate = mutation({
   args: {
     name: v.string(),
     description: v.optional(v.string()),
-    type: v.union(v.literal("operational"), v.literal("maintenance"), v.literal("educational"), v.literal("special")),
+    type: v.union(v.literal("operational"), v.literal("maintenance"), v.literal("special")),
     storeHours: v.object({
       openTime: v.string(),
       closeTime: v.string(),
@@ -170,7 +283,7 @@ export const updateShiftTemplate = mutation({
     shiftId: v.id("shifts"),
     name: v.optional(v.string()),
     description: v.optional(v.string()),
-    type: v.optional(v.union(v.literal("operational"), v.literal("maintenance"), v.literal("educational"), v.literal("special"))),
+    type: v.optional(v.union(v.literal("operational"), v.literal("maintenance"), v.literal("special"))),
     storeHours: v.optional(v.object({
       openTime: v.string(),
       closeTime: v.string(),
