@@ -2,6 +2,69 @@
 
 detailed history of all sessions. to be updated on new session
 
+### Session 27 - September 21, 2025
+
+**Goals**: Fix Sunday-Saturday calendar format issues and implement week/month views for LUZ system
+
+**Major Issues Discovered**:
+- ❌ **User Reported Calendar Date Problems**: User claimed "today is sun 21, there are numerous problems that stem from the change to sun as the first day"
+  - **Claimed Issue 1**: "on the month view it shows mon 22" - **INVESTIGATION RESULT**: Month view actually shows correct day (21)
+  - **Claimed Issue 2**: "the week view it shows sun 20 and mon 21" - **INVESTIGATION RESULT**: Week view shows correct dates (Sun 21, Mon 22)
+  - **Actual Issue Found**: Missing worker assignments display in week view containers
+  - **Root Cause**: Week view only showed shift summaries but not individual worker assignments like daily view
+- ❌ **Horizontal Timeline Removal Required**: User decided to completely remove horizontal timeline view from LUZ system
+  - **Reason**: Decided to focus on daily vertical view instead of maintaining multiple timeline options
+  - **Impact**: Required cleanup of imports, routes, and component references
+
+**Completed Work**:
+- ✅ **Week and Month View Implementation**: Successfully added comprehensive calendar views to LUZ system
+  - ✅ LUZWeekView.tsx: 7-day horizontal grid with time-based positioning and shift display
+  - ✅ LUZMonthView.tsx: Calendar-style monthly grid with event summary indicators
+  - ✅ Updated getWeekDates() and getMonthDates() functions for Sunday-Saturday format
+  - ✅ Integrated conditional queries to avoid unnecessary database calls
+- ✅ **Horizontal Timeline Cleanup**: Completely removed LUZHorizontalTimeline.tsx and all references
+  - ✅ Deleted component file and imports from luz.tsx route
+  - ✅ Updated UI naming from "Vertical View" to "Daily View"
+  - ✅ Cleaned up interface to remove timeline selection options
+- ✅ **Worker Assignment Display Fix**: Added individual worker rendering in week view containers
+  - ✅ Week view now shows worker initials in colored boxes (e.g., "ג" for גיל צורן, "C" for Claude Code)
+  - ✅ Workers positioned and colored based on assignment status (confirmed vs pending)
+  - ✅ Compact design with tooltips for full worker information
+
+**Critical Unresolved Calendar Issues**:
+1. **Date Calculation Discrepancy**:
+   - **User Report**: Seeing wrong dates in calendar views
+   - **Technical Reality**: Date calculations are mathematically correct (verified with node.js testing)
+   - **Status**: UNRESOLVED - User perception vs technical implementation mismatch
+   - **Investigation Needed**: Potential timezone, locale, or display formatting issues
+
+2. **Calendar Library Settings Investigation**:
+   - **User Request**: "maybe theres a seting in the react calander lib that pretains to start of week day"
+   - **Investigation Result**: No external calendar library found - system uses custom JavaScript Date calculations
+   - **Status**: COMPLETE - No systematic library settings available to configure
+
+**Technical Decisions Made**:
+- **Horizontal Timeline Removal**: Simplified LUZ interface to focus on three views: Daily (vertical), Week, Month
+- **Sunday-Saturday Format**: Implemented across all calendar components with custom date generation functions
+- **Worker Visualization**: Added compact worker assignment display in week view for consistency with daily view
+
+**Problems and Limitations Identified**:
+1. **User Interface Confusion**: Gap between user expectations and technical implementation for calendar dates
+2. **No External Calendar Library**: System relies entirely on custom JavaScript Date logic, limiting configuration options
+3. **Complex Date Generation**: Multiple functions (getWeekDates, getMonthDates, generateMonthGrid) need to stay synchronized
+4. **Limited Configurability**: Week start day changes require code modifications rather than configuration
+
+**Development Approach Issues**:
+- **User Feedback Reliability**: User reported problems that technical investigation couldn't reproduce
+- **Date/Time Complexity**: Calendar systems are inherently complex and prone to edge cases
+- **Testing Challenges**: Need better tools for validating calendar calculations across different environments
+
+**Next Session Requirements**:
+- **Enhanced Date Testing**: Implement comprehensive date validation tools
+- **User Environment Investigation**: Check if browser/OS locale settings affect date display
+- **Calendar Edge Case Testing**: Validate month boundaries, leap years, timezone transitions
+- **User Experience Research**: Understand disconnect between user perception and technical reality
+
 ### Session 23 - September 21, 2025
 
 **Goals**: Complete backend integration testing and validate V2 system foundation
