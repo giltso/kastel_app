@@ -32,6 +32,8 @@ interface LUZOverviewProps {
     rentals: boolean;
   };
   hasManagerTag: boolean;
+  onReviewRequests?: () => void;
+  onApproveAssignment?: (assignmentId: string) => void;
 }
 
 export function LUZOverview({
@@ -39,7 +41,9 @@ export function LUZOverview({
   shiftsForDate,
   pendingAssignments,
   filters,
-  hasManagerTag
+  hasManagerTag,
+  onReviewRequests,
+  onApproveAssignment
 }: LUZOverviewProps) {
   return (
     <div className="bg-base-100 border border-base-300 rounded-lg p-4">
@@ -61,7 +65,12 @@ export function LUZOverview({
                     <div className="text-sm text-base-content/70">{assignment.shift?.name}</div>
                   </div>
                   <div className="flex gap-1">
-                    <button className="btn btn-xs btn-success">Approve</button>
+                    <button
+                      className="btn btn-xs btn-success"
+                      onClick={() => onApproveAssignment?.(assignment._id)}
+                    >
+                      Approve
+                    </button>
                     <button className="btn btn-xs btn-error">Reject</button>
                   </div>
                 </div>
@@ -69,7 +78,12 @@ export function LUZOverview({
             ))}
             {pendingAssignments.length > 3 && (
               <div className="text-center">
-                <button className="btn btn-sm btn-outline">View All ({pendingAssignments.length})</button>
+                <button
+                  className="btn btn-sm btn-outline"
+                  onClick={() => onReviewRequests?.()}
+                >
+                  View All ({pendingAssignments.length})
+                </button>
               </div>
             )}
           </div>

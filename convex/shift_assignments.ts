@@ -405,3 +405,89 @@ export const completeAssignment = mutation({
     return args.assignmentId;
   },
 });
+
+// Mutation: Worker requests to join shift (self-initiated)
+export const requestJoinShift = mutation({
+  args: {
+    shiftTemplateId: v.id("shifts"),
+    date: v.string(),
+    requestedHours: v.optional(v.array(v.object({
+      startTime: v.string(),
+      endTime: v.string(),
+    }))),
+    requestNotes: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new ConvexError("Not authenticated");
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+
+    if (!user) {
+      throw new ConvexError("User not found");
+    }
+
+    // Validate worker permissions (worker can request for themselves)
+    await validateWorkerPermissions(ctx, user._id);
+
+    // Validate shift template exists
+    const shift = await ctx.db.get(args.shiftTemplateId);
+    if (!shift || !shift.isActive) {
+      throw new ConvexError("Shift template not found or inactive");
+    }
+
+    // Check for existing assignment
+    const existingAssignment = await ctx.db
+      .query("shift_assignments")
+      .withIndex("by_workerId", (q) => q.eq("workerId", user._id))
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("shiftTemplateId"), args.shiftTemplateId),
+          q.eq(q.field("date"), args.date)
+        )
+      )
+      .unique();
+
+    if (existingAssignment) {
+      throw new ConvexError("You already have an assignment for this shift on this date");
+    }
+
+    // Use requested hours or default to full shift
+    const assignedHours = args.requestedHours && args.requestedHours.length > 0
+      ? args.requestedHours
+      : [{
+          startTime: shift.storeHours.openTime,
+          endTime: shift.storeHours.closeTime
+        }];
+
+    // Validate hours are within shift bounds and valid
+    for (const hourRange of assignedHours) {
+      if (hourRange.startTime >= hourRange.endTime) {
+        throw new ConvexError("Invalid hour range: start time must be before end time");
+      }
+
+      // Check if requested hours are within shift bounds
+      if (hourRange.startTime < shift.storeHours.openTime ||
+          hourRange.endTime > shift.storeHours.closeTime) {
+        throw new ConvexError("Requested hours must be within shift operating hours");
+      }
+    }
+
+    // Create assignment pending manager approval (worker-initiated)
+    return await ctx.db.insert("shift_assignments", {
+      shiftTemplateId: args.shiftTemplateId,
+      workerId: user._id,
+      date: args.date,
+      assignedHours: assignedHours,
+      assignedBy: user._id, // Worker assigned themselves
+      assignedAt: Date.now(),
+      status: "pending_manager_approval", // Requires manager approval
+      assignmentNotes: args.requestNotes,
+    });
+  },
+});

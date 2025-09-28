@@ -6,9 +6,16 @@ import { LUZOverview } from "@/components/LUZOverview";
 import { LUZVerticalTimeline } from "@/components/LUZVerticalTimeline";
 import { LUZWeekView } from "@/components/LUZWeekView";
 import { LUZMonthView } from "@/components/LUZMonthView";
+import { ShiftDetailsModal } from "@/components/modals/ShiftDetailsModal";
+import { CreateEditShiftModal } from "@/components/modals/CreateEditShiftModal";
+import { AssignWorkerModal } from "@/components/modals/AssignWorkerModal";
+import { RequestJoinShiftModal } from "@/components/modals/RequestJoinShiftModal";
+import { ReviewRequestModal } from "@/components/modals/ReviewRequestModal";
+import { ApproveAssignmentModal } from "@/components/modals/ApproveAssignmentModal";
 import { Calendar, Filter, Plus, Nut } from "lucide-react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
+import { Id } from "../../convex/_generated/dataModel";
 
 export const Route = createFileRoute("/luz")({
   component: LUZPage,
@@ -88,6 +95,16 @@ function LUZPage() {
     shifts: true,
     courses: false,
     rentals: false,
+  });
+
+  // Modal state management
+  const [modals, setModals] = useState({
+    shiftDetails: { isOpen: false, shiftId: null as Id<"shifts"> | null },
+    createEditShift: { isOpen: false, shiftId: null as Id<"shifts"> | null },
+    assignWorker: { isOpen: false, shiftId: null as Id<"shifts"> | null, date: "" },
+    requestJoin: { isOpen: false, shiftId: null as Id<"shifts"> | null, date: "" },
+    reviewRequests: { isOpen: false, shiftId: null as Id<"shifts"> | null },
+    approveAssignment: { isOpen: false, assignmentId: null as Id<"shift_assignments"> | null },
   });
 
   // Real data queries
@@ -192,6 +209,26 @@ function LUZPage() {
     }
   };
 
+  // Modal handlers
+  const openModal = (modalName: keyof typeof modals, data: any = {}) => {
+    setModals(prev => ({
+      ...prev,
+      [modalName]: { ...prev[modalName], isOpen: true, ...data }
+    }));
+  };
+
+  const closeModal = (modalName: keyof typeof modals) => {
+    setModals(prev => ({
+      ...prev,
+      [modalName]: { ...prev[modalName], isOpen: false }
+    }));
+  };
+
+  const handleModalSuccess = () => {
+    // Refresh data or perform any needed actions after successful modal operations
+    console.log("Modal operation successful");
+  };
+
   return (
     <>
       <EnsureUserV2 />
@@ -213,7 +250,10 @@ function LUZPage() {
               className="input input-bordered"
             />
             {hasManagerTag && (
-              <button className="btn btn-primary">
+              <button
+                className="btn btn-primary"
+                onClick={() => openModal('createEditShift')}
+              >
                 <Plus className="w-4 h-4" />
                 Create Shift
               </button>
@@ -310,6 +350,8 @@ function LUZPage() {
               pendingAssignments={pendingAssignments}
               filters={filters}
               hasManagerTag={hasManagerTag}
+              onReviewRequests={() => openModal('reviewRequests')}
+              onApproveAssignment={(assignmentId) => openModal('approveAssignment', { assignmentId })}
             />
           </div>
 
@@ -323,6 +365,8 @@ function LUZPage() {
                 selectedDate={selectedDate}
                 hasManagerTag={hasManagerTag}
                 getShiftStaffingStatus={getShiftStaffingStatus}
+                onShiftClick={(shiftId) => openModal('shiftDetails', { shiftId })}
+                onRequestJoin={(shiftId, date) => openModal('requestJoin', { shiftId, date })}
               />
             ) : timelineView === 'week' ? (
               <LUZWeekView
@@ -332,6 +376,8 @@ function LUZPage() {
                 assignmentsForWeek={assignmentsForWeek}
                 hasManagerTag={hasManagerTag}
                 getShiftStaffingStatus={getShiftStaffingStatus}
+                onShiftClick={(shiftId) => openModal('shiftDetails', { shiftId })}
+                onRequestJoin={(shiftId, date) => openModal('requestJoin', { shiftId, date })}
               />
             ) : (
               <LUZMonthView
@@ -340,11 +386,63 @@ function LUZPage() {
                 hasManagerTag={hasManagerTag}
                 getShiftStaffingStatus={getShiftStaffingStatus}
                 onDateClick={(date) => setSelectedDate(date)}
+                onShiftClick={(shiftId) => openModal('shiftDetails', { shiftId })}
+                onRequestJoin={(shiftId, date) => openModal('requestJoin', { shiftId, date })}
               />
             )}
           </div>
         </div>
       </div>
+
+      {/* Modal Components */}
+      <ShiftDetailsModal
+        shiftId={modals.shiftDetails.shiftId}
+        selectedDate={selectedDate}
+        isOpen={modals.shiftDetails.isOpen}
+        onClose={() => closeModal('shiftDetails')}
+        onEditShift={(shiftId) => openModal('createEditShift', { shiftId })}
+        onAssignWorker={(shiftId, date) => openModal('assignWorker', { shiftId, date })}
+        onRequestJoin={(shiftId, date) => openModal('requestJoin', { shiftId, date })}
+        onApproveAssignment={(assignmentId) => openModal('approveAssignment', { assignmentId })}
+        onReviewRequests={(shiftId) => openModal('reviewRequests', { shiftId })}
+      />
+
+      <CreateEditShiftModal
+        shiftId={modals.createEditShift.shiftId}
+        isOpen={modals.createEditShift.isOpen}
+        onClose={() => closeModal('createEditShift')}
+        onSuccess={handleModalSuccess}
+      />
+
+      <AssignWorkerModal
+        shiftId={modals.assignWorker.shiftId}
+        selectedDate={modals.assignWorker.date || selectedDate}
+        isOpen={modals.assignWorker.isOpen}
+        onClose={() => closeModal('assignWorker')}
+        onSuccess={handleModalSuccess}
+      />
+
+      <RequestJoinShiftModal
+        shiftId={modals.requestJoin.shiftId}
+        selectedDate={modals.requestJoin.date || selectedDate}
+        isOpen={modals.requestJoin.isOpen}
+        onClose={() => closeModal('requestJoin')}
+        onSuccess={handleModalSuccess}
+      />
+
+      <ReviewRequestModal
+        shiftId={modals.reviewRequests.shiftId}
+        isOpen={modals.reviewRequests.isOpen}
+        onClose={() => closeModal('reviewRequests')}
+        onSuccess={handleModalSuccess}
+      />
+
+      <ApproveAssignmentModal
+        assignmentId={modals.approveAssignment.assignmentId}
+        isOpen={modals.approveAssignment.isOpen}
+        onClose={() => closeModal('approveAssignment')}
+        onSuccess={handleModalSuccess}
+      />
     </>
   );
 }
