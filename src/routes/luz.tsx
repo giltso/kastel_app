@@ -327,6 +327,7 @@ function LUZPage() {
               value={selectedDate}
               onChange={(e) => setSelectedDate(e.target.value)}
               className="input input-bordered"
+              lang={navigator.language || 'en-US'}
             />
             {hasManagerTag && (
               <button
