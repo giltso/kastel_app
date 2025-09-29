@@ -177,105 +177,117 @@ export function ShiftDetailsModal({
                 Hourly Requirements Timeline
               </h4>
 
-              {/* Timeline Container with Assignment Preview */}
-              <div className="relative bg-base-100 rounded-lg border border-base-300 p-3" style={{ minHeight: '300px' }}>
-                {/* Time axis */}
-                <div className="absolute left-0 top-3 w-full">
-                  {/* Hour labels */}
-                  <div className="flex justify-between text-xs text-base-content/70 mb-2">
-                    {shift.hourlyRequirements.map((req, index) => (
-                      <div key={index} className="flex-1 text-center">
-                        {req.hour}
-                      </div>
-                    ))}
-                  </div>
+              {/* Vertical Timeline Container */}
+              <div className="relative bg-base-100 rounded-lg border border-base-300 p-3">
+                {/* Calculate shift hours */}
+                {(() => {
+                  const startHour = parseInt(shift.storeHours.openTime.split(':')[0]);
+                  const endHour = parseInt(shift.storeHours.closeTime.split(':')[0]);
+                  const shiftHours = Array.from({ length: endHour - startHour }, (_, i) => startHour + i);
 
-                  {/* Timeline background */}
-                  <div className="h-40 bg-base-200 rounded relative">
-                    {/* Hour dividers */}
-                    {shift.hourlyRequirements.map((_, index) => (
-                      <div
-                        key={index}
-                        className="absolute top-0 bottom-0 w-px bg-base-300/50"
-                        style={{
-                          left: `${(index / (shift.hourlyRequirements.length - 1)) * 100}%`
-                        }}
-                      />
-                    ))}
-
-                    {/* Assignment blocks - similar to daily timeline */}
-                    {shiftAssignments.filter(a => a.status === 'confirmed').map((assignment, workerIndex) => {
-                      if (!assignment.assignedHours || assignment.assignedHours.length === 0) {
-                        return null;
-                      }
-
-                      return assignment.assignedHours.map((timeSlot, slotIndex) => {
-                        const startHour = parseInt(timeSlot.startTime.split(':')[0]);
-                        const endHour = parseInt(timeSlot.endTime.split(':')[0]);
-                        const shiftStartHour = parseInt(shift.storeHours.openTime.split(':')[0]);
-                        const shiftEndHour = parseInt(shift.storeHours.closeTime.split(':')[0]);
-                        const shiftDuration = shiftEndHour - shiftStartHour;
-
-                        // Calculate position as percentage of shift timeline
-                        const startPercent = ((startHour - shiftStartHour) / shiftDuration) * 100;
-                        const widthPercent = ((endHour - startHour) / shiftDuration) * 100;
-
-                        return (
-                          <div
-                            key={`${assignment._id}-${slotIndex}`}
-                            className="absolute bg-success/60 border border-success rounded text-white"
-                            style={{
-                              left: `${Math.max(0, startPercent)}%`,
-                              width: `${Math.min(widthPercent, 100 - startPercent)}%`,
-                              top: `${10 + (workerIndex * 25) + (slotIndex * 3)}px`,
-                              height: '20px',
-                            }}
-                            title={`${assignment.worker?.name} (${timeSlot.startTime} - ${timeSlot.endTime})`}
-                          >
-                            <div className="px-2 py-0.5 text-xs font-medium truncate leading-tight">
-                              {assignment.worker?.name}
-                            </div>
+                  return (
+                    <div className="flex">
+                      {/* Time labels column */}
+                      <div className="w-16 flex flex-col">
+                        {shiftHours.map((hour) => (
+                          <div key={hour} className="h-12 flex items-center justify-center text-xs font-medium border-b border-base-300/30">
+                            {hour}:00
                           </div>
-                        );
-                      });
-                    }).flat()}
-                  </div>
+                        ))}
+                      </div>
 
-                  {/* Staffing requirements indicators */}
-                  <div className="mt-3 space-y-1">
-                    {shift.hourlyRequirements.map((req, index) => {
-                      const hourInt = parseInt(req.hour.split(':')[0]);
-                      const currentStaffing = shiftAssignments.filter(assignment =>
-                        assignment.status === 'confirmed' && assignment.assignedHours?.some(timeSlot => {
-                          const assignStart = parseInt(timeSlot.startTime.split(':')[0]);
-                          const assignEnd = parseInt(timeSlot.endTime.split(':')[0]);
-                          return hourInt >= assignStart && hourInt < assignEnd;
-                        })
-                      ).length;
+                      {/* Timeline content area */}
+                      <div className="flex-1 relative" style={{ minHeight: `${shiftHours.length * 48}px` }}>
+                        {/* Hour dividers */}
+                        {shiftHours.map((hour, index) => (
+                          <div
+                            key={hour}
+                            className="absolute left-0 right-0 border-b border-base-300/20"
+                            style={{ top: `${index * 48}px`, height: '48px' }}
+                          />
+                        ))}
 
-                      const status = currentStaffing < req.minWorkers ? 'understaffed' :
-                                    currentStaffing === req.minWorkers ? 'minimum' :
-                                    currentStaffing <= req.optimalWorkers ? 'good' : 'overstaffed';
+                        {/* Assignment blocks - vertical positioning */}
+                        {shiftAssignments.filter(a => a.status === 'confirmed').map((assignment, workerIndex) => {
+                          if (!assignment.assignedHours || assignment.assignedHours.length === 0) {
+                            return null;
+                          }
 
-                      const statusColor = {
-                        understaffed: 'text-error',
-                        minimum: 'text-warning',
-                        good: 'text-success',
-                        overstaffed: 'text-info'
-                      }[status];
+                          return assignment.assignedHours.map((timeSlot, slotIndex) => {
+                            const assignStartHour = parseInt(timeSlot.startTime.split(':')[0]);
+                            const assignEndHour = parseInt(timeSlot.endTime.split(':')[0]);
+                            const duration = assignEndHour - assignStartHour;
 
-                      return (
-                        <div key={index} className="flex justify-between items-center text-xs">
-                          <span className="text-base-content/70">{req.hour}</span>
-                          <span className={`font-medium ${statusColor}`}>
-                            {currentStaffing}/{req.minWorkers}
-                            {req.optimalWorkers !== req.minWorkers && ` (${req.optimalWorkers})`}
-                          </span>
+                            // Position relative to shift start
+                            const topPosition = (assignStartHour - startHour) * 48;
+                            const height = duration * 48;
+
+                            return (
+                              <div
+                                key={`${assignment._id}-${slotIndex}`}
+                                className="absolute bg-success/60 border border-success rounded text-white px-2 py-1"
+                                style={{
+                                  top: `${topPosition}px`,
+                                  height: `${height}px`,
+                                  left: `${10 + (workerIndex * 80) + (slotIndex * 5)}px`,
+                                  width: '70px',
+                                }}
+                                title={`${assignment.worker?.name} (${timeSlot.startTime} - ${timeSlot.endTime})`}
+                              >
+                                <div className="text-xs font-medium truncate">{assignment.worker?.name}</div>
+                                <div className="text-xs opacity-90">{timeSlot.startTime}-{timeSlot.endTime}</div>
+                              </div>
+                            );
+                          });
+                        }).flat()}
+
+                        {/* Staffing indicators on the right */}
+                        <div className="absolute right-2 top-0">
+                          {shift.hourlyRequirements.map((req) => {
+                            const hourInt = parseInt(req.hour.split(':')[0]);
+                            const hourIndex = hourInt - startHour;
+
+                            if (hourIndex < 0 || hourIndex >= shiftHours.length) return null;
+
+                            const currentStaffing = shiftAssignments.filter(assignment =>
+                              assignment.status === 'confirmed' && assignment.assignedHours?.some(timeSlot => {
+                                const assignStart = parseInt(timeSlot.startTime.split(':')[0]);
+                                const assignEnd = parseInt(timeSlot.endTime.split(':')[0]);
+                                return hourInt >= assignStart && hourInt < assignEnd;
+                              })
+                            ).length;
+
+                            const status = currentStaffing < req.minWorkers ? 'understaffed' :
+                                          currentStaffing === req.minWorkers ? 'minimum' :
+                                          currentStaffing <= req.optimalWorkers ? 'good' : 'overstaffed';
+
+                            const statusColor = {
+                              understaffed: 'bg-error/60 text-white',
+                              minimum: 'bg-warning/60 text-black',
+                              good: 'bg-success/60 text-white',
+                              overstaffed: 'bg-info/60 text-black'
+                            }[status];
+
+                            return (
+                              <div
+                                key={req.hour}
+                                className={`absolute ${statusColor} rounded text-center text-xs font-medium`}
+                                style={{
+                                  top: `${hourIndex * 48 + 12}px`,
+                                  width: '40px',
+                                  height: '24px',
+                                  lineHeight: '24px'
+                                }}
+                              >
+                                {currentStaffing}/{req.minWorkers}
+                              </div>
+                            );
+                          })}
                         </div>
-                      );
-                    })}
-                  </div>
-                </div>
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
             </div>
           </div>
