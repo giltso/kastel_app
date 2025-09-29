@@ -31,7 +31,7 @@ export function AssignWorkerModal({
   onClose,
   onSuccess,
 }: AssignWorkerModalProps) {
-  const { hasManagerTag } = usePermissionsV2();
+  const { hasManagerTag, user } = usePermissionsV2();
   const [selectedWorkerId, setSelectedWorkerId] = useState<Id<"users"> | "">("");
   const [assignedHours, setAssignedHours] = useState<TimeSlot[]>([]);
   const [breakPeriods, setBreakPeriods] = useState<BreakPeriod[]>([]);
@@ -57,6 +57,9 @@ export function AssignWorkerModal({
 
   // Assignment mutation
   const assignWorker = useMutation(api.shift_assignments.assignWorkerToShift);
+
+  // Check if manager is assigning themselves (auto-approval case)
+  const isManagerSelfAssignment = hasManagerTag && user && selectedWorkerId === user._id;
 
   // Filter for workers only and apply search
   const availableWorkers = allUsers.filter(user => {
@@ -440,6 +443,11 @@ export function AssignWorkerModal({
                 <>
                   <span className="loading loading-spinner loading-sm"></span>
                   Assigning...
+                </>
+              ) : isManagerSelfAssignment ? (
+                <>
+                  <UserPlus className="w-4 h-4" />
+                  Assign Myself (Auto-approved)
                 </>
               ) : (
                 <>

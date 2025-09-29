@@ -249,7 +249,11 @@ export const assignWorkerToShift = mutation({
       }
     }
 
-    // Create assignment pending worker approval
+    // Check if manager is assigning themselves (auto-approval case)
+    const isManagerSelfAssignment = user._id === args.workerId;
+    const now = Date.now();
+
+    // Create assignment with appropriate status
     return await ctx.db.insert("shift_assignments", {
       shiftTemplateId: args.shiftTemplateId,
       workerId: args.workerId,
@@ -257,9 +261,10 @@ export const assignWorkerToShift = mutation({
       assignedHours: args.assignedHours,
       breakPeriods: args.breakPeriods,
       assignedBy: user._id,
-      assignedAt: Date.now(),
-      status: "pending_worker_approval",
-      managerApprovedAt: Date.now(), // Manager already approved by assigning
+      assignedAt: now,
+      status: isManagerSelfAssignment ? "confirmed" : "pending_worker_approval",
+      managerApprovedAt: now, // Manager already approved by assigning
+      workerApprovedAt: isManagerSelfAssignment ? now : undefined, // Auto-approve if self-assignment
       assignmentNotes: args.assignmentNotes,
     });
   },
@@ -478,15 +483,24 @@ export const requestJoinShift = mutation({
       }
     }
 
-    // Create assignment pending manager approval (worker-initiated)
+    // Check if requesting user is a manager (auto-approval case)
+    const isStaff = user.emulatingIsStaff ?? user.isStaff ?? false;
+    const hasWorkerTag = user.emulatingWorkerTag ?? user.workerTag ?? false;
+    const hasManagerTag = user.emulatingManagerTag ?? user.managerTag ?? false;
+    const isManagerRequest = isStaff && hasWorkerTag && hasManagerTag;
+    const now = Date.now();
+
+    // Create assignment with appropriate status
     return await ctx.db.insert("shift_assignments", {
       shiftTemplateId: args.shiftTemplateId,
       workerId: user._id,
       date: args.date,
       assignedHours: assignedHours,
       assignedBy: user._id, // Worker assigned themselves
-      assignedAt: Date.now(),
-      status: "pending_manager_approval", // Requires manager approval
+      assignedAt: now,
+      status: isManagerRequest ? "confirmed" : "pending_manager_approval",
+      managerApprovedAt: isManagerRequest ? now : undefined, // Auto-approve if manager request
+      workerApprovedAt: now, // Worker already approved by requesting
       assignmentNotes: args.requestNotes,
     });
   },

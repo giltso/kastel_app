@@ -20,7 +20,7 @@ export function RequestJoinShiftModal({
   onClose,
   onSuccess,
 }: RequestJoinShiftModalProps) {
-  const { user } = usePermissionsV2();
+  const { user, hasManagerTag } = usePermissionsV2();
   const [requestNotes, setRequestNotes] = useState("");
   const [selectedHours, setSelectedHours] = useState<{ startTime: string; endTime: string }[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -238,9 +238,19 @@ export function RequestJoinShiftModal({
           <div className="bg-base-100 border border-base-300 rounded-lg p-4 mb-6">
             <h4 className="font-medium mb-2">Request Summary</h4>
             <ul className="text-sm text-base-content/70 space-y-1">
-              <li>• Your request will be sent to managers for approval</li>
-              <li>• You'll be notified once a decision is made</li>
-              <li>• You can view the status in your assignments dashboard</li>
+              {hasManagerTag ? (
+                <>
+                  <li>• As a manager, your request will be automatically approved</li>
+                  <li>• Your assignment will be confirmed immediately</li>
+                  <li>• You can view your confirmed assignment in the assignments dashboard</li>
+                </>
+              ) : (
+                <>
+                  <li>• Your request will be sent to managers for approval</li>
+                  <li>• You'll be notified once a decision is made</li>
+                  <li>• You can view the status in your assignments dashboard</li>
+                </>
+              )}
             </ul>
           </div>
 
@@ -261,8 +271,10 @@ export function RequestJoinShiftModal({
               {isSubmitting ? (
                 <>
                   <span className="loading loading-spinner loading-sm"></span>
-                  Submitting...
+                  {hasManagerTag ? 'Auto-approving...' : 'Submitting...'}
                 </>
+              ) : hasManagerTag ? (
+                'Submit Request (Auto-approved)'
               ) : (
                 'Submit Request'
               )}
