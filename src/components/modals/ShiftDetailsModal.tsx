@@ -88,12 +88,14 @@ export function ShiftDetailsModal({
 
   return (
     <div className="modal modal-open">
-      <div className="modal-box max-w-4xl max-h-[90vh] overflow-y-auto">
-        {/* Header */}
-        <div className="flex justify-between items-start mb-6">
+      <div className="modal-box max-w-5xl max-h-[90vh] overflow-y-auto">
+        {/* Compact Header */}
+        <div className="flex justify-between items-center mb-4">
           <div>
-            <h3 className="font-bold text-2xl">{shift.name}</h3>
-            <p className="text-base-content/70 mt-1">{shift.description}</p>
+            <h3 className="font-bold text-xl">{shift.name}</h3>
+            {shift.description && (
+              <p className="text-sm text-base-content/70">{shift.description}</p>
+            )}
           </div>
           <button
             className="btn btn-sm btn-circle btn-ghost"
@@ -103,145 +105,195 @@ export function ShiftDetailsModal({
           </button>
         </div>
 
-        {/* Shift Overview */}
-        <div className="grid md:grid-cols-2 gap-6 mb-6">
-          {/* Basic Information */}
-          <div className="bg-base-200 rounded-lg p-4">
-            <h4 className="font-semibold mb-3 flex items-center gap-2">
-              <Clock className="w-4 h-4" />
-              Schedule Details
-            </h4>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span>Date:</span>
-                <span className="font-medium">{new Date(selectedDate).toLocaleDateString()}</span>
+        {/* Main 2-Column Layout */}
+        <div className="grid lg:grid-cols-2 gap-6 mb-6">
+
+          {/* LEFT COLUMN: Schedule Details & Staffing Status */}
+          <div className="space-y-4">
+            {/* Schedule Details */}
+            <div className="bg-base-200 rounded-lg p-4">
+              <h4 className="font-semibold mb-3 flex items-center gap-2 text-sm">
+                <Clock className="w-4 h-4" />
+                Schedule Details
+              </h4>
+              <div className="space-y-1.5 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-base-content/70">Date:</span>
+                  <span className="font-medium">{new Date(selectedDate).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-base-content/70">Hours:</span>
+                  <span className="font-medium">{shift.storeHours.openTime} - {shift.storeHours.closeTime}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-base-content/70">Type:</span>
+                  <span className="font-medium capitalize">{shift.type}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-base-content/70">Days:</span>
+                  <span className="font-medium text-xs">{shift.recurringDays.map(day => day.charAt(0).toUpperCase() + day.slice(1, 3)).join(', ')}</span>
+                </div>
               </div>
-              <div className="flex justify-between">
-                <span>Hours:</span>
-                <span className="font-medium">{shift.storeHours.openTime} - {shift.storeHours.closeTime}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Type:</span>
-                <span className="font-medium capitalize">{shift.type}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Recurring:</span>
-                <span className="font-medium">{shift.recurringDays.map(day => day.charAt(0).toUpperCase() + day.slice(1)).join(', ')}</span>
-              </div>
+            </div>
+
+            {/* Staffing Status */}
+            <div className="bg-base-200 rounded-lg p-4">
+              <h4 className="font-semibold mb-3 flex items-center gap-2 text-sm">
+                <Users className="w-4 h-4" />
+                Staffing Status
+              </h4>
+              {staffingStatus && (
+                <div className="space-y-2">
+                  <div className={`badge badge-${staffingStatus.color} badge-md`}>
+                    {staffingStatus.status === 'understaffed' && 'Understaffed'}
+                    {staffingStatus.status === 'minimum' && 'Minimum'}
+                    {staffingStatus.status === 'good' && 'Well Staffed'}
+                    {staffingStatus.status === 'overstaffed' && 'Overstaffed'}
+                  </div>
+                  <div className="text-sm space-y-1">
+                    <div className="flex justify-between">
+                      <span className="text-base-content/70">Current:</span>
+                      <span className="font-medium">{staffingStatus.confirmedWorkers}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-base-content/70">Minimum:</span>
+                      <span className="font-medium">{staffingStatus.minWorkers}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-base-content/70">Optimal:</span>
+                      <span className="font-medium">{staffingStatus.optimalWorkers}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Staffing Status */}
-          <div className="bg-base-200 rounded-lg p-4">
-            <h4 className="font-semibold mb-3 flex items-center gap-2">
-              <Users className="w-4 h-4" />
-              Staffing Status
-            </h4>
-            {staffingStatus && (
-              <div className="space-y-2">
-                <div className={`badge badge-${staffingStatus.color} badge-lg`}>
-                  {staffingStatus.status === 'understaffed' && 'Understaffed'}
-                  {staffingStatus.status === 'minimum' && 'Minimum Staffed'}
-                  {staffingStatus.status === 'good' && 'Well Staffed'}
-                  {staffingStatus.status === 'overstaffed' && 'Overstaffed'}
-                </div>
-                <div className="text-sm">
-                  <div>Current: <span className="font-medium">{staffingStatus.confirmedWorkers}</span></div>
-                  <div>Minimum: <span className="font-medium">{staffingStatus.minWorkers}</span></div>
-                  <div>Optimal: <span className="font-medium">{staffingStatus.optimalWorkers}</span></div>
+          {/* RIGHT COLUMN: Hourly Requirements Timeline */}
+          <div>
+            <div className="bg-base-200 rounded-lg p-4">
+              <h4 className="font-semibold mb-3 flex items-center gap-2 text-sm">
+                <Calendar className="w-4 h-4" />
+                Hourly Requirements Timeline
+              </h4>
+
+              {/* Timeline Container */}
+              <div className="relative">
+                {/* Timeline line */}
+                <div className="absolute left-10 top-0 bottom-0 w-0.5 bg-base-300"></div>
+
+                {/* Hour entries */}
+                <div className="space-y-2">
+                  {shift.hourlyRequirements.map((req, index) => {
+                    // Calculate current staffing for this hour
+                    const hourInt = parseInt(req.hour.split(':')[0]);
+                    const currentStaffing = shiftAssignments.filter(assignment =>
+                      assignment.status === 'confirmed' && assignment.assignedHours?.some(timeSlot => {
+                        const assignStart = parseInt(timeSlot.startTime.split(':')[0]);
+                        const assignEnd = parseInt(timeSlot.endTime.split(':')[0]);
+                        return hourInt >= assignStart && hourInt < assignEnd;
+                      })
+                    ).length;
+
+                    const status = currentStaffing < req.minWorkers ? 'understaffed' :
+                                  currentStaffing === req.minWorkers ? 'minimum' :
+                                  currentStaffing <= req.optimalWorkers ? 'good' : 'overstaffed';
+
+                    const statusColor = {
+                      understaffed: 'bg-error/20 border-error text-error',
+                      minimum: 'bg-warning/20 border-warning text-warning',
+                      good: 'bg-success/20 border-success text-success',
+                      overstaffed: 'bg-info/20 border-info text-info'
+                    }[status];
+
+                    return (
+                      <div key={index} className="relative flex items-center gap-3">
+                        {/* Timeline dot */}
+                        <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center text-xs font-bold ${statusColor}`}>
+                          {currentStaffing}
+                        </div>
+
+                        {/* Hour info */}
+                        <div className="flex-1 bg-base-100 rounded-lg p-2 border border-base-300">
+                          <div className="flex justify-between items-center">
+                            <div className="font-medium text-sm">{req.hour}</div>
+                            <div className="text-xs text-base-content/70">
+                              {currentStaffing}/{req.minWorkers}
+                              {req.optimalWorkers !== req.minWorkers && ` (${req.optimalWorkers})`}
+                            </div>
+                          </div>
+                          {req.notes && (
+                            <div className="text-xs text-base-content/60 mt-1">{req.notes}</div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
-            )}
+            </div>
           </div>
         </div>
 
-        {/* Hourly Requirements */}
-        <div className="mb-6">
-          <h4 className="font-semibold mb-3">Hourly Requirements</h4>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-            {shift.hourlyRequirements.map((req, index) => (
-              <div key={index} className="bg-base-100 border border-base-300 rounded p-3">
-                <div className="font-medium">{req.hour}</div>
-                <div className="text-sm text-base-content/70">
-                  Min: {req.minWorkers} | Optimal: {req.optimalWorkers}
-                </div>
-                {req.notes && (
-                  <div className="text-xs text-base-content/60 mt-1">{req.notes}</div>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Current Assignments - Role-adaptive content */}
-        <div className="mb-6">
-          <h4 className="font-semibold mb-3">Current Assignments</h4>
+        {/* Current Assignments - Compact version */}
+        <div className="mb-4">
+          <h4 className="font-semibold mb-2 text-sm">Current Assignments</h4>
           {shiftAssignments.length === 0 ? (
-            <div className="text-base-content/60 text-center py-4">
+            <div className="text-base-content/60 text-center py-2 text-sm">
               No assignments for this date
             </div>
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-1">
               {shiftAssignments.map((assignment) => (
-                <div key={assignment._id} className="bg-base-100 border border-base-300 rounded-lg p-4">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <div className="font-medium">{assignment.worker?.name}</div>
-                      <div className="text-sm text-base-content/70">
-                        Status: <span className={`font-medium ${
-                          assignment.status === 'confirmed' ? 'text-success' :
-                          assignment.status === 'pending_worker_approval' ? 'text-warning' :
-                          assignment.status === 'pending_manager_approval' ? 'text-info' :
-                          'text-error'
-                        }`}>
-                          {assignment.status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                        </span>
+                <div key={assignment._id} className="bg-base-100 border border-base-300/50 rounded-lg p-2">
+                  <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-2">
+                      <div className="font-medium text-sm">{assignment.worker?.name}</div>
+                      <div className={`badge badge-xs ${
+                        assignment.status === 'confirmed' ? 'badge-success' :
+                        assignment.status === 'pending_worker_approval' ? 'badge-warning' :
+                        assignment.status === 'pending_manager_approval' ? 'badge-info' :
+                        'badge-error'
+                      }`}>
+                        {assignment.status === 'confirmed' ? 'Confirmed' :
+                         assignment.status === 'pending_worker_approval' ? 'Pending Worker' :
+                         assignment.status === 'pending_manager_approval' ? 'Pending Manager' :
+                         'Rejected'}
                       </div>
-
-                      {/* Manager-only: Show detailed assignment information */}
-                      {hasManagerTag && (
-                        <div className="text-sm mt-2">
-                          {assignment.assignedHours && assignment.assignedHours.length > 0 && (
-                            <div>
-                              Hours: {assignment.assignedHours.map(h => `${h.startTime}-${h.endTime}`).join(', ')}
-                            </div>
-                          )}
-                          {assignment.assignmentNotes && (
-                            <div className="text-base-content/60">Notes: {assignment.assignmentNotes}</div>
-                          )}
-                        </div>
-                      )}
                     </div>
 
-                    {/* Role-based action buttons */}
-                    <div className="flex gap-2">
-                      {/* Worker-only: Approve pending assignments assigned to them */}
-                      {hasWorkerTag && assignment.workerId === user?._id &&
-                       assignment.status === 'pending_worker_approval' && (
-                        <button
-                          className="btn btn-xs btn-success"
-                          onClick={() => onApproveAssignment?.(assignment._id)}
-                        >
-                          <CheckCircle className="w-3 h-3" />
-                          Approve
-                        </button>
-                      )}
-                    </div>
+                    {/* Compact action button */}
+                    {hasWorkerTag && assignment.workerId === user?._id &&
+                     assignment.status === 'pending_worker_approval' && (
+                      <button
+                        className="btn btn-xs btn-success"
+                        onClick={() => onApproveAssignment?.(assignment._id)}
+                      >
+                        <CheckCircle className="w-3 h-3" />
+                      </button>
+                    )}
                   </div>
+
+                  {/* Compact assignment details */}
+                  {assignment.assignedHours && assignment.assignedHours.length > 0 && (
+                    <div className="text-xs text-base-content/70 mt-1">
+                      {assignment.assignedHours.map(h => `${h.startTime}-${h.endTime}`).join(', ')}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
           )}
         </div>
 
-        {/* Pending Actions for Current User */}
+        {/* Pending Actions for Current User - Compact */}
         {pendingWorkerApprovals.length > 0 && (
-          <div className="mb-6 p-4 bg-warning/10 border border-warning/20 rounded-lg">
-            <h4 className="font-semibold text-warning mb-2">Action Required</h4>
-            <p className="text-sm mb-3">You have {pendingWorkerApprovals.length} pending assignment(s) that need your approval.</p>
+          <div className="mb-3 p-3 bg-warning/10 border border-warning/20 rounded-lg">
+            <h4 className="font-semibold text-warning mb-2 text-sm">Action Required</h4>
+            <p className="text-xs mb-2">You have {pendingWorkerApprovals.length} pending assignment(s).</p>
             {pendingWorkerApprovals.map((assignment) => (
               <div key={assignment._id} className="flex justify-between items-center">
-                <span className="text-sm">Assignment by {assignment.assignedBy?.name}</span>
+                <span className="text-xs">Assignment by {assignment.assignedBy?.name}</span>
                 <button
                   className="btn btn-xs btn-success"
                   onClick={() => onApproveAssignment?.(assignment._id)}
@@ -253,82 +305,85 @@ export function ShiftDetailsModal({
           </div>
         )}
 
-        {/* Action Buttons - Role-adaptive */}
-        <div className="flex flex-wrap gap-3">
-          {/* Base Worker Actions */}
-          {hasWorkerTag && (
-            <>
-              {!myAssignment ? (
-                /* Request to Join - if not already assigned */
-                onRequestJoin && (
-                  <button
-                    className="btn btn-primary"
-                    onClick={() => onRequestJoin(shift._id, selectedDate)}
-                  >
-                    <Plus className="w-4 h-4" />
-                    Request to Join
-                  </button>
-                )
-              ) : (
-                /* Edit Assignment - if user is assigned */
-                <div className="flex items-center gap-2">
-                  <div className={`badge ${
-                    myAssignment.status === 'confirmed' ? 'badge-success' :
-                    myAssignment.status === 'pending_worker_approval' ? 'badge-warning' :
-                    myAssignment.status === 'pending_manager_approval' ? 'badge-info' :
-                    'badge-error'
-                  }`}>
-                    Your Status: {myAssignment.status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                  </div>
-                  {onEditAssignment && (
+        {/* Compact Action Buttons */}
+        <div className="flex justify-between items-center">
+          <div className="flex flex-wrap gap-2">
+            {/* Base Worker Actions */}
+            {hasWorkerTag && (
+              <>
+                {!myAssignment ? (
+                  /* Request to Join - if not already assigned */
+                  onRequestJoin && (
                     <button
-                      className="btn btn-warning btn-sm"
-                      onClick={() => onEditAssignment(myAssignment._id)}
+                      className="btn btn-primary btn-sm"
+                      onClick={() => onRequestJoin(shift._id, selectedDate)}
                     >
-                      <Edit className="w-4 h-4" />
-                      Edit Assignment
+                      <Plus className="w-3 h-3" />
+                      Request to Join
                     </button>
-                  )}
-                </div>
-              )}
-            </>
-          )}
+                  )
+                ) : (
+                  /* Edit Assignment - if user is assigned */
+                  <div className="flex items-center gap-2">
+                    <div className={`badge badge-xs ${
+                      myAssignment.status === 'confirmed' ? 'badge-success' :
+                      myAssignment.status === 'pending_worker_approval' ? 'badge-warning' :
+                      myAssignment.status === 'pending_manager_approval' ? 'badge-info' :
+                      'badge-error'
+                    }`}>
+                      {myAssignment.status === 'confirmed' ? 'Confirmed' :
+                       myAssignment.status === 'pending_worker_approval' ? 'Pending Worker' :
+                       myAssignment.status === 'pending_manager_approval' ? 'Pending Manager' :
+                       'Rejected'}
+                    </div>
+                    {onEditAssignment && (
+                      <button
+                        className="btn btn-warning btn-xs"
+                        onClick={() => onEditAssignment(myAssignment._id)}
+                      >
+                        <Edit className="w-3 h-3" />
+                        Edit
+                      </button>
+                    )}
+                  </div>
+                )}
+              </>
+            )}
 
-          {/* Manager-only Actions (Additive) */}
-          {hasManagerTag && (
-            <>
-              <button
-                className="btn btn-secondary"
-                onClick={() => onEditShift?.(shift._id)}
-              >
-                <Edit className="w-4 h-4" />
-                Edit Shift
-              </button>
-
-              <button
-                className="btn btn-accent"
-                onClick={() => onAssignWorker?.(shift._id, selectedDate)}
-              >
-                <UserPlus className="w-4 h-4" />
-                Assign Worker
-              </button>
-
-              {pendingManagerApprovals.length > 0 && (
+            {/* Manager-only Actions (Additive) */}
+            {hasManagerTag && (
+              <>
                 <button
-                  className="btn btn-warning"
-                  onClick={() => onReviewRequests?.(shift._id)}
+                  className="btn btn-secondary btn-sm"
+                  onClick={() => onEditShift?.(shift._id)}
                 >
-                  <CheckCircle className="w-4 h-4" />
-                  Review Requests ({pendingManagerApprovals.length})
+                  <Edit className="w-3 h-3" />
+                  Edit Shift
                 </button>
-              )}
-            </>
-          )}
-        </div>
 
-        {/* Modal Actions */}
-        <div className="modal-action">
-          <button className="btn" onClick={onClose}>
+                <button
+                  className="btn btn-accent btn-sm"
+                  onClick={() => onAssignWorker?.(shift._id, selectedDate)}
+                >
+                  <UserPlus className="w-3 h-3" />
+                  Assign Worker
+                </button>
+
+                {pendingManagerApprovals.length > 0 && (
+                  <button
+                    className="btn btn-warning btn-sm"
+                    onClick={() => onReviewRequests?.(shift._id)}
+                  >
+                    <CheckCircle className="w-3 h-3" />
+                    Review ({pendingManagerApprovals.length})
+                  </button>
+                )}
+              </>
+            )}
+          </div>
+
+          {/* Close button */}
+          <button className="btn btn-sm" onClick={onClose}>
             Close
           </button>
         </div>
