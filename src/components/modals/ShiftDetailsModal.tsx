@@ -177,58 +177,104 @@ export function ShiftDetailsModal({
                 Hourly Requirements Timeline
               </h4>
 
-              {/* Timeline Container */}
-              <div className="relative">
-                {/* Timeline line */}
-                <div className="absolute left-10 top-0 bottom-0 w-0.5 bg-base-300"></div>
+              {/* Timeline Container with Assignment Preview */}
+              <div className="relative bg-base-100 rounded-lg border border-base-300 p-3" style={{ minHeight: '300px' }}>
+                {/* Time axis */}
+                <div className="absolute left-0 top-3 w-full">
+                  {/* Hour labels */}
+                  <div className="flex justify-between text-xs text-base-content/70 mb-2">
+                    {shift.hourlyRequirements.map((req, index) => (
+                      <div key={index} className="flex-1 text-center">
+                        {req.hour}
+                      </div>
+                    ))}
+                  </div>
 
-                {/* Hour entries */}
-                <div className="space-y-2">
-                  {shift.hourlyRequirements.map((req, index) => {
-                    // Calculate current staffing for this hour
-                    const hourInt = parseInt(req.hour.split(':')[0]);
-                    const currentStaffing = shiftAssignments.filter(assignment =>
-                      assignment.status === 'confirmed' && assignment.assignedHours?.some(timeSlot => {
-                        const assignStart = parseInt(timeSlot.startTime.split(':')[0]);
-                        const assignEnd = parseInt(timeSlot.endTime.split(':')[0]);
-                        return hourInt >= assignStart && hourInt < assignEnd;
-                      })
-                    ).length;
+                  {/* Timeline background */}
+                  <div className="h-40 bg-base-200 rounded relative">
+                    {/* Hour dividers */}
+                    {shift.hourlyRequirements.map((_, index) => (
+                      <div
+                        key={index}
+                        className="absolute top-0 bottom-0 w-px bg-base-300/50"
+                        style={{
+                          left: `${(index / (shift.hourlyRequirements.length - 1)) * 100}%`
+                        }}
+                      />
+                    ))}
 
-                    const status = currentStaffing < req.minWorkers ? 'understaffed' :
-                                  currentStaffing === req.minWorkers ? 'minimum' :
-                                  currentStaffing <= req.optimalWorkers ? 'good' : 'overstaffed';
+                    {/* Assignment blocks - similar to daily timeline */}
+                    {shiftAssignments.filter(a => a.status === 'confirmed').map((assignment, workerIndex) => {
+                      if (!assignment.assignedHours || assignment.assignedHours.length === 0) {
+                        return null;
+                      }
 
-                    const statusColor = {
-                      understaffed: 'bg-error/20 border-error text-error',
-                      minimum: 'bg-warning/20 border-warning text-warning',
-                      good: 'bg-success/20 border-success text-success',
-                      overstaffed: 'bg-info/20 border-info text-info'
-                    }[status];
+                      return assignment.assignedHours.map((timeSlot, slotIndex) => {
+                        const startHour = parseInt(timeSlot.startTime.split(':')[0]);
+                        const endHour = parseInt(timeSlot.endTime.split(':')[0]);
+                        const shiftStartHour = parseInt(shift.storeHours.openTime.split(':')[0]);
+                        const shiftEndHour = parseInt(shift.storeHours.closeTime.split(':')[0]);
+                        const shiftDuration = shiftEndHour - shiftStartHour;
 
-                    return (
-                      <div key={index} className="relative flex items-center gap-3">
-                        {/* Timeline dot */}
-                        <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center text-xs font-bold ${statusColor}`}>
-                          {currentStaffing}
-                        </div>
+                        // Calculate position as percentage of shift timeline
+                        const startPercent = ((startHour - shiftStartHour) / shiftDuration) * 100;
+                        const widthPercent = ((endHour - startHour) / shiftDuration) * 100;
 
-                        {/* Hour info */}
-                        <div className="flex-1 bg-base-100 rounded-lg p-2 border border-base-300">
-                          <div className="flex justify-between items-center">
-                            <div className="font-medium text-sm">{req.hour}</div>
-                            <div className="text-xs text-base-content/70">
-                              {currentStaffing}/{req.minWorkers}
-                              {req.optimalWorkers !== req.minWorkers && ` (${req.optimalWorkers})`}
+                        return (
+                          <div
+                            key={`${assignment._id}-${slotIndex}`}
+                            className="absolute bg-success/60 border border-success rounded text-white"
+                            style={{
+                              left: `${Math.max(0, startPercent)}%`,
+                              width: `${Math.min(widthPercent, 100 - startPercent)}%`,
+                              top: `${10 + (workerIndex * 25) + (slotIndex * 3)}px`,
+                              height: '20px',
+                            }}
+                            title={`${assignment.worker?.name} (${timeSlot.startTime} - ${timeSlot.endTime})`}
+                          >
+                            <div className="px-2 py-0.5 text-xs font-medium truncate leading-tight">
+                              {assignment.worker?.name}
                             </div>
                           </div>
-                          {req.notes && (
-                            <div className="text-xs text-base-content/60 mt-1">{req.notes}</div>
-                          )}
+                        );
+                      });
+                    }).flat()}
+                  </div>
+
+                  {/* Staffing requirements indicators */}
+                  <div className="mt-3 space-y-1">
+                    {shift.hourlyRequirements.map((req, index) => {
+                      const hourInt = parseInt(req.hour.split(':')[0]);
+                      const currentStaffing = shiftAssignments.filter(assignment =>
+                        assignment.status === 'confirmed' && assignment.assignedHours?.some(timeSlot => {
+                          const assignStart = parseInt(timeSlot.startTime.split(':')[0]);
+                          const assignEnd = parseInt(timeSlot.endTime.split(':')[0]);
+                          return hourInt >= assignStart && hourInt < assignEnd;
+                        })
+                      ).length;
+
+                      const status = currentStaffing < req.minWorkers ? 'understaffed' :
+                                    currentStaffing === req.minWorkers ? 'minimum' :
+                                    currentStaffing <= req.optimalWorkers ? 'good' : 'overstaffed';
+
+                      const statusColor = {
+                        understaffed: 'text-error',
+                        minimum: 'text-warning',
+                        good: 'text-success',
+                        overstaffed: 'text-info'
+                      }[status];
+
+                      return (
+                        <div key={index} className="flex justify-between items-center text-xs">
+                          <span className="text-base-content/70">{req.hour}</span>
+                          <span className={`font-medium ${statusColor}`}>
+                            {currentStaffing}/{req.minWorkers}
+                            {req.optimalWorkers !== req.minWorkers && ` (${req.optimalWorkers})`}
+                          </span>
                         </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
             </div>
