@@ -34,6 +34,7 @@ interface LUZOverviewProps {
   hasManagerTag: boolean;
   onReviewRequests?: () => void;
   onApproveAssignment?: (assignmentId: string) => void;
+  onRejectAssignment?: (assignmentId: string) => void;
 }
 
 export function LUZOverview({
@@ -43,7 +44,8 @@ export function LUZOverview({
   filters,
   hasManagerTag,
   onReviewRequests,
-  onApproveAssignment
+  onApproveAssignment,
+  onRejectAssignment
 }: LUZOverviewProps) {
   return (
     <div className="bg-base-100 border border-base-300 rounded-lg p-4">
@@ -71,7 +73,12 @@ export function LUZOverview({
                     >
                       Approve
                     </button>
-                    <button className="btn btn-xs btn-error">Reject</button>
+                    <button
+                      className="btn btn-xs btn-error"
+                      onClick={() => onRejectAssignment?.(assignment._id)}
+                    >
+                      Reject
+                    </button>
                   </div>
                 </div>
               </div>

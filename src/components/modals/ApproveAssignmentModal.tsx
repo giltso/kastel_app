@@ -22,7 +22,6 @@ export function ApproveAssignmentModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [rejectionReason, setRejectionReason] = useState("");
-  const [showRejectForm, setShowRejectForm] = useState(false);
 
   // Fetch assignment details
   const assignment = useQuery(
@@ -57,8 +56,7 @@ export function ApproveAssignmentModal({
     }
   };
 
-  const handleReject = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleReject = async () => {
     if (!assignmentId) return;
 
     setIsSubmitting(true);
@@ -248,40 +246,6 @@ export function ApproveAssignmentModal({
           </ul>
         </div>
 
-        {/* Rejection Form */}
-        {showRejectForm && (
-          <div className="bg-error/10 border border-error/20 rounded-lg p-4 mb-6">
-            <h4 className="font-medium mb-3 text-error">Rejection Reason</h4>
-            <form onSubmit={handleReject}>
-              <textarea
-                value={rejectionReason}
-                onChange={(e) => setRejectionReason(e.target.value)}
-                className="textarea textarea-bordered w-full"
-                rows={3}
-                placeholder="Please provide a reason for rejecting this assignment (optional but helpful for your manager)..."
-              />
-              <div className="flex gap-2 mt-3">
-                <button
-                  type="submit"
-                  className="btn btn-error btn-sm"
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? "Rejecting..." : "Confirm Rejection"}
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-ghost btn-sm"
-                  onClick={() => {
-                    setShowRejectForm(false);
-                    setRejectionReason("");
-                  }}
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
-          </div>
-        )}
 
         {/* Error Display */}
         {error && (
@@ -292,42 +256,49 @@ export function ApproveAssignmentModal({
         )}
 
         {/* Action Buttons */}
-        {!showRejectForm && (
-          <div className="flex justify-end gap-3">
-            <button
-              className="btn btn-ghost"
-              onClick={onClose}
-              disabled={isSubmitting}
-            >
-              Cancel
-            </button>
-            <button
-              className="btn btn-error"
-              onClick={() => setShowRejectForm(true)}
-              disabled={isSubmitting}
-            >
-              <XCircle className="w-4 h-4" />
-              Reject Assignment
-            </button>
-            <button
-              className="btn btn-success"
-              onClick={handleApprove}
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? (
-                <>
-                  <span className="loading loading-spinner loading-sm"></span>
-                  Approving...
-                </>
-              ) : (
-                <>
-                  <CheckCircle className="w-4 h-4" />
-                  Approve Assignment
-                </>
-              )}
-            </button>
-          </div>
-        )}
+        <div className="flex justify-end gap-3">
+          <button
+            className="btn btn-ghost"
+            onClick={onClose}
+            disabled={isSubmitting}
+          >
+            Cancel
+          </button>
+          <button
+            className="btn btn-error"
+            onClick={handleReject}
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? (
+              <>
+                <span className="loading loading-spinner loading-sm"></span>
+                Rejecting...
+              </>
+            ) : (
+              <>
+                <XCircle className="w-4 h-4" />
+                Reject Assignment
+              </>
+            )}
+          </button>
+          <button
+            className="btn btn-success"
+            onClick={handleApprove}
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? (
+              <>
+                <span className="loading loading-spinner loading-sm"></span>
+                Approving...
+              </>
+            ) : (
+              <>
+                <CheckCircle className="w-4 h-4" />
+                Approve Assignment
+              </>
+            )}
+          </button>
+        </div>
       </div>
     </div>
   );

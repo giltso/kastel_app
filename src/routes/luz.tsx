@@ -114,6 +114,10 @@ function LUZPage() {
   // Real data queries for assignments
   const assignmentsForDate = useQuery(api.shift_assignments.getAssignmentsForDate, { date: selectedDate }) || [];
 
+  // Direct assignment approval/rejection mutations
+  const approveAssignment = useMutation(api.shift_assignments.approveAssignment);
+  const rejectAssignment = useMutation(api.shift_assignments.rejectAssignment);
+
   // Week view assignments queries (conditional to avoid unnecessary queries)
   const weekDates = getWeekDates(selectedDate);
   const weekAssignmentQueries = weekDates.map(date => {
@@ -227,6 +231,25 @@ function LUZPage() {
   const handleModalSuccess = () => {
     // Refresh data or perform any needed actions after successful modal operations
     console.log("Modal operation successful");
+  };
+
+  // Direct assignment handlers for overview
+  const handleDirectApprove = async (assignmentId: Id<"shift_assignments">) => {
+    try {
+      await approveAssignment({ assignmentId });
+      console.log("Assignment approved successfully");
+    } catch (error) {
+      console.error("Failed to approve assignment:", error);
+    }
+  };
+
+  const handleDirectReject = async (assignmentId: Id<"shift_assignments">) => {
+    try {
+      await rejectAssignment({ assignmentId });
+      console.log("Assignment rejected successfully");
+    } catch (error) {
+      console.error("Failed to reject assignment:", error);
+    }
   };
 
   return (
@@ -351,7 +374,8 @@ function LUZPage() {
               filters={filters}
               hasManagerTag={hasManagerTag}
               onReviewRequests={() => openModal('reviewRequests')}
-              onApproveAssignment={(assignmentId) => openModal('approveAssignment', { assignmentId })}
+              onApproveAssignment={handleDirectApprove}
+              onRejectAssignment={handleDirectReject}
             />
           </div>
 
