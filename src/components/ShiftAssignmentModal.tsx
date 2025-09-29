@@ -21,7 +21,7 @@ export function ShiftAssignmentModal({ isOpen, onClose, shift, date, currentUser
   const dateString = date.toISOString().split('T')[0];
   
   // Get list of workers for manager assignment
-  const workers = useQuery(api.users.listUsers) || [];
+  const workers = useQuery(api.users_v2.getAllUsersV2) || [];
   const shiftAssignments = useQuery(api.shifts.getShiftAssignments, { date: dateString }) || [];
   
   // Filter out workers who are already assigned to any shift on this date

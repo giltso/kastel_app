@@ -1,6 +1,7 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { usePermissionsV2 } from "@/hooks/usePermissionsV2";
 import { EnsureUserV2 } from "@/components/EnsureUserV2";
+import { useEffect } from "react";
 import { KastelLogo } from "@/components/KastelLogo";
 
 export const Route = createFileRoute("/")({
@@ -16,6 +17,14 @@ function V2HomePage() {
     isStaff,
     isCustomer
   } = usePermissionsV2();
+  const navigate = useNavigate();
+
+  // Automatically redirect staff users to LUZ system
+  useEffect(() => {
+    if (!isLoading && isStaff) {
+      navigate({ to: "/luz" });
+    }
+  }, [isLoading, isStaff, navigate]);
 
   if (isLoading) {
     return (
@@ -30,12 +39,12 @@ function V2HomePage() {
     return <GuestHomePage />;
   }
 
-  // Staff members should never reach this page - Home navigation goes to LUZ for them
+  // Staff members should be automatically redirected via useEffect above
+  // This fallback should rarely be reached for staff users
   if (isStaff) {
     return (
-      <div className="text-center py-12">
-        <h1 className="text-2xl font-bold mb-4">Redirecting to LUZ...</h1>
-        <p>Staff home is the LUZ system.</p>
+      <div className="flex items-center justify-center min-h-64">
+        <span className="loading loading-spinner loading-lg"></span>
       </div>
     );
   }

@@ -26,6 +26,8 @@ interface LUZVerticalTimelineProps {
   selectedDate: string;
   hasManagerTag: boolean;
   getShiftStaffingStatus: (shift: any, assignedWorkers: any[]) => any;
+  onShiftClick?: (shiftId: string) => void;
+  onRequestJoin?: (shiftId: string, date: string) => void;
 }
 
 export function LUZVerticalTimeline({
@@ -34,7 +36,9 @@ export function LUZVerticalTimeline({
   coursesForDate,
   selectedDate,
   hasManagerTag,
-  getShiftStaffingStatus
+  getShiftStaffingStatus,
+  onShiftClick,
+  onRequestJoin
 }: LUZVerticalTimelineProps) {
   return (
     <div className="bg-base-100 border border-base-300 rounded-lg p-4">
@@ -110,7 +114,7 @@ export function LUZVerticalTimeline({
                       return (
                         <div
                           key={shift._id}
-                          className="absolute"
+                          className="absolute cursor-pointer"
                           style={{
                             left: position.left,
                             width: position.width,
@@ -118,6 +122,7 @@ export function LUZVerticalTimeline({
                             height: `${height}px`,
                             padding: '5px'
                           }}
+                          onClick={() => onShiftClick?.(shift._id)}
                         >
                           {/* Header - Connected to shift body */}
                           <div

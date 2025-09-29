@@ -56,7 +56,7 @@ export function EditEventModal({ isOpen, onClose, event }: EditEventModalProps) 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const updateEvent = useMutation(api.events.updateEvent);
-  const users = useQuery(api.users.listWorkers); // Assume we have this query
+  const users = useQuery(api.users_v2.getAllUsersV2);
 
   const form = useForm({
     defaultValues: {

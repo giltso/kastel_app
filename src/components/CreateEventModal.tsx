@@ -54,7 +54,7 @@ export function CreateEventModal({ isOpen, onClose, prefilledData = {} }: Create
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [isRecurring, setIsRecurring] = useState(false);
   const createEvent = useMutation(api.events.createEvent);
-  const users = useQuery(api.users.listWorkers);
+  const users = useQuery(api.users_v2.getAllUsersV2);
 
   const form = useForm({
     defaultValues: {
