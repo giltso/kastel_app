@@ -12,6 +12,7 @@ interface ShiftDetailsModalProps {
   onEditShift?: (shiftId: Id<"shifts">) => void;
   onAssignWorker?: (shiftId: Id<"shifts">, date: string) => void;
   onRequestJoin?: (shiftId: Id<"shifts">, date: string) => void;
+  onEditAssignment?: (assignmentId: Id<"shift_assignments">) => void;
   onApproveAssignment?: (assignmentId: Id<"shift_assignments">) => void;
   onReviewRequests?: (shiftId: Id<"shifts">) => void;
 }
@@ -24,6 +25,7 @@ export function ShiftDetailsModal({
   onEditShift,
   onAssignWorker,
   onRequestJoin,
+  onEditAssignment,
   onApproveAssignment,
   onReviewRequests,
 }: ShiftDetailsModalProps) {
@@ -256,19 +258,19 @@ export function ShiftDetailsModal({
           {/* Base Worker Actions */}
           {hasWorkerTag && (
             <>
-              {/* Request to Join - if not already assigned */}
-              {!myAssignment && onRequestJoin && (
-                <button
-                  className="btn btn-primary"
-                  onClick={() => onRequestJoin(shift._id, selectedDate)}
-                >
-                  <Plus className="w-4 h-4" />
-                  Request to Join
-                </button>
-              )}
-
-              {/* Show assignment status if user is assigned */}
-              {myAssignment && (
+              {!myAssignment ? (
+                /* Request to Join - if not already assigned */
+                onRequestJoin && (
+                  <button
+                    className="btn btn-primary"
+                    onClick={() => onRequestJoin(shift._id, selectedDate)}
+                  >
+                    <Plus className="w-4 h-4" />
+                    Request to Join
+                  </button>
+                )
+              ) : (
+                /* Edit Assignment - if user is assigned */
                 <div className="flex items-center gap-2">
                   <div className={`badge ${
                     myAssignment.status === 'confirmed' ? 'badge-success' :
@@ -278,6 +280,15 @@ export function ShiftDetailsModal({
                   }`}>
                     Your Status: {myAssignment.status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                   </div>
+                  {onEditAssignment && (
+                    <button
+                      className="btn btn-warning btn-sm"
+                      onClick={() => onEditAssignment(myAssignment._id)}
+                    >
+                      <Edit className="w-4 h-4" />
+                      Edit Assignment
+                    </button>
+                  )}
                 </div>
               )}
             </>

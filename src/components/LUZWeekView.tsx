@@ -37,8 +37,6 @@ export function LUZWeekView({
   hasManagerTag,
   getShiftStaffingStatus
 }: LUZWeekViewProps) {
-  const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-
   return (
     <div className="bg-base-100 border border-base-300 rounded-lg p-4">
       <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
@@ -48,26 +46,15 @@ export function LUZWeekView({
 
       {/* Week Grid Container */}
       <div className="relative overflow-x-auto">
-        {/* Header Row with Days */}
-        <div className="grid grid-cols-8 gap-1 mb-2 text-xs font-medium">
-          <div className="p-2 text-center bg-base-200 rounded">Time</div>
-          {weekDates.map((date, index) => {
-            const dateObj = new Date(date + 'T00:00:00');
-            const dayName = dayNames[index];
-            const dayNumber = dateObj.getDate();
-            return (
-              <div key={date} className="p-2 text-center bg-base-200 rounded">
-                <div>{dayName}</div>
-                <div className="text-xs text-base-content/70">{dayNumber}</div>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Time Grid with Events */}
+        {/* Combined Header and Content Structure */}
         <div className="relative" style={{ minHeight: '600px' }}>
           {/* Time Labels Column */}
-          <div className="absolute left-0 top-0 w-16 z-10">
+          <div className="absolute left-0 top-0 w-16 z-10 bg-base-100">
+            {/* Time header */}
+            <div className="h-12 flex items-center justify-center text-xs font-medium bg-base-200 border-b border-base-300/30 rounded-tl">
+              Time
+            </div>
+            {/* Time labels */}
             {Array.from({ length: 12 }, (_, i) => {
               const hour = i + 8;
               return (
@@ -78,9 +65,13 @@ export function LUZWeekView({
             })}
           </div>
 
-          {/* Day Columns */}
+          {/* Day Headers and Content */}
           <div className="ml-16 grid grid-cols-7 gap-1">
             {weekDates.map((date, dayIndex) => {
+              const dateObj = new Date(date + 'T00:00:00');
+              // Use actual date calculation instead of array index
+              const dayName = dateObj.toLocaleDateString('en-US', { weekday: 'short' });
+              const dayNumber = dateObj.getDate();
               const shiftsForDate = shiftsForWeek[date] || [];
               const coursesForDate = coursesForWeek[date] || [];
               const assignmentsForDate = assignmentsForWeek[date] || [];
@@ -95,13 +86,21 @@ export function LUZWeekView({
               );
 
               return (
-                <div key={date} className="relative" style={{ minHeight: '576px' }}> {/* 12 hours * 48px = 576px */}
-                  {/* Time Grid Background */}
-                  <div className="absolute inset-0">
-                    {Array.from({ length: 12 }, (_, i) => (
-                      <div key={i} className="h-12 border-b border-base-300/20"></div>
-                    ))}
+                <div key={date} className="relative">
+                  {/* Day Header */}
+                  <div className="h-12 p-2 text-center bg-base-200 rounded-tr text-xs font-medium border-b border-base-300/30 mb-1">
+                    <div>{dayName}</div>
+                    <div className="text-xs text-base-content/70">{dayNumber}</div>
                   </div>
+
+                  {/* Day Content Area */}
+                  <div className="relative" style={{ minHeight: '576px' }}> {/* 12 hours * 48px = 576px */}
+                    {/* Time Grid Background */}
+                    <div className="absolute inset-0">
+                      {Array.from({ length: 12 }, (_, i) => (
+                        <div key={i} className="h-12 border-b border-base-300/20"></div>
+                      ))}
+                    </div>
 
                   {/* Render Shifts for this day */}
                   {shiftsForDate.map((shift) => {
@@ -147,36 +146,43 @@ export function LUZWeekView({
                           {staffingStatus.currentWorkers}/{staffingStatus.minWorkers} workers
                         </div>
 
-                        {/* Worker assignments within shift body */}
+                        {/* Worker assignments within shift body - IMPROVED VISIBILITY */}
                         <div className="relative flex-1 overflow-hidden">
                           {shiftWorkers.map((assignment, workerIndex) => {
-                            const workerStartHour = parseInt(assignment.assignedHours[0]?.startTime.split(':')[0] || startHour.toString());
-                            const workerEndHour = parseInt(assignment.assignedHours[0]?.endTime.split(':')[0] || endHour.toString());
+                            // Handle multiple time slots for each assignment
+                            if (!assignment.assignedHours || assignment.assignedHours.length === 0) {
+                              return null;
+                            }
 
-                            // Position relative to shift duration
-                            const relativeStart = ((workerStartHour - startHour) / duration) * 100;
-                            const relativeHeight = ((workerEndHour - workerStartHour) / duration) * 100;
+                            return assignment.assignedHours.map((timeSlot, slotIndex) => {
+                              const workerStartHour = parseInt(timeSlot.startTime.split(':')[0]);
+                              const workerEndHour = parseInt(timeSlot.endTime.split(':')[0]);
 
-                            return (
-                              <div
-                                key={assignment._id}
-                                className={`absolute rounded px-1 py-0.5 text-xs ${
-                                  assignment.status === 'confirmed'
-                                    ? 'bg-success/30 border border-success'
-                                    : 'bg-warning/30 border border-warning'
-                                }`}
-                                style={{
-                                  top: `${20 + relativeStart * 0.6}px`, // Start below header text
-                                  height: `${Math.max(16, relativeHeight * 0.6)}px`, // Minimum height for visibility
-                                  left: `${4 + workerIndex * 18}px`, // Stack workers horizontally
-                                  width: '16px', // Compact width for week view
-                                }}
-                                title={`${assignment.worker?.name} (${assignment.assignedHours[0]?.startTime} - ${assignment.assignedHours[0]?.endTime})`}
-                              >
-                                <div className="truncate text-xs leading-none">{assignment.worker?.name?.charAt(0)}</div>
-                              </div>
-                            );
-                          })}
+                              // Position relative to shift duration
+                              const relativeStart = ((workerStartHour - startHour) / duration) * 100;
+                              const relativeHeight = ((workerEndHour - workerStartHour) / duration) * 100;
+
+                              return (
+                                <div
+                                  key={`${assignment._id}-${slotIndex}`}
+                                  className={`absolute rounded px-1 py-0.5 text-xs font-medium ${
+                                    assignment.status === 'confirmed'
+                                      ? 'bg-success/60 border border-success text-white'
+                                      : 'bg-warning/60 border border-warning text-black'
+                                  }`}
+                                  style={{
+                                    top: `${25 + relativeStart * 0.8}px`, // Start below header text with better positioning
+                                    height: `${Math.max(20, relativeHeight * 0.8)}px`, // Larger minimum height for visibility
+                                    left: `${4 + (workerIndex * 25) + (slotIndex * 3)}px`, // Better spacing for workers and slots
+                                    width: '22px', // Larger width for better visibility
+                                  }}
+                                  title={`${assignment.worker?.name} (${timeSlot.startTime} - ${timeSlot.endTime})`}
+                                >
+                                  <div className="truncate text-xs leading-none">{assignment.worker?.name?.charAt(0)}</div>
+                                </div>
+                              );
+                            });
+                          }).flat()}
                         </div>
                       </div>
                     );
@@ -219,17 +225,18 @@ export function LUZWeekView({
                     );
                   })}
 
-                  {/* Empty state for days with no events */}
-                  {shiftsForDate.length === 0 && coursesForDate.length === 0 && (
-                    <div className="absolute inset-0 flex items-center justify-center text-base-content/30">
-                      <div className="text-center">
-                        <div className="text-xs">No events</div>
-                        {hasManagerTag && (
-                          <button className="btn btn-xs btn-ghost mt-1">+</button>
-                        )}
+                    {/* Empty state for days with no events */}
+                    {shiftsForDate.length === 0 && coursesForDate.length === 0 && (
+                      <div className="absolute inset-0 flex items-center justify-center text-base-content/30">
+                        <div className="text-center">
+                          <div className="text-xs">No events</div>
+                          {hasManagerTag && (
+                            <button className="btn btn-xs btn-ghost mt-1">+</button>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
               );
             })}

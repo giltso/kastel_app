@@ -1,4 +1,5 @@
 import { Users } from "lucide-react";
+import { usePermissionsV2 } from "@/hooks/usePermissionsV2";
 
 /**
  * LUZ Overview Component
@@ -35,6 +36,9 @@ interface LUZOverviewProps {
   onReviewRequests?: () => void;
   onApproveAssignment?: (assignmentId: string) => void;
   onRejectAssignment?: (assignmentId: string) => void;
+  onRequestJoin?: (shiftId: string, date: string) => void;
+  onAssignWorker?: (shiftId: string, date: string) => void;
+  onEditAssignment?: (assignmentId: string) => void;
 }
 
 export function LUZOverview({
@@ -45,8 +49,12 @@ export function LUZOverview({
   hasManagerTag,
   onReviewRequests,
   onApproveAssignment,
-  onRejectAssignment
+  onRejectAssignment,
+  onRequestJoin,
+  onAssignWorker,
+  onEditAssignment
 }: LUZOverviewProps) {
+  const { user } = usePermissionsV2();
   return (
     <div className="bg-base-100 border border-base-300 rounded-lg p-4">
       <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
@@ -135,17 +143,48 @@ export function LUZOverview({
           <h3 className="font-medium mb-3">Available Shifts</h3>
           {shiftsForDate.length > 0 ? (
             <div className="space-y-2">
-              {shiftsForDate.map((shift) => (
-                <div key={shift._id} className="p-3 bg-info/10 border border-info/20 rounded-lg">
-                  <div className="font-medium">{shift.name}</div>
-                  <div className="text-sm text-base-content/70 mb-2">
-                    {shift.storeHours.openTime} - {shift.storeHours.closeTime}
+              {shiftsForDate.map((shift) => {
+                // Check if current user has an assignment for this shift
+                const userAssignment = assignmentsForDate.find(
+                  assignment => assignment.shiftTemplateId === shift._id && assignment.workerId === user?._id
+                );
+
+                return (
+                  <div key={shift._id} className="p-3 bg-info/10 border border-info/20 rounded-lg">
+                    <div className="font-medium">{shift.name}</div>
+                    <div className="text-sm text-base-content/70 mb-2">
+                      {shift.storeHours.openTime} - {shift.storeHours.closeTime}
+                    </div>
+                    <div className="flex gap-1">
+                      {userAssignment ? (
+                        // Show Edit Assignment button if user has assignment for this shift
+                        <button
+                          className="btn btn-xs btn-warning"
+                          onClick={() => onEditAssignment?.(userAssignment._id)}
+                        >
+                          Edit Assignment
+                        </button>
+                      ) : (
+                        // Show Request to Join button if user doesn't have assignment
+                        <button
+                          className="btn btn-xs btn-primary"
+                          onClick={() => onRequestJoin?.(shift._id, new Date().toISOString().split('T')[0])}
+                        >
+                          Request to Join
+                        </button>
+                      )}
+                      {hasManagerTag && (
+                        <button
+                          className="btn btn-xs btn-secondary"
+                          onClick={() => onAssignWorker?.(shift._id, new Date().toISOString().split('T')[0])}
+                        >
+                          Assign a Worker
+                        </button>
+                      )}
+                    </div>
                   </div>
-                  <button className="btn btn-xs btn-primary">
-                    Request to Join
-                  </button>
-                </div>
-              ))}
+                );
+              })}
             </div>
           ) : (
             <p className="text-base-content/50 text-sm">No shifts available for this day</p>

@@ -8,8 +8,9 @@ import { LUZWeekView } from "@/components/LUZWeekView";
 import { LUZMonthView } from "@/components/LUZMonthView";
 import { ShiftDetailsModal } from "@/components/modals/ShiftDetailsModal";
 import { CreateEditShiftModal } from "@/components/modals/CreateEditShiftModal";
-import { AssignWorkerModal } from "@/components/modals/AssignWorkerModal";
 import { RequestJoinShiftModal } from "@/components/modals/RequestJoinShiftModal";
+import { AssignWorkerModal } from "@/components/modals/AssignWorkerModal";
+import { EditAssignmentModal } from "@/components/modals/EditAssignmentModal";
 import { ReviewRequestModal } from "@/components/modals/ReviewRequestModal";
 import { ApproveAssignmentModal } from "@/components/modals/ApproveAssignmentModal";
 import { Calendar, Filter, Plus, Nut } from "lucide-react";
@@ -74,17 +75,69 @@ const getMonthDates = (dateString: string) => {
 
 // Calculate staffing status for a shift
 const getShiftStaffingStatus = (shift: any, assignedWorkers: any[]) => {
-  // Use maximum concurrent workers needed rather than sum of all hours
-  const minWorkers = Math.max(...shift.hourlyRequirements.map((req: any) => req.minWorkers));
-  const currentWorkers = assignedWorkers.filter(worker => worker.status === 'confirmed').length;
+  // Calculate staffing status for each hour requirement
+  const hourlyStatuses = shift.hourlyRequirements.map((req: any) => {
+    const requiredHour = req.hour; // e.g., "09:00"
+    const minWorkers = req.minWorkers;
+    const optimalWorkers = req.optimalWorkers;
 
-  if (currentWorkers < minWorkers) {
-    return { status: 'understaffed', currentWorkers, minWorkers, severity: 'error' };
-  } else if (currentWorkers === minWorkers) {
-    return { status: 'staffed', currentWorkers, minWorkers, severity: 'success' };
+    // Count time slots that cover this specific hour from confirmed assignments
+    // Each time slot that covers this hour contributes 1 unit of capacity
+    const workersAtHour = assignedWorkers
+      .filter(worker => worker.status === 'confirmed')
+      .reduce((totalCapacity, worker) => {
+        // Count how many of this worker's time slots cover this hour
+        const slotsForThisHour = worker.assignedHours?.filter((timeSlot: any) => {
+          const slotStart = timeSlot.startTime; // e.g., "09:00"
+          const slotEnd = timeSlot.endTime; // e.g., "17:00"
+
+          // Parse hours for comparison
+          const reqHourNum = parseInt(requiredHour.split(':')[0]);
+          const startHourNum = parseInt(slotStart.split(':')[0]);
+          const endHourNum = parseInt(slotEnd.split(':')[0]);
+
+          // Time slot contributes if the required hour is within this time slot
+          return reqHourNum >= startHourNum && reqHourNum < endHourNum;
+        }) || [];
+
+        // Each time slot that covers this hour adds to capacity
+        return totalCapacity + slotsForThisHour.length;
+      }, 0);
+
+    // Determine status for this hour
+    if (workersAtHour < minWorkers) {
+      return { hour: requiredHour, status: 'understaffed', workers: workersAtHour, min: minWorkers, optimal: optimalWorkers };
+    } else if (workersAtHour <= optimalWorkers) {
+      return { hour: requiredHour, status: 'staffed', workers: workersAtHour, min: minWorkers, optimal: optimalWorkers };
+    } else {
+      return { hour: requiredHour, status: 'overstaffed', workers: workersAtHour, min: minWorkers, optimal: optimalWorkers };
+    }
+  });
+
+  // Apply pessimistic logic: worst status across all hours
+  const hasUnderstaffed = hourlyStatuses.some(h => h.status === 'understaffed');
+  const hasOverstaffed = hourlyStatuses.some(h => h.status === 'overstaffed');
+
+  let overallStatus: string;
+  if (hasUnderstaffed) {
+    overallStatus = 'understaffed';
+  } else if (hasOverstaffed) {
+    overallStatus = 'overstaffed';
   } else {
-    return { status: 'overstaffed', currentWorkers, minWorkers, severity: 'warning' };
+    overallStatus = 'staffed';
   }
+
+  // Return summary with total workers and min workers for display
+  const totalCurrentWorkers = assignedWorkers.filter(w => w.status === 'confirmed').length;
+  const totalMinWorkers = Math.max(...shift.hourlyRequirements.map((req: any) => req.minWorkers));
+
+  return {
+    status: overallStatus,
+    currentWorkers: totalCurrentWorkers,
+    minWorkers: totalMinWorkers,
+    severity: overallStatus === 'understaffed' ? 'error' : overallStatus === 'overstaffed' ? 'warning' : 'success',
+    hourlyBreakdown: hourlyStatuses
+  };
 };
 
 function LUZPage() {
@@ -101,8 +154,9 @@ function LUZPage() {
   const [modals, setModals] = useState({
     shiftDetails: { isOpen: false, shiftId: null as Id<"shifts"> | null },
     createEditShift: { isOpen: false, shiftId: null as Id<"shifts"> | null },
-    assignWorker: { isOpen: false, shiftId: null as Id<"shifts"> | null, date: "" },
     requestJoin: { isOpen: false, shiftId: null as Id<"shifts"> | null, date: "" },
+    assignWorker: { isOpen: false, shiftId: null as Id<"shifts"> | null, date: "" },
+    editAssignment: { isOpen: false, assignmentId: null as Id<"shift_assignments"> | null },
     reviewRequests: { isOpen: false, shiftId: null as Id<"shifts"> | null },
     approveAssignment: { isOpen: false, assignmentId: null as Id<"shift_assignments"> | null },
   });
@@ -376,6 +430,9 @@ function LUZPage() {
               onReviewRequests={() => openModal('reviewRequests')}
               onApproveAssignment={handleDirectApprove}
               onRejectAssignment={handleDirectReject}
+              onRequestJoin={(shiftId, date) => openModal('requestJoin', { shiftId, date })}
+              onAssignWorker={(shiftId, date) => openModal('assignWorker', { shiftId, date })}
+              onEditAssignment={(assignmentId) => openModal('editAssignment', { assignmentId })}
             />
           </div>
 
@@ -427,6 +484,7 @@ function LUZPage() {
         onEditShift={(shiftId) => openModal('createEditShift', { shiftId })}
         onAssignWorker={(shiftId, date) => openModal('assignWorker', { shiftId, date })}
         onRequestJoin={(shiftId, date) => openModal('requestJoin', { shiftId, date })}
+        onEditAssignment={(assignmentId) => openModal('editAssignment', { assignmentId })}
         onApproveAssignment={(assignmentId) => openModal('approveAssignment', { assignmentId })}
         onReviewRequests={(shiftId) => openModal('reviewRequests', { shiftId })}
       />
@@ -438,6 +496,14 @@ function LUZPage() {
         onSuccess={handleModalSuccess}
       />
 
+      <RequestJoinShiftModal
+        shiftId={modals.requestJoin.shiftId}
+        selectedDate={modals.requestJoin.date || selectedDate}
+        isOpen={modals.requestJoin.isOpen}
+        onClose={() => closeModal('requestJoin')}
+        onSuccess={handleModalSuccess}
+      />
+
       <AssignWorkerModal
         shiftId={modals.assignWorker.shiftId}
         selectedDate={modals.assignWorker.date || selectedDate}
@@ -446,11 +512,10 @@ function LUZPage() {
         onSuccess={handleModalSuccess}
       />
 
-      <RequestJoinShiftModal
-        shiftId={modals.requestJoin.shiftId}
-        selectedDate={modals.requestJoin.date || selectedDate}
-        isOpen={modals.requestJoin.isOpen}
-        onClose={() => closeModal('requestJoin')}
+      <EditAssignmentModal
+        assignmentId={modals.editAssignment.assignmentId}
+        isOpen={modals.editAssignment.isOpen}
+        onClose={() => closeModal('editAssignment')}
         onSuccess={handleModalSuccess}
       />
 

@@ -37,7 +37,7 @@ async function validateWorkerPermissions(ctx: any, userId: Id<"users">) {
   return user;
 }
 
-// Query: Get assignments for a specific date
+// Query: Get assignments for a specific date (excludes rejected assignments)
 export const getAssignmentsForDate = query({
   args: { date: v.string() },
   handler: async (ctx, args) => {
@@ -49,6 +49,7 @@ export const getAssignmentsForDate = query({
     const assignments = await ctx.db
       .query("shift_assignments")
       .withIndex("by_date", (q) => q.eq("date", args.date))
+      .filter((q) => q.neq(q.field("status"), "rejected"))
       .collect();
 
     // Enrich with user and shift data
@@ -87,6 +88,7 @@ export const getAssignmentsForWorker = query({
     let assignments = await ctx.db
       .query("shift_assignments")
       .withIndex("by_workerId", (q) => q.eq("workerId", args.workerId))
+      .filter((q) => q.neq(q.field("status"), "rejected"))
       .collect();
 
     // Filter by date range if provided
@@ -503,5 +505,124 @@ export const requestJoinShift = mutation({
       workerApprovedAt: now, // Worker already approved by requesting
       assignmentNotes: args.requestNotes,
     });
+  },
+});
+
+// Mutation: Edit existing assignment (creates new assignment with edited details)
+export const editAssignment = mutation({
+  args: {
+    originalAssignmentId: v.id("shift_assignments"),
+    requestedHours: v.optional(v.array(v.object({
+      startTime: v.string(),
+      endTime: v.string(),
+    }))),
+    requestNotes: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new ConvexError("Not authenticated");
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+
+    if (!user) {
+      throw new ConvexError("User not found");
+    }
+
+    // Get the original assignment
+    const originalAssignment = await ctx.db.get(args.originalAssignmentId);
+    if (!originalAssignment) {
+      throw new ConvexError("Original assignment not found");
+    }
+
+    // Get the shift template
+    const shift = await ctx.db.get(originalAssignment.shiftTemplateId);
+    if (!shift || !shift.isActive) {
+      throw new ConvexError("Shift template not found or inactive");
+    }
+
+    // Check permissions - user can edit their own assignment or manager can edit any
+    const isStaff = user.emulatingIsStaff ?? user.isStaff ?? false;
+    const hasWorkerTag = user.emulatingWorkerTag ?? user.workerTag ?? false;
+    const hasManagerTag = user.emulatingManagerTag ?? user.managerTag ?? false;
+
+    const isOwnAssignment = originalAssignment.workerId === user._id;
+    const isManager = isStaff && hasWorkerTag && hasManagerTag;
+
+    if (!isOwnAssignment && !isManager) {
+      throw new ConvexError("You can only edit your own assignments or need manager permissions");
+    }
+
+    // Use requested hours or keep original hours if none provided
+    const assignedHours = args.requestedHours && args.requestedHours.length > 0
+      ? args.requestedHours
+      : originalAssignment.assignedHours;
+
+    // Validate hours are within shift bounds and valid
+    for (const hourRange of assignedHours) {
+      if (hourRange.startTime >= hourRange.endTime) {
+        throw new ConvexError("Invalid hour range: start time must be before end time");
+      }
+
+      // Check if requested hours are within shift bounds
+      if (hourRange.startTime < shift.storeHours.openTime ||
+          hourRange.endTime > shift.storeHours.closeTime) {
+        throw new ConvexError("Requested hours must be within shift operating hours");
+      }
+    }
+
+    const now = Date.now();
+
+    // Determine approval workflow based on who is editing
+    let status: "pending_worker_approval" | "pending_manager_approval" | "confirmed" | "rejected" | "completed";
+    let managerApprovedAt: number | undefined;
+    let workerApprovedAt: number | undefined;
+
+    if (isManager && isOwnAssignment) {
+      // Manager editing their own assignment - auto-approve
+      status = "confirmed";
+      managerApprovedAt = now;
+      workerApprovedAt = now;
+    } else if (isManager && !isOwnAssignment) {
+      // Manager editing someone else's assignment - needs worker approval
+      status = "pending_worker_approval";
+      managerApprovedAt = now;
+      workerApprovedAt = undefined;
+    } else if (isOwnAssignment) {
+      // Worker editing their own assignment - needs manager approval
+      status = "pending_manager_approval";
+      managerApprovedAt = undefined;
+      workerApprovedAt = now;
+    } else {
+      // This case shouldn't happen due to permission check above
+      throw new ConvexError("Invalid edit permissions");
+    }
+
+    // Create new assignment with edited details
+    const newAssignmentId = await ctx.db.insert("shift_assignments", {
+      shiftTemplateId: originalAssignment.shiftTemplateId,
+      workerId: originalAssignment.workerId,
+      date: originalAssignment.date,
+      assignedHours: assignedHours,
+      breakPeriods: originalAssignment.breakPeriods, // Keep original break periods
+      assignedBy: user._id, // Person who made the edit
+      assignedAt: now,
+      status: status,
+      managerApprovedAt: managerApprovedAt,
+      workerApprovedAt: workerApprovedAt,
+      assignmentNotes: args.requestNotes || `Edited from original assignment: ${originalAssignment.assignmentNotes || ''}`,
+    });
+
+    // Mark original assignment as replaced (we'll use rejected status to hide it)
+    await ctx.db.patch(args.originalAssignmentId, {
+      status: "rejected",
+      assignmentNotes: `${originalAssignment.assignmentNotes || ''}\nReplaced by edit request: ${newAssignmentId}`
+    });
+
+    return newAssignmentId;
   },
 });

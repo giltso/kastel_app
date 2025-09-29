@@ -2,6 +2,38 @@
 
 detailed history of all sessions. to be updated on new session
 
+### Session 29 - September 29, 2025
+
+**Goals**: Implement assignment editing functionality and fix hourly capacity calculation issues
+
+**Major Achievements**:
+- ✅ **EditAssignmentModal Implementation**: Complete assignment editing system
+  - ✅ Role-based approval workflows (workers request edits → manager approval, managers apply directly)
+  - ✅ Multiple time slot editing support
+  - ✅ Integration with LUZOverview and ShiftDetailsModal components
+  - ✅ Conditional UI (Edit Assignment replaces Request to Join when user has existing assignment)
+- ✅ **Hourly Capacity Calculation Fixes**: Fixed critical timeline display issues
+  - ✅ Multiple time slots now contribute properly to hourly capacity
+  - ✅ Cross-shift capacity bleeding eliminated (each shift only shows its own workers)
+  - ✅ Timeline UI now accurately reflects backend calculations
+
+**Technical Implementation**:
+- **Backend**: Added `editAssignment` mutation to `convex/shift_assignments.ts`
+- **Frontend**: Created `src/components/modals/EditAssignmentModal.tsx` with comprehensive edit interface
+- **UI Updates**: Modified LUZOverview.tsx and ShiftDetailsModal.tsx for conditional button display
+- **Capacity Fix**: Updated `src/components/LUZVerticalTimeline.tsx` to use proper shift filtering and time slot iteration
+- **Modal Management**: Extended LUZ route with EditAssignmentModal state management
+
+**Issues Resolved**:
+- **Timeline Capacity Display**: Fixed UI only showing capacity from first time slot (`assignedHours[0]`)
+- **Cross-Shift Data Bleeding**: Fixed timeline showing worker capacity in wrong shifts
+- **Assignment Editing Gap**: Workers can now modify existing assignments instead of only creating new ones
+
+**Testing Verification**:
+- ✅ **Playwright Testing**: Verified edit assignment functionality working in overview
+- ✅ **Capacity Validation**: Confirmed multiple time slots (e.g., 8:00-13:00 AND 15:00-18:00) display correctly
+- ✅ **Shift Isolation**: Verified each shift only displays capacity from its assigned workers
+
 ### Session 28 - September 28, 2025
 
 **Goals**: Implement comprehensive worker shift actions with UI testing and update design documentation

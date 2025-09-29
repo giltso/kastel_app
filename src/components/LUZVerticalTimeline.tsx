@@ -170,33 +170,40 @@ export function LUZVerticalTimeline({
                             <div className="relative w-full h-full px-3 py-2 pr-12">
                               {/* WORKER RENDERING: Only show workers assigned to THIS specific shift */}
                               {assignmentsForDate?.filter(assignment => assignment.shiftTemplateId === shift._id).map((assignment, workerIndex) => {
-                                const workerStartHour = parseInt(assignment.assignedHours[0]?.startTime.split(':')[0] || startHour.toString());
-                                const workerEndHour = parseInt(assignment.assignedHours[0]?.endTime.split(':')[0] || endHour.toString());
+                                // Handle multiple time slots for each assignment
+                                if (!assignment.assignedHours || assignment.assignedHours.length === 0) {
+                                  return null;
+                                }
 
-                                // Position relative to shift duration
-                                const relativeStart = ((workerStartHour - startHour) / duration) * 100;
-                                const relativeHeight = ((workerEndHour - workerStartHour) / duration) * 100;
+                                return assignment.assignedHours.map((timeSlot, slotIndex) => {
+                                  const workerStartHour = parseInt(timeSlot.startTime.split(':')[0]);
+                                  const workerEndHour = parseInt(timeSlot.endTime.split(':')[0]);
 
-                                return (
-                                  <div
-                                    key={assignment._id}
-                                    className={`absolute rounded px-2 py-1 ${
-                                      assignment.status === 'confirmed'
-                                        ? 'bg-success/30 border border-success'
-                                        : 'bg-warning/30 border border-warning'
-                                    }`}
-                                    style={{
-                                      top: `${relativeStart}%`,
-                                      height: `${relativeHeight}%`,
-                                      left: `${workerIndex * 25}%`,
-                                      width: '20%',
-                                    }}
-                                  >
-                                    <div className="text-xs font-medium text-base-content">{assignment.worker?.name}</div>
-                                    <div className="text-xs text-base-content">{assignment.assignedHours[0]?.startTime} - {assignment.assignedHours[0]?.endTime}</div>
-                                  </div>
-                                );
-                              })}
+                                  // Position relative to shift duration
+                                  const relativeStart = ((workerStartHour - startHour) / duration) * 100;
+                                  const relativeHeight = ((workerEndHour - workerStartHour) / duration) * 100;
+
+                                  return (
+                                    <div
+                                      key={`${assignment._id}-${slotIndex}`}
+                                      className={`absolute rounded px-2 py-1 ${
+                                        assignment.status === 'confirmed'
+                                          ? 'bg-success/30 border border-success'
+                                          : 'bg-warning/30 border border-warning'
+                                      }`}
+                                      style={{
+                                        top: `${relativeStart}%`,
+                                        height: `${relativeHeight}%`,
+                                        left: `${(workerIndex * 25) + (slotIndex * 2)}%`, // Slight offset for multiple slots
+                                        width: '20%',
+                                      }}
+                                    >
+                                      <div className="text-xs font-medium text-base-content">{assignment.worker?.name}</div>
+                                      <div className="text-xs text-base-content">{timeSlot.startTime} - {timeSlot.endTime}</div>
+                                    </div>
+                                  );
+                                });
+                              }).flat()}
                             </div>
 
                             {/* Capacity indicators - Right side, relative to shift time */}
@@ -206,10 +213,12 @@ export function LUZVerticalTimeline({
                                 // Position relative to shift duration with +5% offset for better alignment
                                 const relativePosition = ((hourInt - startHour) / duration) * 100 + 5;
 
-                                const currentWorkers = assignmentsForDate?.filter(assignment => {
-                                  const assignStart = parseInt(assignment.assignedHours[0]?.startTime.split(':')[0] || '0');
-                                  const assignEnd = parseInt(assignment.assignedHours[0]?.endTime.split(':')[0] || '0');
-                                  return hourInt >= assignStart && hourInt < assignEnd && assignment.status === 'confirmed';
+                                const currentWorkers = shiftWorkers.filter(assignment => {
+                                  return assignment.status === 'confirmed' && assignment.assignedHours?.some(timeSlot => {
+                                    const assignStart = parseInt(timeSlot.startTime.split(':')[0]);
+                                    const assignEnd = parseInt(timeSlot.endTime.split(':')[0]);
+                                    return hourInt >= assignStart && hourInt < assignEnd;
+                                  });
                                 }).length || 0;
 
                                 const hourStatus = currentWorkers < hourReq.minWorkers ? 'understaffed' :
