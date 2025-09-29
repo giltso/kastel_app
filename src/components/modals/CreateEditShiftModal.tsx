@@ -55,6 +55,7 @@ export function CreateEditShiftModal({
   const { hasManagerTag } = usePermissionsV2();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isAutoUpdatingRequirements, setIsAutoUpdatingRequirements] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -127,6 +128,42 @@ export function CreateEditShiftModal({
 
     setHourlyRequirements(slots);
   };
+
+  // Auto-update hourly requirements when shift hours change
+  useEffect(() => {
+    const startHour = parseInt(formData.openTime.split(':')[0]);
+    const endHour = parseInt(formData.closeTime.split(':')[0]);
+
+    // Only auto-update if we have valid hours and existing requirements
+    if (startHour >= 0 && endHour > startHour && hourlyRequirements.length > 0) {
+      const newSlots: HourlyRequirement[] = [];
+
+      for (let hour = startHour; hour < endHour; hour++) {
+        const hourStr = hour.toString().padStart(2, '0') + ':00';
+
+        // Preserve existing data if we have it
+        const existing = hourlyRequirements.find(req => req.hour === hourStr);
+
+        newSlots.push(existing || {
+          hour: hourStr,
+          minWorkers: 1,
+          optimalWorkers: 2,
+          notes: "",
+        });
+      }
+
+      // Only update if the slots have actually changed
+      if (newSlots.length !== hourlyRequirements.length ||
+          newSlots.some((slot, i) => slot.hour !== hourlyRequirements[i]?.hour)) {
+        setIsAutoUpdatingRequirements(true);
+        setHourlyRequirements(newSlots);
+
+        // Clear the indicator after a brief delay
+        const timer = setTimeout(() => setIsAutoUpdatingRequirements(false), 1500);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [formData.openTime, formData.closeTime, hourlyRequirements.length]); // Watch for changes in shift hours
 
   const updateHourlyRequirement = (index: number, field: keyof HourlyRequirement, value: string | number) => {
     const updated = [...hourlyRequirements];
@@ -353,7 +390,15 @@ export function CreateEditShiftModal({
           {/* Hourly Requirements */}
           <div className="bg-base-200 rounded-lg p-4">
             <div className="flex justify-between items-center mb-4">
-              <h4 className="font-semibold">Hourly Staffing Requirements</h4>
+              <div className="flex items-center gap-2">
+                <h4 className="font-semibold">Hourly Staffing Requirements</h4>
+                {isAutoUpdatingRequirements && (
+                  <div className="badge badge-info badge-sm">
+                    <span className="loading loading-spinner loading-xs mr-1"></span>
+                    Auto-updating
+                  </div>
+                )}
+              </div>
               <button
                 type="button"
                 className="btn btn-sm btn-outline"

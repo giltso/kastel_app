@@ -37,6 +37,64 @@ async function validateWorkerPermissions(ctx: any, userId: Id<"users">) {
   return user;
 }
 
+// Helper function to validate range-based hourly requirements
+function validateHourlyRequirements(requirements: Array<{
+  startTime?: string;
+  endTime?: string;
+  hour?: string;
+  minWorkers: number;
+  optimalWorkers: number;
+}>, shiftOpenTime: string, shiftCloseTime: string) {
+  if (requirements.length === 0) {
+    throw new ConvexError("At least one hourly requirement is needed");
+  }
+
+  const shiftStart = parseInt(shiftOpenTime.split(':')[0]);
+  const shiftEnd = parseInt(shiftCloseTime.split(':')[0]);
+
+  for (let i = 0; i < requirements.length; i++) {
+    const req = requirements[i];
+
+    // Validate worker counts
+    if (req.minWorkers < 0 || req.optimalWorkers < req.minWorkers) {
+      throw new ConvexError(`Requirement ${i + 1}: optimal must be >= minimum >= 0`);
+    }
+
+    // For range-based requirements
+    if (req.startTime && req.endTime) {
+      const reqStart = parseInt(req.startTime.split(':')[0]);
+      const reqEnd = parseInt(req.endTime.split(':')[0]);
+
+      // Validate range is within shift bounds
+      if (reqStart < shiftStart || reqEnd > shiftEnd || reqStart >= reqEnd) {
+        throw new ConvexError(`Requirement ${i + 1}: range must be within shift hours (${shiftOpenTime} - ${shiftCloseTime})`);
+      }
+
+      // Check for overlaps with other requirements
+      for (let j = i + 1; j < requirements.length; j++) {
+        const otherReq = requirements[j];
+        if (otherReq.startTime && otherReq.endTime) {
+          const otherStart = parseInt(otherReq.startTime.split(':')[0]);
+          const otherEnd = parseInt(otherReq.endTime.split(':')[0]);
+
+          // Check for overlap
+          if ((reqStart < otherEnd && reqEnd > otherStart)) {
+            throw new ConvexError(`Requirements ${i + 1} and ${j + 1}: time ranges cannot overlap`);
+          }
+        }
+      }
+    }
+
+    // Legacy hour validation (for backward compatibility)
+    if (req.hour && !req.startTime) {
+      const hourInt = parseInt(req.hour.split(':')[0]);
+      if (hourInt < shiftStart || hourInt >= shiftEnd) {
+        throw new ConvexError(`Requirement ${i + 1}: hour must be within shift hours`);
+      }
+    }
+  }
+}
+
 // Query: Get all active shift templates
 export const getShiftTemplates = query({
   args: {},
@@ -217,10 +275,14 @@ export const createShiftTemplate = mutation({
       closeTime: v.string(),
     }),
     hourlyRequirements: v.array(v.object({
-      hour: v.string(),
+      startTime: v.string(), // "08:00" - Start of requirement range
+      endTime: v.string(), // "12:00" - End of requirement range
       minWorkers: v.number(),
       optimalWorkers: v.number(),
       notes: v.optional(v.string()),
+
+      // Legacy support - will be removed later
+      hour: v.optional(v.string()), // For backward compatibility
     })),
     recurringDays: v.array(v.union(
       v.literal("monday"),
@@ -251,16 +313,8 @@ export const createShiftTemplate = mutation({
     // Validate manager permissions
     await validateManagerPermissions(ctx, user._id);
 
-    // Validate hourly requirements
-    if (args.hourlyRequirements.length === 0) {
-      throw new ConvexError("At least one hourly requirement is needed");
-    }
-
-    for (const req of args.hourlyRequirements) {
-      if (req.minWorkers < 0 || req.optimalWorkers < req.minWorkers) {
-        throw new ConvexError("Invalid worker requirements: optimal must be >= minimum >= 0");
-      }
-    }
+    // Validate hourly requirements with new range validation
+    validateHourlyRequirements(args.hourlyRequirements, args.storeHours.openTime, args.storeHours.closeTime);
 
     return await ctx.db.insert("shifts", {
       name: args.name,
@@ -289,10 +343,14 @@ export const updateShiftTemplate = mutation({
       closeTime: v.string(),
     })),
     hourlyRequirements: v.optional(v.array(v.object({
-      hour: v.string(),
+      startTime: v.string(), // "08:00" - Start of requirement range
+      endTime: v.string(), // "12:00" - End of requirement range
       minWorkers: v.number(),
       optimalWorkers: v.number(),
       notes: v.optional(v.string()),
+
+      // Legacy support - will be removed later
+      hour: v.optional(v.string()), // For backward compatibility
     }))),
     recurringDays: v.optional(v.array(v.union(
       v.literal("monday"),
@@ -332,16 +390,15 @@ export const updateShiftTemplate = mutation({
 
     // Validate hourly requirements if provided
     if (args.hourlyRequirements) {
-      if (args.hourlyRequirements.length === 0) {
-        throw new ConvexError("At least one hourly requirement is needed");
-      }
-
-      for (const req of args.hourlyRequirements) {
-        if (req.minWorkers < 0 || req.optimalWorkers < req.minWorkers) {
-          throw new ConvexError("Invalid worker requirements: optimal must be >= minimum >= 0");
-        }
-      }
+      const storeHours = args.storeHours || existingShift.storeHours;
+      validateHourlyRequirements(args.hourlyRequirements, storeHours.openTime, storeHours.closeTime);
     }
+
+    // Check for boundary changes that might affect existing assignments
+    const boundaryChanges = args.storeHours && (
+      args.storeHours.openTime !== existingShift.storeHours.openTime ||
+      args.storeHours.closeTime !== existingShift.storeHours.closeTime
+    );
 
     // Build update object with only provided fields
     const updates: Partial<Doc<"shifts">> = {
@@ -357,7 +414,82 @@ export const updateShiftTemplate = mutation({
     if (args.color !== undefined) updates.color = args.color;
     if (args.isActive !== undefined) updates.isActive = args.isActive;
 
+    // Apply shift updates first
     await ctx.db.patch(args.shiftId, updates);
+
+    // Handle assignment boundary adjustments if boundaries changed
+    if (boundaryChanges && args.storeHours) {
+      const affectedAssignments = await ctx.db
+        .query("shift_assignments")
+        .withIndex("by_shiftTemplateId", (q) => q.eq("shiftTemplateId", args.shiftId))
+        .filter((q) => q.neq(q.field("status"), "rejected")) // Only active assignments
+        .collect();
+
+      const newOpenTime = args.storeHours.openTime;
+      const newCloseTime = args.storeHours.closeTime;
+      const newStartHour = parseInt(newOpenTime.split(':')[0]);
+      const newEndHour = parseInt(newCloseTime.split(':')[0]);
+
+      for (const assignment of affectedAssignments) {
+        if (!assignment.assignedHours || assignment.assignedHours.length === 0) continue;
+
+        let needsAdjustment = false;
+        const originalHours = [...assignment.assignedHours];
+        const adjustedHours = [];
+
+        for (const hourSlot of assignment.assignedHours) {
+          const startHour = parseInt(hourSlot.startTime.split(':')[0]);
+          const endHour = parseInt(hourSlot.endTime.split(':')[0]);
+
+          // Check if this time slot is outside new boundaries
+          if (startHour < newStartHour || endHour > newEndHour) {
+            needsAdjustment = true;
+
+            // Adjust the time slot to fit within new boundaries
+            const adjustedStartHour = Math.max(startHour, newStartHour);
+            const adjustedEndHour = Math.min(endHour, newEndHour);
+
+            // Only include the slot if it still has valid duration
+            if (adjustedStartHour < adjustedEndHour) {
+              adjustedHours.push({
+                startTime: `${adjustedStartHour.toString().padStart(2, '0')}:00`,
+                endTime: `${adjustedEndHour.toString().padStart(2, '0')}:00`,
+              });
+            }
+          } else {
+            // Time slot is within boundaries, keep as-is
+            adjustedHours.push(hourSlot);
+          }
+        }
+
+        if (needsAdjustment) {
+          // Create boundary adjustment record
+          const boundaryAdjustment = {
+            originalHours,
+            adjustedHours,
+            reason: "shift_boundary_change",
+            adjustedBy: user._id,
+            adjustedAt: Date.now(),
+            needsApproval: true, // Requires worker approval for boundary changes
+            approvalStatus: "pending_worker_approval" as const,
+          };
+
+          // Update assignment with new hours and boundary adjustment
+          await ctx.db.patch(assignment._id, {
+            assignedHours: adjustedHours,
+            boundaryAdjustments: [
+              ...(assignment.boundaryAdjustments || []),
+              boundaryAdjustment
+            ],
+            // If significantly changed, require re-approval
+            status: adjustedHours.length === 0 ? "rejected" :
+                   adjustedHours.length !== originalHours.length ? "pending_worker_approval" :
+                   assignment.status,
+          });
+        }
+      }
+    }
+
     return args.shiftId;
   },
 });

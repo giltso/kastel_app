@@ -39,12 +39,16 @@ export default defineSchema({
       closeTime: v.string(), // "20:00"
     }),
 
-    // Hourly Population Requirements (KEY V2 FEATURE)
+    // Range-based Population Requirements (V2.1 UPGRADE)
     hourlyRequirements: v.array(v.object({
-      hour: v.string(), // "14:00" (24-hour format)
-      minWorkers: v.number(), // Minimum required workers
-      optimalWorkers: v.number(), // Ideal staffing level
-      notes: v.optional(v.string()), // "Peak customer period", "Opening procedures"
+      startTime: v.string(), // "08:00" - Start of requirement range
+      endTime: v.string(), // "12:00" - End of requirement range
+      minWorkers: v.number(), // Minimum required workers for this range
+      optimalWorkers: v.number(), // Ideal staffing level for this range
+      notes: v.optional(v.string()), // "Morning rush", "Lunch coverage"
+
+      // Legacy support for migration - will be removed later
+      hour: v.optional(v.string()), // "14:00" (24-hour format) - DEPRECATED
     })),
 
     // Recurrence Pattern
@@ -105,6 +109,28 @@ export default defineSchema({
 
     // Notes
     assignmentNotes: v.optional(v.string()), // Manager's assignment notes
+
+    // Boundary Adjustment Tracking (V2.1 UPGRADE)
+    boundaryAdjustments: v.optional(v.array(v.object({
+      originalHours: v.array(v.object({
+        startTime: v.string(),
+        endTime: v.string(),
+      })),
+      adjustedHours: v.array(v.object({
+        startTime: v.string(),
+        endTime: v.string(),
+      })),
+      reason: v.string(), // "shift_boundary_change", "manual_adjustment"
+      adjustedBy: v.id("users"), // Who made the adjustment
+      adjustedAt: v.number(), // When adjustment was made
+      needsApproval: v.boolean(), // Does this need worker/manager approval?
+      approvalStatus: v.optional(v.union(
+        v.literal("pending_worker_approval"),
+        v.literal("pending_manager_approval"),
+        v.literal("approved"),
+        v.literal("rejected")
+      )),
+    }))),
   })
   .index("by_shiftTemplateId", ["shiftTemplateId"])
   .index("by_workerId", ["workerId"])
