@@ -28,19 +28,21 @@ const getTodayString = () => {
   return today.toISOString().split('T')[0];
 };
 
-// Generate week dates (Sunday to Saturday) for a given date
+// Generate week dates (Monday to Sunday) for a given date
 const getWeekDates = (dateString: string) => {
   const date = new Date(dateString + 'T00:00:00');
   const dayOfWeek = date.getDay(); // 0 = Sunday, 1 = Monday, etc.
-  const sunday = new Date(date);
+  const monday = new Date(date);
 
-  // Calculate days to subtract to get to Sunday (0)
-  sunday.setDate(date.getDate() - dayOfWeek);
+  // Calculate days to subtract to get to Monday (1)
+  // If it's Sunday (0), we need to go back 6 days, otherwise go back (dayOfWeek - 1) days
+  const daysToSubtract = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+  monday.setDate(date.getDate() - daysToSubtract);
 
   const weekDates = [];
   for (let i = 0; i < 7; i++) {
-    const currentDate = new Date(sunday);
-    currentDate.setDate(sunday.getDate() + i);
+    const currentDate = new Date(monday);
+    currentDate.setDate(monday.getDate() + i);
     weekDates.push(currentDate.toISOString().split('T')[0]);
   }
 
