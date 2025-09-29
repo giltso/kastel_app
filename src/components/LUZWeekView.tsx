@@ -70,7 +70,7 @@ export function LUZWeekView({
             {weekDates.map((date, dayIndex) => {
               const dateObj = new Date(date + 'T00:00:00');
               // Use actual date calculation instead of array index
-              const dayName = dateObj.toLocaleDateString('en-US', { weekday: 'short' });
+              const dayName = dateObj.toLocaleDateString(undefined, { weekday: 'short' });
               const dayNumber = dateObj.getDate();
               const shiftsForDate = shiftsForWeek[date] || [];
               const coursesForDate = coursesForWeek[date] || [];
