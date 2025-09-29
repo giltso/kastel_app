@@ -18,7 +18,7 @@ export function ApproveAssignmentModal({
   onClose,
   onSuccess,
 }: ApproveAssignmentModalProps) {
-  const { user, hasWorkerTag } = usePermissionsV2();
+  const { user, hasWorkerTag, hasManagerTag } = usePermissionsV2();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [rejectionReason, setRejectionReason] = useState("");
@@ -90,11 +90,16 @@ export function ApproveAssignmentModal({
     ).join(', ');
   };
 
-  // Check if this assignment is for the current user and pending their approval
-  const canApprove = specificAssignment &&
-    specificAssignment.workerId === user?._id &&
-    specificAssignment.status === 'pending_worker_approval' &&
-    hasWorkerTag;
+  // Check if user can approve this assignment
+  const canApprove = specificAssignment && user && (
+    // Worker approving their own assignment
+    (specificAssignment.workerId === user._id &&
+     specificAssignment.status === 'pending_worker_approval' &&
+     hasWorkerTag) ||
+    // Manager approving worker-requested assignment
+    (specificAssignment.status === 'pending_manager_approval' &&
+     hasManagerTag)
+  );
 
   if (!isOpen || !specificAssignment) return null;
 
@@ -107,11 +112,17 @@ export function ApproveAssignmentModal({
           <div className="alert alert-info">
             <AlertCircle className="w-4 h-4" />
             <span>
-              {specificAssignment.workerId !== user?._id
-                ? "This assignment is not for you"
-                : specificAssignment.status !== 'pending_worker_approval'
-                ? "This assignment is not pending your approval"
-                : "You don't have permission to approve assignments"
+              {specificAssignment.status === 'pending_worker_approval' && specificAssignment.workerId !== user?._id
+                ? "This assignment is for another worker"
+                : specificAssignment.status === 'pending_manager_approval' && !hasManagerTag
+                ? "Only managers can approve this assignment"
+                : specificAssignment.status === 'pending_worker_approval' && !hasWorkerTag
+                ? "You need worker permissions to approve this assignment"
+                : specificAssignment.status === 'confirmed'
+                ? "This assignment has already been approved"
+                : specificAssignment.status === 'rejected'
+                ? "This assignment has already been rejected"
+                : "This assignment is not pending your approval"
               }
             </span>
           </div>
@@ -130,7 +141,10 @@ export function ApproveAssignmentModal({
           <div>
             <h3 className="font-bold text-xl">Assignment Approval Required</h3>
             <p className="text-base-content/70 mt-1">
-              Please review and approve or reject this assignment
+              {specificAssignment.status === 'pending_worker_approval'
+                ? "Please review and approve or reject this assignment for yourself"
+                : "Please review and approve or reject this worker's shift request"
+              }
             </p>
           </div>
           <button
@@ -216,10 +230,21 @@ export function ApproveAssignmentModal({
             Important Information
           </h4>
           <ul className="text-sm text-base-content/70 space-y-1">
-            <li>• Approving this assignment confirms your availability for the specified time</li>
-            <li>• Once approved, this assignment becomes part of your schedule</li>
-            <li>• If you reject, the manager will be notified and may offer alternatives</li>
-            <li>• You can discuss any concerns with your manager before deciding</li>
+            {specificAssignment.status === 'pending_worker_approval' ? (
+              <>
+                <li>• Approving this assignment confirms your availability for the specified time</li>
+                <li>• Once approved, this assignment becomes part of your schedule</li>
+                <li>• If you reject, the manager will be notified and may offer alternatives</li>
+                <li>• You can discuss any concerns with your manager before deciding</li>
+              </>
+            ) : (
+              <>
+                <li>• Approving confirms this worker will be scheduled for the requested shift</li>
+                <li>• The worker has already indicated their availability for this time</li>
+                <li>• If you reject, the worker will be notified and can request alternative times</li>
+                <li>• Consider staffing needs and shift coverage when making your decision</li>
+              </>
+            )}
           </ul>
         </div>
 
