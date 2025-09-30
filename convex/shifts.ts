@@ -234,9 +234,11 @@ export const getShiftsForDate = query({
       throw new ConvexError("Not authenticated");
     }
 
-    // Get day of week from date (0 = Sunday, 1 = Monday, etc.)
-    const dateObj = new Date(args.date + 'T00:00:00');
-    const dayOfWeek = dateObj.getDay();
+    // Get day of week from date string using UTC to avoid timezone issues
+    // Parse YYYY-MM-DD format directly
+    const [year, month, day] = args.date.split('-').map(Number);
+    const dateObj = new Date(Date.UTC(year, month - 1, day));
+    const dayOfWeek = dateObj.getUTCDay();
     const dayNames = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
     const dayName = dayNames[dayOfWeek];
 
