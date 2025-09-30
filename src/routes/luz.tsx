@@ -364,7 +364,7 @@ function LUZPage() {
                 Create Shift
               </button>
             )}
-            {shifts.length === 0 && hasManagerTag && (
+            {shiftsForDate.length === 0 && hasManagerTag && (
               <button className="btn btn-secondary" onClick={handleCreateSampleShifts}>
                 🔧 Create Sample Data
               </button>
