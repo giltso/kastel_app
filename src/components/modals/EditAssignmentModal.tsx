@@ -93,6 +93,30 @@ export function EditAssignmentModal({
     setSelectedHours(updated);
   };
 
+  // Check for overlapping time slots
+  const checkForOverlaps = (slots: { startTime: string; endTime: string }[]) => {
+    for (let i = 0; i < slots.length; i++) {
+      for (let j = i + 1; j < slots.length; j++) {
+        const slot1 = slots[i];
+        const slot2 = slots[j];
+
+        // Check if slots overlap: (start1 < end2) && (start2 < end1)
+        if (slot1.startTime < slot2.endTime && slot2.startTime < slot1.endTime) {
+          return {
+            hasOverlap: true,
+            slot1Index: i,
+            slot2Index: j,
+            message: `Time slots ${i + 1} (${slot1.startTime}-${slot1.endTime}) and ${j + 1} (${slot2.startTime}-${slot2.endTime}) overlap`
+          };
+        }
+      }
+    }
+    return { hasOverlap: false };
+  };
+
+  // Validate time slots before submission
+  const overlapCheck = selectedHours.length > 0 ? checkForOverlaps(selectedHours) : { hasOverlap: false };
+
   if (!isOpen || !assignment || !shift) return null;
 
   // Check if user can edit this assignment
@@ -229,32 +253,48 @@ export function EditAssignmentModal({
                     No changes to hours. Current assignment hours will be kept.
                   </div>
                 ) : (
-                  <div className="space-y-2">
-                    {selectedHours.map((slot, index) => (
-                      <div key={index} className="flex items-center gap-2">
-                        <input
-                          type="time"
-                          value={slot.startTime}
-                          onChange={(e) => updateTimeSlot(index, 'startTime', e.target.value)}
-                          className="input input-bordered input-sm"
-                        />
-                        <span>to</span>
-                        <input
-                          type="time"
-                          value={slot.endTime}
-                          onChange={(e) => updateTimeSlot(index, 'endTime', e.target.value)}
-                          className="input input-bordered input-sm"
-                        />
-                        <button
-                          type="button"
-                          className="btn btn-sm btn-ghost btn-circle"
-                          onClick={() => removeTimeSlot(index)}
-                        >
-                          ✕
-                        </button>
+                  <>
+                    <div className="space-y-2">
+                      {selectedHours.map((slot, index) => {
+                        const isInvolved = overlapCheck.hasOverlap &&
+                          (overlapCheck.slot1Index === index || overlapCheck.slot2Index === index);
+
+                        return (
+                          <div key={index} className={`flex items-center gap-2 ${isInvolved ? 'p-2 bg-error/10 rounded border border-error/30' : ''}`}>
+                            <span className="text-xs font-medium text-base-content/60 w-4">#{index + 1}</span>
+                            <input
+                              type="time"
+                              value={slot.startTime}
+                              onChange={(e) => updateTimeSlot(index, 'startTime', e.target.value)}
+                              className={`input input-bordered input-sm ${isInvolved ? 'input-error' : ''}`}
+                            />
+                            <span>to</span>
+                            <input
+                              type="time"
+                              value={slot.endTime}
+                              onChange={(e) => updateTimeSlot(index, 'endTime', e.target.value)}
+                              className={`input input-bordered input-sm ${isInvolved ? 'input-error' : ''}`}
+                            />
+                            <button
+                              type="button"
+                              className="btn btn-sm btn-ghost btn-circle"
+                              onClick={() => removeTimeSlot(index)}
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Overlap Warning */}
+                    {overlapCheck.hasOverlap && (
+                      <div className="alert alert-error mt-3">
+                        <AlertCircle className="w-4 h-4" />
+                        <span className="text-sm">{overlapCheck.message}</span>
                       </div>
-                    ))}
-                  </div>
+                    )}
+                  </>
                 )}
               </div>
 
@@ -316,7 +356,7 @@ export function EditAssignmentModal({
                 <button
                   type="submit"
                   className="btn btn-primary flex-1"
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || overlapCheck.hasOverlap}
                 >
                   {isSubmitting ? (
                     <>

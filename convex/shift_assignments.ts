@@ -244,10 +244,22 @@ export const assignWorkerToShift = mutation({
       throw new ConvexError("Worker already has an assignment for this shift on this date");
     }
 
-    // Validate hours are within shift bounds
-    for (const hourRange of args.assignedHours) {
+    // Validate hours are within shift bounds and check for overlaps
+    for (let i = 0; i < args.assignedHours.length; i++) {
+      const hourRange = args.assignedHours[i];
+
       if (hourRange.startTime >= hourRange.endTime) {
-        throw new ConvexError("Invalid hour range: start time must be before end time");
+        throw new ConvexError(`Time slot ${i + 1}: start time (${hourRange.startTime}) must be before end time (${hourRange.endTime})`);
+      }
+
+      // Check for overlaps with other time slots for this worker
+      for (let j = i + 1; j < args.assignedHours.length; j++) {
+        const otherRange = args.assignedHours[j];
+
+        // Check if ranges overlap: (start1 < end2) && (start2 < end1)
+        if (hourRange.startTime < otherRange.endTime && otherRange.startTime < hourRange.endTime) {
+          throw new ConvexError(`Time slots ${i + 1} (${hourRange.startTime}-${hourRange.endTime}) and ${j + 1} (${otherRange.startTime}-${otherRange.endTime}) overlap. A worker cannot be assigned to overlapping time slots.`);
+        }
       }
     }
 
