@@ -77,42 +77,49 @@ const getMonthDates = (dateString: string) => {
 
 // Calculate staffing status for a shift
 const getShiftStaffingStatus = (shift: any, assignedWorkers: any[]) => {
-  // Calculate staffing status for each hour requirement
-  const hourlyStatuses = shift.hourlyRequirements.map((req: any) => {
-    const requiredHour = req.hour; // e.g., "09:00"
-    const minWorkers = req.minWorkers;
-    const optimalWorkers = req.optimalWorkers;
+  // Expand range-based requirements into individual hours for status calculation
+  const hourlyStatuses: any[] = [];
 
-    // Count time slots that cover this specific hour from confirmed assignments
-    // Each time slot that covers this hour contributes 1 unit of capacity
-    const workersAtHour = assignedWorkers
-      .filter(worker => worker.status === 'confirmed')
-      .reduce((totalCapacity, worker) => {
-        // Count how many of this worker's time slots cover this hour
-        const slotsForThisHour = worker.assignedHours?.filter((timeSlot: any) => {
-          const slotStart = timeSlot.startTime; // e.g., "09:00"
-          const slotEnd = timeSlot.endTime; // e.g., "17:00"
+  shift.hourlyRequirements.forEach((req: any) => {
+    const reqStart = parseInt(req.startTime.split(':')[0]);
+    const reqEnd = parseInt(req.endTime.split(':')[0]);
 
-          // Parse hours for comparison
-          const reqHourNum = parseInt(requiredHour.split(':')[0]);
-          const startHourNum = parseInt(slotStart.split(':')[0]);
-          const endHourNum = parseInt(slotEnd.split(':')[0]);
+    // Generate status for each hour in the range
+    for (let hourNum = reqStart; hourNum < reqEnd; hourNum++) {
+      const requiredHour = `${hourNum.toString().padStart(2, '0')}:00`;
+      const minWorkers = req.minWorkers;
+      const optimalWorkers = req.optimalWorkers;
 
-          // Time slot contributes if the required hour is within this time slot
-          return reqHourNum >= startHourNum && reqHourNum < endHourNum;
-        }) || [];
+      // Count time slots that cover this specific hour from confirmed assignments
+      // Each time slot that covers this hour contributes 1 unit of capacity
+      const workersAtHour = assignedWorkers
+        .filter(worker => worker.status === 'confirmed')
+        .reduce((totalCapacity, worker) => {
+          // Count how many of this worker's time slots cover this hour
+          const slotsForThisHour = worker.assignedHours?.filter((timeSlot: any) => {
+            const slotStart = timeSlot.startTime; // e.g., "09:00"
+            const slotEnd = timeSlot.endTime; // e.g., "17:00"
 
-        // Each time slot that covers this hour adds to capacity
-        return totalCapacity + slotsForThisHour.length;
-      }, 0);
+            // Parse hours for comparison
+            const startHourNum = parseInt(slotStart.split(':')[0]);
+            const endHourNum = parseInt(slotEnd.split(':')[0]);
 
-    // Determine status for this hour
-    if (workersAtHour < minWorkers) {
-      return { hour: requiredHour, status: 'understaffed', workers: workersAtHour, min: minWorkers, optimal: optimalWorkers };
-    } else if (workersAtHour <= optimalWorkers) {
-      return { hour: requiredHour, status: 'staffed', workers: workersAtHour, min: minWorkers, optimal: optimalWorkers };
-    } else {
-      return { hour: requiredHour, status: 'overstaffed', workers: workersAtHour, min: minWorkers, optimal: optimalWorkers };
+            // Time slot contributes if the required hour is within this time slot
+            return hourNum >= startHourNum && hourNum < endHourNum;
+          }) || [];
+
+          // Each time slot that covers this hour adds to capacity
+          return totalCapacity + slotsForThisHour.length;
+        }, 0);
+
+      // Determine status for this hour
+      if (workersAtHour < minWorkers) {
+        hourlyStatuses.push({ hour: requiredHour, status: 'understaffed', workers: workersAtHour, min: minWorkers, optimal: optimalWorkers });
+      } else if (workersAtHour <= optimalWorkers) {
+        hourlyStatuses.push({ hour: requiredHour, status: 'staffed', workers: workersAtHour, min: minWorkers, optimal: optimalWorkers });
+      } else {
+        hourlyStatuses.push({ hour: requiredHour, status: 'overstaffed', workers: workersAtHour, min: minWorkers, optimal: optimalWorkers });
+      }
     }
   });
 

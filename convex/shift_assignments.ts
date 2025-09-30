@@ -475,13 +475,13 @@ export const requestJoinShift = mutation({
     // Validate hours are within shift bounds and valid
     for (const hourRange of assignedHours) {
       if (hourRange.startTime >= hourRange.endTime) {
-        throw new ConvexError("Invalid hour range: start time must be before end time");
+        throw new ConvexError(`Invalid hour range: start time (${hourRange.startTime}) must be before end time (${hourRange.endTime})`);
       }
 
-      // Check if requested hours are within shift bounds
+      // Check if requested hours are within shift bounds (string comparison works for HH:MM format)
       if (hourRange.startTime < shift.storeHours.openTime ||
           hourRange.endTime > shift.storeHours.closeTime) {
-        throw new ConvexError("Requested hours must be within shift operating hours");
+        throw new ConvexError(`Requested hours (${hourRange.startTime}-${hourRange.endTime}) must be within shift operating hours (${shift.storeHours.openTime}-${shift.storeHours.closeTime})`);
       }
     }
 
@@ -565,13 +565,13 @@ export const editAssignment = mutation({
     // Validate hours are within shift bounds and valid
     for (const hourRange of assignedHours) {
       if (hourRange.startTime >= hourRange.endTime) {
-        throw new ConvexError("Invalid hour range: start time must be before end time");
+        throw new ConvexError(`Invalid hour range: start time (${hourRange.startTime}) must be before end time (${hourRange.endTime})`);
       }
 
-      // Check if requested hours are within shift bounds
+      // Check if requested hours are within shift bounds (string comparison works for HH:MM format)
       if (hourRange.startTime < shift.storeHours.openTime ||
           hourRange.endTime > shift.storeHours.closeTime) {
-        throw new ConvexError("Requested hours must be within shift operating hours");
+        throw new ConvexError(`Requested hours (${hourRange.startTime}-${hourRange.endTime}) must be within shift operating hours (${shift.storeHours.openTime}-${shift.storeHours.closeTime})`);
       }
     }
 
