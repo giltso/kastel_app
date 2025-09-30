@@ -40,33 +40,31 @@ export function LUZMonthView({
 }: LUZMonthViewProps) {
   // Generate calendar grid for the month
   const generateMonthGrid = (dateString: string) => {
-    const date = new Date(dateString + 'T00:00:00');
-    const year = date.getFullYear();
-    const month = date.getMonth();
+    // Parse date components to avoid timezone issues
+    const [year, month, day] = dateString.split('-').map(Number);
 
-    // First day of the month
-    const firstDay = new Date(year, month, 1);
-    const lastDay = new Date(year, month + 1, 0);
+    // First day of the month in UTC
+    const firstDay = new Date(Date.UTC(year, month - 1, 1));
 
     // Calculate start of calendar grid (Sunday of first week)
-    const startDate = new Date(firstDay);
-    const dayOfWeek = firstDay.getDay(); // 0 = Sunday, 1 = Monday, etc.
-    // For Sunday-based weeks, subtract the day of week directly
-    startDate.setDate(firstDay.getDate() - dayOfWeek);
+    const dayOfWeek = firstDay.getUTCDay(); // 0 = Sunday, 1 = Monday, etc.
+    const startDate = new Date(Date.UTC(year, month - 1, 1 - dayOfWeek));
 
     // Generate 42 days (6 weeks)
     const days = [];
+    const today = new Date().toISOString().split('T')[0];
+
     for (let i = 0; i < 42; i++) {
       const currentDate = new Date(startDate);
-      currentDate.setDate(startDate.getDate() + i);
-      const dateString = currentDate.toISOString().split('T')[0];
-      const isCurrentMonth = currentDate.getMonth() === month;
-      const isToday = dateString === new Date().toISOString().split('T')[0];
-      const isSelected = dateString === selectedDate;
+      currentDate.setUTCDate(startDate.getUTCDate() + i);
+      const currentDateString = currentDate.toISOString().split('T')[0];
+      const isCurrentMonth = currentDate.getUTCMonth() === month - 1;
+      const isToday = currentDateString === today;
+      const isSelected = currentDateString === selectedDate;
 
       days.push({
-        date: dateString,
-        dayNumber: currentDate.getDate(),
+        date: currentDateString,
+        dayNumber: currentDate.getUTCDate(),
         isCurrentMonth,
         isToday,
         isSelected

@@ -109,6 +109,17 @@ export const getShiftTemplates = query({
   },
 });
 
+// Debug helper: Get shift by name
+export const getShiftByName = query({
+  args: { name: v.string() },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("shifts")
+      .filter((q) => q.eq(q.field("name"), args.name))
+      .first();
+  },
+});
+
 // Development helper: Create sample shift templates
 export const createSampleShifts = mutation({
   args: {},

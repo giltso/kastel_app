@@ -51,24 +51,21 @@ const getWeekDates = (dateString: string) => {
 
 // Generate month dates for calendar grid (42 days including surrounding weeks)
 const getMonthDates = (dateString: string) => {
-  const date = new Date(dateString + 'T00:00:00');
-  const year = date.getFullYear();
-  const month = date.getMonth();
+  // Parse date components to avoid timezone issues
+  const [year, month, day] = dateString.split('-').map(Number);
 
-  // First day of the month
-  const firstDay = new Date(year, month, 1);
+  // First day of the month in UTC
+  const firstDay = new Date(Date.UTC(year, month - 1, 1));
 
   // Calculate start of calendar grid (Sunday of first week)
-  const startDate = new Date(firstDay);
-  const dayOfWeek = firstDay.getDay(); // 0 = Sunday, 1 = Monday, etc.
-  // For Sunday-based weeks, subtract the day of week directly
-  startDate.setDate(firstDay.getDate() - dayOfWeek);
+  const dayOfWeek = firstDay.getUTCDay(); // 0 = Sunday, 1 = Monday, etc.
+  const startDate = new Date(Date.UTC(year, month - 1, 1 - dayOfWeek));
 
   // Generate 42 days (6 weeks) to cover the entire month view
   const monthDates = [];
   for (let i = 0; i < 42; i++) {
     const currentDate = new Date(startDate);
-    currentDate.setDate(startDate.getDate() + i);
+    currentDate.setUTCDate(startDate.getUTCDate() + i);
     monthDates.push(currentDate.toISOString().split('T')[0]);
   }
 
