@@ -122,9 +122,9 @@ export function EditAssignmentModal({
 
   return (
     <div className="modal modal-open">
-      <div className="modal-box max-w-4xl h-[80vh] p-0 overflow-hidden">
+      <div className="modal-box max-w-4xl max-h-[90vh] p-0 flex flex-col">
         {/* Header */}
-        <div className="flex justify-between items-start p-6 border-b border-base-300">
+        <div className="flex justify-between items-start p-6 border-b border-base-300 flex-shrink-0">
           <div>
             <h3 className="font-bold text-xl">Edit Assignment</h3>
             <p className="text-base-content/70 mt-1">{shift.name}</p>
@@ -137,7 +137,7 @@ export function EditAssignmentModal({
           </button>
         </div>
 
-        <div className="flex h-full">
+        <div className="flex flex-1 overflow-hidden">
           {/* Left Column - Assignment Details & Form */}
           <div className="flex-1 p-6 overflow-y-auto">
             {/* Current Assignment Information */}
@@ -174,6 +174,35 @@ export function EditAssignmentModal({
                     )) || "No hours assigned"}
                   </div>
                 </div>
+              </div>
+            </div>
+
+            {/* Shift Hourly Requirements (Range-based) */}
+            <div className="bg-base-100 rounded-lg border border-base-300 p-4 mb-6">
+              <h4 className="font-semibold mb-3 flex items-center gap-2">
+                <Users className="w-4 h-4" />
+                Shift Staffing Requirements (Ranges)
+              </h4>
+              <div className="space-y-2">
+                {shift.hourlyRequirements.map((req, index) => (
+                  <div key={index} className="flex items-center justify-between p-2 bg-base-200 rounded text-sm">
+                    <div className="flex items-center gap-2">
+                      <Clock className="w-3 h-3" />
+                      <span className="font-medium">{req.startTime} - {req.endTime}</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-base-content/70">
+                        Min: <span className="font-medium text-base-content">{req.minWorkers}</span>
+                      </span>
+                      <span className="text-base-content/70">
+                        Optimal: <span className="font-medium text-base-content">{req.optimalWorkers}</span>
+                      </span>
+                      {req.notes && (
+                        <span className="text-xs text-base-content/60 italic">({req.notes})</span>
+                      )}
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
 
