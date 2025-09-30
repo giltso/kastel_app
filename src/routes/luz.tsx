@@ -150,7 +150,7 @@ const getShiftStaffingStatus = (shift: any, assignedWorkers: any[]) => {
 };
 
 function LUZPage() {
-  const { user, isLoading, isAuthenticated, hasWorkerTag, hasManagerTag } = usePermissionsV2();
+  const { user, isLoading, isAuthenticated, isStaff, hasWorkerTag, hasManagerTag } = usePermissionsV2();
   const [selectedDate, setSelectedDate] = useState(getTodayString());
   const [timelineView, setTimelineView] = useState<'vertical' | 'week' | 'month'>('vertical');
   const [filters, setFilters] = useState({
@@ -273,11 +273,11 @@ function LUZPage() {
     );
   }
 
-  if (!hasWorkerTag) {
+  if (!isStaff) {
     return (
       <div className="text-center py-12">
-        <h1 className="text-2xl font-bold mb-4">Worker Access Required</h1>
-        <p>The LUZ system is only accessible to staff members with worker permissions.</p>
+        <h1 className="text-2xl font-bold mb-4">Staff Access Required</h1>
+        <p>The LUZ system is only accessible to staff members.</p>
       </div>
     );
   }

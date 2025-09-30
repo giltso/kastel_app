@@ -235,7 +235,7 @@ export const getShiftsForDate = query({
     }
 
     // Get day of week from date (0 = Sunday, 1 = Monday, etc.)
-    const dateObj = new Date(args.date);
+    const dateObj = new Date(args.date + 'T00:00:00');
     const dayOfWeek = dateObj.getDay();
     const dayNames = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
     const dayName = dayNames[dayOfWeek];
