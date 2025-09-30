@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Clock, Users, Calendar, Plus, AlertCircle, Edit } from "lucide-react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
@@ -43,9 +43,10 @@ export function EditAssignmentModal({
   // Use the edit assignment mutation (we'll create this)
   const editAssignment = useMutation(api.shift_assignments.editAssignment);
 
-  // Initialize form with existing assignment data
-  useState(() => {
+  // Initialize form with existing assignment data when modal opens
+  useEffect(() => {
     if (assignment && isOpen) {
+      // Pre-populate with existing hours for editing
       setSelectedHours(assignment.assignedHours || []);
       setRequestNotes(assignment.assignmentNotes || "");
     }
