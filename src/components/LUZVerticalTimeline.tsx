@@ -208,46 +208,59 @@ export function LUZVerticalTimeline({
 
                             {/* Capacity indicators - Right side, relative to shift time */}
                             <div className="absolute right-2 top-0 w-10 h-full">
-                              {shift.hourlyRequirements?.map((hourReq, hourIndex) => {
-                                const hourInt = parseInt(hourReq.hour.split(':')[0]);
-                                // Position relative to shift duration with +5% offset for better alignment
-                                const relativePosition = ((hourInt - startHour) / duration) * 100 + 5;
-
-                                const currentWorkers = shiftWorkers.filter(assignment => {
-                                  return assignment.status === 'confirmed' && assignment.assignedHours?.some(timeSlot => {
-                                    const assignStart = parseInt(timeSlot.startTime.split(':')[0]);
-                                    const assignEnd = parseInt(timeSlot.endTime.split(':')[0]);
-                                    return hourInt >= assignStart && hourInt < assignEnd;
+                              {(() => {
+                                // Generate indicators for each hour in the shift
+                                const indicators = [];
+                                for (let hourInt = startHour; hourInt < endHour; hourInt++) {
+                                  // Find the requirement range that contains this hour
+                                  const applicableReq = shift.hourlyRequirements?.find(req => {
+                                    const reqStart = parseInt(req.startTime.split(':')[0]);
+                                    const reqEnd = parseInt(req.endTime.split(':')[0]);
+                                    return hourInt >= reqStart && hourInt < reqEnd;
                                   });
-                                }).length || 0;
 
-                                const hourStatus = currentWorkers < hourReq.minWorkers ? 'understaffed' :
-                                                 currentWorkers === hourReq.minWorkers ? 'staffed' : 'overstaffed';
+                                  if (!applicableReq) continue; // Skip hours without requirements
 
-                                const hourColor = {
-                                  understaffed: 'bg-error/60 text-white',
-                                  staffed: 'bg-success/60 text-white',
-                                  overstaffed: 'bg-warning/60 text-black'
-                                }[hourStatus];
+                                  // Position relative to shift duration with +5% offset for better alignment
+                                  const relativePosition = ((hourInt - startHour) / duration) * 100 + 5;
 
-                                return (
-                                  <div
-                                    key={hourReq.hour}
-                                    className={`absolute ${hourColor} rounded text-center`}
-                                    style={{
-                                      top: `${relativePosition}%`,
-                                      left: '0px',
-                                      right: '0px',
-                                      height: '18px',
-                                      fontSize: '9px',
-                                      lineHeight: '18px',
-                                      transform: 'translateY(-50%)'
-                                    }}
-                                  >
-                                    {currentWorkers}/{hourReq.minWorkers}
-                                  </div>
-                                );
-                              })}
+                                  const currentWorkers = shiftWorkers.filter(assignment => {
+                                    return assignment.status === 'confirmed' && assignment.assignedHours?.some(timeSlot => {
+                                      const assignStart = parseInt(timeSlot.startTime.split(':')[0]);
+                                      const assignEnd = parseInt(timeSlot.endTime.split(':')[0]);
+                                      return hourInt >= assignStart && hourInt < assignEnd;
+                                    });
+                                  }).length || 0;
+
+                                  const hourStatus = currentWorkers < applicableReq.minWorkers ? 'understaffed' :
+                                                   currentWorkers === applicableReq.minWorkers ? 'staffed' : 'overstaffed';
+
+                                  const hourColor = {
+                                    understaffed: 'bg-error/60 text-white',
+                                    staffed: 'bg-success/60 text-white',
+                                    overstaffed: 'bg-warning/60 text-black'
+                                  }[hourStatus];
+
+                                  indicators.push(
+                                    <div
+                                      key={`${hourInt}:00`}
+                                      className={`absolute ${hourColor} rounded text-center`}
+                                      style={{
+                                        top: `${relativePosition}%`,
+                                        left: '0px',
+                                        right: '0px',
+                                        height: '18px',
+                                        fontSize: '9px',
+                                        lineHeight: '18px',
+                                        transform: 'translateY(-50%)'
+                                      }}
+                                    >
+                                      {currentWorkers}/{applicableReq.minWorkers}
+                                    </div>
+                                  );
+                                }
+                                return indicators;
+                              })()}
                             </div>
                           </div>
                         </div>

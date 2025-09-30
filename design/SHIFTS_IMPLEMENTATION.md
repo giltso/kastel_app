@@ -1,7 +1,7 @@
 # Shifts System Implementation Design
 
 **Date:** 2025-09-28
-**Status:** ✅ PRODUCTION READY - COMPREHENSIVE MODAL SYSTEM COMPLETE
+**Status:** in work - COMPREHENSIVE MODAL SYSTEM 
 
 ## 🎯 FUNCTIONAL DESIGN
 
@@ -14,7 +14,7 @@ The shifts system provides **recurring operational scheduling** for workers acro
 - **Definition**: Managers create recurring shift templates that define when operational work needs to happen
 - **Recurrence Logic**: Each shift template specifies which days of the week it runs (e.g., Monday-Friday, weekends only)
 - **Time Boundaries**: Fixed start and end times for each shift template
-- **Capacity Planning**: Required workers (target) and maximum workers (ceiling) for each shift
+- **Capacity Planning**: Required workers (target) and maximum workers (ceiling) for each shifttha
 
 #### **2. Assignment System**
 - **Manager Assignment**: Managers can assign specific workers to specific shift instances (date + shift combination)
@@ -317,13 +317,7 @@ When editing a recurring shift instance:
 - **Access**: Worker-specific, role-based validation
 - **Integration**: Handles manager-initiated assignments
 
-#### **6. EditAssignmentModal** (Worker/Manager Tool)
-- **Purpose**: Edit existing assignments with role-based approval workflows
-- **Features**: Modify time slots, update notes, multiple time slot support
-- **Workflow**: Workers request edits → manager approval | Managers apply directly
-- **Integration**: Replaces "Request to Join" button when user has existing assignment
-
-#### **7. ReviewRequestModal** (Manager Response)
+#### **6. ReviewRequestModal** (Manager Response)
 - **Purpose**: Manager interface for bulk request approval
 - **Features**: Filtering, batch operations, request review
 - **Workflow**: Reviews worker join requests in bulk
@@ -332,9 +326,9 @@ When editing a recurring shift instance:
 ### **Technical Implementation Details**
 
 #### **Modal State Management**
-- **Centralized Handlers**: All 7 modals managed in `/luz.tsx` route
+- **Centralized Handlers**: All modals managed in `/luz.tsx` route
 - **State Persistence**: Modal states preserved during navigation
-- **Integration Points**: Timeline clicks, overview buttons, detail views, conditional edit/join buttons
+- **Integration Points**: Timeline clicks, overview buttons, detail views
 
 #### **Role-Adaptive Architecture**
 - **Additive Permissions**: Base + Worker + Manager layers
@@ -347,13 +341,6 @@ When editing a recurring shift instance:
 - **Comprehensive Validation**: Server-side conflict detection and capacity management
 - **API Fixes**: Resolved `getAllUsers` vs `getAllUsersV2` naming issues
 - **Status Management**: Pending approvals, confirmed assignments, comprehensive workflow states
-- **Assignment Editing**: `editAssignment` mutation with role-based approval workflows
-
-#### **Hourly Capacity Calculation**
-- **Multiple Time Slot Support**: Workers with multiple time slots contribute capacity to all covered hours
-- **Shift-Specific Filtering**: Each shift only counts workers assigned to that specific shift
-- **Timeline Accuracy**: Fixed UI display to match backend calculation logic
-- **Pessimistic Status**: Overall shift status shows worst case across all required hours
 
 ### **Testing Validation**
 - **Playwright Testing**: Comprehensive UI testing of all modal workflows
@@ -363,4 +350,4 @@ When editing a recurring shift instance:
 
 ---
 
-**Current Status**: Complete shift action system with 7-modal architecture, dual approval workflows, assignment editing capabilities, and accurate hourly capacity calculations. All major worker and manager workflows implemented and tested.
+**Current Status**: Complete shift action system with comprehensive modal architecture, dual approval workflows, and full role-based functionality. All major worker and manager workflows implemented and tested.

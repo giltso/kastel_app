@@ -121,11 +121,12 @@ export function EditAssignmentModal({
 
   return (
     <div className="modal modal-open">
-      <div className="modal-box max-w-2xl">
-        <div className="flex justify-between items-start mb-6">
+      <div className="modal-box max-w-4xl h-[80vh] p-0 overflow-hidden">
+        {/* Header */}
+        <div className="flex justify-between items-start p-6 border-b border-base-300">
           <div>
             <h3 className="font-bold text-xl">Edit Assignment</h3>
-            <p className="text-base-content/70 mt-1">Request changes to your assignment</p>
+            <p className="text-base-content/70 mt-1">{shift.name}</p>
           </div>
           <button
             className="btn btn-sm btn-circle btn-ghost"
@@ -135,168 +136,272 @@ export function EditAssignmentModal({
           </button>
         </div>
 
-        {/* Current Assignment Information */}
-        <div className="bg-base-200 rounded-lg p-4 mb-6">
-          <h4 className="font-semibold mb-3">Current Assignment</h4>
-          <div className="grid md:grid-cols-2 gap-4 text-sm">
-            <div className="flex items-center gap-2">
-              <Calendar className="w-4 h-4" />
-              <span>{shift.name}</span>
+        <div className="flex h-full">
+          {/* Left Column - Assignment Details & Form */}
+          <div className="flex-1 p-6 overflow-y-auto">
+            {/* Current Assignment Information */}
+            <div className="bg-base-100 rounded-lg border border-base-300 p-4 mb-6">
+              <h4 className="font-semibold mb-3 flex items-center gap-2">
+                <Calendar className="w-4 h-4" />
+                Current Assignment
+              </h4>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-base-content/70">Date:</span>
+                  <span>{new Date(assignment.date).toLocaleDateString()}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-base-content/70">Shift Hours:</span>
+                  <span>{shift.storeHours.openTime} - {shift.storeHours.closeTime}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-base-content/70">Status:</span>
+                  <span className={`badge badge-sm ${
+                    assignment.status === 'confirmed' ? 'badge-success' :
+                    assignment.status.includes('pending') ? 'badge-warning' : 'badge-neutral'
+                  }`}>
+                    {assignment.status}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-base-content/70">Current Hours:</span>
+                  <div className="text-right">
+                    {assignment.assignedHours?.map((hour, index) => (
+                      <div key={index}>
+                        {hour.startTime} - {hour.endTime}
+                      </div>
+                    )) || "No hours assigned"}
+                  </div>
+                </div>
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <Clock className="w-4 h-4" />
-              <span>{shift.storeHours.openTime} - {shift.storeHours.closeTime}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Users className="w-4 h-4" />
-              <span>Date: {new Date(assignment.date).toLocaleDateString()}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className={`badge ${
-                assignment.status === 'confirmed' ? 'badge-success' :
-                assignment.status.includes('pending') ? 'badge-warning' : 'badge-neutral'
-              }`}>
-                {assignment.status}
-              </span>
-            </div>
+
+            <form onSubmit={handleSubmit}>
+              {/* New Time Preferences */}
+              <div className="bg-base-100 rounded-lg border border-base-300 p-4 mb-6">
+                <div className="flex justify-between items-center mb-3">
+                  <h4 className="font-semibold flex items-center gap-2">
+                    <Clock className="w-4 h-4" />
+                    New Hours
+                  </h4>
+                  <button
+                    type="button"
+                    className="btn btn-xs btn-outline"
+                    onClick={addTimeSlot}
+                  >
+                    <Plus className="w-3 h-3" />
+                    Add Time Slot
+                  </button>
+                </div>
+
+                {selectedHours.length === 0 ? (
+                  <div className="text-sm text-base-content/60 p-3 bg-base-200 rounded border">
+                    No changes to hours. Current assignment hours will be kept.
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {selectedHours.map((slot, index) => (
+                      <div key={index} className="flex items-center gap-2">
+                        <input
+                          type="time"
+                          value={slot.startTime}
+                          onChange={(e) => updateTimeSlot(index, 'startTime', e.target.value)}
+                          className="input input-bordered input-sm"
+                        />
+                        <span>to</span>
+                        <input
+                          type="time"
+                          value={slot.endTime}
+                          onChange={(e) => updateTimeSlot(index, 'endTime', e.target.value)}
+                          className="input input-bordered input-sm"
+                        />
+                        <button
+                          type="button"
+                          className="btn btn-sm btn-ghost btn-circle"
+                          onClick={() => removeTimeSlot(index)}
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Request Notes */}
+              <div className="bg-base-100 rounded-lg border border-base-300 p-4 mb-6">
+                <h4 className="font-semibold mb-3">Edit Notes (Optional)</h4>
+                <textarea
+                  value={requestNotes}
+                  onChange={(e) => setRequestNotes(e.target.value)}
+                  className="textarea textarea-bordered w-full"
+                  rows={3}
+                  placeholder="Explain what changes you're requesting and why..."
+                />
+              </div>
+
+              {/* Error Display */}
+              {error && (
+                <div className="alert alert-error mb-4">
+                  <AlertCircle className="w-4 h-4" />
+                  <span>{error}</span>
+                </div>
+              )}
+
+              {/* Submit Section */}
+              <div className="bg-base-100 border border-base-300 rounded-lg p-4 mb-6">
+                <h4 className="font-medium mb-2">Edit Summary</h4>
+                <ul className="text-sm text-base-content/70 space-y-1">
+                  {hasManagerTag ? (
+                    <>
+                      <li>• As a manager, your edit will create a new confirmed assignment</li>
+                      <li>• The original assignment will be replaced immediately</li>
+                      <li>• Changes will be effective right away</li>
+                    </>
+                  ) : assignment.workerId === user?._id ? (
+                    <>
+                      <li>• Your edit request will need manager approval</li>
+                      <li>• Original assignment stays active until approved</li>
+                      <li>• You'll be notified once a decision is made</li>
+                    </>
+                  ) : (
+                    <>
+                      <li>• Edit request will be sent to the worker and managers</li>
+                      <li>• Requires approval from both worker and management</li>
+                      <li>• Original assignment remains until approved</li>
+                    </>
+                  )}
+                </ul>
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  className="btn btn-ghost flex-1"
+                  onClick={onClose}
+                  disabled={isSubmitting}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="btn btn-primary flex-1"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <span className="loading loading-spinner loading-sm"></span>
+                      {hasManagerTag ? 'Applying Changes...' : 'Submitting Edit...'}
+                    </>
+                  ) : (
+                    <>
+                      <Edit className="w-4 h-4" />
+                      {hasManagerTag ? 'Apply Changes' : 'Submit Edit Request'}
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
           </div>
 
-          {/* Current Hours */}
-          <div className="mt-4">
-            <span className="font-medium text-sm">Current Hours:</span>
-            <div className="text-sm mt-1">
-              {assignment.assignedHours?.map((hour, index) => (
-                <span key={index} className="mr-2">
-                  {hour.startTime} - {hour.endTime}
-                </span>
-              )) || "No hours assigned"}
+          {/* Right Column - Current Assignment Timeline */}
+          <div className="w-80 bg-base-50 border-l border-base-300 p-6 overflow-y-auto">
+            <h4 className="font-semibold mb-4 flex items-center gap-2">
+              <Users className="w-4 h-4" />
+              Current Assignment Timeline
+            </h4>
+
+            {/* Vertical Timeline Container */}
+            <div className="relative bg-base-100 rounded-lg border border-base-300 p-3">
+              {(() => {
+                const startHour = parseInt(shift.storeHours.openTime.split(':')[0]);
+                const endHour = parseInt(shift.storeHours.closeTime.split(':')[0]);
+                const shiftHours = Array.from({ length: endHour - startHour }, (_, i) => startHour + i);
+
+                return shiftHours.map((hour, index) => {
+                  const hourTime = `${hour.toString().padStart(2, '0')}:00`;
+
+                  // Check if this hour is covered by current assignment
+                  const isAssigned = assignment.assignedHours?.some(slot => {
+                    const slotStart = parseInt(slot.startTime.split(':')[0]);
+                    const slotEnd = parseInt(slot.endTime.split(':')[0]);
+                    return hour >= slotStart && hour < slotEnd;
+                  });
+
+                  // Check if this hour would be covered by new assignment
+                  const wouldBeAssigned = selectedHours.length > 0 ? selectedHours.some(slot => {
+                    const slotStart = parseInt(slot.startTime.split(':')[0]);
+                    const slotEnd = parseInt(slot.endTime.split(':')[0]);
+                    return hour >= slotStart && hour < slotEnd;
+                  }) : isAssigned;
+
+                  return (
+                    <div key={hour} className="flex items-center gap-3 py-2">
+                      {/* Time */}
+                      <div className="w-12 text-xs font-mono text-base-content/60 text-right">
+                        {hourTime}
+                      </div>
+
+                      {/* Current Assignment Block */}
+                      <div className="flex-1 relative">
+                        {isAssigned && (
+                          <div className="bg-primary/20 border-l-2 border-primary rounded-r px-2 py-1">
+                            <div className="text-xs font-medium text-primary">Current</div>
+                          </div>
+                        )}
+
+                        {/* New Assignment Preview (if different) */}
+                        {selectedHours.length > 0 && wouldBeAssigned && !isAssigned && (
+                          <div className="bg-success/20 border-l-2 border-success rounded-r px-2 py-1">
+                            <div className="text-xs font-medium text-success">New</div>
+                          </div>
+                        )}
+
+                        {/* Removed Assignment (if current but not in new) */}
+                        {selectedHours.length > 0 && isAssigned && !wouldBeAssigned && (
+                          <div className="bg-error/20 border-l-2 border-error rounded-r px-2 py-1">
+                            <div className="text-xs font-medium text-error">Removing</div>
+                          </div>
+                        )}
+
+                        {/* No assignment */}
+                        {!isAssigned && !wouldBeAssigned && (
+                          <div className="bg-base-200 border-l-2 border-base-300 rounded-r px-2 py-1">
+                            <div className="text-xs text-base-content/40">Unassigned</div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                });
+              })()}
+            </div>
+
+            {/* Legend */}
+            <div className="mt-4 space-y-2 text-xs">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 bg-primary/20 border-l-2 border-primary rounded-r"></div>
+                <span>Current Assignment</span>
+              </div>
+              {selectedHours.length > 0 && (
+                <>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-success/20 border-l-2 border-success rounded-r"></div>
+                    <span>New Hours</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-error/20 border-l-2 border-error rounded-r"></div>
+                    <span>Removing</span>
+                  </div>
+                </>
+              )}
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 bg-base-200 border-l-2 border-base-300 rounded-r"></div>
+                <span>Unassigned</span>
+              </div>
             </div>
           </div>
         </div>
-
-        <form onSubmit={handleSubmit}>
-          {/* New Time Preferences */}
-          <div className="mb-6">
-            <div className="flex justify-between items-center mb-3">
-              <label className="font-medium">New Hours (Optional - leave empty to keep current)</label>
-              <button
-                type="button"
-                className="btn btn-xs btn-outline"
-                onClick={addTimeSlot}
-              >
-                <Plus className="w-3 h-3" />
-                Add Time Slot
-              </button>
-            </div>
-
-            {selectedHours.length === 0 ? (
-              <div className="text-sm text-base-content/60 p-3 bg-base-100 rounded border">
-                No changes to hours. Current assignment hours will be kept.
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {selectedHours.map((slot, index) => (
-                  <div key={index} className="flex items-center gap-2">
-                    <input
-                      type="time"
-                      value={slot.startTime}
-                      onChange={(e) => updateTimeSlot(index, 'startTime', e.target.value)}
-                      className="input input-bordered input-sm"
-                    />
-                    <span>to</span>
-                    <input
-                      type="time"
-                      value={slot.endTime}
-                      onChange={(e) => updateTimeSlot(index, 'endTime', e.target.value)}
-                      className="input input-bordered input-sm"
-                    />
-                    <button
-                      type="button"
-                      className="btn btn-sm btn-ghost btn-circle"
-                      onClick={() => removeTimeSlot(index)}
-                    >
-                      ✕
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Request Notes */}
-          <div className="mb-6">
-            <label className="block font-medium mb-2">Edit Notes (Optional)</label>
-            <textarea
-              value={requestNotes}
-              onChange={(e) => setRequestNotes(e.target.value)}
-              className="textarea textarea-bordered w-full"
-              rows={3}
-              placeholder="Explain what changes you're requesting and why..."
-            />
-          </div>
-
-          {/* Error Display */}
-          {error && (
-            <div className="alert alert-error mb-4">
-              <AlertCircle className="w-4 h-4" />
-              <span>{error}</span>
-            </div>
-          )}
-
-          {/* Submit Section */}
-          <div className="bg-base-100 border border-base-300 rounded-lg p-4 mb-6">
-            <h4 className="font-medium mb-2">Edit Summary</h4>
-            <ul className="text-sm text-base-content/70 space-y-1">
-              {hasManagerTag ? (
-                <>
-                  <li>• As a manager, your edit will create a new confirmed assignment</li>
-                  <li>• The original assignment will be replaced immediately</li>
-                  <li>• Changes will be effective right away</li>
-                </>
-              ) : assignment.workerId === user?._id ? (
-                <>
-                  <li>• Your edit request will need manager approval</li>
-                  <li>• Original assignment stays active until approved</li>
-                  <li>• You'll be notified once a decision is made</li>
-                </>
-              ) : (
-                <>
-                  <li>• Edit request will be sent to the worker and managers</li>
-                  <li>• Requires approval from both worker and management</li>
-                  <li>• Original assignment remains until approved</li>
-                </>
-              )}
-            </ul>
-          </div>
-
-          <div className="modal-action">
-            <button
-              type="button"
-              className="btn btn-ghost"
-              onClick={onClose}
-              disabled={isSubmitting}
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="btn btn-primary"
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? (
-                <>
-                  <span className="loading loading-spinner loading-sm"></span>
-                  {hasManagerTag ? 'Applying Changes...' : 'Submitting Edit...'}
-                </>
-              ) : (
-                <>
-                  <Edit className="w-4 h-4" />
-                  {hasManagerTag ? 'Apply Changes' : 'Submit Edit Request'}
-                </>
-              )}
-            </button>
-          </div>
-        </form>
       </div>
     </div>
   );

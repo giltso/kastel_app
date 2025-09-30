@@ -243,46 +243,57 @@ export function ShiftDetailsModal({
 
                         {/* Staffing indicators on the right */}
                         <div className="absolute right-2 top-0">
-                          {shift.hourlyRequirements.map((req) => {
-                            const hourInt = parseInt(req.hour.split(':')[0]);
-                            const hourIndex = hourInt - startHour;
+                          {(() => {
+                            // Expand ranges to individual hours for timeline visualization
+                            const indicators = [];
+                            for (let hourInt = startHour; hourInt < endHour; hourInt++) {
+                              // Find the requirement range that contains this hour
+                              const applicableReq = shift.hourlyRequirements.find(req => {
+                                const reqStart = parseInt(req.startTime.split(':')[0]);
+                                const reqEnd = parseInt(req.endTime.split(':')[0]);
+                                return hourInt >= reqStart && hourInt < reqEnd;
+                              });
 
-                            if (hourIndex < 0 || hourIndex >= shiftHours.length) return null;
+                              if (!applicableReq) continue; // Skip hours without requirements
 
-                            const currentStaffing = shiftAssignments.filter(assignment =>
-                              assignment.status === 'confirmed' && assignment.assignedHours?.some(timeSlot => {
-                                const assignStart = parseInt(timeSlot.startTime.split(':')[0]);
-                                const assignEnd = parseInt(timeSlot.endTime.split(':')[0]);
-                                return hourInt >= assignStart && hourInt < assignEnd;
-                              })
-                            ).length;
+                              const hourIndex = hourInt - startHour;
 
-                            const status = currentStaffing < req.minWorkers ? 'understaffed' :
-                                          currentStaffing === req.minWorkers ? 'minimum' :
-                                          currentStaffing <= req.optimalWorkers ? 'good' : 'overstaffed';
+                              const currentStaffing = shiftAssignments.filter(assignment =>
+                                assignment.status === 'confirmed' && assignment.assignedHours?.some(timeSlot => {
+                                  const assignStart = parseInt(timeSlot.startTime.split(':')[0]);
+                                  const assignEnd = parseInt(timeSlot.endTime.split(':')[0]);
+                                  return hourInt >= assignStart && hourInt < assignEnd;
+                                })
+                              ).length;
 
-                            const statusColor = {
-                              understaffed: 'bg-error/60 text-white',
-                              minimum: 'bg-warning/60 text-black',
-                              good: 'bg-success/60 text-white',
-                              overstaffed: 'bg-info/60 text-black'
-                            }[status];
+                              const status = currentStaffing < applicableReq.minWorkers ? 'understaffed' :
+                                            currentStaffing === applicableReq.minWorkers ? 'minimum' :
+                                            currentStaffing <= applicableReq.optimalWorkers ? 'good' : 'overstaffed';
 
-                            return (
-                              <div
-                                key={req.hour}
-                                className={`absolute ${statusColor} rounded text-center text-xs font-medium`}
-                                style={{
-                                  top: `${hourIndex * 48 + 12}px`,
-                                  width: '40px',
-                                  height: '24px',
-                                  lineHeight: '24px'
-                                }}
-                              >
-                                {currentStaffing}/{req.minWorkers}
-                              </div>
-                            );
-                          })}
+                              const statusColor = {
+                                understaffed: 'bg-error/60 text-white',
+                                minimum: 'bg-warning/60 text-black',
+                                good: 'bg-success/60 text-white',
+                                overstaffed: 'bg-info/60 text-black'
+                              }[status];
+
+                              indicators.push(
+                                <div
+                                  key={`${hourInt}:00`}
+                                  className={`absolute ${statusColor} rounded text-center text-xs font-medium`}
+                                  style={{
+                                    top: `${hourIndex * 48 + 12}px`,
+                                    width: '40px',
+                                    height: '24px',
+                                    lineHeight: '24px'
+                                  }}
+                                >
+                                  {currentStaffing}/{applicableReq.minWorkers}
+                                </div>
+                              );
+                            }
+                            return indicators;
+                          })()}
                         </div>
                       </div>
                     </div>

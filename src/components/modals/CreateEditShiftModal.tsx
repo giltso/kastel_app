@@ -13,7 +13,8 @@ interface CreateEditShiftModalProps {
 }
 
 interface HourlyRequirement {
-  hour: string;
+  startTime: string; // "08:00" format
+  endTime: string;   // "12:00" format
   minWorkers: number;
   optimalWorkers: number;
   notes?: string;
@@ -97,7 +98,8 @@ export function CreateEditShiftModal({
 
       setHourlyRequirements(
         existingShift.hourlyRequirements.map(req => ({
-          hour: req.hour,
+          startTime: req.startTime || "08:00",
+          endTime: req.endTime || "09:00",
           minWorkers: req.minWorkers,
           optimalWorkers: req.optimalWorkers,
           notes: req.notes || "",
@@ -112,58 +114,43 @@ export function CreateEditShiftModal({
     const startHour = parseInt(formData.openTime.split(':')[0]);
     const endHour = parseInt(formData.closeTime.split(':')[0]);
 
-    for (let hour = startHour; hour < endHour; hour++) {
-      const hourStr = hour.toString().padStart(2, '0') + ':00';
+    // Create intelligent range blocks based on shift duration
+    const shiftDuration = endHour - startHour;
 
-      // Check if we already have this hour
-      const existing = hourlyRequirements.find(req => req.hour === hourStr);
-
-      slots.push(existing || {
-        hour: hourStr,
-        minWorkers: 1,
-        optimalWorkers: 2,
-        notes: "",
-      });
-    }
-
-    setHourlyRequirements(slots);
-  };
-
-  // Auto-update hourly requirements when shift hours change
-  useEffect(() => {
-    const startHour = parseInt(formData.openTime.split(':')[0]);
-    const endHour = parseInt(formData.closeTime.split(':')[0]);
-
-    // Only auto-update if we have valid hours and existing requirements
-    if (startHour >= 0 && endHour > startHour && hourlyRequirements.length > 0) {
-      const newSlots: HourlyRequirement[] = [];
-
-      for (let hour = startHour; hour < endHour; hour++) {
-        const hourStr = hour.toString().padStart(2, '0') + ':00';
-
-        // Preserve existing data if we have it
-        const existing = hourlyRequirements.find(req => req.hour === hourStr);
-
-        newSlots.push(existing || {
-          hour: hourStr,
+    if (shiftDuration <= 4) {
+      // Short shift: 1-2 hour blocks
+      const blockSize = 2;
+      for (let hour = startHour; hour < endHour; hour += blockSize) {
+        const blockEndHour = Math.min(hour + blockSize, endHour);
+        slots.push({
+          startTime: `${hour.toString().padStart(2, '0')}:00`,
+          endTime: `${blockEndHour.toString().padStart(2, '0')}:00`,
           minWorkers: 1,
           optimalWorkers: 2,
           notes: "",
         });
       }
-
-      // Only update if the slots have actually changed
-      if (newSlots.length !== hourlyRequirements.length ||
-          newSlots.some((slot, i) => slot.hour !== hourlyRequirements[i]?.hour)) {
-        setIsAutoUpdatingRequirements(true);
-        setHourlyRequirements(newSlots);
-
-        // Clear the indicator after a brief delay
-        const timer = setTimeout(() => setIsAutoUpdatingRequirements(false), 1500);
-        return () => clearTimeout(timer);
+    } else {
+      // Standard shift: Create 3-4 hour logical blocks (morning, midday, afternoon, evening)
+      const blockSize = Math.ceil(shiftDuration / 3); // Divide into ~3 blocks
+      for (let hour = startHour; hour < endHour; hour += blockSize) {
+        const blockEndHour = Math.min(hour + blockSize, endHour);
+        const blockName = hour < 12 ? "Morning" : hour < 15 ? "Midday" : "Afternoon/Evening";
+        slots.push({
+          startTime: `${hour.toString().padStart(2, '0')}:00`,
+          endTime: `${blockEndHour.toString().padStart(2, '0')}:00`,
+          minWorkers: 2,
+          optimalWorkers: 3,
+          notes: blockName,
+        });
       }
     }
-  }, [formData.openTime, formData.closeTime, hourlyRequirements.length]); // Watch for changes in shift hours
+
+    setHourlyRequirements(slots);
+  };
+
+  // Note: With range-based requirements, we don't auto-update on time changes
+  // Managers should use "Generate from Hours" button to recreate ranges if needed
 
   const updateHourlyRequirement = (index: number, field: keyof HourlyRequirement, value: string | number) => {
     const updated = [...hourlyRequirements];
@@ -418,13 +405,23 @@ export function CreateEditShiftModal({
               <div className="space-y-3">
                 {hourlyRequirements.map((req, index) => (
                   <div key={index} className="bg-base-100 rounded-lg p-3">
-                    <div className="grid md:grid-cols-4 gap-3 items-end">
+                    <div className="grid md:grid-cols-5 gap-3 items-end">
                       <div>
-                        <label className="label-text text-sm font-medium">Hour</label>
+                        <label className="label-text text-sm font-medium">Start Time</label>
                         <input
                           type="time"
-                          value={req.hour}
-                          onChange={(e) => updateHourlyRequirement(index, 'hour', e.target.value)}
+                          value={req.startTime}
+                          onChange={(e) => updateHourlyRequirement(index, 'startTime', e.target.value)}
+                          className="input input-bordered input-sm w-full"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="label-text text-sm font-medium">End Time</label>
+                        <input
+                          type="time"
+                          value={req.endTime}
+                          onChange={(e) => updateHourlyRequirement(index, 'endTime', e.target.value)}
                           className="input input-bordered input-sm w-full"
                         />
                       </div>
@@ -468,7 +465,7 @@ export function CreateEditShiftModal({
                         value={req.notes || ""}
                         onChange={(e) => updateHourlyRequirement(index, 'notes', e.target.value)}
                         className="input input-bordered input-sm w-full"
-                        placeholder="Optional notes for this hour..."
+                        placeholder="Optional notes for this time range..."
                       />
                     </div>
                   </div>

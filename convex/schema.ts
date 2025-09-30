@@ -39,16 +39,13 @@ export default defineSchema({
       closeTime: v.string(), // "20:00"
     }),
 
-    // Range-based Population Requirements (V2.1 UPGRADE)
+    // Range-based Hourly Requirements (V2.1)
     hourlyRequirements: v.array(v.object({
       startTime: v.string(), // "08:00" - Start of requirement range
-      endTime: v.string(), // "12:00" - End of requirement range
+      endTime: v.string(),   // "12:00" - End of requirement range
       minWorkers: v.number(), // Minimum required workers for this range
       optimalWorkers: v.number(), // Ideal staffing level for this range
       notes: v.optional(v.string()), // "Morning rush", "Lunch coverage"
-
-      // Legacy support for migration - will be removed later
-      hour: v.optional(v.string()), // "14:00" (24-hour format) - DEPRECATED
     })),
 
     // Recurrence Pattern

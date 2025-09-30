@@ -60,36 +60,34 @@ function validateHourlyRequirements(requirements: Array<{
       throw new ConvexError(`Requirement ${i + 1}: optimal must be >= minimum >= 0`);
     }
 
-    // For range-based requirements
-    if (req.startTime && req.endTime) {
-      const reqStart = parseInt(req.startTime.split(':')[0]);
-      const reqEnd = parseInt(req.endTime.split(':')[0]);
-
-      // Validate range is within shift bounds
-      if (reqStart < shiftStart || reqEnd > shiftEnd || reqStart >= reqEnd) {
-        throw new ConvexError(`Requirement ${i + 1}: range must be within shift hours (${shiftOpenTime} - ${shiftCloseTime})`);
-      }
-
-      // Check for overlaps with other requirements
-      for (let j = i + 1; j < requirements.length; j++) {
-        const otherReq = requirements[j];
-        if (otherReq.startTime && otherReq.endTime) {
-          const otherStart = parseInt(otherReq.startTime.split(':')[0]);
-          const otherEnd = parseInt(otherReq.endTime.split(':')[0]);
-
-          // Check for overlap
-          if ((reqStart < otherEnd && reqEnd > otherStart)) {
-            throw new ConvexError(`Requirements ${i + 1} and ${j + 1}: time ranges cannot overlap`);
-          }
-        }
-      }
+    // Validate range-based requirements
+    if (!req.startTime || !req.endTime) {
+      throw new ConvexError(`Requirement ${i + 1}: must have startTime and endTime`);
     }
 
-    // Legacy hour validation (for backward compatibility)
-    if (req.hour && !req.startTime) {
-      const hourInt = parseInt(req.hour.split(':')[0]);
-      if (hourInt < shiftStart || hourInt >= shiftEnd) {
-        throw new ConvexError(`Requirement ${i + 1}: hour must be within shift hours`);
+    const reqStart = parseInt(req.startTime.split(':')[0]);
+    const reqEnd = parseInt(req.endTime.split(':')[0]);
+
+    // Validate range is valid and within shift bounds
+    if (reqStart >= reqEnd) {
+      throw new ConvexError(`Requirement ${i + 1}: startTime must be before endTime`);
+    }
+
+    if (reqStart < shiftStart || reqEnd > shiftEnd) {
+      throw new ConvexError(`Requirement ${i + 1}: range must be within shift hours (${shiftOpenTime} - ${shiftCloseTime})`);
+    }
+
+    // Check for overlaps with other requirements (optional - allow overlaps if needed)
+    for (let j = i + 1; j < requirements.length; j++) {
+      const otherReq = requirements[j];
+      if (!otherReq.startTime || !otherReq.endTime) continue; // Skip if invalid
+
+      const otherStart = parseInt(otherReq.startTime.split(':')[0]);
+      const otherEnd = parseInt(otherReq.endTime.split(':')[0]);
+
+      // Check for overlap
+      if ((reqStart < otherEnd && reqEnd > otherStart)) {
+        throw new ConvexError(`Requirements ${i + 1} and ${j + 1}: time ranges overlap (${req.startTime}-${req.endTime} and ${otherReq.startTime}-${otherReq.endTime})`);
       }
     }
   }
@@ -148,16 +146,11 @@ export const createSampleShifts = mutation({
         closeTime: "18:00",
       },
       hourlyRequirements: [
-        { hour: "08:00", minWorkers: 1, optimalWorkers: 2, notes: "Opening procedures, early customers" },
-        { hour: "09:00", minWorkers: 2, optimalWorkers: 3, notes: "Morning rush, tool rentals" },
-        { hour: "10:00", minWorkers: 2, optimalWorkers: 3, notes: "Peak customer period" },
-        { hour: "11:00", minWorkers: 2, optimalWorkers: 3, notes: "Peak customer period" },
-        { hour: "12:00", minWorkers: 2, optimalWorkers: 3, notes: "Lunch coverage needed" },
-        { hour: "13:00", minWorkers: 2, optimalWorkers: 3, notes: "Afternoon operations" },
-        { hour: "14:00", minWorkers: 3, optimalWorkers: 4, notes: "Peak afternoon period" },
-        { hour: "15:00", minWorkers: 3, optimalWorkers: 4, notes: "Peak afternoon period" },
-        { hour: "16:00", minWorkers: 2, optimalWorkers: 3, notes: "Evening operations" },
-        { hour: "17:00", minWorkers: 2, optimalWorkers: 2, notes: "Closing preparations" },
+        { startTime: "08:00", endTime: "09:00", minWorkers: 1, optimalWorkers: 2, notes: "Opening procedures, early customers" },
+        { startTime: "09:00", endTime: "12:00", minWorkers: 2, optimalWorkers: 3, notes: "Morning rush, peak customer period" },
+        { startTime: "12:00", endTime: "14:00", minWorkers: 2, optimalWorkers: 3, notes: "Lunch coverage, afternoon operations" },
+        { startTime: "14:00", endTime: "16:00", minWorkers: 3, optimalWorkers: 4, notes: "Peak afternoon period" },
+        { startTime: "16:00", endTime: "18:00", minWorkers: 2, optimalWorkers: 3, notes: "Evening operations, closing preparations" },
       ],
       recurringDays: ["monday", "tuesday", "wednesday", "thursday", "friday"],
       isActive: true,
@@ -176,14 +169,10 @@ export const createSampleShifts = mutation({
         closeTime: "17:00",
       },
       hourlyRequirements: [
-        { hour: "09:00", minWorkers: 1, optimalWorkers: 2, notes: "Weekend opening" },
-        { hour: "10:00", minWorkers: 2, optimalWorkers: 3, notes: "Weekend DIY projects" },
-        { hour: "11:00", minWorkers: 2, optimalWorkers: 3, notes: "Peak weekend period" },
-        { hour: "12:00", minWorkers: 2, optimalWorkers: 3, notes: "Lunch coverage" },
-        { hour: "13:00", minWorkers: 2, optimalWorkers: 3, notes: "Weekend projects continue" },
-        { hour: "14:00", minWorkers: 2, optimalWorkers: 3, notes: "Afternoon weekend rush" },
-        { hour: "15:00", minWorkers: 2, optimalWorkers: 2, notes: "Wind down period" },
-        { hour: "16:00", minWorkers: 1, optimalWorkers: 2, notes: "Closing preparations" },
+        { startTime: "09:00", endTime: "10:00", minWorkers: 1, optimalWorkers: 2, notes: "Weekend opening" },
+        { startTime: "10:00", endTime: "13:00", minWorkers: 2, optimalWorkers: 3, notes: "Weekend DIY projects, peak weekend period" },
+        { startTime: "13:00", endTime: "15:00", minWorkers: 2, optimalWorkers: 3, notes: "Weekend projects continue, afternoon weekend rush" },
+        { startTime: "15:00", endTime: "17:00", minWorkers: 1, optimalWorkers: 2, notes: "Wind down period, closing preparations" },
       ],
       recurringDays: ["saturday", "sunday"],
       isActive: true,
@@ -202,8 +191,7 @@ export const createSampleShifts = mutation({
         closeTime: "20:00",
       },
       hourlyRequirements: [
-        { hour: "18:00", minWorkers: 1, optimalWorkers: 2, notes: "Evening customer service" },
-        { hour: "19:00", minWorkers: 1, optimalWorkers: 2, notes: "Late customer assistance" },
+        { startTime: "18:00", endTime: "20:00", minWorkers: 1, optimalWorkers: 2, notes: "Evening customer service, late customer assistance" },
       ],
       recurringDays: ["tuesday", "thursday"],
       isActive: true,
@@ -533,5 +521,21 @@ export const deleteShiftTemplate = mutation({
       await ctx.db.delete(args.shiftId);
       return { deleted: true, deactivated: false };
     }
+  },
+});
+
+// Development helper: Clear all shifts (use with caution!)
+export const clearAllShifts = mutation({
+  args: {},
+  handler: async (ctx) => {
+    // Get all shifts
+    const allShifts = await ctx.db.query("shifts").collect();
+
+    // Delete each shift
+    for (const shift of allShifts) {
+      await ctx.db.delete(shift._id);
+    }
+
+    return { deleted: allShifts.length };
   },
 });
