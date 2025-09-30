@@ -70,7 +70,7 @@ export function LUZWeekView({
           </div>
 
           {/* Day Headers and Content */}
-          <div className="ml-16 grid grid-cols-7 gap-1">
+          <div className="ml-16 grid grid-cols-7 gap-2">
             {weekDates.map((date, dayIndex) => {
               const dateObj = new Date(date + 'T00:00:00');
               // Use actual date calculation instead of array index
