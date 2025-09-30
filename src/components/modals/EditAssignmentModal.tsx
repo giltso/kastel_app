@@ -40,8 +40,9 @@ export function EditAssignmentModal({
     assignment?.shiftTemplateId ? { shiftId: assignment.shiftTemplateId } : "skip"
   );
 
-  // Use the edit assignment mutation (we'll create this)
+  // Use the edit assignment mutation and delete mutation
   const editAssignment = useMutation(api.shift_assignments.editAssignment);
+  const requestDeleteAssignment = useMutation(api.shift_assignments.requestDeleteAssignment);
 
   // Initialize form with existing assignment data when modal opens
   useEffect(() => {
@@ -60,15 +61,24 @@ export function EditAssignmentModal({
     setError(null);
 
     try {
-      // Default to existing hours if no changes made
-      const hoursToRequest = selectedHours.length > 0 ? selectedHours : assignment.assignedHours;
+      // Check if all time slots have been removed
+      if (selectedHours.length === 0 && assignment.assignedHours?.length > 0) {
+        // User intentionally removed all hours - request deletion (requires approval)
+        await requestDeleteAssignment({
+          assignmentId: assignmentId!,
+          deleteNotes: requestNotes || "All time slots removed"
+        });
+      } else {
+        // Default to existing hours if no changes made
+        const hoursToRequest = selectedHours.length > 0 ? selectedHours : assignment.assignedHours;
 
-      // Create a new assignment with edited details - approval workflow based on permissions
-      await editAssignment({
-        originalAssignmentId: assignmentId!,
-        requestedHours: hoursToRequest.length > 0 ? hoursToRequest : undefined,
-        requestNotes: requestNotes || undefined,
-      });
+        // Create a new assignment with edited details - approval workflow based on permissions
+        await editAssignment({
+          originalAssignmentId: assignmentId!,
+          requestedHours: hoursToRequest.length > 0 ? hoursToRequest : undefined,
+          requestNotes: requestNotes || undefined,
+        });
+      }
 
       onSuccess?.();
       onClose();
@@ -366,6 +376,23 @@ export function EditAssignmentModal({
                 <div className="alert alert-error mb-4">
                   <AlertCircle className="w-4 h-4" />
                   <span>{error}</span>
+                </div>
+              )}
+
+              {/* Warning when all time slots removed */}
+              {selectedHours.length === 0 && assignment?.assignedHours && assignment.assignedHours.length > 0 && (
+                <div className="alert alert-warning mb-4">
+                  <AlertCircle className="w-4 h-4" />
+                  <div>
+                    <div className="font-medium">Deletion Request</div>
+                    <div className="text-sm">
+                      {hasManagerTag && assignment.workerId === user?._id
+                        ? "Removing all time slots will delete this assignment immediately."
+                        : hasManagerTag
+                        ? "Removing all time slots will request deletion. Worker approval required."
+                        : "Removing all time slots will request deletion. Manager approval required."}
+                    </div>
+                  </div>
                 </div>
               )}
 

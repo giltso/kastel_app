@@ -638,3 +638,81 @@ export const editAssignment = mutation({
     return newAssignmentId;
   },
 });
+
+// Mutation: Request to delete an assignment (requires approval)
+export const requestDeleteAssignment = mutation({
+  args: {
+    assignmentId: v.id("shift_assignments"),
+    deleteNotes: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new ConvexError("Not authenticated");
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+
+    if (!user) {
+      throw new ConvexError("User not found");
+    }
+
+    // Get the assignment
+    const assignment = await ctx.db.get(args.assignmentId);
+    if (!assignment) {
+      throw new ConvexError("Assignment not found");
+    }
+
+    // Check permissions - user can delete their own assignment or manager can delete any
+    const isStaff = user.emulatingIsStaff ?? user.isStaff ?? false;
+    const hasWorkerTag = user.emulatingWorkerTag ?? user.workerTag ?? false;
+    const hasManagerTag = user.emulatingManagerTag ?? user.managerTag ?? false;
+
+    const isOwnAssignment = assignment.workerId === user._id;
+    const isManager = isStaff && hasWorkerTag && hasManagerTag;
+
+    if (!isOwnAssignment && !isManager) {
+      throw new ConvexError("You can only delete your own assignments or need manager permissions");
+    }
+
+    const now = Date.now();
+
+    // Determine approval workflow based on who is deleting
+    let status: "pending_worker_approval" | "pending_manager_approval" | "rejected";
+    let managerApprovedAt: number | undefined;
+    let workerApprovedAt: number | undefined;
+
+    if (isManager && isOwnAssignment) {
+      // Manager deleting their own assignment - mark as rejected (effectively deleted)
+      status = "rejected";
+      managerApprovedAt = now;
+      workerApprovedAt = now;
+    } else if (isManager && !isOwnAssignment) {
+      // Manager deleting someone else's assignment - needs worker approval
+      status = "pending_worker_approval";
+      managerApprovedAt = now;
+      workerApprovedAt = undefined;
+    } else if (isOwnAssignment) {
+      // Worker deleting their own assignment - needs manager approval
+      status = "pending_manager_approval";
+      managerApprovedAt = undefined;
+      workerApprovedAt = now;
+    } else {
+      // This case shouldn't happen due to permission check above
+      throw new ConvexError("Invalid delete permissions");
+    }
+
+    // Update assignment with delete request status and notes
+    await ctx.db.patch(args.assignmentId, {
+      status: status,
+      managerApprovedAt: managerApprovedAt,
+      workerApprovedAt: workerApprovedAt,
+      assignmentNotes: `${assignment.assignmentNotes || ''}\nDeletion requested by ${user.name || 'user'}: ${args.deleteNotes || 'No reason provided'}`
+    });
+
+    return args.assignmentId;
+  },
+});
