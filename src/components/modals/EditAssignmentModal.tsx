@@ -164,13 +164,13 @@ export function EditAssignmentModal({
         <div className="flex flex-1 overflow-hidden">
           {/* Left Column - Assignment Details & Form */}
           <div className="flex-1 p-6 overflow-y-auto">
-            {/* Current Assignment Information */}
+            {/* Current Assignment Information with Integrated Requirements */}
             <div className="bg-base-100 rounded-lg border border-base-300 p-4 mb-6">
               <h4 className="font-semibold mb-3 flex items-center gap-2">
                 <Calendar className="w-4 h-4" />
-                Current Assignment
+                Current Assignment & Coverage
               </h4>
-              <div className="space-y-2 text-sm">
+              <div className="space-y-3 text-sm">
                 <div className="flex justify-between">
                   <span className="text-base-content/70">Date:</span>
                   <span>{new Date(assignment.date).toLocaleDateString()}</span>
@@ -188,45 +188,96 @@ export function EditAssignmentModal({
                     {assignment.status}
                   </span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-base-content/70">Current Hours:</span>
-                  <div className="text-right">
-                    {assignment.assignedHours?.map((hour, index) => (
-                      <div key={index}>
-                        {hour.startTime} - {hour.endTime}
-                      </div>
-                    )) || "No hours assigned"}
+
+                {/* Coverage Timeline with Requirements */}
+                <div className="pt-2 border-t border-base-300">
+                  <div className="font-medium text-base-content/90 mb-2">Time Coverage:</div>
+                  <div className="space-y-1.5">
+                    {(() => {
+                      // Create a combined timeline showing assigned hours and gaps
+                      const timeline: Array<{
+                        startTime: string;
+                        endTime: string;
+                        isAssigned: boolean;
+                        requirement?: any;
+                      }> = [];
+
+                      // Process each requirement range
+                      shift.hourlyRequirements.forEach(req => {
+                        const reqStart = req.startTime;
+                        const reqEnd = req.endTime;
+
+                        // Check if this requirement range is covered by assignment
+                        const coveringAssignments = assignment.assignedHours?.filter(hour => {
+                          // Check if assignment overlaps with requirement
+                          return hour.startTime < reqEnd && hour.endTime > reqStart;
+                        }) || [];
+
+                        if (coveringAssignments.length > 0) {
+                          // Show covered portions
+                          coveringAssignments.forEach(hour => {
+                            timeline.push({
+                              startTime: hour.startTime,
+                              endTime: hour.endTime,
+                              isAssigned: true,
+                              requirement: req
+                            });
+                          });
+                        } else {
+                          // Show gap
+                          timeline.push({
+                            startTime: reqStart,
+                            endTime: reqEnd,
+                            isAssigned: false,
+                            requirement: req
+                          });
+                        }
+                      });
+
+                      // Sort by start time
+                      timeline.sort((a, b) => a.startTime.localeCompare(b.startTime));
+
+                      // Remove duplicates (when assignment covers multiple requirements)
+                      const uniqueTimeline: typeof timeline = [];
+                      const seen = new Set<string>();
+                      timeline.forEach(item => {
+                        const key = `${item.startTime}-${item.endTime}-${item.isAssigned}`;
+                        if (!seen.has(key)) {
+                          seen.add(key);
+                          uniqueTimeline.push(item);
+                        }
+                      });
+
+                      return uniqueTimeline.map((slot, index) => {
+                        const req = slot.requirement;
+                        return (
+                          <div
+                            key={index}
+                            className={`flex items-center gap-2 p-2 rounded text-xs ${
+                              slot.isAssigned
+                                ? 'bg-success/10 border border-success/30'
+                                : 'bg-warning/10 border border-warning/30'
+                            }`}
+                          >
+                            <span className="text-lg">
+                              {slot.isAssigned ? '✓' : '✗'}
+                            </span>
+                            <div className="flex-1">
+                              <div className="font-medium">
+                                {slot.startTime} - {slot.endTime}
+                                {!slot.isAssigned && <span className="ml-1 text-warning">(Gap)</span>}
+                              </div>
+                              <div className="text-base-content/60">
+                                {req.minWorkers}-{req.optimalWorkers} workers needed
+                                {req.notes && ` · ${req.notes}`}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      });
+                    })()}
                   </div>
                 </div>
-              </div>
-            </div>
-
-            {/* Shift Hourly Requirements (Range-based) */}
-            <div className="bg-base-100 rounded-lg border border-base-300 p-4 mb-6">
-              <h4 className="font-semibold mb-3 flex items-center gap-2">
-                <Users className="w-4 h-4" />
-                Shift Staffing Requirements (Ranges)
-              </h4>
-              <div className="space-y-2">
-                {shift.hourlyRequirements.map((req, index) => (
-                  <div key={index} className="flex items-center justify-between p-2 bg-base-200 rounded text-sm">
-                    <div className="flex items-center gap-2">
-                      <Clock className="w-3 h-3" />
-                      <span className="font-medium">{req.startTime} - {req.endTime}</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className="text-base-content/70">
-                        Min: <span className="font-medium text-base-content">{req.minWorkers}</span>
-                      </span>
-                      <span className="text-base-content/70">
-                        Optimal: <span className="font-medium text-base-content">{req.optimalWorkers}</span>
-                      </span>
-                      {req.notes && (
-                        <span className="text-xs text-base-content/60 italic">({req.notes})</span>
-                      )}
-                    </div>
-                  </div>
-                ))}
               </div>
             </div>
 
