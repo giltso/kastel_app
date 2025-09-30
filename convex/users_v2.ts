@@ -394,6 +394,74 @@ export const getUserStatistics = query({
   },
 });
 
+// Demote staff to customer (common operation)
+export const demoteToCustomer = mutation({
+  args: {
+    userId: v.id("users"),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
+    // Get current user and validate permissions
+    const currentUser = await ctx.db
+      .query("users")
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+
+    if (!currentUser) {
+      throw new Error("Current user not found");
+    }
+
+    // Only dev or managers can demote users
+    const canDemote = currentUser.role === "dev" || hasV2Permission(currentUser, "manager");
+    if (!canDemote) {
+      throw new Error("Only managers can demote users to customer");
+    }
+
+    // Get target user
+    const targetUser = await ctx.db.get(args.userId);
+    if (!targetUser) {
+      throw new Error("Target user not found");
+    }
+
+    await ctx.db.patch(args.userId, {
+      isStaff: false,
+      workerTag: false,
+      instructorTag: false,
+      toolHandlerTag: false,
+      managerTag: false,
+      // Keep rentalApprovedTag as is (customer may still be rental approved)
+    });
+
+    return { success: true };
+  },
+});
+
+// Get all course enrollments (for filtering customers by enrollment status)
+export const getAllEnrollments = query({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return [];
+
+    const currentUser = await ctx.db
+      .query("users")
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+
+    if (!currentUser) return [];
+
+    // Only dev or managers can see all enrollments
+    const canViewAll = currentUser.role === "dev" || hasV2Permission(currentUser, "manager");
+    if (!canViewAll) return [];
+
+    return await ctx.db.query("course_enrollments").collect();
+  },
+});
+
 // Development helper: Convert current user to dev (for testing)
 export const makeCurrentUserDev = mutation({
   args: {},

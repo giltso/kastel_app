@@ -1,10 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { usePermissionsV2 } from "@/hooks/usePermissionsV2";
 import { EnsureUserV2 } from "@/components/EnsureUserV2";
-import { Users, Shield, UserPlus, Settings } from "lucide-react";
+import { Users, Shield, Settings, Search } from "lucide-react";
 import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
+import { EditRoleModal } from "@/components/modals/EditRoleModal";
+import { Id } from "../../convex/_generated/dataModel";
 
 export const Route = createFileRoute("/roles")({
   component: RolesPage,
@@ -14,9 +16,29 @@ function RolesPage() {
   const { checkPermission, isLoading, isAuthenticated } = usePermissionsV2();
   const [viewMode, setViewMode] = useState<'staff' | 'customers'>('staff');
 
+  // Search and filter state
+  const [searchQuery, setSearchQuery] = useState("");
+  const [roleFilters, setRoleFilters] = useState({
+    // Staff filters
+    worker: false,
+    manager: false,
+    instructor: false,
+    toolHandler: false,
+    // Customer filters
+    rentalApproved: false,
+    enrolled: false,
+  });
+
+  // Modal state
+  const [editRoleModal, setEditRoleModal] = useState<{
+    isOpen: boolean;
+    user: any | null;
+  }>({ isOpen: false, user: null });
+
   // Get real user data from backend
   const allUsers = useQuery(api.users_v2.getAllUsersV2);
   const userStats = useQuery(api.users_v2.getUserStatistics);
+  const enrollments = useQuery(api.users_v2.getAllEnrollments);
 
   if (isLoading || allUsers === undefined || userStats === undefined) {
     return (
@@ -44,9 +66,68 @@ function RolesPage() {
     );
   }
 
-  // Filter users based on view mode
-  const staffUsers = allUsers?.filter(user => user.effectiveRole.isStaff) || [];
-  const customerUsers = allUsers?.filter(user => !user.effectiveRole.isStaff) || [];
+  // Build set of enrolled customer IDs
+  const enrolledCustomerIds = useMemo(() => {
+    if (!enrollments) return new Set<Id<"users">>();
+    return new Set(
+      enrollments
+        .filter(e => e.status === 'confirmed' || e.status === 'approved')
+        .map(e => e.studentId)
+    );
+  }, [enrollments]);
+
+  // Filter users based on view mode, search, and role filters
+  const staffUsers = useMemo(() => {
+    if (!allUsers) return [];
+
+    return allUsers
+      .filter(user => user.effectiveRole.isStaff)
+      .filter(user => {
+        // Search filter
+        const matchesSearch =
+          user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          user.email?.toLowerCase().includes(searchQuery.toLowerCase());
+
+        if (!matchesSearch) return false;
+
+        // Role filters (OR logic - show if ANY active filter matches)
+        const activeFilters = Object.entries(roleFilters).filter(([_, active]) => active);
+        if (activeFilters.length === 0) return true; // No filters = show all
+
+        return activeFilters.some(([tag, _]) => {
+          if (tag === 'worker') return user.effectiveRole.workerTag;
+          if (tag === 'manager') return user.effectiveRole.managerTag;
+          if (tag === 'instructor') return user.effectiveRole.instructorTag;
+          if (tag === 'toolHandler') return user.effectiveRole.toolHandlerTag;
+          return false;
+        });
+      });
+  }, [allUsers, searchQuery, roleFilters]);
+
+  const customerUsers = useMemo(() => {
+    if (!allUsers) return [];
+
+    return allUsers
+      .filter(user => !user.effectiveRole.isStaff)
+      .filter(user => {
+        // Search filter
+        const matchesSearch =
+          user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          user.email?.toLowerCase().includes(searchQuery.toLowerCase());
+
+        if (!matchesSearch) return false;
+
+        // Role filters (OR logic - show if ANY active filter matches)
+        const activeFilters = Object.entries(roleFilters).filter(([_, active]) => active);
+        if (activeFilters.length === 0) return true; // No filters = show all
+
+        return activeFilters.some(([tag, _]) => {
+          if (tag === 'rentalApproved') return user.effectiveRole.rentalApprovedTag;
+          if (tag === 'enrolled') return enrolledCustomerIds.has(user._id);
+          return false;
+        });
+      });
+  }, [allUsers, searchQuery, roleFilters, enrolledCustomerIds]);
 
   // Helper function to get role badges for a user
   const getRoleBadges = (user: any) => {
@@ -64,35 +145,37 @@ function RolesPage() {
       <EnsureUserV2 />
       <div className="max-w-7xl mx-auto p-4">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <Shield className="w-8 h-8 text-primary" />
-            <div>
-              <h1 className="text-3xl font-bold">Role Management</h1>
-              <p className="text-base-content/70">Manage user roles and permissions</p>
-            </div>
+        <div className="flex items-center gap-3 mb-6">
+          <Shield className="w-8 h-8 text-primary" />
+          <div>
+            <h1 className="text-3xl font-bold">Role Management</h1>
+            <p className="text-base-content/70">Manage user roles and permissions</p>
           </div>
-          <button className="btn btn-primary">
-            <UserPlus className="w-4 h-4" />
-            {viewMode === 'staff' ? 'Add Staff Member' : 'Promote to Staff'}
-          </button>
         </div>
 
-        {/* View Mode Toggle */}
+        {/* View Mode Toggle - Enhanced */}
         <div className="flex justify-center mb-6">
-          <div className="tabs tabs-boxed">
+          <div className="tabs tabs-boxed tabs-lg p-2">
             <button
-              className={`tab ${viewMode === 'staff' ? 'tab-active' : ''}`}
+              className={`tab tab-lg px-8 py-4 text-lg font-semibold transition-all ${
+                viewMode === 'staff'
+                  ? 'tab-active bg-primary text-primary-content'
+                  : 'hover:bg-base-300'
+              }`}
               onClick={() => setViewMode('staff')}
             >
-              <Shield className="w-4 h-4 mr-2" />
+              <Shield className="w-5 h-5 mr-2" />
               Staff Management
             </button>
             <button
-              className={`tab ${viewMode === 'customers' ? 'tab-active' : ''}`}
+              className={`tab tab-lg px-8 py-4 text-lg font-semibold transition-all ${
+                viewMode === 'customers'
+                  ? 'tab-active bg-warning text-warning-content'
+                  : 'hover:bg-base-300'
+              }`}
               onClick={() => setViewMode('customers')}
             >
-              <Users className="w-4 h-4 mr-2" />
+              <Users className="w-5 h-5 mr-2" />
               Customer Management
             </button>
           </div>
@@ -194,19 +277,69 @@ function RolesPage() {
                   </div>
               <div className="p-4">
                 {/* Search and Filter */}
-                <div className="flex flex-col sm:flex-row gap-4 mb-4">
-                  <input
-                    type="text"
-                    placeholder="Search staff members..."
-                    className="input input-bordered flex-1"
-                  />
-                  <select className="select select-bordered">
-                    <option value="">All Roles</option>
-                    <option value="manager">Managers</option>
-                    <option value="worker">Workers</option>
-                    <option value="instructor">Instructors</option>
-                    <option value="toolHandler">Tool Handlers</option>
-                  </select>
+                <div className="mb-4 space-y-3">
+                  {/* Search Input */}
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-base-content/50" />
+                    <input
+                      type="text"
+                      placeholder="Search staff members by name or email..."
+                      className="input input-bordered w-full pl-10"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                  </div>
+
+                  {/* Role Filter Toggles */}
+                  <div className="flex flex-wrap gap-3">
+                    <label className="flex items-center gap-2 cursor-pointer hover:bg-base-200 px-3 py-2 rounded-lg transition-colors">
+                      <input
+                        type="checkbox"
+                        className="checkbox checkbox-primary checkbox-sm"
+                        checked={roleFilters.worker}
+                        onChange={(e) =>
+                          setRoleFilters(prev => ({ ...prev, worker: e.target.checked }))
+                        }
+                      />
+                      <span className="text-sm font-medium">Worker</span>
+                    </label>
+
+                    <label className="flex items-center gap-2 cursor-pointer hover:bg-base-200 px-3 py-2 rounded-lg transition-colors">
+                      <input
+                        type="checkbox"
+                        className="checkbox checkbox-success checkbox-sm"
+                        checked={roleFilters.manager}
+                        onChange={(e) =>
+                          setRoleFilters(prev => ({ ...prev, manager: e.target.checked }))
+                        }
+                      />
+                      <span className="text-sm font-medium">Manager</span>
+                    </label>
+
+                    <label className="flex items-center gap-2 cursor-pointer hover:bg-base-200 px-3 py-2 rounded-lg transition-colors">
+                      <input
+                        type="checkbox"
+                        className="checkbox checkbox-info checkbox-sm"
+                        checked={roleFilters.instructor}
+                        onChange={(e) =>
+                          setRoleFilters(prev => ({ ...prev, instructor: e.target.checked }))
+                        }
+                      />
+                      <span className="text-sm font-medium">Instructor</span>
+                    </label>
+
+                    <label className="flex items-center gap-2 cursor-pointer hover:bg-base-200 px-3 py-2 rounded-lg transition-colors">
+                      <input
+                        type="checkbox"
+                        className="checkbox checkbox-warning checkbox-sm"
+                        checked={roleFilters.toolHandler}
+                        onChange={(e) =>
+                          setRoleFilters(prev => ({ ...prev, toolHandler: e.target.checked }))
+                        }
+                      />
+                      <span className="text-sm font-medium">Tool Handler</span>
+                    </label>
+                  </div>
                 </div>
 
                 {/* Staff Table */}
@@ -250,10 +383,14 @@ function RolesPage() {
                               <span className="badge badge-success">Active</span>
                             </td>
                             <td>
-                              <div className="flex gap-2">
-                                <button className="btn btn-ghost btn-sm">Edit</button>
-                                <button className="btn btn-ghost btn-sm text-error">Remove</button>
-                              </div>
+                              <button
+                                className="btn btn-primary btn-sm"
+                                onClick={() =>
+                                  setEditRoleModal({ isOpen: true, user })
+                                }
+                              >
+                                Edit Roles
+                              </button>
                             </td>
                           </tr>
                         ))
@@ -322,19 +459,45 @@ function RolesPage() {
                   </div>
                   <div className="p-4">
                     {/* Search and Filter for Customers */}
-                    <div className="flex flex-col sm:flex-row gap-4 mb-4">
-                      <input
-                        type="text"
-                        placeholder="Search customers..."
-                        className="input input-bordered flex-1"
-                      />
-                      <select className="select select-bordered">
-                        <option value="">All Status</option>
-                        <option value="active">Active</option>
-                        <option value="rental_approved">Rental Approved</option>
-                        <option value="pending">Pending Approval</option>
-                        <option value="inactive">Inactive</option>
-                      </select>
+                    <div className="mb-4 space-y-3">
+                      {/* Search Input */}
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-base-content/50" />
+                        <input
+                          type="text"
+                          placeholder="Search customers by name or email..."
+                          className="input input-bordered w-full pl-10"
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                        />
+                      </div>
+
+                      {/* Customer Filter Toggles */}
+                      <div className="flex flex-wrap gap-3">
+                        <label className="flex items-center gap-2 cursor-pointer hover:bg-base-200 px-3 py-2 rounded-lg transition-colors">
+                          <input
+                            type="checkbox"
+                            className="checkbox checkbox-success checkbox-sm"
+                            checked={roleFilters.rentalApproved}
+                            onChange={(e) =>
+                              setRoleFilters(prev => ({ ...prev, rentalApproved: e.target.checked }))
+                            }
+                          />
+                          <span className="text-sm font-medium">Rental Approved</span>
+                        </label>
+
+                        <label className="flex items-center gap-2 cursor-pointer hover:bg-base-200 px-3 py-2 rounded-lg transition-colors">
+                          <input
+                            type="checkbox"
+                            className="checkbox checkbox-secondary checkbox-sm"
+                            checked={roleFilters.enrolled}
+                            onChange={(e) =>
+                              setRoleFilters(prev => ({ ...prev, enrolled: e.target.checked }))
+                            }
+                          />
+                          <span className="text-sm font-medium">Enrolled in Courses</span>
+                        </label>
+                      </div>
                     </div>
 
                     {/* Customer Table */}
@@ -379,10 +542,14 @@ function RolesPage() {
                                   </div>
                                 </td>
                                 <td>
-                                  <div className="flex gap-2">
-                                    <button className="btn btn-ghost btn-sm">Edit</button>
-                                    <button className="btn btn-ghost btn-sm">Promote</button>
-                                  </div>
+                                  <button
+                                    className="btn btn-primary btn-sm"
+                                    onClick={() =>
+                                      setEditRoleModal({ isOpen: true, user })
+                                    }
+                                  >
+                                    Edit Roles
+                                  </button>
                                 </td>
                               </tr>
                             ))
@@ -437,6 +604,18 @@ function RolesPage() {
             </>
           )}
         </div>
+
+        {/* Edit Role Modal */}
+        {editRoleModal.user && (
+          <EditRoleModal
+            isOpen={editRoleModal.isOpen}
+            onClose={() => setEditRoleModal({ isOpen: false, user: null })}
+            user={editRoleModal.user}
+            onSuccess={() => {
+              // Modal will close automatically, data will refresh via Convex reactivity
+            }}
+          />
+        )}
       </div>
     </>
   );
