@@ -300,15 +300,26 @@ export const createCourseV2 = mutation({
     description: v.string(),
     category: v.string(),
     skillLevel: v.union(v.literal("beginner"), v.literal("intermediate"), v.literal("advanced")),
-    startDate: v.string(),
-    endDate: v.string(),
-    startTime: v.string(),
-    endTime: v.string(),
+    sessionType: v.union(v.literal("single"), v.literal("multi-meeting"), v.literal("recurring-template")),
+    // Legacy fields for single session courses
+    startDate: v.optional(v.string()),
+    endDate: v.optional(v.string()),
+    startTime: v.optional(v.string()),
+    endTime: v.optional(v.string()),
     location: v.string(),
     maxParticipants: v.number(),
-    price: v.number(),
+    price: v.optional(v.number()),
     syllabus: v.array(v.string()),
     materials: v.optional(v.array(v.string())),
+    // Sessions for multi-meeting courses
+    sessions: v.optional(v.array(v.object({
+      sessionNumber: v.number(),
+      date: v.string(),
+      startTime: v.string(),
+      endTime: v.string(),
+      location: v.optional(v.string()),
+      notes: v.optional(v.string()),
+    }))),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -326,11 +337,24 @@ export const createCourseV2 = mutation({
       throw new Error("Instructor tag required to create courses");
     }
 
-    // Validate dates
-    const startDate = new Date(args.startDate);
-    const endDate = new Date(args.endDate);
-    if (endDate < startDate) {
-      throw new Error("End date must be after start date");
+    // Validate single session courses have required date/time fields
+    if (args.sessionType === "single") {
+      if (!args.startDate || !args.endDate || !args.startTime || !args.endTime) {
+        throw new Error("Single session courses require startDate, endDate, startTime, and endTime");
+      }
+
+      const startDate = new Date(args.startDate);
+      const endDate = new Date(args.endDate);
+      if (endDate < startDate) {
+        throw new Error("End date must be after start date");
+      }
+    }
+
+    // Validate multi-meeting courses have sessions
+    if (args.sessionType === "multi-meeting") {
+      if (!args.sessions || args.sessions.length === 0) {
+        throw new Error("Multi-meeting courses require at least one session");
+      }
     }
 
     const courseId = await ctx.db.insert("courses", {
@@ -338,13 +362,14 @@ export const createCourseV2 = mutation({
       description: args.description,
       category: args.category,
       skillLevel: args.skillLevel,
+      sessionType: args.sessionType,
       startDate: args.startDate,
       endDate: args.endDate,
       startTime: args.startTime,
       endTime: args.endTime,
       location: args.location,
       maxParticipants: args.maxParticipants,
-      price: args.price,
+      price: args.price || 0, // Default to 0 (free) if not specified
       syllabus: args.syllabus,
       materials: args.materials || [],
       instructorId: currentUser._id,
@@ -352,6 +377,21 @@ export const createCourseV2 = mutation({
       currentParticipants: 0,
       isActive: true,
     });
+
+    // Create course sessions if multi-meeting
+    if (args.sessionType === "multi-meeting" && args.sessions) {
+      for (const session of args.sessions) {
+        await ctx.db.insert("course_sessions", {
+          courseId,
+          sessionNumber: session.sessionNumber,
+          date: session.date,
+          startTime: session.startTime,
+          endTime: session.endTime,
+          location: session.location,
+          notes: session.notes,
+        });
+      }
+    }
 
     return { courseId };
   },
@@ -695,6 +735,155 @@ export const cancelEnrollmentV2 = mutation({
       status: "cancelled",
     });
 
+    return { success: true };
+  },
+});
+
+// Get course with sessions
+export const getCourseWithSessions = query({
+  args: { courseId: v.id("courses") },
+  handler: async (ctx, args) => {
+    const course = await ctx.db.get(args.courseId);
+    if (!course) return null;
+
+    // Get sessions if multi-meeting course
+    let sessions = [];
+    if (course.sessionType === "multi-meeting") {
+      sessions = await ctx.db
+        .query("course_sessions")
+        .withIndex("by_courseId", (q) => q.eq("courseId", args.courseId))
+        .collect();
+
+      // Sort by session number
+      sessions.sort((a, b) => a.sessionNumber - b.sessionNumber);
+    }
+
+    return {
+      ...course,
+      sessions,
+    };
+  },
+});
+
+// Create course session (instructor only)
+export const createCourseSession = mutation({
+  args: {
+    courseId: v.id("courses"),
+    sessionNumber: v.number(),
+    date: v.string(),
+    startTime: v.string(),
+    endTime: v.string(),
+    location: v.optional(v.string()),
+    notes: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+
+    const currentUser = await ctx.db
+      .query("users")
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+
+    if (!currentUser) throw new Error("User not found");
+
+    const course = await ctx.db.get(args.courseId);
+    if (!course) throw new Error("Course not found");
+
+    // Check ownership
+    const isOwner = course.instructorId === currentUser._id;
+    if (!isOwner && currentUser.role !== "dev") {
+      throw new Error("Only course owner can add sessions");
+    }
+
+    const sessionId = await ctx.db.insert("course_sessions", {
+      courseId: args.courseId,
+      sessionNumber: args.sessionNumber,
+      date: args.date,
+      startTime: args.startTime,
+      endTime: args.endTime,
+      location: args.location,
+      notes: args.notes,
+    });
+
+    return { sessionId };
+  },
+});
+
+// Update course session (instructor only)
+export const updateCourseSession = mutation({
+  args: {
+    sessionId: v.id("course_sessions"),
+    date: v.optional(v.string()),
+    startTime: v.optional(v.string()),
+    endTime: v.optional(v.string()),
+    location: v.optional(v.string()),
+    notes: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+
+    const currentUser = await ctx.db
+      .query("users")
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+
+    if (!currentUser) throw new Error("User not found");
+
+    const session = await ctx.db.get(args.sessionId);
+    if (!session) throw new Error("Session not found");
+
+    const course = await ctx.db.get(session.courseId);
+    if (!course) throw new Error("Course not found");
+
+    // Check ownership
+    const isOwner = course.instructorId === currentUser._id;
+    if (!isOwner && currentUser.role !== "dev") {
+      throw new Error("Only course owner can edit sessions");
+    }
+
+    const updateFields: any = {};
+    if (args.date !== undefined) updateFields.date = args.date;
+    if (args.startTime !== undefined) updateFields.startTime = args.startTime;
+    if (args.endTime !== undefined) updateFields.endTime = args.endTime;
+    if (args.location !== undefined) updateFields.location = args.location;
+    if (args.notes !== undefined) updateFields.notes = args.notes;
+
+    await ctx.db.patch(args.sessionId, updateFields);
+    return { success: true };
+  },
+});
+
+// Delete course session (instructor only)
+export const deleteCourseSession = mutation({
+  args: {
+    sessionId: v.id("course_sessions"),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+
+    const currentUser = await ctx.db
+      .query("users")
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+
+    if (!currentUser) throw new Error("User not found");
+
+    const session = await ctx.db.get(args.sessionId);
+    if (!session) throw new Error("Session not found");
+
+    const course = await ctx.db.get(session.courseId);
+    if (!course) throw new Error("Course not found");
+
+    // Check ownership
+    const isOwner = course.instructorId === currentUser._id;
+    if (!isOwner && currentUser.role !== "dev") {
+      throw new Error("Only course owner can delete sessions");
+    }
+
+    await ctx.db.delete(args.sessionId);
     return { success: true };
   },
 });

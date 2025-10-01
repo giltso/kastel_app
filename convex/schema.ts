@@ -220,7 +220,7 @@ export default defineSchema({
   .index("by_approvedBy", ["approvedBy"])
   .index("by_rentalStartDate", ["rentalStartDate"]),
 
-  // V2 Courses system - Integrated with V2 instructor tag permissions
+  // V2 Courses system - Course templates with session support
   courses: defineTable({
     title: v.string(),
     description: v.string(),
@@ -228,16 +228,26 @@ export default defineSchema({
     instructorId: v.id("users"), // Course owner/writer (has full edit permissions)
     helperInstructorIds: v.optional(v.array(v.id("users"))), // Helper instructors (can approve enrollments only)
     assistantIds: v.optional(v.array(v.id("users"))), // Legacy field, can be deprecated
-    startDate: v.string(),
-    endDate: v.string(),
-    startTime: v.string(),
-    endTime: v.string(),
+
+    // Session type determines how dates/times are stored
+    sessionType: v.union(
+      v.literal("single"), // Single session - uses legacy date/time fields
+      v.literal("multi-meeting"), // Multiple sessions - uses course_sessions table
+      v.literal("recurring-template") // Future: recurring independent instances
+    ),
+
+    // Legacy date/time fields (used for single session courses and backward compatibility)
+    startDate: v.optional(v.string()),
+    endDate: v.optional(v.string()),
+    startTime: v.optional(v.string()),
+    endTime: v.optional(v.string()),
+
     maxParticipants: v.number(),
     currentParticipants: v.number(),
     skillLevel: v.union(v.literal("beginner"), v.literal("intermediate"), v.literal("advanced")),
     category: v.string(),
-    price: v.number(),
-    location: v.string(),
+    price: v.optional(v.number()), // Made optional, defaults to 0 (free)
+    location: v.string(), // Default location, can be overridden per session
     isActive: v.boolean(),
     materials: v.optional(v.array(v.string())),
     createdBy: v.id("users"),
@@ -247,6 +257,19 @@ export default defineSchema({
   .index("by_skillLevel", ["skillLevel"])
   .index("by_category", ["category"])
   .index("by_isActive", ["isActive"]),
+
+  // Course Sessions - For multi-meeting courses
+  course_sessions: defineTable({
+    courseId: v.id("courses"), // Reference to course template
+    sessionNumber: v.number(), // 1, 2, 3, etc. - order of sessions
+    date: v.string(), // "2025-10-12" - specific session date
+    startTime: v.string(), // "14:00"
+    endTime: v.string(), // "16:00"
+    location: v.optional(v.string()), // Override course template location if needed
+    notes: v.optional(v.string()), // "Bring safety goggles"
+  })
+  .index("by_courseId", ["courseId"])
+  .index("by_date", ["date"]),
 
   // Keep existing Course Enrollments system (V2 will integrate later)
   course_enrollments: defineTable({
