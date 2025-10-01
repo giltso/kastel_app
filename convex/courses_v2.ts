@@ -747,7 +747,7 @@ export const getCourseWithSessions = query({
     if (!course) return null;
 
     // Get sessions if multi-meeting course
-    let sessions = [];
+    let sessions: any[] = [];
     if (course.sessionType === "multi-meeting") {
       sessions = await ctx.db
         .query("course_sessions")
@@ -904,6 +904,10 @@ export const getCoursesForDate = query({
 
     // Filter courses that overlap with the given date
     const coursesOnDate = allCourses.filter(course => {
+      // Only filter single-session courses by date, multi-meeting courses handled separately
+      if (course.sessionType !== "single" || !course.startDate || !course.endDate) {
+        return false;
+      }
       return course.startDate <= args.date && course.endDate >= args.date;
     });
 

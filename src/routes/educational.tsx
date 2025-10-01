@@ -101,8 +101,8 @@ function EducationalPage() {
           </div>
         )}
 
-        {/* Action Buttons (Instructors) - Only show if courses exist */}
-        {hasInstructorTag && filteredCourses && filteredCourses.length > 0 && (
+        {/* Action Buttons (Instructors) */}
+        {hasInstructorTag && (
           <div className="flex justify-center mb-6">
             <button
               onClick={() => setCreateModalOpen(true)}
