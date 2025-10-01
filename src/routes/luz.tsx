@@ -197,6 +197,13 @@ function LUZPage() {
       shifts: useQuery(shouldQuery ? api.shifts.getShiftsForDate : "skip", shouldQuery ? { date } : "skip") || []
     };
   });
+  const weekCourseQueries = weekDates.map(date => {
+    const shouldQuery = timelineView === 'week' && filters.courses;
+    return {
+      date,
+      courses: useQuery(shouldQuery ? api.courses_v2.getCoursesForDate : "skip", shouldQuery ? { date } : "skip") || []
+    };
+  });
 
   // Month view queries (conditional to avoid unnecessary queries)
   const monthDates = getMonthDates(selectedDate);
@@ -214,10 +221,17 @@ function LUZPage() {
       shifts: useQuery(shouldQuery ? api.shifts.getShiftsForDate : "skip", shouldQuery ? { date } : "skip") || []
     };
   });
+  const monthCourseQueries = monthDates.map(date => {
+    const shouldQuery = timelineView === 'month' && filters.courses;
+    return {
+      date,
+      courses: useQuery(shouldQuery ? api.courses_v2.getCoursesForDate : "skip", shouldQuery ? { date } : "skip") || []
+    };
+  });
   const pendingAssignments = useQuery(api.shift_assignments.getPendingAssignments) || [];
 
-  // Data arrays filtered by date and filters
-  const coursesForDate: any[] = filters.courses ? [] : []; // TODO: Connect to courses query
+  // Day view course query
+  const coursesForDate: any[] = useQuery(filters.courses ? api.courses_v2.getCoursesForDate : "skip", filters.courses ? { date: selectedDate } : "skip") || [];
 
   // Week view data preparation
   const shiftsForWeek: { [date: string]: any[] } = {};
@@ -230,7 +244,9 @@ function LUZPage() {
       // Use the queried shifts for each date
       const dayShifts = weekShiftQueries.find(q => q.date === date);
       shiftsForWeek[date] = dayShifts ? dayShifts.shifts : [];
-      coursesForWeek[date] = filters.courses ? [] : []; // TODO: Connect to courses query
+      // Use the queried courses for each date
+      const dayCourses = weekCourseQueries.find(q => q.date === date);
+      coursesForWeek[date] = dayCourses ? dayCourses.courses : [];
       // Use the queried assignments for each date
       const dayAssignments = weekAssignmentQueries.find(q => q.date === date);
       assignmentsForWeek[date] = dayAssignments ? dayAssignments.assignments : [];
@@ -244,10 +260,11 @@ function LUZPage() {
   if (timelineView === 'month') {
     monthDates.forEach(date => {
       const dayShifts = monthShiftQueries.find(q => q.date === date);
+      const dayCourses = monthCourseQueries.find(q => q.date === date);
       const dayAssignments = monthAssignmentQueries.find(q => q.date === date);
       monthData[date] = {
         shifts: dayShifts ? dayShifts.shifts : [],
-        courses: filters.courses ? [] : [], // TODO: Connect to courses query
+        courses: dayCourses ? dayCourses.courses : [],
         assignments: dayAssignments ? dayAssignments.assignments : []
       };
     });

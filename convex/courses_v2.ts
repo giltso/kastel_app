@@ -698,3 +698,93 @@ export const cancelEnrollmentV2 = mutation({
     return { success: true };
   },
 });
+
+// Get courses for a specific date (for calendar display)
+export const getCoursesForDate = query({
+  args: {
+    date: v.string(), // YYYY-MM-DD format
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+
+    // Get all active courses
+    const allCourses = await ctx.db
+      .query("courses")
+      .withIndex("by_isActive", (q) => q.eq("isActive", true))
+      .collect();
+
+    // Filter courses that overlap with the given date
+    const coursesOnDate = allCourses.filter(course => {
+      return course.startDate <= args.date && course.endDate >= args.date;
+    });
+
+    // For unauthenticated users, return basic info
+    if (!identity) {
+      return coursesOnDate.map(course => ({
+        _id: course._id,
+        title: course.title,
+        startDate: course.startDate,
+        endDate: course.endDate,
+        startTime: course.startTime,
+        endTime: course.endTime,
+        category: course.category,
+        skillLevel: course.skillLevel,
+        location: course.location,
+      }));
+    }
+
+    // For authenticated users, include enrollment status
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_token", (q) =>
+        q.eq("tokenIdentifier", identity.tokenIdentifier)
+      )
+      .unique();
+
+    if (!user) {
+      return coursesOnDate.map(course => ({
+        _id: course._id,
+        title: course.title,
+        startDate: course.startDate,
+        endDate: course.endDate,
+        startTime: course.startTime,
+        endTime: course.endTime,
+        category: course.category,
+        skillLevel: course.skillLevel,
+        location: course.location,
+      }));
+    }
+
+    // Get users role for permission checking
+    const effectiveRole = await getEffectiveV2Role(ctx, user._id);
+
+    return Promise.all(
+      coursesOnDate.map(async (course) => {
+        const isTeaching = course.instructorId === user._id ||
+                          course.helperInstructorIds?.includes(user._id);
+
+        // Check if user is enrolled
+        const userEnrollment = await ctx.db
+          .query("course_enrollments")
+          .withIndex("by_userId_courseId", (q) =>
+            q.eq("userId", user._id).eq("courseId", course._id)
+          )
+          .first();
+
+        return {
+          _id: course._id,
+          title: course.title,
+          startDate: course.startDate,
+          endDate: course.endDate,
+          startTime: course.startTime,
+          endTime: course.endTime,
+          category: course.category,
+          skillLevel: course.skillLevel,
+          location: course.location,
+          isTeaching,
+          enrollmentStatus: userEnrollment?.status,
+        };
+      })
+    );
+  },
+});
