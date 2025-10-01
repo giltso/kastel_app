@@ -83,7 +83,7 @@ function GuestHomePage() {
               <Link to="/tools" className="btn btn-primary">
                 Browse Our Tools
               </Link>
-              <Link to="/courses" className="btn btn-secondary">
+              <Link to="/educational" className="btn btn-secondary">
                 View Courses
               </Link>
             </div>
@@ -195,7 +195,7 @@ function StaffHomePage({ user, hasPermission }: { user: any, hasPermission: (p: 
                 <div className="p-3 rounded bg-secondary/10 border border-secondary/20">
                   <div className="font-medium text-sm">Courses</div>
                   <div className="text-xs opacity-70">
-                    <Link to="/courses" className="link">Manage Courses →</Link>
+                    <Link to="/educational" className="link">Manage Courses →</Link>
                   </div>
                 </div>
               </div>
@@ -212,12 +212,12 @@ function StaffHomePage({ user, hasPermission }: { user: any, hasPermission: (p: 
                   </Link>
                 )}
                 {hasPermission("manage_courses") && (
-                  <Link to="/courses" className="btn btn-secondary btn-sm w-full justify-start">
+                  <Link to="/educational" className="btn btn-secondary btn-sm w-full justify-start">
                     📚 Manage Courses
                   </Link>
                 )}
                 {hasPermission("access_worker_portal") && (
-                  <Link to="/calendar" className="btn btn-accent btn-sm w-full justify-start">
+                  <Link to="/luz" className="btn btn-accent btn-sm w-full justify-start">
                     📅 Full Calendar View
                   </Link>
                 )}
@@ -242,8 +242,8 @@ function StaffHomePage({ user, hasPermission }: { user: any, hasPermission: (p: 
                     </p>
                   </div>
                   <div className="not-prose">
-                    <Link to="/calendar" className="btn btn-primary btn-sm">
-                      View Legacy Calendar
+                    <Link to="/luz" className="btn btn-primary btn-sm">
+                      View LUZ Calendar
                     </Link>
                   </div>
                 </div>
@@ -292,7 +292,7 @@ function CustomerHomePage({ user, hasPermission }: { user: any, hasPermission: (
               <Link to="/tools" className="btn btn-primary">
                 Browse Our Tools
               </Link>
-              <Link to="/courses" className="btn btn-secondary">
+              <Link to="/educational" className="btn btn-secondary">
                 View Courses
               </Link>
             </div>

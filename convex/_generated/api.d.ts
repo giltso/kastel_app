@@ -13,14 +13,12 @@ import type {
   FilterApi,
   FunctionReference,
 } from "convex/server";
-import type * as courses from "../courses.js";
 import type * as courses_v2 from "../courses_v2.js";
 import type * as dev_helpers from "../dev_helpers.js";
 import type * as shift_assignments from "../shift_assignments.js";
 import type * as shifts from "../shifts.js";
 import type * as tools from "../tools.js";
 import type * as users_v2 from "../users_v2.js";
-import type * as worker_requests from "../worker_requests.js";
 
 /**
  * A utility for referencing Convex functions in your app's API.
@@ -31,14 +29,12 @@ import type * as worker_requests from "../worker_requests.js";
  * ```
  */
 declare const fullApi: ApiFromModules<{
-  courses: typeof courses;
   courses_v2: typeof courses_v2;
   dev_helpers: typeof dev_helpers;
   shift_assignments: typeof shift_assignments;
   shifts: typeof shifts;
   tools: typeof tools;
   users_v2: typeof users_v2;
-  worker_requests: typeof worker_requests;
 }>;
 export declare const api: FilterApi<
   typeof fullApi,

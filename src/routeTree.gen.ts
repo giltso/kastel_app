@@ -11,50 +11,17 @@
 // Import Routes
 
 import { Route as rootRoute } from './routes/__root'
-import { Route as V1Import } from './routes/v1'
-import { Route as UnauthorizedImport } from './routes/unauthorized'
-import { Route as ToolsV2Import } from './routes/tools-v2'
 import { Route as ToolsImport } from './routes/tools'
-import { Route as ShiftsImport } from './routes/shifts'
 import { Route as RolesImport } from './routes/roles'
-import { Route as ProHelpImport } from './routes/pro-help'
 import { Route as LuzImport } from './routes/luz'
-import { Route as FormsImport } from './routes/forms'
-import { Route as EventsImport } from './routes/events'
 import { Route as EducationalImport } from './routes/educational'
-import { Route as CoursesImport } from './routes/courses'
-import { Route as CalendarImport } from './routes/calendar'
 import { Route as IndexImport } from './routes/index'
 
 // Create/Update Routes
 
-const V1Route = V1Import.update({
-  id: '/v1',
-  path: '/v1',
-  getParentRoute: () => rootRoute,
-} as any)
-
-const UnauthorizedRoute = UnauthorizedImport.update({
-  id: '/unauthorized',
-  path: '/unauthorized',
-  getParentRoute: () => rootRoute,
-} as any)
-
-const ToolsV2Route = ToolsV2Import.update({
-  id: '/tools-v2',
-  path: '/tools-v2',
-  getParentRoute: () => rootRoute,
-} as any)
-
 const ToolsRoute = ToolsImport.update({
   id: '/tools',
   path: '/tools',
-  getParentRoute: () => rootRoute,
-} as any)
-
-const ShiftsRoute = ShiftsImport.update({
-  id: '/shifts',
-  path: '/shifts',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -64,45 +31,15 @@ const RolesRoute = RolesImport.update({
   getParentRoute: () => rootRoute,
 } as any)
 
-const ProHelpRoute = ProHelpImport.update({
-  id: '/pro-help',
-  path: '/pro-help',
-  getParentRoute: () => rootRoute,
-} as any)
-
 const LuzRoute = LuzImport.update({
   id: '/luz',
   path: '/luz',
   getParentRoute: () => rootRoute,
 } as any)
 
-const FormsRoute = FormsImport.update({
-  id: '/forms',
-  path: '/forms',
-  getParentRoute: () => rootRoute,
-} as any)
-
-const EventsRoute = EventsImport.update({
-  id: '/events',
-  path: '/events',
-  getParentRoute: () => rootRoute,
-} as any)
-
 const EducationalRoute = EducationalImport.update({
   id: '/educational',
   path: '/educational',
-  getParentRoute: () => rootRoute,
-} as any)
-
-const CoursesRoute = CoursesImport.update({
-  id: '/courses',
-  path: '/courses',
-  getParentRoute: () => rootRoute,
-} as any)
-
-const CalendarRoute = CalendarImport.update({
-  id: '/calendar',
-  path: '/calendar',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -123,39 +60,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexImport
       parentRoute: typeof rootRoute
     }
-    '/calendar': {
-      id: '/calendar'
-      path: '/calendar'
-      fullPath: '/calendar'
-      preLoaderRoute: typeof CalendarImport
-      parentRoute: typeof rootRoute
-    }
-    '/courses': {
-      id: '/courses'
-      path: '/courses'
-      fullPath: '/courses'
-      preLoaderRoute: typeof CoursesImport
-      parentRoute: typeof rootRoute
-    }
     '/educational': {
       id: '/educational'
       path: '/educational'
       fullPath: '/educational'
       preLoaderRoute: typeof EducationalImport
-      parentRoute: typeof rootRoute
-    }
-    '/events': {
-      id: '/events'
-      path: '/events'
-      fullPath: '/events'
-      preLoaderRoute: typeof EventsImport
-      parentRoute: typeof rootRoute
-    }
-    '/forms': {
-      id: '/forms'
-      path: '/forms'
-      fullPath: '/forms'
-      preLoaderRoute: typeof FormsImport
       parentRoute: typeof rootRoute
     }
     '/luz': {
@@ -165,25 +74,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LuzImport
       parentRoute: typeof rootRoute
     }
-    '/pro-help': {
-      id: '/pro-help'
-      path: '/pro-help'
-      fullPath: '/pro-help'
-      preLoaderRoute: typeof ProHelpImport
-      parentRoute: typeof rootRoute
-    }
     '/roles': {
       id: '/roles'
       path: '/roles'
       fullPath: '/roles'
       preLoaderRoute: typeof RolesImport
-      parentRoute: typeof rootRoute
-    }
-    '/shifts': {
-      id: '/shifts'
-      path: '/shifts'
-      fullPath: '/shifts'
-      preLoaderRoute: typeof ShiftsImport
       parentRoute: typeof rootRoute
     }
     '/tools': {
@@ -193,27 +88,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ToolsImport
       parentRoute: typeof rootRoute
     }
-    '/tools-v2': {
-      id: '/tools-v2'
-      path: '/tools-v2'
-      fullPath: '/tools-v2'
-      preLoaderRoute: typeof ToolsV2Import
-      parentRoute: typeof rootRoute
-    }
-    '/unauthorized': {
-      id: '/unauthorized'
-      path: '/unauthorized'
-      fullPath: '/unauthorized'
-      preLoaderRoute: typeof UnauthorizedImport
-      parentRoute: typeof rootRoute
-    }
-    '/v1': {
-      id: '/v1'
-      path: '/v1'
-      fullPath: '/v1'
-      preLoaderRoute: typeof V1Import
-      parentRoute: typeof rootRoute
-    }
   }
 }
 
@@ -221,140 +95,52 @@ declare module '@tanstack/react-router' {
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/calendar': typeof CalendarRoute
-  '/courses': typeof CoursesRoute
   '/educational': typeof EducationalRoute
-  '/events': typeof EventsRoute
-  '/forms': typeof FormsRoute
   '/luz': typeof LuzRoute
-  '/pro-help': typeof ProHelpRoute
   '/roles': typeof RolesRoute
-  '/shifts': typeof ShiftsRoute
   '/tools': typeof ToolsRoute
-  '/tools-v2': typeof ToolsV2Route
-  '/unauthorized': typeof UnauthorizedRoute
-  '/v1': typeof V1Route
 }
 
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/calendar': typeof CalendarRoute
-  '/courses': typeof CoursesRoute
   '/educational': typeof EducationalRoute
-  '/events': typeof EventsRoute
-  '/forms': typeof FormsRoute
   '/luz': typeof LuzRoute
-  '/pro-help': typeof ProHelpRoute
   '/roles': typeof RolesRoute
-  '/shifts': typeof ShiftsRoute
   '/tools': typeof ToolsRoute
-  '/tools-v2': typeof ToolsV2Route
-  '/unauthorized': typeof UnauthorizedRoute
-  '/v1': typeof V1Route
 }
 
 export interface FileRoutesById {
   __root__: typeof rootRoute
   '/': typeof IndexRoute
-  '/calendar': typeof CalendarRoute
-  '/courses': typeof CoursesRoute
   '/educational': typeof EducationalRoute
-  '/events': typeof EventsRoute
-  '/forms': typeof FormsRoute
   '/luz': typeof LuzRoute
-  '/pro-help': typeof ProHelpRoute
   '/roles': typeof RolesRoute
-  '/shifts': typeof ShiftsRoute
   '/tools': typeof ToolsRoute
-  '/tools-v2': typeof ToolsV2Route
-  '/unauthorized': typeof UnauthorizedRoute
-  '/v1': typeof V1Route
 }
 
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths:
-    | '/'
-    | '/calendar'
-    | '/courses'
-    | '/educational'
-    | '/events'
-    | '/forms'
-    | '/luz'
-    | '/pro-help'
-    | '/roles'
-    | '/shifts'
-    | '/tools'
-    | '/tools-v2'
-    | '/unauthorized'
-    | '/v1'
+  fullPaths: '/' | '/educational' | '/luz' | '/roles' | '/tools'
   fileRoutesByTo: FileRoutesByTo
-  to:
-    | '/'
-    | '/calendar'
-    | '/courses'
-    | '/educational'
-    | '/events'
-    | '/forms'
-    | '/luz'
-    | '/pro-help'
-    | '/roles'
-    | '/shifts'
-    | '/tools'
-    | '/tools-v2'
-    | '/unauthorized'
-    | '/v1'
-  id:
-    | '__root__'
-    | '/'
-    | '/calendar'
-    | '/courses'
-    | '/educational'
-    | '/events'
-    | '/forms'
-    | '/luz'
-    | '/pro-help'
-    | '/roles'
-    | '/shifts'
-    | '/tools'
-    | '/tools-v2'
-    | '/unauthorized'
-    | '/v1'
+  to: '/' | '/educational' | '/luz' | '/roles' | '/tools'
+  id: '__root__' | '/' | '/educational' | '/luz' | '/roles' | '/tools'
   fileRoutesById: FileRoutesById
 }
 
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  CalendarRoute: typeof CalendarRoute
-  CoursesRoute: typeof CoursesRoute
   EducationalRoute: typeof EducationalRoute
-  EventsRoute: typeof EventsRoute
-  FormsRoute: typeof FormsRoute
   LuzRoute: typeof LuzRoute
-  ProHelpRoute: typeof ProHelpRoute
   RolesRoute: typeof RolesRoute
-  ShiftsRoute: typeof ShiftsRoute
   ToolsRoute: typeof ToolsRoute
-  ToolsV2Route: typeof ToolsV2Route
-  UnauthorizedRoute: typeof UnauthorizedRoute
-  V1Route: typeof V1Route
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  CalendarRoute: CalendarRoute,
-  CoursesRoute: CoursesRoute,
   EducationalRoute: EducationalRoute,
-  EventsRoute: EventsRoute,
-  FormsRoute: FormsRoute,
   LuzRoute: LuzRoute,
-  ProHelpRoute: ProHelpRoute,
   RolesRoute: RolesRoute,
-  ShiftsRoute: ShiftsRoute,
   ToolsRoute: ToolsRoute,
-  ToolsV2Route: ToolsV2Route,
-  UnauthorizedRoute: UnauthorizedRoute,
-  V1Route: V1Route,
 }
 
 export const routeTree = rootRoute
@@ -368,62 +154,26 @@ export const routeTree = rootRoute
       "filePath": "__root.tsx",
       "children": [
         "/",
-        "/calendar",
-        "/courses",
         "/educational",
-        "/events",
-        "/forms",
         "/luz",
-        "/pro-help",
         "/roles",
-        "/shifts",
-        "/tools",
-        "/tools-v2",
-        "/unauthorized",
-        "/v1"
+        "/tools"
       ]
     },
     "/": {
       "filePath": "index.tsx"
     },
-    "/calendar": {
-      "filePath": "calendar.tsx"
-    },
-    "/courses": {
-      "filePath": "courses.tsx"
-    },
     "/educational": {
       "filePath": "educational.tsx"
-    },
-    "/events": {
-      "filePath": "events.tsx"
-    },
-    "/forms": {
-      "filePath": "forms.tsx"
     },
     "/luz": {
       "filePath": "luz.tsx"
     },
-    "/pro-help": {
-      "filePath": "pro-help.tsx"
-    },
     "/roles": {
       "filePath": "roles.tsx"
     },
-    "/shifts": {
-      "filePath": "shifts.tsx"
-    },
     "/tools": {
       "filePath": "tools.tsx"
-    },
-    "/tools-v2": {
-      "filePath": "tools-v2.tsx"
-    },
-    "/unauthorized": {
-      "filePath": "unauthorized.tsx"
-    },
-    "/v1": {
-      "filePath": "v1.tsx"
     }
   }
 }
