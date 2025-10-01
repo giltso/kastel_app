@@ -220,13 +220,14 @@ export default defineSchema({
   .index("by_approvedBy", ["approvedBy"])
   .index("by_rentalStartDate", ["rentalStartDate"]),
 
-  // Keep existing Courses system (V2 will integrate later)
+  // V2 Courses system - Integrated with V2 instructor tag permissions
   courses: defineTable({
     title: v.string(),
     description: v.string(),
     syllabus: v.array(v.string()),
-    instructorId: v.id("users"),
-    assistantIds: v.optional(v.array(v.id("users"))),
+    instructorId: v.id("users"), // Course owner/writer (has full edit permissions)
+    helperInstructorIds: v.optional(v.array(v.id("users"))), // Helper instructors (can approve enrollments only)
+    assistantIds: v.optional(v.array(v.id("users"))), // Legacy field, can be deprecated
     startDate: v.string(),
     endDate: v.string(),
     startTime: v.string(),

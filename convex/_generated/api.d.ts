@@ -14,6 +14,7 @@ import type {
   FunctionReference,
 } from "convex/server";
 import type * as courses from "../courses.js";
+import type * as courses_v2 from "../courses_v2.js";
 import type * as dev_helpers from "../dev_helpers.js";
 import type * as shift_assignments from "../shift_assignments.js";
 import type * as shifts from "../shifts.js";
@@ -31,6 +32,7 @@ import type * as worker_requests from "../worker_requests.js";
  */
 declare const fullApi: ApiFromModules<{
   courses: typeof courses;
+  courses_v2: typeof courses_v2;
   dev_helpers: typeof dev_helpers;
   shift_assignments: typeof shift_assignments;
   shifts: typeof shifts;
