@@ -122,7 +122,6 @@ export function EditRoleModal({ isOpen, onClose, user, onSuccess }: EditRoleModa
 
     try {
       await demoteToCustomer({ userId: user._id });
-
       onSuccess?.();
       onClose();
     } catch (err) {

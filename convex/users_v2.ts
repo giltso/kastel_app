@@ -278,6 +278,16 @@ export const updateUserRole = mutation({
     if (args.managerTag !== undefined) updateFields.managerTag = args.managerTag;
     if (args.rentalApprovedTag !== undefined) updateFields.rentalApprovedTag = args.rentalApprovedTag;
 
+    // If target user is a dev, also update their emulation fields to match
+    if (targetUser.role === "dev") {
+      if (args.isStaff !== undefined) updateFields.emulatingIsStaff = args.isStaff;
+      if (args.workerTag !== undefined) updateFields.emulatingWorkerTag = args.workerTag;
+      if (args.instructorTag !== undefined) updateFields.emulatingInstructorTag = args.instructorTag;
+      if (args.toolHandlerTag !== undefined) updateFields.emulatingToolHandlerTag = args.toolHandlerTag;
+      if (args.managerTag !== undefined) updateFields.emulatingManagerTag = args.managerTag;
+      if (args.rentalApprovedTag !== undefined) updateFields.emulatingRentalApprovedTag = args.rentalApprovedTag;
+    }
+
     await ctx.db.patch(args.userId, updateFields);
 
     return { success: true };
@@ -326,14 +336,27 @@ export const promoteToStaff = mutation({
       throw new Error("Manager tag requires worker tag");
     }
 
-    await ctx.db.patch(args.userId, {
+    // Set actual role fields
+    const updateFields: any = {
       isStaff: true,
       workerTag: args.workerTag ?? false,
       instructorTag: args.instructorTag ?? false,
       toolHandlerTag: args.toolHandlerTag ?? false,
       managerTag: args.managerTag ?? false,
       rentalApprovedTag: false, // Clear customer permissions when promoting to staff
-    });
+    };
+
+    // If target user is a dev, also update their emulation fields
+    if (targetUser.role === "dev") {
+      updateFields.emulatingIsStaff = true;
+      updateFields.emulatingWorkerTag = args.workerTag ?? false;
+      updateFields.emulatingInstructorTag = args.instructorTag ?? false;
+      updateFields.emulatingToolHandlerTag = args.toolHandlerTag ?? false;
+      updateFields.emulatingManagerTag = args.managerTag ?? false;
+      updateFields.emulatingRentalApprovedTag = false;
+    }
+
+    await ctx.db.patch(args.userId, updateFields);
 
     return { success: true };
   },
@@ -427,14 +450,27 @@ export const demoteToCustomer = mutation({
       throw new Error("Target user not found");
     }
 
-    await ctx.db.patch(args.userId, {
+    // Clear actual role fields
+    const updateFields: any = {
       isStaff: false,
       workerTag: false,
       instructorTag: false,
       toolHandlerTag: false,
       managerTag: false,
       // Keep rentalApprovedTag as is (customer may still be rental approved)
-    });
+    };
+
+    // If target user is a dev, also clear their emulation fields
+    if (targetUser.role === "dev") {
+      updateFields.emulatingIsStaff = false;
+      updateFields.emulatingWorkerTag = false;
+      updateFields.emulatingInstructorTag = false;
+      updateFields.emulatingToolHandlerTag = false;
+      updateFields.emulatingManagerTag = false;
+      // Keep emulatingRentalApprovedTag as is
+    }
+
+    await ctx.db.patch(args.userId, updateFields);
 
     return { success: true };
   },

@@ -613,7 +613,7 @@ function RolesPage() {
             onClose={() => setEditRoleModal({ isOpen: false, user: null })}
             user={editRoleModal.user}
             onSuccess={() => {
-              // Modal will close automatically, data will refresh via Convex reactivity
+              // Queries will automatically refetch via Convex reactivity
             }}
           />
         )}
