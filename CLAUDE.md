@@ -37,37 +37,65 @@ Before marking any feature as "complete":
 
 **Remember: It's better to be honest about incomplete work than to claim completion and create false confidence.**
 
-## Event Management System
+## Current V2 Implementation Status
 
-This application includes a comprehensive role-based event management system with advanced calendar interactions:
+This is a hardware shop management application with V2 tag-based permissions system.
 
-### Features Implemented
-- **Role-based Access Control**: Support for dev, guest, customer, worker, manager roles
-- **Event CRUD Operations**: Full create, read, update, delete functionality
-- **Approval Workflow**: Worker-created events require manager approval
-- **Participants System**: Multi-user event participation with participant search
-- **Interactive Calendar**: Calendar views (day/week/month) with click-to-create functionality
-- **Drag & Drop System**: Complete drag-and-drop support for moving and resizing events
-- **Recurring Events**: Support for recurring events with proper UI state management
-- **Concurrent Events Display**: Side-by-side display for overlapping events in calendar views
-- **Edge Dragging**: Event resizing functionality via edge dragging
-- **Search & Filtering**: Advanced search by title, description, participants, with status/type filters
-- **Event Status Management**: Complete lifecycle from pending → approved → in progress → completed
-- **Role Emulation**: Testing interface for switching between roles
+### Implemented Features
 
-### Key Files
-- `convex/events.ts`: Backend event operations and role-based filtering
-- `convex/users.ts`: User management and role switching
-- `src/routes/events.tsx`: Events list page with approval UI
-- `src/routes/calendar.tsx`: Calendar views and interactions
-- `src/components/CreateEventModal.tsx`: Event creation interface
-- `src/components/EditEventModal.tsx`: Event editing with participants
+#### Role Management System
+- **V2 Tag-Based Permissions**: Clean additive permission system with staff tags (workerTag, managerTag, instructorTag, toolHandlerTag) and customer tags (rentalApprovedTag)
+- **Role Emulation**: Dev users can test different permission combinations via emulation
+- **Edit Roles Interface**: Search, filter, and modify user roles with tag toggles
+- **Staff Promotion/Demotion**: Convert customers to staff and vice versa
 
-### Authentication & Permissions
-- Workers: Can create events (pending approval), edit own events, see assigned events
-- Managers: All worker permissions + approve/reject events, see all operationally relevant events
-- Guests/Customers: View approved events only
-- Role-based UI: Approval buttons only visible to managers for pending events
+**Key Files:**
+- `convex/users_v2.ts`: User management with V2 permissions
+- `src/routes/roles.tsx`: Role management interface
+- `src/hooks/usePermissionsV2.ts`: V2 permission hook
+- `src/components/modals/EditRoleModal.tsx`: Role editing modal
+
+#### LUZ Calendar System
+- **Timeline Views**: Day (vertical), week, and month calendar views
+- **Shift Management**: Create shift templates with hourly requirements
+- **Assignment System**: Worker assignments with dual approval workflows
+- **Calendar Integration**: Shifts, courses, and tool rentals display on unified timeline
+- **Real-time Updates**: Live data synchronization across clients
+
+**Key Files:**
+- `src/routes/luz.tsx`: Main LUZ calendar page
+- `convex/shifts.ts`: Shift template backend
+- `convex/shift_assignments.ts`: Assignment management
+- `src/components/LUZVerticalTimeline.tsx`, `LUZWeekView.tsx`, `LUZMonthView.tsx`: Timeline views
+
+#### Educational System
+- **Course Management**: Create courses with instructors, capacity, and schedules
+- **Enrollment Workflow**: Student enrollment with instructor approval
+- **Role Integration**: Instructor tag permissions for course management
+- **Calendar Display**: Courses appear on LUZ timeline views
+
+**Key Files:**
+- `convex/courses_v2.ts`: Course backend with V2 permissions
+- `src/routes/educational.tsx`: Educational courses page
+- `src/components/modals/CreateCourseModal.tsx`, `CourseDetailsModal.tsx`: Course modals
+
+#### Tool Rental System
+- **Inventory Management**: Tool catalog with availability tracking
+- **Rental Workflow**: Customer requests, staff approval, rental lifecycle
+- **Calendar Integration**: Active rentals display on LUZ timeline
+- **Role-Based Access**: Tool handler tag for staff, rental approved tag for customers
+
+**Key Files:**
+- `convex/tools.ts`: Tool rental backend
+- `src/routes/tools.tsx`: Tool rental interface
+
+### Authentication & Permissions (V2 System)
+- **Staff + Worker Tag**: Access to LUZ calendar, shift management
+- **Staff + Manager Tag**: Approval workflows, requires worker tag
+- **Staff + Instructor Tag**: Course creation and management
+- **Staff + Tool Handler Tag**: Tool inventory and rental approval
+- **Customer + Rental Approved Tag**: Can request tool rentals
+- **Guest**: Public browsing only
 
 ## Git Workflow
 
