@@ -53,11 +53,12 @@ export function calculateWidthFactor(eventType: string, eventData: any, assignme
 }
 
 /**
- * Convert shifts and courses to top-level events with width factors
+ * Convert shifts, courses, and rentals to top-level events with width factors
  */
 export function createTopLevelEvents(
   shiftsForDate: any[],
   coursesForDate: any[],
+  rentalsForDate: any[],
   assignmentsForDate: any[]
 ): TopLevelEvent[] {
   const events: TopLevelEvent[] = [];
@@ -90,6 +91,20 @@ export function createTopLevelEvents(
         endHour: endHour + (endMinutes > 0 ? 1 : 0), // Round up if there are minutes
         widthFactor: calculateWidthFactor('course', course),
         data: course
+      });
+    });
+  }
+
+  // Add rentals as top-level events (span entire day)
+  if (rentalsForDate) {
+    rentalsForDate.forEach(rental => {
+      events.push({
+        id: rental._id,
+        type: 'rental',
+        startHour: 8, // Start of business day
+        endHour: 20, // End of business day
+        widthFactor: calculateWidthFactor('rental', rental),
+        data: rental
       });
     });
   }
@@ -179,13 +194,14 @@ export function calculateEventPositions(events: TopLevelEvent[], paddingPx: numb
 export function calculateTimelinePositions(
   shiftsForDate: any[],
   coursesForDate: any[],
+  rentalsForDate: any[],
   assignmentsForDate: any[],
   paddingPx: number = 5
 ): {
   events: TopLevelEvent[];
   positions: Map<string, EventPosition>;
 } {
-  const events = createTopLevelEvents(shiftsForDate, coursesForDate, assignmentsForDate);
+  const events = createTopLevelEvents(shiftsForDate, coursesForDate, rentalsForDate, assignmentsForDate);
   const positions = calculateEventPositions(events, paddingPx);
 
   return { events, positions };

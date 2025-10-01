@@ -204,6 +204,13 @@ function LUZPage() {
       courses: useQuery(shouldQuery ? api.courses_v2.getCoursesForDate : "skip", shouldQuery ? { date } : "skip") || []
     };
   });
+  const weekRentalQueries = weekDates.map(date => {
+    const shouldQuery = timelineView === 'week' && filters.rentals;
+    return {
+      date,
+      rentals: useQuery(shouldQuery ? api.tools.getToolRentalsForDate : "skip", shouldQuery ? { date } : "skip") || []
+    };
+  });
 
   // Month view queries (conditional to avoid unnecessary queries)
   const monthDates = getMonthDates(selectedDate);
@@ -228,14 +235,25 @@ function LUZPage() {
       courses: useQuery(shouldQuery ? api.courses_v2.getCoursesForDate : "skip", shouldQuery ? { date } : "skip") || []
     };
   });
+  const monthRentalQueries = monthDates.map(date => {
+    const shouldQuery = timelineView === 'month' && filters.rentals;
+    return {
+      date,
+      rentals: useQuery(shouldQuery ? api.tools.getToolRentalsForDate : "skip", shouldQuery ? { date } : "skip") || []
+    };
+  });
   const pendingAssignments = useQuery(api.shift_assignments.getPendingAssignments) || [];
 
   // Day view course query
   const coursesForDate: any[] = useQuery(filters.courses ? api.courses_v2.getCoursesForDate : "skip", filters.courses ? { date: selectedDate } : "skip") || [];
 
+  // Day view rental query
+  const rentalsForDate: any[] = useQuery(filters.rentals ? api.tools.getToolRentalsForDate : "skip", filters.rentals ? { date: selectedDate } : "skip") || [];
+
   // Week view data preparation
   const shiftsForWeek: { [date: string]: any[] } = {};
   const coursesForWeek: { [date: string]: any[] } = {};
+  const rentalsForWeek: { [date: string]: any[] } = {};
   const assignmentsForWeek: { [date: string]: any[] } = {};
 
   // For week view, organize data by date
@@ -247,6 +265,9 @@ function LUZPage() {
       // Use the queried courses for each date
       const dayCourses = weekCourseQueries.find(q => q.date === date);
       coursesForWeek[date] = dayCourses ? dayCourses.courses : [];
+      // Use the queried rentals for each date
+      const dayRentals = weekRentalQueries.find(q => q.date === date);
+      rentalsForWeek[date] = dayRentals ? dayRentals.rentals : [];
       // Use the queried assignments for each date
       const dayAssignments = weekAssignmentQueries.find(q => q.date === date);
       assignmentsForWeek[date] = dayAssignments ? dayAssignments.assignments : [];
@@ -254,17 +275,19 @@ function LUZPage() {
   }
 
   // Month view data preparation
-  const monthData: { [date: string]: { shifts: any[]; courses: any[]; assignments: any[] } } = {};
+  const monthData: { [date: string]: { shifts: any[]; courses: any[]; rentals: any[]; assignments: any[] } } = {};
 
   // For month view, organize data by date
   if (timelineView === 'month') {
     monthDates.forEach(date => {
       const dayShifts = monthShiftQueries.find(q => q.date === date);
       const dayCourses = monthCourseQueries.find(q => q.date === date);
+      const dayRentals = monthRentalQueries.find(q => q.date === date);
       const dayAssignments = monthAssignmentQueries.find(q => q.date === date);
       monthData[date] = {
         shifts: dayShifts ? dayShifts.shifts : [],
         courses: dayCourses ? dayCourses.courses : [],
+        rentals: dayRentals ? dayRentals.rentals : [],
         assignments: dayAssignments ? dayAssignments.assignments : []
       };
     });
@@ -486,6 +509,7 @@ function LUZPage() {
                 assignmentsForDate={assignmentsForDate}
                 shiftsForDate={shiftsForDate}
                 coursesForDate={coursesForDate}
+                rentalsForDate={rentalsForDate}
                 selectedDate={selectedDate}
                 hasManagerTag={hasManagerTag}
                 getShiftStaffingStatus={getShiftStaffingStatus}
@@ -497,6 +521,7 @@ function LUZPage() {
                 weekDates={weekDates}
                 shiftsForWeek={shiftsForWeek}
                 coursesForWeek={coursesForWeek}
+                rentalsForWeek={rentalsForWeek}
                 assignmentsForWeek={assignmentsForWeek}
                 hasManagerTag={hasManagerTag}
                 getShiftStaffingStatus={getShiftStaffingStatus}

@@ -54,7 +54,7 @@ function NavigationLinks({ onLinkClick }: { onLinkClick: () => void }) {
       </Link>
       {checkPermission("request_tool_rentals") && (
         <Link
-          to="/tools-v2"
+          to="/tools"
           className="btn btn-ghost"
           activeProps={{
             className: "btn btn-ghost btn-active",
@@ -112,7 +112,7 @@ function MobileNavigationLinks({ onLinkClick }: { onLinkClick: () => void }) {
       {checkPermission("request_tool_rentals") && (
         <li>
           <Link
-            to="/tools-v2"
+            to="/tools"
             onClick={onLinkClick}
             activeProps={{
               className: "active",

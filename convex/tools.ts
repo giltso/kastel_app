@@ -361,3 +361,70 @@ export const updateRentalStatus = mutation({
     return { success: true };
   },
 });
+
+// Get tool rentals for a specific date (for calendar display)
+export const getToolRentalsForDate = query({
+  args: {
+    date: v.string(), // YYYY-MM-DD format
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+
+    // Get all active/approved rentals
+    const allRentals = await ctx.db
+      .query("tool_rentals")
+      .collect();
+
+    // Filter rentals that overlap with the given date
+    const rentalsOnDate = allRentals.filter(rental => {
+      // Include if rental period overlaps with the target date
+      return rental.rentalStartDate <= args.date && rental.rentalEndDate >= args.date &&
+             (rental.status === "approved" || rental.status === "active");
+    });
+
+    // Guests see no rentals
+    if (!identity) {
+      return [];
+    }
+
+    // Get user and check permissions
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+
+    if (!user) {
+      return [];
+    }
+
+    const effectiveRole = getEffectiveRole(user);
+
+    // Staff see all rentals with enriched data
+    if (effectiveRole.isStaff && effectiveRole.workerTag) {
+      return await Promise.all(
+        rentalsOnDate.map(async (rental) => {
+          const tool = await ctx.db.get(rental.toolId);
+          const renterUser = await ctx.db.get(rental.renterUserId);
+          return {
+            ...rental,
+            tool,
+            renterUser,
+          };
+        })
+      );
+    }
+
+    // Customers see only their own rentals
+    const myRentals = rentalsOnDate.filter(rental => rental.renterUserId === user._id);
+    return await Promise.all(
+      myRentals.map(async (rental) => {
+        const tool = await ctx.db.get(rental.toolId);
+        return {
+          ...rental,
+          tool,
+          renterUser: user, // Customer only sees their own info
+        };
+      })
+    );
+  },
+});

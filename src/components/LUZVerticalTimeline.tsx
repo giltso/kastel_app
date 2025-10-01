@@ -23,6 +23,7 @@ interface LUZVerticalTimelineProps {
   assignmentsForDate: any[];
   shiftsForDate: any[];
   coursesForDate: any[];
+  rentalsForDate: any[];
   selectedDate: string;
   hasManagerTag: boolean;
   getShiftStaffingStatus: (shift: any, assignedWorkers: any[]) => any;
@@ -34,6 +35,7 @@ export function LUZVerticalTimeline({
   assignmentsForDate,
   shiftsForDate,
   coursesForDate,
+  rentalsForDate,
   selectedDate,
   hasManagerTag,
   getShiftStaffingStatus,
@@ -78,6 +80,7 @@ export function LUZVerticalTimeline({
             const { events, positions } = calculateTimelinePositions(
               shiftsForDate || [],
               coursesForDate || [],
+              rentalsForDate || [],
               assignmentsForDate || [],
               paddingPx
             );
@@ -322,6 +325,48 @@ export function LUZVerticalTimeline({
                         </div>
                       );
                     })}
+
+                {/* Render individual rental events using new positioning */}
+                {rentalsForDate?.map((rental) => {
+                  const position = positions.get(rental._id);
+                  if (!position) return null;
+                  const startHour = 8; // Rentals span entire business day
+                  const endHour = 20;
+                  const startRow = Math.max(0, startHour - 8);
+                  const duration = endHour - startHour;
+                  const topPos = 32 + (startRow * 64);
+                  const height = duration * 64;
+
+                  return (
+                    <div
+                      key={rental._id}
+                      className="absolute bg-accent/20 border-2 border-accent rounded"
+                      style={{
+                        left: position.left,
+                        width: position.width,
+                        top: `${topPos}px`,
+                        height: `${height}px`,
+                        padding: '5px'
+                      }}
+                    >
+                      {/* Tab-style Header */}
+                      <div className="bg-accent/30 border-b border-accent/50 px-2 py-1 rounded-t">
+                        <div className="font-medium text-sm text-base-content">{rental.tool?.name || 'Tool Rental'}</div>
+                        <div className="text-xs text-base-content/80">
+                          {rental.rentalStartDate} - {rental.rentalEndDate} • {rental.renterUser?.name} • ${rental.totalCost}
+                        </div>
+                      </div>
+
+                      {/* Rental details area */}
+                      <div className="relative px-3 py-2">
+                        <div className="text-xs">
+                          <div className="mb-1"><strong>Status:</strong> {rental.status}</div>
+                          {rental.notes && <div className="text-xs text-base-content/70 mt-2">{rental.notes}</div>}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </>
             );
           })()}

@@ -24,6 +24,7 @@ interface LUZMonthViewProps {
   monthData: { [date: string]: {
     shifts: any[];
     courses: any[];
+    rentals: any[];
     assignments: any[];
   } };
   hasManagerTag: boolean;
@@ -86,9 +87,9 @@ export function LUZMonthView({
   // Calculate day status and metrics
   const getDayStatus = (date: string) => {
     const dayData = monthData[date];
-    if (!dayData) return { status: 'no-data', shiftsCount: 0, coursesCount: 0, assignmentsCount: 0 };
+    if (!dayData) return { status: 'no-data', shiftsCount: 0, coursesCount: 0, rentalsCount: 0, assignmentsCount: 0 };
 
-    const { shifts, courses, assignments } = dayData;
+    const { shifts, courses, rentals, assignments } = dayData;
 
     // Calculate staffing status for the day
     let understaffedCount = 0;
@@ -118,6 +119,7 @@ export function LUZMonthView({
       status,
       shiftsCount: shifts.length,
       coursesCount: courses.length,
+      rentalsCount: rentals.length,
       assignmentsCount: assignments.filter(a => a.status === 'confirmed').length,
       understaffedCount,
       staffedCount,
@@ -203,11 +205,18 @@ export function LUZMonthView({
                         {dayStatus.coursesCount} courses
                       </div>
                     )}
+
+                    {/* Rentals indicator */}
+                    {dayStatus.rentalsCount > 0 && (
+                      <div className="text-xs text-accent">
+                        {dayStatus.rentalsCount} rentals
+                      </div>
+                    )}
                   </div>
                 )}
 
                 {/* Empty day indicator */}
-                {day.isCurrentMonth && dayStatus.shiftsCount === 0 && dayStatus.coursesCount === 0 && (
+                {day.isCurrentMonth && dayStatus.shiftsCount === 0 && dayStatus.coursesCount === 0 && dayStatus.rentalsCount === 0 && (
                   <div className="absolute inset-0 flex items-center justify-center text-base-content/30">
                     <div className="w-1 h-1 bg-base-content/20 rounded-full"></div>
                   </div>

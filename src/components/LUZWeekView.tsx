@@ -24,6 +24,7 @@ interface LUZWeekViewProps {
   weekDates: string[]; // Array of 7 date strings (YYYY-MM-DD format)
   shiftsForWeek: { [date: string]: any[] }; // Shifts grouped by date
   coursesForWeek: { [date: string]: any[] }; // Courses grouped by date
+  rentalsForWeek: { [date: string]: any[] }; // Rentals grouped by date
   assignmentsForWeek: { [date: string]: any[] }; // Assignments grouped by date
   hasManagerTag: boolean;
   getShiftStaffingStatus: (shift: any, assignedWorkers: any[]) => any;
@@ -35,6 +36,7 @@ export function LUZWeekView({
   weekDates,
   shiftsForWeek,
   coursesForWeek,
+  rentalsForWeek,
   assignmentsForWeek,
   hasManagerTag,
   getShiftStaffingStatus,
@@ -82,9 +84,11 @@ export function LUZWeekView({
 
               // Calculate positions for this day
               const paddingPx = 2; // Smaller padding for week view
+              const rentalsForDate = rentalsForWeek[date] || [];
               const { events, positions } = calculateTimelinePositions(
                 shiftsForDate,
                 coursesForDate,
+                rentalsForDate,
                 assignmentsForDate,
                 paddingPx
               );
@@ -230,8 +234,43 @@ export function LUZWeekView({
                     );
                   })}
 
+                  {/* Render Rentals for this day */}
+                  {rentalsForDate.map((rental) => {
+                    const position = positions.get(rental._id);
+                    if (!position) return null;
+
+                    const startHour = 8;
+                    const endHour = 20;
+                    const startRow = 0;
+                    const duration = endHour - startHour;
+                    const topPos = startRow * 48;
+                    const height = duration * 48;
+
+                    return (
+                      <div
+                        key={rental._id}
+                        className="absolute bg-accent/20 border border-accent rounded text-xs overflow-hidden"
+                        style={{
+                          left: position.left,
+                          width: position.width,
+                          top: `${topPos}px`,
+                          height: `${height}px`,
+                          padding: '2px'
+                        }}
+                      >
+                        <div className="font-medium truncate">{rental.tool?.name || 'Rental'}</div>
+                        <div className="text-xs text-base-content/70 truncate">
+                          {rental.renterUser?.name}
+                        </div>
+                        <div className="text-xs">
+                          ${rental.totalCost}
+                        </div>
+                      </div>
+                    );
+                  })}
+
                     {/* Empty state for days with no events */}
-                    {shiftsForDate.length === 0 && coursesForDate.length === 0 && (
+                    {shiftsForDate.length === 0 && coursesForDate.length === 0 && rentalsForDate.length === 0 && (
                       <div className="absolute inset-0 flex items-center justify-center text-base-content/30">
                         <div className="text-center">
                           <div className="text-xs">No events</div>
