@@ -736,8 +736,8 @@ export const getCoursesForDate = query({
     // For authenticated users, include enrollment status
     const user = await ctx.db
       .query("users")
-      .withIndex("by_token", (q) =>
-        q.eq("tokenIdentifier", identity.tokenIdentifier)
+      .withIndex("by_clerkId", (q) =>
+        q.eq("clerkId", identity.subject)
       )
       .unique();
 
@@ -756,7 +756,7 @@ export const getCoursesForDate = query({
     }
 
     // Get users role for permission checking
-    const effectiveRole = await getEffectiveV2Role(ctx, user._id);
+    const effectiveRole = getEffectiveV2Role(user);
 
     return Promise.all(
       coursesOnDate.map(async (course) => {
@@ -766,9 +766,8 @@ export const getCoursesForDate = query({
         // Check if user is enrolled
         const userEnrollment = await ctx.db
           .query("course_enrollments")
-          .withIndex("by_userId_courseId", (q) =>
-            q.eq("userId", user._id).eq("courseId", course._id)
-          )
+          .withIndex("by_studentId", (q) => q.eq("studentId", user._id))
+          .filter((q) => q.eq(q.field("courseId"), course._id))
           .first();
 
         return {
