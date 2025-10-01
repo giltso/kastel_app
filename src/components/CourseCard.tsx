@@ -1,4 +1,4 @@
-import { Calendar, Clock, MapPin, DollarSign, Users } from "lucide-react";
+import { Calendar, Clock, MapPin, Users } from "lucide-react";
 
 interface CourseCardProps {
   course: any;
@@ -45,17 +45,11 @@ export function CourseCard({ course, onViewDetails, onEnroll, showEnrollButton =
           </div>
         </div>
 
-        <div className="flex justify-between items-center">
-          <div className="flex items-center gap-1 text-lg font-bold">
-            <DollarSign className="w-4 h-4" />
-            {course.price}
-          </div>
-          <div className="flex items-center gap-1 text-sm">
-            <Users className="w-4 h-4 opacity-60" />
-            <span className={isFull ? "text-error" : ""}>
-              {spotsAvailable} {spotsAvailable === 1 ? "spot" : "spots"} left
-            </span>
-          </div>
+        <div className="flex items-center gap-1 text-sm">
+          <Users className="w-4 h-4 opacity-60" />
+          <span className={isFull ? "text-error" : ""}>
+            {spotsAvailable} {spotsAvailable === 1 ? "spot" : "spots"} left
+          </span>
         </div>
 
         <div className="flex gap-2 mt-2">

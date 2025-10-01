@@ -23,7 +23,6 @@ export function CreateCourseModal({ isOpen, onClose, onSuccess }: CreateCourseMo
     endTime: "",
     location: "",
     maxParticipants: 10,
-    price: 0,
     syllabus: [""],
     materials: [""],
   });
@@ -37,6 +36,14 @@ export function CreateCourseModal({ isOpen, onClose, onSuccess }: CreateCourseMo
     setIsSubmitting(true);
 
     try {
+      // Validate dates and times
+      const startDateTime = new Date(`${formData.startDate}T${formData.startTime}`);
+      const endDateTime = new Date(`${formData.endDate}T${formData.endTime}`);
+
+      if (endDateTime <= startDateTime) {
+        throw new Error("End date and time must be after start date and time");
+      }
+
       // Filter out empty syllabus and materials
       const cleanedSyllabus = formData.syllabus.filter(item => item.trim());
       const cleanedMaterials = formData.materials.filter(item => item.trim());
@@ -62,7 +69,6 @@ export function CreateCourseModal({ isOpen, onClose, onSuccess }: CreateCourseMo
         endTime: "",
         location: "",
         maxParticipants: 10,
-        price: 0,
         syllabus: [""],
         materials: [""],
       });
@@ -191,20 +197,6 @@ export function CreateCourseModal({ isOpen, onClose, onSuccess }: CreateCourseMo
               />
             </div>
 
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text">Price ($) *</span>
-              </label>
-              <input
-                type="number"
-                min="0"
-                step="0.01"
-                className="input input-bordered"
-                value={formData.price}
-                onChange={(e) => setFormData(prev => ({ ...prev, price: parseFloat(e.target.value) }))}
-                required
-              />
-            </div>
           </div>
 
           {/* Schedule */}
@@ -217,7 +209,15 @@ export function CreateCourseModal({ isOpen, onClose, onSuccess }: CreateCourseMo
                 type="date"
                 className="input input-bordered"
                 value={formData.startDate}
-                onChange={(e) => setFormData(prev => ({ ...prev, startDate: e.target.value }))}
+                onChange={(e) => {
+                  const newStartDate = e.target.value;
+                  setFormData(prev => ({
+                    ...prev,
+                    startDate: newStartDate,
+                    // If end date is before new start date, update it to match
+                    endDate: prev.endDate && prev.endDate < newStartDate ? newStartDate : prev.endDate
+                  }));
+                }}
                 required
               />
             </div>

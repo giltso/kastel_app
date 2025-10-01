@@ -98,22 +98,11 @@ function EducationalPage() {
               <div className="stat-value text-warning">{stats.pendingEnrollments}</div>
               <div className="stat-desc">Awaiting review</div>
             </div>
-
-            {hasManagerTag && stats.totalRevenue !== undefined && (
-              <div className="stat">
-                <div className="stat-figure text-success">
-                  <div className="text-2xl">$</div>
-                </div>
-                <div className="stat-title">Revenue</div>
-                <div className="stat-value text-success">${stats.totalRevenue}</div>
-                <div className="stat-desc">{stats.pendingPayments} pending</div>
-              </div>
-            )}
           </div>
         )}
 
-        {/* Action Buttons (Instructors) */}
-        {hasInstructorTag && (
+        {/* Action Buttons (Instructors) - Only show if courses exist */}
+        {hasInstructorTag && filteredCourses && filteredCourses.length > 0 && (
           <div className="flex justify-center mb-6">
             <button
               onClick={() => setCreateModalOpen(true)}

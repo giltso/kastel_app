@@ -1,7 +1,7 @@
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { Id } from "../../../convex/_generated/dataModel";
-import { X, Calendar, Clock, MapPin, DollarSign, Users, BookOpen, CheckCircle, XCircle } from "lucide-react";
+import { X, Calendar, Clock, MapPin, Users, BookOpen, CheckCircle, XCircle } from "lucide-react";
 import { useState } from "react";
 
 interface CourseDetailsModalProps {
@@ -14,7 +14,6 @@ interface CourseDetailsModalProps {
 export function CourseDetailsModal({ isOpen, onClose, courseId, onEnroll }: CourseDetailsModalProps) {
   const courseDetails = useQuery(api.courses_v2.getCourseDetailsV2, { courseId });
   const updateEnrollmentStatus = useMutation(api.courses_v2.updateEnrollmentStatusV2);
-  const updatePaymentStatus = useMutation(api.courses_v2.updatePaymentStatusV2);
 
   const [isUpdating, setIsUpdating] = useState(false);
 
@@ -53,17 +52,6 @@ export function CourseDetailsModal({ isOpen, onClose, courseId, onEnroll }: Cour
     }
   };
 
-  const handleUpdatePayment = async (enrollmentId: Id<"course_enrollments">, status: "pending" | "paid" | "refunded") => {
-    setIsUpdating(true);
-    try {
-      await updatePaymentStatus({ enrollmentId, paymentStatus: status });
-    } catch (error) {
-      console.error("Failed to update payment:", error);
-    } finally {
-      setIsUpdating(false);
-    }
-  };
-
   const getStatusBadgeClass = (status: string) => {
     switch (status) {
       case "pending": return "badge-warning";
@@ -72,15 +60,6 @@ export function CourseDetailsModal({ isOpen, onClose, courseId, onEnroll }: Cour
       case "completed": return "badge-success";
       case "cancelled": return "badge-error";
       case "no_show": return "badge-error";
-      default: return "badge-neutral";
-    }
-  };
-
-  const getPaymentBadgeClass = (status: string) => {
-    switch (status) {
-      case "pending": return "badge-warning";
-      case "paid": return "badge-success";
-      case "refunded": return "badge-info";
       default: return "badge-neutral";
     }
   };
@@ -153,25 +132,15 @@ export function CourseDetailsModal({ isOpen, onClose, courseId, onEnroll }: Cour
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="stat bg-base-200 rounded-lg p-4">
-              <div className="stat-figure text-primary">
-                <DollarSign className="w-8 h-8" />
-              </div>
-              <div className="stat-title">Price</div>
-              <div className="stat-value text-2xl">${courseDetails.price}</div>
+          <div className="stat bg-base-200 rounded-lg p-4 w-full">
+            <div className="stat-figure text-secondary">
+              <Users className="w-8 h-8" />
             </div>
-
-            <div className="stat bg-base-200 rounded-lg p-4">
-              <div className="stat-figure text-secondary">
-                <Users className="w-8 h-8" />
-              </div>
-              <div className="stat-title">Participants</div>
-              <div className="stat-value text-2xl">
-                {courseDetails.currentParticipants}/{courseDetails.maxParticipants}
-              </div>
-              <div className="stat-desc">{courseDetails.spotsAvailable} spots left</div>
+            <div className="stat-title">Participants</div>
+            <div className="stat-value text-2xl">
+              {courseDetails.currentParticipants}/{courseDetails.maxParticipants}
             </div>
+            <div className="stat-desc">{courseDetails.spotsAvailable} spots left</div>
           </div>
 
           {/* Instructor Info */}
@@ -230,7 +199,6 @@ export function CourseDetailsModal({ isOpen, onClose, courseId, onEnroll }: Cour
                       <th>Student</th>
                       <th>Enrollment Date</th>
                       <th>Status</th>
-                      <th>Payment</th>
                       <th>Actions</th>
                     </tr>
                   </thead>
@@ -245,11 +213,6 @@ export function CourseDetailsModal({ isOpen, onClose, courseId, onEnroll }: Cour
                         <td>
                           <div className={`badge badge-sm ${getStatusBadgeClass(enrollment.status)}`}>
                             {enrollment.status}
-                          </div>
-                        </td>
-                        <td>
-                          <div className={`badge badge-sm ${getPaymentBadgeClass(enrollment.paymentStatus)}`}>
-                            {enrollment.paymentStatus}
                           </div>
                         </td>
                         <td>
@@ -283,15 +246,6 @@ export function CourseDetailsModal({ isOpen, onClose, courseId, onEnroll }: Cour
                                 Confirm
                               </button>
                             )}
-                            {enrollment.paymentStatus === "pending" && courseDetails.canManage && (
-                              <button
-                                onClick={() => handleUpdatePayment(enrollment._id, "paid")}
-                                className="btn btn-xs btn-success"
-                                disabled={isUpdating}
-                              >
-                                Mark Paid
-                              </button>
-                            )}
                           </div>
                         </td>
                       </tr>
@@ -310,9 +264,6 @@ export function CourseDetailsModal({ isOpen, onClose, courseId, onEnroll }: Cour
                 <div className="flex gap-2 mt-2">
                   <div className={`badge ${getStatusBadgeClass(courseDetails.userEnrollment.status)}`}>
                     {courseDetails.userEnrollment.status}
-                  </div>
-                  <div className={`badge ${getPaymentBadgeClass(courseDetails.userEnrollment.paymentStatus)}`}>
-                    Payment: {courseDetails.userEnrollment.paymentStatus}
                   </div>
                 </div>
               </div>
