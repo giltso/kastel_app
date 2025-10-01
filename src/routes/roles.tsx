@@ -40,33 +40,7 @@ function RolesPage() {
   const userStats = useQuery(api.users_v2.getUserStatistics);
   const enrollments = useQuery(api.users_v2.getAllEnrollments);
 
-  if (isLoading || allUsers === undefined || userStats === undefined) {
-    return (
-      <div className="flex items-center justify-center min-h-64">
-        <span className="loading loading-spinner loading-lg"></span>
-      </div>
-    );
-  }
-
-  if (!isAuthenticated) {
-    return (
-      <div className="text-center py-12">
-        <h1 className="text-2xl font-bold mb-4">Access Denied</h1>
-        <p>Please sign in to access role management.</p>
-      </div>
-    );
-  }
-
-  if (!checkPermission("manage_staff_roles")) {
-    return (
-      <div className="text-center py-12">
-        <h1 className="text-2xl font-bold mb-4">Manager Access Required</h1>
-        <p>Role management is only accessible to staff members with manager permissions.</p>
-      </div>
-    );
-  }
-
-  // Build set of enrolled customer IDs
+  // Build set of enrolled customer IDs (must be called before early returns)
   const enrolledCustomerIds = useMemo(() => {
     if (!enrollments) return new Set<Id<"users">>();
     return new Set(
@@ -128,6 +102,33 @@ function RolesPage() {
         });
       });
   }, [allUsers, searchQuery, roleFilters, enrolledCustomerIds]);
+
+  // Early returns must come AFTER all hooks
+  if (isLoading || allUsers === undefined || userStats === undefined) {
+    return (
+      <div className="flex items-center justify-center min-h-64">
+        <span className="loading loading-spinner loading-lg"></span>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="text-center py-12">
+        <h1 className="text-2xl font-bold mb-4">Access Denied</h1>
+        <p>Please sign in to access role management.</p>
+      </div>
+    );
+  }
+
+  if (!checkPermission("manage_staff_roles")) {
+    return (
+      <div className="text-center py-12">
+        <h1 className="text-2xl font-bold mb-4">Manager Access Required</h1>
+        <p>Role management is only accessible to staff members with manager permissions.</p>
+      </div>
+    );
+  }
 
   // Helper function to get role badges for a user
   const getRoleBadges = (user: any) => {
