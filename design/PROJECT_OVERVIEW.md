@@ -68,10 +68,15 @@
 
 ### 3. Educational Courses - FUNCTIONAL
 - ✅ **Course Management**: Full CRUD operations for courses implemented
+- ✅ **Course Types**: Single-session and multi-meeting courses fully supported
+- ✅ **Session Management**: Multi-meeting courses with independent session scheduling
+- ✅ **3-Step Wizard**: Progressive course creation UI (Basic Info → Sessions → Materials)
 - ✅ **Enrollment System**: Student enrollment with approval workflows functional
 - ✅ **Role Integration**: Instructor permissions with course ownership operational
 - ✅ **Helper Instructors**: Multi-instructor support with permission differentiation
 - ✅ **Student Experience**: Course browsing, enrollment requests, and tracking functional
+- ✅ **Schema**: course_sessions table for multi-meeting courses deployed and tested
+- 🚧 **Recurring Templates**: Future feature for independent course instances
 - 🚧 **Advanced Features**: Course materials management and progress tracking pending
 
 ### 4. Role Management System - FUNCTIONAL

@@ -2,6 +2,43 @@
 
 detailed history of all sessions. to be updated on new session
 
+### Session 30 - October 1, 2025
+
+**Goal**: Fix course creation modal issues and schema deployment problems
+
+**Major Achievements**:
+- ✅ **Schema Deployment Fix**: Resolved `course_sessions` table not being created
+  - Force regenerated Convex schema by clearing `_generated` directory and restarting dev server
+  - Successfully deployed `course_sessions` table for multi-meeting course support
+- ✅ **Course Creation Modal Redesign**: Fixed 3-step wizard functionality
+  - Made `price` field optional in schema with `v.optional(v.number())`
+  - Fixed Create Course button visibility (now shows even with no existing courses)
+  - Fixed step validation requiring all basic info fields
+- ✅ **TypeScript Fixes**: Resolved compilation errors
+  - Added explicit type annotation for sessions array
+  - Added null checks for optional `startDate`/`endDate` fields
+  - Fixed single-session course filtering logic
+- ✅ **Testing**: Verified both course types working
+  - Created "Beginner Woodworking" single-session course successfully
+  - Created "Advanced Metalworking - 3 Week Series" multi-meeting course with 3 sessions
+
+**Technical Implementation**:
+- **Schema**: `convex/schema.ts` - Added `sessionType`, made date/time fields optional, created `course_sessions` table
+- **Backend**: `convex/courses_v2.ts` - Updated `createCourseV2` for session support, fixed TypeScript errors
+- **Frontend**: `src/components/modals/CreateCourseModal.tsx` - Complete 3-step wizard with session management
+- **UI Fix**: `src/routes/educational.tsx` - Removed conditional preventing Create Course button from showing
+
+**Issues Resolved**:
+- **Schema Not Deployed**: `course_sessions` table wasn't created despite code changes
+- **ArgumentValidationError**: Missing required `price` field blocking course creation
+- **UI Logic Bug**: Create Course button only visible when courses already exist
+- **TypeScript Errors**: Type safety issues with optional fields and sessions array
+
+**System Status**:
+- Single-session courses: ✅ Fully functional
+- Multi-meeting courses: ✅ Fully functional (tested with 3 sessions)
+- Recurring templates: 🚧 UI placeholder exists, marked "Coming Soon"
+
 ### Session 29 - September 29, 2025
 
 **Goals**: Implement assignment editing functionality and fix hourly capacity calculation issues
