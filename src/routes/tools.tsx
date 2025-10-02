@@ -3,9 +3,10 @@ import { Authenticated, useMutation } from "convex/react";
 import { convexQuery } from "@convex-dev/react-query";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { Hammer, Plus, Edit, Trash2, Calendar, User, Clock, DollarSign, Package, History, Search } from "lucide-react";
+import { Hammer, Plus, Edit, Trash2, Calendar, User, Clock, DollarSign, Package, History, Search, UserPlus } from "lucide-react";
 import { api } from "../../convex/_generated/api";
 import { usePermissionsV2 } from "@/hooks/usePermissionsV2";
+import { CreateManualRentalModal } from "@/components/modals/CreateManualRentalModal";
 
 const toolsQueryOptions = convexQuery(api.tools.listTools, {});
 const toolRentalsQueryOptions = convexQuery(api.tools.listToolRentals, {});
@@ -59,6 +60,7 @@ function OperationalView() {
   const { data: rentals } = useSuspenseQuery(toolRentalsQueryOptions);
   const [showAddTool, setShowAddTool] = useState(false);
   const [showRentalHistory, setShowRentalHistory] = useState(false);
+  const [showManualRental, setShowManualRental] = useState(false);
   const [activeTab, setActiveTab] = useState<"inventory" | "rentals">("inventory");
 
   return (
@@ -71,6 +73,13 @@ function OperationalView() {
         >
           <Plus className="w-4 h-4" />
           Add Tool
+        </button>
+        <button
+          onClick={() => setShowManualRental(true)}
+          className="btn btn-secondary"
+        >
+          <UserPlus className="w-4 h-4" />
+          Manual Rental
         </button>
         <button
           onClick={() => setShowRentalHistory(true)}
@@ -107,6 +116,13 @@ function OperationalView() {
 
       {showAddTool && (
         <AddToolModal onClose={() => setShowAddTool(false)} />
+      )}
+
+      {showManualRental && (
+        <CreateManualRentalModal
+          isOpen={showManualRental}
+          onClose={() => setShowManualRental(false)}
+        />
       )}
 
       {showRentalHistory && (
@@ -426,7 +442,17 @@ function RentalsTable({ rentals }: { rentals: any[] }) {
               {rentals.map((rental) => (
                 <tr key={rental._id}>
                   <td>{rental.tool?.name || "Unknown Tool"}</td>
-                  <td>{rental.renterUser?.name || "Unknown User"}</td>
+                  <td>
+                    {rental.isManualRental ? (
+                      <div>
+                        <div className="font-medium">{rental.nonUserRenterName}</div>
+                        <div className="text-xs text-base-content/60">{rental.nonUserRenterContact}</div>
+                        <div className="badge badge-sm badge-outline mt-1">Walk-in</div>
+                      </div>
+                    ) : (
+                      rental.renterUser?.name || "Unknown User"
+                    )}
+                  </td>
                   <td>
                     <div className="text-sm">
                       <div>{rental.rentalStartDate} to {rental.rentalEndDate}</div>
@@ -850,10 +876,18 @@ function RentalHistoryModal({ onClose }: { onClose: () => void }) {
                     </div>
                   </td>
                   <td>
-                    <div>
-                      <div className="font-medium">{rental.renterUser?.name || 'Unknown User'}</div>
-                      <div className="text-xs text-base-content/60">{rental.renterUser?.email}</div>
-                    </div>
+                    {rental.isManualRental ? (
+                      <div>
+                        <div className="font-medium">{rental.nonUserRenterName}</div>
+                        <div className="text-xs text-base-content/60">{rental.nonUserRenterContact}</div>
+                        <div className="badge badge-xs badge-outline mt-1">Walk-in</div>
+                      </div>
+                    ) : (
+                      <div>
+                        <div className="font-medium">{rental.renterUser?.name || 'Unknown User'}</div>
+                        <div className="text-xs text-base-content/60">{rental.renterUser?.email}</div>
+                      </div>
+                    )}
                   </td>
                   <td>
                     <div className="text-xs whitespace-pre-line">

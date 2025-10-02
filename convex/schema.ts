@@ -203,7 +203,7 @@ export default defineSchema({
   // Keep existing Tool Rentals system (V2 will integrate later)
   tool_rentals: defineTable({
     toolId: v.id("tools"),
-    renterUserId: v.id("users"),
+    renterUserId: v.optional(v.id("users")), // Optional for manual rentals
     rentalStartDate: v.string(),
     rentalEndDate: v.string(),
     actualReturnDate: v.optional(v.string()),
@@ -213,6 +213,10 @@ export default defineSchema({
     approvedBy: v.optional(v.id("users")),
     createdBy: v.id("users"),
     notes: v.optional(v.string()),
+    // Manual rental fields (for non-registered customers)
+    isManualRental: v.optional(v.boolean()),
+    nonUserRenterName: v.optional(v.string()),
+    nonUserRenterContact: v.optional(v.string()), // Phone or email
   })
   .index("by_toolId", ["toolId"])
   .index("by_renterUserId", ["renterUserId"])

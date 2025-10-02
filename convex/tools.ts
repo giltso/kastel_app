@@ -69,7 +69,7 @@ export const listToolRentals = query({
       return await Promise.all(
         rentals.map(async (rental) => {
           const tool = await ctx.db.get(rental.toolId);
-          const renterUser = await ctx.db.get(rental.renterUserId);
+          const renterUser = rental.renterUserId ? await ctx.db.get(rental.renterUserId) : null;
           return {
             ...rental,
             tool,
@@ -129,7 +129,7 @@ export const listRentalHistory = query({
     const enrichedRentals = await Promise.all(
       rentals.map(async (rental) => {
         const tool = await ctx.db.get(rental.toolId);
-        const renterUser = await ctx.db.get(rental.renterUserId);
+        const renterUser = rental.renterUserId ? await ctx.db.get(rental.renterUserId) : null;
         return {
           ...rental,
           tool,
@@ -404,7 +404,7 @@ export const getToolRentalsForDate = query({
       return await Promise.all(
         rentalsOnDate.map(async (rental) => {
           const tool = await ctx.db.get(rental.toolId);
-          const renterUser = await ctx.db.get(rental.renterUserId);
+          const renterUser = rental.renterUserId ? await ctx.db.get(rental.renterUserId) : null;
           return {
             ...rental,
             tool,
@@ -426,5 +426,77 @@ export const getToolRentalsForDate = query({
         };
       })
     );
+  },
+});
+
+// Mutation: Create manual rental for non-registered customer
+export const createManualRental = mutation({
+  args: {
+    toolId: v.id("tools"),
+    nonUserRenterName: v.string(),
+    nonUserRenterContact: v.string(),
+    rentalStartDate: v.string(),
+    rentalEndDate: v.string(),
+    notes: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Must be authenticated");
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    const effectiveRole = getEffectiveRole(user);
+
+    // Only tool handlers can create manual rentals
+    if (!effectiveRole.isStaff || !effectiveRole.toolHandlerTag) {
+      throw new Error("Only tool handlers can create manual rentals");
+    }
+
+    // Get the tool
+    const tool = await ctx.db.get(args.toolId);
+    if (!tool) {
+      throw new Error("Tool not found");
+    }
+
+    if (!tool.isAvailable) {
+      throw new Error("Tool is not available");
+    }
+
+    // Calculate rental duration and cost
+    const startDate = new Date(args.rentalStartDate);
+    const endDate = new Date(args.rentalEndDate);
+    const durationDays = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+    const totalCost = durationDays * tool.rentalPricePerDay;
+
+    // Create the rental (already approved, created by tool handler)
+    const rentalId = await ctx.db.insert("tool_rentals", {
+      toolId: args.toolId,
+      renterUserId: undefined, // No user ID for manual rentals
+      rentalStartDate: args.rentalStartDate,
+      rentalEndDate: args.rentalEndDate,
+      dailyRate: tool.rentalPricePerDay,
+      totalCost,
+      status: "approved", // Manual rentals are pre-approved
+      approvedBy: user._id,
+      createdBy: user._id,
+      notes: args.notes,
+      isManualRental: true,
+      nonUserRenterName: args.nonUserRenterName,
+      nonUserRenterContact: args.nonUserRenterContact,
+    });
+
+    // Update tool availability
+    await ctx.db.patch(args.toolId, { isAvailable: false });
+
+    return rentalId;
   },
 });
