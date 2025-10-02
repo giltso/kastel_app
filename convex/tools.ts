@@ -320,9 +320,9 @@ export const updateRentalStatus = mutation({
 
     const effectiveRole = getEffectiveRole(user);
 
-    // Only staff can update rental status
-    if (!effectiveRole.isStaff || !effectiveRole.workerTag) {
-      throw new Error("Only staff can update rental status");
+    // Only staff with tool handler tag can update rental status
+    if (!effectiveRole.isStaff || !effectiveRole.toolHandlerTag) {
+      throw new Error("Only tool handlers can update rental status");
     }
 
     // Get the rental

@@ -5,7 +5,7 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Hammer, Plus, Edit, Trash2, Calendar, User, Clock, DollarSign, Package, History, Search } from "lucide-react";
 import { api } from "../../convex/_generated/api";
-import { usePermissions } from "@/hooks/usePermissions";
+import { usePermissionsV2 } from "@/hooks/usePermissionsV2";
 
 const toolsQueryOptions = convexQuery(api.tools.listTools, {});
 const toolRentalsQueryOptions = convexQuery(api.tools.listToolRentals, {});
@@ -15,17 +15,17 @@ export const Route = createFileRoute("/tools")({
 });
 
 function ToolsPage() {
-  const { hasPermission, effectiveRole } = usePermissions();
-  const isOperational = hasPermission("access_worker_portal");
-  const isCustomer = hasPermission("access_customer_portal");
-  const isGuest = effectiveRole === "guest";
+  const { isStaff, hasToolHandlerTag, hasRentalApprovedTag, isAuthenticated } = usePermissionsV2();
+  const isToolHandler = isStaff && hasToolHandlerTag;
+  const isRentalApproved = !isStaff && hasRentalApprovedTag;
+  const isGuest = !isAuthenticated;
 
   let description, ViewComponent;
-  
-  if (isOperational) {
+
+  if (isToolHandler) {
     description = "Manage tool inventory and rental requests";
     ViewComponent = OperationalView;
-  } else if (isCustomer) {
+  } else if (isRentalApproved) {
     description = "Browse and rent available tools";
     ViewComponent = CustomerView;
   } else {
