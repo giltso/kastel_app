@@ -325,24 +325,22 @@ function LUZPage() {
 
   // Date navigation functions
   const navigateDate = (direction: 'prev' | 'next') => {
-    const currentDate = new Date(selectedDate + 'T00:00:00');
-    let newDate: Date;
+    // Parse date in UTC to avoid timezone issues
+    const [year, month, day] = selectedDate.split('-').map(Number);
+    const currentDate = new Date(Date.UTC(year, month - 1, day));
 
     if (timelineView === 'vertical') {
       // Daily view: navigate by 1 day
-      newDate = new Date(currentDate);
-      newDate.setDate(currentDate.getDate() + (direction === 'next' ? 1 : -1));
+      currentDate.setUTCDate(currentDate.getUTCDate() + (direction === 'next' ? 1 : -1));
     } else if (timelineView === 'week') {
       // Week view: navigate by 7 days
-      newDate = new Date(currentDate);
-      newDate.setDate(currentDate.getDate() + (direction === 'next' ? 7 : -7));
+      currentDate.setUTCDate(currentDate.getUTCDate() + (direction === 'next' ? 7 : -7));
     } else {
       // Month view: navigate by 1 month
-      newDate = new Date(currentDate);
-      newDate.setMonth(currentDate.getMonth() + (direction === 'next' ? 1 : -1));
+      currentDate.setUTCMonth(currentDate.getUTCMonth() + (direction === 'next' ? 1 : -1));
     }
 
-    setSelectedDate(newDate.toISOString().split('T')[0]);
+    setSelectedDate(currentDate.toISOString().split('T')[0]);
   };
 
   const handleCreateSampleShifts = async () => {
