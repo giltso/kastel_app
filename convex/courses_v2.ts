@@ -918,11 +918,13 @@ export const getCoursesForDate = query({
         title: course.title,
         startDate: course.startDate,
         endDate: course.endDate,
-        startTime: course.startTime,
-        endTime: course.endTime,
         category: course.category,
         skillLevel: course.skillLevel,
-        location: course.location,
+        schedule: {
+          startTime: course.startTime,
+          endTime: course.endTime,
+          location: course.location,
+        },
       }));
     }
 
@@ -940,11 +942,13 @@ export const getCoursesForDate = query({
         title: course.title,
         startDate: course.startDate,
         endDate: course.endDate,
-        startTime: course.startTime,
-        endTime: course.endTime,
         category: course.category,
         skillLevel: course.skillLevel,
-        location: course.location,
+        schedule: {
+          startTime: course.startTime,
+          endTime: course.endTime,
+          location: course.location,
+        },
       }));
     }
 
@@ -968,11 +972,13 @@ export const getCoursesForDate = query({
           title: course.title,
           startDate: course.startDate,
           endDate: course.endDate,
-          startTime: course.startTime,
-          endTime: course.endTime,
           category: course.category,
           skillLevel: course.skillLevel,
-          location: course.location,
+          schedule: {
+            startTime: course.startTime,
+            endTime: course.endTime,
+            location: course.location,
+          },
           isTeaching,
           enrollmentStatus: userEnrollment?.status,
         };

@@ -119,7 +119,9 @@ export function CourseDetailsModal({ isOpen, onClose, courseId, onEnroll }: Cour
               <Clock className="w-4 h-4 opacity-70" />
               <div className="text-sm">
                 <div className="font-semibold">Time</div>
-                <div className="opacity-70">{courseDetails.startTime} - {courseDetails.endTime}</div>
+                <div className="opacity-70">
+                  {courseDetails.schedule?.startTime || courseDetails.startTime} - {courseDetails.schedule?.endTime || courseDetails.endTime}
+                </div>
               </div>
             </div>
 
@@ -127,7 +129,7 @@ export function CourseDetailsModal({ isOpen, onClose, courseId, onEnroll }: Cour
               <MapPin className="w-4 h-4 opacity-70" />
               <div className="text-sm">
                 <div className="font-semibold">Location</div>
-                <div className="opacity-70">{courseDetails.location}</div>
+                <div className="opacity-70">{courseDetails.schedule?.location || courseDetails.location}</div>
               </div>
             </div>
           </div>
