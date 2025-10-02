@@ -498,36 +498,32 @@ function LUZPage() {
           </div>
 
           {/* Date Navigation */}
-          <div className="flex items-center gap-2">
-            <div className="join">
-              <button
-                className="btn btn-sm join-item"
-                onClick={() => navigateDate('prev')}
-                title={timelineView === 'vertical' ? 'Previous Day' : timelineView === 'week' ? 'Previous Week' : 'Previous Month'}
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-              <input
-                type="date"
-                value={selectedDate}
-                onChange={(e) => setSelectedDate(e.target.value)}
-                className="input input-bordered input-sm join-item w-40"
-                lang={navigator.language || 'en-US'}
-              />
-              <button
-                className="btn btn-sm join-item"
-                onClick={() => navigateDate('next')}
-                title={timelineView === 'vertical' ? 'Next Day' : timelineView === 'week' ? 'Next Week' : 'Next Month'}
-              >
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
+          <div className="join">
             <button
-              className="btn btn-sm"
+              className="btn btn-sm join-item"
+              onClick={() => navigateDate('prev')}
+              title={timelineView === 'vertical' ? 'Previous Day' : timelineView === 'week' ? 'Previous Week' : 'Previous Month'}
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <button
+              className="btn btn-sm join-item"
               onClick={() => setSelectedDate(getTodayString())}
               title="Jump to Today"
             >
-              Today
+              {new Date(selectedDate + 'T00:00:00').toLocaleDateString(undefined, {
+                weekday: 'short',
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric'
+              })}
+            </button>
+            <button
+              className="btn btn-sm join-item"
+              onClick={() => navigateDate('next')}
+              title={timelineView === 'vertical' ? 'Next Day' : timelineView === 'week' ? 'Next Week' : 'Next Month'}
+            >
+              <ChevronRight className="w-4 h-4" />
             </button>
           </div>
         </div>
