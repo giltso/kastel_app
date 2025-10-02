@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { Id } from "../../../convex/_generated/dataModel";
-import { X, Calendar, Clock, MapPin, DollarSign } from "lucide-react";
+import { X, Calendar, Clock, MapPin } from "lucide-react";
 
 interface EnrollmentRequestModalProps {
   isOpen: boolean;
@@ -81,14 +81,6 @@ export function EnrollmentRequestModal({ isOpen, onClose, course, onSuccess }: E
                     <div className="opacity-70">{course.location}</div>
                   </div>
                 </div>
-
-                <div className="flex items-center gap-2 text-sm">
-                  <DollarSign className="w-4 h-4 opacity-60" />
-                  <div>
-                    <div className="font-semibold">Price</div>
-                    <div className="opacity-70">${course.price}</div>
-                  </div>
-                </div>
               </div>
 
               <div className="mt-4 flex gap-2">
@@ -110,7 +102,6 @@ export function EnrollmentRequestModal({ isOpen, onClose, course, onSuccess }: E
               <ul className="list-disc list-inside text-sm mt-2 space-y-1">
                 <li>Your enrollment request will be sent to the instructor</li>
                 <li>You'll be notified when your enrollment is approved</li>
-                <li>Payment will be required before the course starts</li>
                 <li>You can cancel your enrollment at any time before approval</li>
               </ul>
             </div>

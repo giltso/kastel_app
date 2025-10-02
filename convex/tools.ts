@@ -61,8 +61,8 @@ export const listToolRentals = query({
 
     const effectiveRole = getEffectiveRole(user);
 
-    // Staff see all rentals
-    if (effectiveRole.isStaff && effectiveRole.workerTag) {
+    // Staff with tool handler tag see all rentals
+    if (effectiveRole.isStaff && effectiveRole.toolHandlerTag) {
       const rentals = await ctx.db.query("tool_rentals").collect();
 
       // Enrich with tool and user data
