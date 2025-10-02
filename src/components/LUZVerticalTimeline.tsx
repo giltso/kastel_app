@@ -106,13 +106,13 @@ export function LUZVerticalTimeline({
                         understaffed: 'bg-error/20 border-2 border-error',
                         staffed: 'bg-success/20 border-2 border-success',
                         overstaffed: 'bg-warning/20 border-2 border-warning'
-                      }[staffingStatus.status];
+                      }[staffingStatus.status as 'understaffed' | 'staffed' | 'overstaffed'];
 
                       const headerColorClasses = {
                         understaffed: 'bg-error/30 border-b border-error/50',
                         staffed: 'bg-success/30 border-b border-success/50',
                         overstaffed: 'bg-warning/30 border-b border-warning/50'
-                      }[staffingStatus.status];
+                      }[staffingStatus.status as 'understaffed' | 'staffed' | 'overstaffed'];
 
                       return (
                         <div
@@ -178,7 +178,7 @@ export function LUZVerticalTimeline({
                                   return null;
                                 }
 
-                                return assignment.assignedHours.map((timeSlot, slotIndex) => {
+                                return assignment.assignedHours.map((timeSlot: any, slotIndex: number) => {
                                   const workerStartHour = parseInt(timeSlot.startTime.split(':')[0]);
                                   const workerEndHour = parseInt(timeSlot.endTime.split(':')[0]);
 
@@ -216,7 +216,7 @@ export function LUZVerticalTimeline({
                                 const indicators = [];
                                 for (let hourInt = startHour; hourInt < endHour; hourInt++) {
                                   // Find the requirement range that contains this hour
-                                  const applicableReq = shift.hourlyRequirements?.find(req => {
+                                  const applicableReq = shift.hourlyRequirements?.find((req: any) => {
                                     const reqStart = parseInt(req.startTime.split(':')[0]);
                                     const reqEnd = parseInt(req.endTime.split(':')[0]);
                                     return hourInt >= reqStart && hourInt < reqEnd;
@@ -305,7 +305,7 @@ export function LUZVerticalTimeline({
 
                           {/* Students area below header */}
                           <div className="relative px-3 py-2" style={{ height: `${duration * 64}px` }}>
-                            {course.enrolledStudents?.map((student, studentIndex) => (
+                            {course.enrolledStudents?.map((student: any, studentIndex: number) => (
                               <div
                                 key={student._id}
                                 className="absolute bg-info/30 border border-info rounded px-2 py-1"

@@ -54,7 +54,7 @@ function V2HomePage() {
     return (
       <>
         <EnsureUserV2 />
-        <CustomerHomePage user={user} hasPermission={hasPermission} />
+        <CustomerHomePage user={user} hasPermission={hasPermission as any} />
       </>
     );
   }
@@ -108,7 +108,7 @@ function GuestHomePage() {
             <h2 className="card-title justify-center">📚 Educational Courses</h2>
             <p>Learn from experts with hands-on workshops covering woodworking, electrical, and more.</p>
             <div className="card-actions justify-center">
-              <Link to="/courses" className="btn btn-secondary btn-sm">View Courses</Link>
+              <Link to="/educational" className="btn btn-secondary btn-sm">View Courses</Link>
             </div>
           </div>
         </div>
@@ -317,7 +317,7 @@ function CustomerHomePage({ user, hasPermission }: { user: any, hasPermission: (
             <h2 className="card-title justify-center">📚 Educational Courses</h2>
             <p>Learn from experts with hands-on workshops covering woodworking, electrical, and more.</p>
             <div className="card-actions justify-center">
-              <Link to="/courses" className="btn btn-secondary btn-sm">View Courses</Link>
+              <Link to="/educational" className="btn btn-secondary btn-sm">View Courses</Link>
             </div>
           </div>
         </div>

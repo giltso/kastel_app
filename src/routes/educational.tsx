@@ -198,11 +198,11 @@ function EducationalPage() {
                   course={course}
                   onViewDetails={() => setSelectedCourseId(course._id)}
                   onEnroll={
-                    isCustomer && !course.userEnrollment
+                    isCustomer && !("userEnrollment" in course ? course.userEnrollment : null)
                       ? () => setEnrollCourse(course)
                       : undefined
                   }
-                  showEnrollButton={isCustomer && !course.userEnrollment}
+                  showEnrollButton={isCustomer && !("userEnrollment" in course ? course.userEnrollment : null)}
                 />
               ))}
             </div>

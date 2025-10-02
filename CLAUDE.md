@@ -134,6 +134,7 @@ For major tasks, follow this systematic approach:
    - Commit after each significant step (following Git Workflow above)
 
 3. **Completion Phase**:
+   - Run `pnpm typecheck` to verify all TypeScript types compile
    - Report completion status in terminal, focusing on problems and unfinished tasks
    - Update feature documentation with changes made
    - Update PROJECT_OVERVIEW.md implementation status
@@ -151,6 +152,7 @@ When creating feature-specific documentation, use `design/SHIFTS_IMPLEMENTATION.
 ## Testing & Validation
 
 - Always follow these steps before squashing or pushing
+- Run `pnpm typecheck` to verify all TypeScript types are valid across the entire project
 - Check background process output for Convex backend errors. Run `pnpm lint` for comprehensive type checking and linting across the codebase
 - Test UI with Playwright MCP: full browser automation with element interaction and console access
   - The playwright mcp server is unreliable, if it doesn't work ask the user to test manually
@@ -328,6 +330,7 @@ When creating feature-specific documentation, use `design/SHIFTS_IMPLEMENTATION.
 
 ## Other Guidelines
 
+- When writing typscript code avoid using type Any. 
 - When stuck: check official docs first (docs.convex.dev, tanstack.com, daisyui.com)
 - Verify responsive design at multiple breakpoints
 - Document non-obvious implementation choices in this file

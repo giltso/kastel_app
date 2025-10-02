@@ -6,7 +6,6 @@ import { LUZOverview } from "@/components/LUZOverview";
 import { LUZVerticalTimeline } from "@/components/LUZVerticalTimeline";
 import { LUZWeekView } from "@/components/LUZWeekView";
 import { LUZMonthView } from "@/components/LUZMonthView";
-import { ShiftDetailsModal } from "@/components/modals/ShiftDetailsModal";
 import { CreateEditShiftModal } from "@/components/modals/CreateEditShiftModal";
 import { RequestJoinShiftModal } from "@/components/modals/RequestJoinShiftModal";
 import { AssignWorkerModal } from "@/components/modals/AssignWorkerModal";
@@ -169,7 +168,7 @@ function LUZPage() {
 
   // Real data queries
   const shiftsForDate = useQuery(
-    filters.shifts ? api.shifts.getShiftsForDate : "skip",
+    (filters.shifts ? api.shifts.getShiftsForDate : "skip") as any,
     filters.shifts ? { date: selectedDate } : "skip"
   ) || [];
   const createSampleShifts = useMutation(api.shifts.createSampleShifts);
@@ -187,28 +186,28 @@ function LUZPage() {
     const shouldQuery = timelineView === 'week';
     return {
       date,
-      assignments: useQuery(shouldQuery ? api.shift_assignments.getAssignmentsForDate : "skip", shouldQuery ? { date } : "skip") || []
+      assignments: useQuery((shouldQuery ? api.shift_assignments.getAssignmentsForDate : "skip") as any, shouldQuery ? { date } : "skip") || []
     };
   });
   const weekShiftQueries = weekDates.map(date => {
     const shouldQuery = timelineView === 'week' && filters.shifts;
     return {
       date,
-      shifts: useQuery(shouldQuery ? api.shifts.getShiftsForDate : "skip", shouldQuery ? { date } : "skip") || []
+      shifts: useQuery((shouldQuery ? api.shifts.getShiftsForDate : "skip") as any, shouldQuery ? { date } : "skip") || []
     };
   });
   const weekCourseQueries = weekDates.map(date => {
     const shouldQuery = timelineView === 'week' && filters.courses;
     return {
       date,
-      courses: useQuery(shouldQuery ? api.courses_v2.getCoursesForDate : "skip", shouldQuery ? { date } : "skip") || []
+      courses: useQuery((shouldQuery ? api.courses_v2.getCoursesForDate : "skip") as any, shouldQuery ? { date } : "skip") || []
     };
   });
   const weekRentalQueries = weekDates.map(date => {
     const shouldQuery = timelineView === 'week' && filters.rentals;
     return {
       date,
-      rentals: useQuery(shouldQuery ? api.tools.getToolRentalsForDate : "skip", shouldQuery ? { date } : "skip") || []
+      rentals: useQuery((shouldQuery ? api.tools.getToolRentalsForDate : "skip") as any, shouldQuery ? { date } : "skip") || []
     };
   });
 
@@ -218,37 +217,37 @@ function LUZPage() {
     const shouldQuery = timelineView === 'month';
     return {
       date,
-      assignments: useQuery(shouldQuery ? api.shift_assignments.getAssignmentsForDate : "skip", shouldQuery ? { date } : "skip") || []
+      assignments: useQuery((shouldQuery ? api.shift_assignments.getAssignmentsForDate : "skip") as any, shouldQuery ? { date } : "skip") || []
     };
   });
   const monthShiftQueries = monthDates.map(date => {
     const shouldQuery = timelineView === 'month' && filters.shifts;
     return {
       date,
-      shifts: useQuery(shouldQuery ? api.shifts.getShiftsForDate : "skip", shouldQuery ? { date } : "skip") || []
+      shifts: useQuery((shouldQuery ? api.shifts.getShiftsForDate : "skip") as any, shouldQuery ? { date } : "skip") || []
     };
   });
   const monthCourseQueries = monthDates.map(date => {
     const shouldQuery = timelineView === 'month' && filters.courses;
     return {
       date,
-      courses: useQuery(shouldQuery ? api.courses_v2.getCoursesForDate : "skip", shouldQuery ? { date } : "skip") || []
+      courses: useQuery((shouldQuery ? api.courses_v2.getCoursesForDate : "skip") as any, shouldQuery ? { date } : "skip") || []
     };
   });
   const monthRentalQueries = monthDates.map(date => {
     const shouldQuery = timelineView === 'month' && filters.rentals;
     return {
       date,
-      rentals: useQuery(shouldQuery ? api.tools.getToolRentalsForDate : "skip", shouldQuery ? { date } : "skip") || []
+      rentals: useQuery((shouldQuery ? api.tools.getToolRentalsForDate : "skip") as any, shouldQuery ? { date } : "skip") || []
     };
   });
   const pendingAssignments = useQuery(api.shift_assignments.getPendingAssignments) || [];
 
   // Day view course query
-  const coursesForDate: any[] = useQuery(filters.courses ? api.courses_v2.getCoursesForDate : "skip", filters.courses ? { date: selectedDate } : "skip") || [];
+  const coursesForDate: any[] = useQuery((filters.courses ? api.courses_v2.getCoursesForDate : "skip") as any, filters.courses ? { date: selectedDate } : "skip") || [];
 
   // Day view rental query
-  const rentalsForDate: any[] = useQuery(filters.rentals ? api.tools.getToolRentalsForDate : "skip", filters.rentals ? { date: selectedDate } : "skip") || [];
+  const rentalsForDate: any[] = useQuery((filters.rentals ? api.tools.getToolRentalsForDate : "skip") as any, filters.rentals ? { date: selectedDate } : "skip") || [];
 
   // Week view data preparation
   const shiftsForWeek: { [date: string]: any[] } = {};
@@ -537,8 +536,8 @@ function LUZPage() {
               filters={filters}
               hasManagerTag={hasManagerTag}
               onReviewRequests={() => openModal('reviewRequests')}
-              onApproveAssignment={handleDirectApprove}
-              onRejectAssignment={handleDirectReject}
+              onApproveAssignment={handleDirectApprove as any}
+              onRejectAssignment={handleDirectReject as any}
               onRequestJoin={(shiftId, date) => openModal('requestJoin', { shiftId, date })}
               onAssignWorker={(shiftId, date) => openModal('assignWorker', { shiftId, date })}
               onEditAssignment={(assignmentId) => openModal('editAssignment', { assignmentId })}
@@ -556,7 +555,6 @@ function LUZPage() {
                 selectedDate={selectedDate}
                 hasManagerTag={hasManagerTag}
                 getShiftStaffingStatus={getShiftStaffingStatus}
-                onShiftClick={(shiftId) => openModal('shiftDetails', { shiftId })}
                 onRequestJoin={(shiftId, date) => openModal('requestJoin', { shiftId, date })}
               />
             ) : timelineView === 'week' ? (
@@ -568,7 +566,6 @@ function LUZPage() {
                 assignmentsForWeek={assignmentsForWeek}
                 hasManagerTag={hasManagerTag}
                 getShiftStaffingStatus={getShiftStaffingStatus}
-                onShiftClick={(shiftId) => openModal('shiftDetails', { shiftId })}
                 onRequestJoin={(shiftId, date) => openModal('requestJoin', { shiftId, date })}
               />
             ) : (
@@ -578,8 +575,6 @@ function LUZPage() {
                 hasManagerTag={hasManagerTag}
                 getShiftStaffingStatus={getShiftStaffingStatus}
                 onDateClick={(date) => setSelectedDate(date)}
-                onShiftClick={(shiftId) => openModal('shiftDetails', { shiftId })}
-                onRequestJoin={(shiftId, date) => openModal('requestJoin', { shiftId, date })}
               />
             )}
           </div>
@@ -587,19 +582,6 @@ function LUZPage() {
       </div>
 
       {/* Modal Components */}
-      <ShiftDetailsModal
-        shiftId={modals.shiftDetails.shiftId}
-        selectedDate={selectedDate}
-        isOpen={modals.shiftDetails.isOpen}
-        onClose={() => closeModal('shiftDetails')}
-        onEditShift={(shiftId) => openModal('createEditShift', { shiftId })}
-        onAssignWorker={(shiftId, date) => openModal('assignWorker', { shiftId, date })}
-        onRequestJoin={(shiftId, date) => openModal('requestJoin', { shiftId, date })}
-        onEditAssignment={(assignmentId) => openModal('editAssignment', { assignmentId })}
-        onApproveAssignment={(assignmentId) => openModal('approveAssignment', { assignmentId })}
-        onReviewRequests={(shiftId) => openModal('reviewRequests', { shiftId })}
-      />
-
       <CreateEditShiftModal
         shiftId={modals.createEditShift.shiftId}
         isOpen={modals.createEditShift.isOpen}

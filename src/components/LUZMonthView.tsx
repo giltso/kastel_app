@@ -193,13 +193,13 @@ export function LUZMonthView({
                       <div className="text-xs">
                         {dayStatus.shiftsCount} shifts
                       </div>
-                      {dayStatus.understaffedCount > 0 && (
+                      {(dayStatus.understaffedCount ?? 0) > 0 && (
                         <div className="w-2 h-2 bg-error rounded-full"></div>
                       )}
-                      {dayStatus.understaffedCount === 0 && dayStatus.overstaffedCount > 0 && (
+                      {(dayStatus.understaffedCount ?? 0) === 0 && (dayStatus.overstaffedCount ?? 0) > 0 && (
                         <div className="w-2 h-2 bg-warning rounded-full"></div>
                       )}
-                      {dayStatus.understaffedCount === 0 && dayStatus.overstaffedCount === 0 && dayStatus.staffedCount > 0 && (
+                      {(dayStatus.understaffedCount ?? 0) === 0 && (dayStatus.overstaffedCount ?? 0) === 0 && (dayStatus.staffedCount ?? 0) > 0 && (
                         <div className="w-2 h-2 bg-success rounded-full"></div>
                       )}
                     </div>

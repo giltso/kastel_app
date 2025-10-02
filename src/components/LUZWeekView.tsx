@@ -132,7 +132,7 @@ export function LUZWeekView({
                       understaffed: 'bg-error/20 border border-error',
                       staffed: 'bg-success/20 border border-success',
                       overstaffed: 'bg-warning/20 border border-warning'
-                    }[staffingStatus.status];
+                    }[staffingStatus.status as "understaffed" | "staffed" | "overstaffed"];
 
                     return (
                       <div
@@ -163,7 +163,7 @@ export function LUZWeekView({
                               return null;
                             }
 
-                            return assignment.assignedHours.map((timeSlot, slotIndex) => {
+                            return assignment.assignedHours.map((timeSlot: any, slotIndex: number) => {
                               const workerStartHour = parseInt(timeSlot.startTime.split(':')[0]);
                               const workerEndHour = parseInt(timeSlot.endTime.split(':')[0]);
 

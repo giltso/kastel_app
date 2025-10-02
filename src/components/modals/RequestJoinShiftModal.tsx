@@ -67,7 +67,7 @@ export function RequestJoinShiftModal({
 
       // This will create an assignment with status "pending_manager_approval"
       await requestJoinShift({
-        shiftTemplateId: shiftId,
+        shiftTemplateId: shiftId!,
         date: selectedDate,
         requestedHours: hoursToRequest.length > 0 ? hoursToRequest : undefined,
         requestNotes: requestNotes || undefined,
