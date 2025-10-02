@@ -228,7 +228,7 @@ export function LUZVerticalTimeline({
                                   const relativePosition = ((hourInt - startHour) / duration) * 100 + 5;
 
                                   const currentWorkers = shiftWorkers.filter(assignment => {
-                                    return assignment.status === 'confirmed' && assignment.assignedHours?.some(timeSlot => {
+                                    return assignment.status === 'confirmed' && assignment.assignedHours?.some((timeSlot: any) => {
                                       const assignStart = parseInt(timeSlot.startTime.split(':')[0]);
                                       const assignEnd = parseInt(timeSlot.endTime.split(':')[0]);
                                       return hourInt >= assignStart && hourInt < assignEnd;

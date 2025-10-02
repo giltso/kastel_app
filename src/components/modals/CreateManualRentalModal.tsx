@@ -35,9 +35,6 @@ export function CreateManualRentalModal({ isOpen, onClose }: CreateManualRentalM
       rentalEndDate: "",
       notes: "",
     },
-    validators: {
-      onChange: manualRentalSchema,
-    },
     onSubmit: async ({ value }) => {
       setIsSubmitting(true);
       setError(null);
@@ -128,7 +125,7 @@ export function CreateManualRentalModal({ isOpen, onClose }: CreateManualRentalM
                 {!field.state.meta.isValid && (
                   <label className="label">
                     <span className="label-text-alt text-error">
-                      {field.state.meta.errors.map(e => e.message).join(", ")}
+                      {field.state.meta.errors.map((e: any) => e.message).join(", ")}
                     </span>
                   </label>
                 )}
@@ -154,7 +151,7 @@ export function CreateManualRentalModal({ isOpen, onClose }: CreateManualRentalM
                 {!field.state.meta.isValid && (
                   <label className="label">
                     <span className="label-text-alt text-error">
-                      {field.state.meta.errors.map(e => e.message).join(", ")}
+                      {field.state.meta.errors.map((e: any) => e.message).join(", ")}
                     </span>
                   </label>
                 )}
@@ -181,7 +178,7 @@ export function CreateManualRentalModal({ isOpen, onClose }: CreateManualRentalM
                 {!field.state.meta.isValid && (
                   <label className="label">
                     <span className="label-text-alt text-error">
-                      {field.state.meta.errors.map(e => e.message).join(", ")}
+                      {field.state.meta.errors.map((e: any) => e.message).join(", ")}
                     </span>
                   </label>
                 )}
@@ -207,7 +204,7 @@ export function CreateManualRentalModal({ isOpen, onClose }: CreateManualRentalM
                   {!field.state.meta.isValid && (
                     <label className="label">
                       <span className="label-text-alt text-error">
-                        {field.state.meta.errors.map(e => e.message).join(", ")}
+                        {field.state.meta.errors.map((e: any) => e.message).join(", ")}
                       </span>
                     </label>
                   )}
@@ -231,7 +228,7 @@ export function CreateManualRentalModal({ isOpen, onClose }: CreateManualRentalM
                   {!field.state.meta.isValid && (
                     <label className="label">
                       <span className="label-text-alt text-error">
-                        {field.state.meta.errors.map(e => e.message).join(", ")}
+                        {field.state.meta.errors.map((e: any) => e.message).join(", ")}
                       </span>
                     </label>
                   )}

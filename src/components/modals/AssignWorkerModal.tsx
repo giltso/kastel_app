@@ -194,7 +194,7 @@ export function AssignWorkerModal({
       }
 
       await assignWorker({
-        shiftTemplateId: shiftId,
+        shiftTemplateId: shiftId!,
         workerId: selectedWorkerId as Id<"users">,
         date: selectedDate,
         assignedHours: assignedHours,

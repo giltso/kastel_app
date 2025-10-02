@@ -120,7 +120,7 @@ export function CourseDetailsModal({ isOpen, onClose, courseId, onEnroll }: Cour
               <div className="text-sm">
                 <div className="font-semibold">Time</div>
                 <div className="opacity-70">
-                  {courseDetails.schedule?.startTime || courseDetails.startTime} - {courseDetails.schedule?.endTime || courseDetails.endTime}
+                  {courseDetails.startTime} - {courseDetails.endTime}
                 </div>
               </div>
             </div>
@@ -129,7 +129,7 @@ export function CourseDetailsModal({ isOpen, onClose, courseId, onEnroll }: Cour
               <MapPin className="w-4 h-4 opacity-70" />
               <div className="text-sm">
                 <div className="font-semibold">Location</div>
-                <div className="opacity-70">{courseDetails.schedule?.location || courseDetails.location}</div>
+                <div className="opacity-70">{courseDetails.location}</div>
               </div>
             </div>
           </div>
@@ -150,7 +150,7 @@ export function CourseDetailsModal({ isOpen, onClose, courseId, onEnroll }: Cour
             <div className="p-4 bg-base-200 rounded-lg">
               <div className="font-semibold mb-1">Instructor</div>
               <div className="text-sm opacity-70">{courseDetails.instructor.name}</div>
-              {courseDetails.helperInstructors && courseDetails.helperInstructors.length > 0 && (
+              {"helperInstructors" in courseDetails && courseDetails.helperInstructors && courseDetails.helperInstructors.length > 0 && (
                 <div className="mt-2">
                   <div className="text-xs font-semibold mb-1">Helper Instructors:</div>
                   <div className="flex gap-2 flex-wrap">
@@ -191,7 +191,7 @@ export function CourseDetailsModal({ isOpen, onClose, courseId, onEnroll }: Cour
           )}
 
           {/* Enrollments (Instructor/Manager view) */}
-          {courseDetails.enrollments && courseDetails.enrollments.length > 0 && (
+          {("enrollments" in courseDetails ? courseDetails.enrollments : []) && ("enrollments" in courseDetails ? courseDetails.enrollments : []).length > 0 && (
             <div>
               <h4 className="font-semibold mb-3">Enrolled Students</h4>
               <div className="overflow-x-auto">
@@ -205,7 +205,7 @@ export function CourseDetailsModal({ isOpen, onClose, courseId, onEnroll }: Cour
                     </tr>
                   </thead>
                   <tbody>
-                    {courseDetails.enrollments.map((enrollment: any) => (
+                    {("enrollments" in courseDetails ? courseDetails.enrollments : []).map((enrollment: any) => (
                       <tr key={enrollment._id}>
                         <td>
                           <div className="font-semibold">{enrollment.student?.name}</div>
@@ -259,13 +259,13 @@ export function CourseDetailsModal({ isOpen, onClose, courseId, onEnroll }: Cour
           )}
 
           {/* User Enrollment Status */}
-          {courseDetails.userEnrollment && (
+          {("userEnrollment" in courseDetails ? courseDetails.userEnrollment : null) && (
             <div className="alert alert-info">
               <div>
                 <div className="font-semibold">Your Enrollment Status</div>
                 <div className="flex gap-2 mt-2">
-                  <div className={`badge ${getStatusBadgeClass(courseDetails.userEnrollment.status)}`}>
-                    {courseDetails.userEnrollment.status}
+                  <div className={`badge ${getStatusBadgeClass(("userEnrollment" in courseDetails ? courseDetails.userEnrollment : null)?.status || "pending")}`}>
+                    {("userEnrollment" in courseDetails ? courseDetails.userEnrollment : null)?.status || "pending"}
                   </div>
                 </div>
               </div>
@@ -275,7 +275,7 @@ export function CourseDetailsModal({ isOpen, onClose, courseId, onEnroll }: Cour
 
         {/* Actions */}
         <div className="flex justify-end gap-2 mt-6">
-          {!courseDetails.userEnrollment && !courseDetails.canManage && courseDetails.spotsAvailable > 0 && (
+          {!("userEnrollment" in courseDetails ? courseDetails.userEnrollment : null) && !("canManage" in courseDetails ? courseDetails.canManage : false) && courseDetails.spotsAvailable > 0 && (
             <button onClick={onEnroll} className="btn btn-primary">
               Enroll Now
             </button>

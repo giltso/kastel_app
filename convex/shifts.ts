@@ -270,7 +270,7 @@ export const createShiftTemplate = mutation({
   args: {
     name: v.string(),
     description: v.optional(v.string()),
-    type: v.union(v.literal("operational"), v.literal("maintenance"), v.literal("special")),
+    type: v.union(v.literal("operational"), v.literal("maintenance"), v.literal("educational"), v.literal("special")),
     storeHours: v.object({
       openTime: v.string(),
       closeTime: v.string(),
@@ -338,7 +338,7 @@ export const updateShiftTemplate = mutation({
     shiftId: v.id("shifts"),
     name: v.optional(v.string()),
     description: v.optional(v.string()),
-    type: v.optional(v.union(v.literal("operational"), v.literal("maintenance"), v.literal("special"))),
+    type: v.optional(v.union(v.literal("operational"), v.literal("maintenance"), v.literal("educational"), v.literal("special"))),
     storeHours: v.optional(v.object({
       openTime: v.string(),
       closeTime: v.string(),

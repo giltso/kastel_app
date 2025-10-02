@@ -59,14 +59,24 @@ export function CreateEditShiftModal({
   const [isAutoUpdatingRequirements, setIsAutoUpdatingRequirements] = useState(false);
 
   // Form state
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    name: string;
+    description: string;
+    type: "operational" | "maintenance" | "educational" | "special";
+    openTime: string;
+    closeTime: string;
+    recurringDays: string[];
+    color: string;
+    hourlyRequirements: HourlyRequirement[];
+  }>({
     name: "",
     description: "",
-    type: "operational" as const,
+    type: "operational",
     openTime: "08:00",
     closeTime: "18:00",
     recurringDays: [] as string[],
     color: PRESET_COLORS[0],
+    hourlyRequirements: [],
   });
 
   const [hourlyRequirements, setHourlyRequirements] = useState<HourlyRequirement[]>([]);
@@ -89,11 +99,12 @@ export function CreateEditShiftModal({
       setFormData({
         name: existingShift.name,
         description: existingShift.description || "",
-        type: existingShift.type,
+        type: existingShift.type as "operational" | "maintenance" | "educational" | "special",
         openTime: existingShift.storeHours.openTime,
         closeTime: existingShift.storeHours.closeTime,
         recurringDays: existingShift.recurringDays,
         color: existingShift.color || PRESET_COLORS[0],
+        hourlyRequirements: existingShift.hourlyRequirements,
       });
 
       setHourlyRequirements(

@@ -197,7 +197,7 @@ export function ApproveAssignmentModal({
                 <div>
                   <span className="text-base-content/70">Break Periods:</span>
                   <div className="font-medium mt-1">
-                    {formatBreaks(specificAssignment.breakPeriods)}
+                    {formatBreaks(specificAssignment.breakPeriods || [])}
                   </div>
                 </div>
                 <div>
