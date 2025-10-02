@@ -58,12 +58,16 @@
 - **Calendar Integration**: Partial integration, requires substantial development
 - **Testing Status**: Basic functionality tested, comprehensive workflows untested
 
-### 2. Tool Rental System - FUNCTIONAL
+### 2. Tool Rental System - FULLY FUNCTIONAL
 - ✅ **Inventory Management**: Tool catalog with CRUD operations functional
 - ✅ **Rental Workflows**: Booking system operational with approval processes
+- ✅ **Manual Rental Creation**: Tool handlers can create rentals for walk-in (non-registered) customers
+- ✅ **Walk-in Customer Support**: Pre-approved rentals for tech-illiterate customers via staff assistance
+- ✅ **Contact Tracking**: Non-user renter name and contact information capture
 - ✅ **LUZ Integration**: Tool rentals visible on calendar timeline
 - ✅ **Staff Management**: Tool handler role with rental management operational
 - ✅ **Customer Experience**: Tool browsing and rental requests functional
+- ✅ **Display Integration**: Manual rentals shown with "Walk-in" badges in rental lists and history
 - 🚧 **Advanced Features**: Overdue tracking and automated reminders pending
 
 ### 3. Educational Courses - FUNCTIONAL

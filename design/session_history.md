@@ -2,6 +2,49 @@
 
 detailed history of all sessions. to be updated on new session
 
+### Session 31 - October 2, 2025
+
+**Goal**: Fix UI issues and implement manual rental creation for walk-in customers
+
+**Major Achievements**:
+- ✅ **UI Bug Fixes**: Resolved two non-blocking issues from approval workflow testing
+  - ✅ Fixed "Unknown User" display in tool rentals (changed permission check from `workerTag` to `toolHandlerTag`)
+  - ✅ Removed payment/price mentions from course enrollment modal (courses are free)
+- ✅ **Manual Rental System**: Complete walk-in customer rental functionality
+  - ✅ Updated `tool_rentals` schema to support non-registered customers
+  - ✅ Made `renterUserId` optional with `isManualRental`, `nonUserRenterName`, `nonUserRenterContact` fields
+  - ✅ Created `createManualRental` mutation with tool handler permission checks
+  - ✅ Built `CreateManualRentalModal` component with TanStack Form + Zod validation
+  - ✅ Added "Manual Rental" button in tool handler operational view
+  - ✅ Updated rental displays to show walk-in customer info with badges
+  - ✅ Fixed all TypeScript null safety issues for optional `renterUserId` (3 locations)
+
+**Technical Implementation**:
+- **Schema**: `convex/schema.ts` - Made `renterUserId` optional, added manual rental fields
+- **Backend**: `convex/tools.ts` - Created `createManualRental` mutation, fixed null safety in 3 queries
+- **Frontend**: `src/components/modals/CreateManualRentalModal.tsx` - Complete form with validation
+- **UI Updates**: `src/routes/tools.tsx` - Added manual rental button, updated rental tables to display walk-in info
+
+**Issues Resolved**:
+- **Permission Bug**: Tool handler view showed "Unknown User" due to incorrect role check
+- **UI Copy Issue**: Course enrollment modal mentioned payment despite free pricing
+- **TypeScript Errors**: Optional `renterUserId` caused 3 compilation errors in rental queries
+- **Walk-in Customer Gap**: No way to create rentals for non-registered customers
+
+**Features Delivered**:
+- Pre-approved manual rentals (bypass approval workflow)
+- Walk-in customer contact information capture (phone/email)
+- "Walk-in" badges in rental lists and history
+- Tool handler-only access to manual rental creation
+- Real-time cost calculation in rental form
+- Automatic tool availability updates
+
+**Testing Verification**:
+- ✅ Both UI bugs fixed and verified
+- ✅ All TypeScript compilation errors resolved
+- ✅ Frontend routes regenerated successfully
+- ✅ Backend Convex functions deployed without errors
+
 ### Session 30 - October 1, 2025
 
 **Goal**: Fix course creation modal issues and schema deployment problems
