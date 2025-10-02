@@ -13,7 +13,7 @@ import { AssignWorkerModal } from "@/components/modals/AssignWorkerModal";
 import { EditAssignmentModal } from "@/components/modals/EditAssignmentModal";
 import { ReviewRequestModal } from "@/components/modals/ReviewRequestModal";
 import { ApproveAssignmentModal } from "@/components/modals/ApproveAssignmentModal";
-import { Calendar, Filter, Plus, Nut } from "lucide-react";
+import { Calendar, Filter, Plus, Nut, ChevronLeft, ChevronRight } from "lucide-react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Id } from "../../convex/_generated/dataModel";
@@ -323,6 +323,28 @@ function LUZPage() {
     setFilters(prev => ({ ...prev, [filterName]: !prev[filterName] }));
   };
 
+  // Date navigation functions
+  const navigateDate = (direction: 'prev' | 'next') => {
+    const currentDate = new Date(selectedDate + 'T00:00:00');
+    let newDate: Date;
+
+    if (timelineView === 'vertical') {
+      // Daily view: navigate by 1 day
+      newDate = new Date(currentDate);
+      newDate.setDate(currentDate.getDate() + (direction === 'next' ? 1 : -1));
+    } else if (timelineView === 'week') {
+      // Week view: navigate by 7 days
+      newDate = new Date(currentDate);
+      newDate.setDate(currentDate.getDate() + (direction === 'next' ? 7 : -7));
+    } else {
+      // Month view: navigate by 1 month
+      newDate = new Date(currentDate);
+      newDate.setMonth(currentDate.getMonth() + (direction === 'next' ? 1 : -1));
+    }
+
+    setSelectedDate(newDate.toISOString().split('T')[0]);
+  };
+
   const handleCreateSampleShifts = async () => {
     try {
       const result = await createSampleShifts({});
@@ -385,16 +407,33 @@ function LUZPage() {
             </div>
           </div>
           <div className="flex items-center gap-4">
-            <input
-              type="date"
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-              className="input input-bordered"
-              lang={navigator.language || 'en-US'}
-            />
+            {/* Date Navigation */}
+            <div className="join">
+              <button
+                className="btn btn-sm join-item"
+                onClick={() => navigateDate('prev')}
+                title={timelineView === 'vertical' ? 'Previous Day' : timelineView === 'week' ? 'Previous Week' : 'Previous Month'}
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <input
+                type="date"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+                className="input input-bordered input-sm join-item w-40"
+                lang={navigator.language || 'en-US'}
+              />
+              <button
+                className="btn btn-sm join-item"
+                onClick={() => navigateDate('next')}
+                title={timelineView === 'vertical' ? 'Next Day' : timelineView === 'week' ? 'Next Week' : 'Next Month'}
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
             {hasManagerTag && (
               <button
-                className="btn btn-primary"
+                className="btn btn-primary btn-sm"
                 onClick={() => openModal('createEditShift')}
               >
                 <Plus className="w-4 h-4" />
@@ -402,7 +441,7 @@ function LUZPage() {
               </button>
             )}
             {shiftsForDate.length === 0 && hasManagerTag && (
-              <button className="btn btn-secondary" onClick={handleCreateSampleShifts}>
+              <button className="btn btn-secondary btn-sm" onClick={handleCreateSampleShifts}>
                 🔧 Create Sample Data
               </button>
             )}

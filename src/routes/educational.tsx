@@ -154,9 +154,6 @@ function EducationalPage() {
                         <div className={`badge ${getEnrollmentStatusBadge(enrollment.status)}`}>
                           {enrollment.status}
                         </div>
-                        <div className={`badge ${getPaymentStatusBadge(enrollment.paymentStatus)}`}>
-                          {enrollment.paymentStatus}
-                        </div>
                       </div>
                     </div>
                     <div className="text-sm opacity-60 mt-2">
@@ -278,15 +275,3 @@ function getEnrollmentStatusBadge(status: string) {
   }
 }
 
-function getPaymentStatusBadge(status: string) {
-  switch (status) {
-    case "pending":
-      return "badge-warning";
-    case "paid":
-      return "badge-success";
-    case "refunded":
-      return "badge-info";
-    default:
-      return "badge-neutral";
-  }
-}

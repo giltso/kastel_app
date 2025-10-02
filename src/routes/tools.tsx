@@ -259,17 +259,6 @@ function GuestView() {
 
   return (
     <div className="not-prose space-y-6">
-      {/* Call-to-action banner for guests */}
-      <div className="alert alert-info">
-        <div className="flex items-center gap-3">
-          <Hammer className="w-6 h-6" />
-          <div>
-            <h3 className="font-bold">Ready to rent professional tools?</h3>
-            <p className="text-sm">Sign in to check availability and request rentals for your projects.</p>
-          </div>
-        </div>
-      </div>
-
       {/* Category Filter */}
       <div className="flex flex-wrap gap-2">
         {categories.map((category) => (

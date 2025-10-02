@@ -47,15 +47,27 @@ export function LUZMonthView({
     // First day of the month in UTC
     const firstDay = new Date(Date.UTC(year, month - 1, 1));
 
-    // Calculate start of calendar grid (Sunday of first week)
-    const dayOfWeek = firstDay.getUTCDay(); // 0 = Sunday, 1 = Monday, etc.
-    const startDate = new Date(Date.UTC(year, month - 1, 1 - dayOfWeek));
+    // Last day of the month
+    const lastDay = new Date(Date.UTC(year, month, 0));
 
-    // Generate 42 days (6 weeks)
+    // Calculate start of calendar grid (Sunday of first week)
+    const firstDayOfWeek = firstDay.getUTCDay(); // 0 = Sunday, 1 = Monday, etc.
+    const startDate = new Date(Date.UTC(year, month - 1, 1 - firstDayOfWeek));
+
+    // Calculate end of calendar grid (Saturday of last week)
+    const lastDayOfWeek = lastDay.getUTCDay(); // 0 = Sunday, 6 = Saturday
+    const daysAfterMonth = lastDayOfWeek === 6 ? 0 : 6 - lastDayOfWeek;
+
+    // Calculate total days needed (days before month + days in month + days after month)
+    const daysBeforeMonth = firstDayOfWeek;
+    const daysInMonth = lastDay.getUTCDate();
+    const totalDays = daysBeforeMonth + daysInMonth + daysAfterMonth;
+
+    // Generate only the necessary days
     const days = [];
     const today = new Date().toISOString().split('T')[0];
 
-    for (let i = 0; i < 42; i++) {
+    for (let i = 0; i < totalDays; i++) {
       const currentDate = new Date(startDate);
       currentDate.setUTCDate(startDate.getUTCDate() + i);
       const currentDateString = currentDate.toISOString().split('T')[0];
