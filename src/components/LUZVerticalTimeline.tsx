@@ -199,7 +199,7 @@ export function LUZVerticalTimeline({
                                       style={{
                                         top: `${relativeStart}%`,
                                         height: `${relativeHeight}%`,
-                                        left: `${(workerIndex * 25) + (slotIndex * 2)}%`, // Slight offset for multiple slots
+                                        left: `${workerIndex * 25}%`, // Same horizontal position for all slots from same worker
                                         width: '20%',
                                       }}
                                     >
