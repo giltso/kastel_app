@@ -165,6 +165,7 @@ function LUZPage() {
     editAssignment: { isOpen: false, assignmentId: null as Id<"shift_assignments"> | null },
     reviewRequests: { isOpen: false, shiftId: null as Id<"shifts"> | null },
     approveAssignment: { isOpen: false, assignmentId: null as Id<"shift_assignments"> | null },
+    datePicker: { isOpen: false },
   });
 
   // Real data queries
@@ -501,8 +502,15 @@ function LUZPage() {
             </button>
             <button
               className="btn btn-sm join-item"
-              onClick={() => setSelectedDate(getTodayString())}
-              title="Jump to Today"
+              onClick={() => {
+                // If current date is today, open date picker; otherwise, jump to today
+                if (selectedDate === getTodayString()) {
+                  openModal('datePicker', {});
+                } else {
+                  setSelectedDate(getTodayString());
+                }
+              }}
+              title={selectedDate === getTodayString() ? "Pick a date" : "Jump to Today"}
             >
               {new Date(selectedDate + 'T00:00:00').toLocaleDateString(undefined, {
                 weekday: 'short',
@@ -654,6 +662,31 @@ function LUZPage() {
         onClose={() => closeModal('approveAssignment')}
         onSuccess={handleModalSuccess}
       />
+
+      {/* Date Picker Modal */}
+      {modals.datePicker.isOpen && (
+        <dialog open className="modal">
+          <div className="modal-box">
+            <h3 className="font-bold text-lg mb-4">Select Date</h3>
+            <input
+              type="date"
+              className="input input-bordered w-full"
+              value={selectedDate}
+              onChange={(e) => {
+                setSelectedDate(e.target.value);
+                closeModal('datePicker');
+              }}
+              autoFocus
+            />
+            <div className="modal-action">
+              <button className="btn" onClick={() => closeModal('datePicker')}>Cancel</button>
+            </div>
+          </div>
+          <form method="dialog" className="modal-backdrop">
+            <button onClick={() => closeModal('datePicker')}>close</button>
+          </form>
+        </dialog>
+      )}
     </>
   );
 }
