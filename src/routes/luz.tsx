@@ -6,6 +6,7 @@ import { LUZOverview } from "@/components/LUZOverview";
 import { LUZVerticalTimeline } from "@/components/LUZVerticalTimeline";
 import { LUZWeekView } from "@/components/LUZWeekView";
 import { LUZMonthView } from "@/components/LUZMonthView";
+import { ShiftDetailsModal } from "@/components/modals/ShiftDetailsModal";
 import { CreateEditShiftModal } from "@/components/modals/CreateEditShiftModal";
 import { RequestJoinShiftModal } from "@/components/modals/RequestJoinShiftModal";
 import { AssignWorkerModal } from "@/components/modals/AssignWorkerModal";
@@ -390,10 +391,10 @@ function LUZPage() {
     }
   };
 
-  // Shift click handler - opens edit shift modal
+  // Shift click handler - opens shift details modal
   const handleShiftClick = (shiftId: string) => {
     console.log("Shift clicked:", shiftId);
-    openModal('createEditShift', { shiftId });
+    openModal('shiftDetails', { shiftId });
   };
 
   return (
@@ -590,6 +591,37 @@ function LUZPage() {
       </div>
 
       {/* Modal Components */}
+      <ShiftDetailsModal
+        shiftId={modals.shiftDetails.shiftId}
+        selectedDate={selectedDate}
+        isOpen={modals.shiftDetails.isOpen}
+        onClose={() => closeModal('shiftDetails')}
+        onEditShift={(shiftId) => {
+          closeModal('shiftDetails');
+          openModal('createEditShift', { shiftId });
+        }}
+        onAssignWorker={(shiftId, date) => {
+          closeModal('shiftDetails');
+          openModal('assignWorker', { shiftId, date });
+        }}
+        onRequestJoin={(shiftId, date) => {
+          closeModal('shiftDetails');
+          openModal('requestJoin', { shiftId, date });
+        }}
+        onEditAssignment={(assignmentId) => {
+          closeModal('shiftDetails');
+          openModal('editAssignment', { assignmentId });
+        }}
+        onApproveAssignment={(assignmentId) => {
+          closeModal('shiftDetails');
+          openModal('approveAssignment', { assignmentId });
+        }}
+        onReviewRequests={(shiftId) => {
+          closeModal('shiftDetails');
+          openModal('reviewRequests', { shiftId });
+        }}
+      />
+
       <CreateEditShiftModal
         shiftId={modals.createEditShift.shiftId}
         isOpen={modals.createEditShift.isOpen}
