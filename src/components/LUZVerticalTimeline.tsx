@@ -27,7 +27,7 @@ interface LUZVerticalTimelineProps {
   selectedDate: string;
   hasManagerTag: boolean;
   getShiftStaffingStatus: (shift: any, assignedWorkers: any[]) => any;
-  onShiftClick?: (shiftId: string) => void;
+  onShiftClick?: (shiftId: string, date?: string) => void;
   onRequestJoin?: (shiftId: string, date: string) => void;
 }
 

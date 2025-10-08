@@ -382,8 +382,12 @@ function LUZPage() {
   };
 
   // Shift click handler - opens shift details modal
-  const handleShiftClick = (shiftId: string) => {
-    console.log("Shift clicked:", shiftId);
+  const handleShiftClick = (shiftId: string, date?: string) => {
+    console.log("Shift clicked:", shiftId, "for date:", date || selectedDate);
+    // If a specific date is provided (e.g., from week/month view), update selectedDate
+    if (date && date !== selectedDate) {
+      setSelectedDate(date);
+    }
     openModal('shiftDetails', { shiftId });
   };
 

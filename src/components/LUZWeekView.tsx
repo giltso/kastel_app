@@ -28,7 +28,7 @@ interface LUZWeekViewProps {
   assignmentsForWeek: { [date: string]: any[] }; // Assignments grouped by date
   hasManagerTag: boolean;
   getShiftStaffingStatus: (shift: any, assignedWorkers: any[]) => any;
-  onShiftClick?: (shiftId: string) => void;
+  onShiftClick?: (shiftId: string, date?: string) => void;
   onRequestJoin?: (shiftId: string, date: string) => void;
 }
 
@@ -145,7 +145,7 @@ export function LUZWeekView({
                           height: `${height}px`,
                           padding: '2px'
                         }}
-                        onClick={() => onShiftClick?.(shift._id)}
+                        onClick={() => onShiftClick?.(shift._id, date)}
                       >
                         <div className="font-medium truncate" style={{ pointerEvents: 'none' }}>{shift.name}</div>
                         <div className="text-xs text-base-content/70 truncate" style={{ pointerEvents: 'none' }}>
