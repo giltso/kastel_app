@@ -147,16 +147,16 @@ export function LUZWeekView({
                         }}
                         onClick={() => onShiftClick?.(shift._id)}
                       >
-                        <div className="font-medium truncate">{shift.name}</div>
-                        <div className="text-xs text-base-content/70 truncate">
+                        <div className="font-medium truncate" style={{ pointerEvents: 'none' }}>{shift.name}</div>
+                        <div className="text-xs text-base-content/70 truncate" style={{ pointerEvents: 'none' }}>
                           {shift.storeHours.openTime}-{shift.storeHours.closeTime}
                         </div>
-                        <div className="text-xs mb-1">
+                        <div className="text-xs mb-1" style={{ pointerEvents: 'none' }}>
                           {staffingStatus.currentWorkers}/{staffingStatus.minWorkers} workers
                         </div>
 
                         {/* Worker assignments within shift body - IMPROVED VISIBILITY */}
-                        <div className="relative flex-1 overflow-hidden">
+                        <div className="relative flex-1 overflow-hidden" style={{ pointerEvents: 'none' }}>
                           {shiftWorkers.map((assignment, workerIndex) => {
                             // Handle multiple time slots for each assignment
                             if (!assignment.assignedHours || assignment.assignedHours.length === 0) {

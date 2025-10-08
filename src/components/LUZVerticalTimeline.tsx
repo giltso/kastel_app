@@ -135,7 +135,8 @@ export function LUZVerticalTimeline({
                               left: '5px',
                               right: '5px',
                               height: '35px',
-                              zIndex: 10
+                              zIndex: 10,
+                              pointerEvents: 'none' // Allow clicks to pass through to parent
                             }}
                           >
                             <div className="flex justify-between items-center h-full">
@@ -167,6 +168,7 @@ export function LUZVerticalTimeline({
                               left: '5px',
                               right: '5px',
                               height: `${duration * 64}px`, // Exact time span
+                              pointerEvents: 'none' // Allow clicks to pass through to parent
                             }}
                           >
                             {/* Worker assignments within shift body */}
