@@ -531,20 +531,17 @@ function LUZPage() {
 
             {/* Date Picker Dropdown */}
             {isDatePickerOpen && (
-              <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 card card-compact bg-base-100 z-[1000] w-64 p-4 shadow-xl border border-base-300">
-                <div className="card-body">
-                  <h4 className="font-semibold mb-2">Select Date</h4>
-                  <input
-                    type="date"
-                    className="input input-bordered input-sm w-full"
-                    value={selectedDate}
-                    onChange={(e) => {
-                      setSelectedDate(e.target.value);
-                      setIsDatePickerOpen(false);
-                    }}
-                    autoFocus
-                  />
-                </div>
+              <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 bg-base-100 z-[1000] shadow-xl border border-base-300 rounded-lg p-2">
+                <input
+                  type="date"
+                  className="input input-bordered input-sm"
+                  value={selectedDate}
+                  onChange={(e) => {
+                    setSelectedDate(e.target.value);
+                    setIsDatePickerOpen(false);
+                  }}
+                  autoFocus
+                />
               </div>
             )}
           </div>
