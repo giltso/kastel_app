@@ -41,6 +41,7 @@ describe('LUZVerticalTimeline', () => {
     it('CRITICAL: should require onShiftClick prop in production usage', () => {
       // This test documents that onShiftClick is REQUIRED for click functionality
       // If this test passes but clicks don't work in production, check luz.tsx
+      // onShiftClick should open the createEditShift modal to edit the shift
       const onShiftClick = vi.fn();
 
       render(
@@ -54,7 +55,7 @@ describe('LUZVerticalTimeline', () => {
       expect(onShiftClick).toBeDefined();
     });
 
-    it('should call onShiftClick when clicking on a shift', async () => {
+    it('should call onShiftClick when clicking on a shift to open edit modal', async () => {
       const onShiftClick = vi.fn();
       const user = userEvent.setup();
 
@@ -69,12 +70,13 @@ describe('LUZVerticalTimeline', () => {
       const shiftElement = screen.getByText('Morning Shift').closest('div[class*="cursor-pointer"]');
       expect(shiftElement).toBeTruthy();
 
-      // Click the shift
+      // Click the shift to open edit modal
       if (shiftElement) {
         await user.click(shiftElement);
       }
 
       // Verify onClick was called with correct shift ID
+      // In production, this opens the createEditShift modal
       expect(onShiftClick).toHaveBeenCalledWith('shift1');
       expect(onShiftClick).toHaveBeenCalledTimes(1);
     });

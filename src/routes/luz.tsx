@@ -390,12 +390,10 @@ function LUZPage() {
     }
   };
 
-  // Shift click handler - opens edit modal or details
+  // Shift click handler - opens edit shift modal
   const handleShiftClick = (shiftId: string) => {
     console.log("Shift clicked:", shiftId);
-    // TODO: Open shift details modal or edit shift modal
-    // For now, just open the assign worker modal
-    openModal('assignWorker', { shiftId, date: selectedDate });
+    openModal('createEditShift', { shiftId });
   };
 
   return (
