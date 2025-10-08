@@ -390,6 +390,14 @@ function LUZPage() {
     }
   };
 
+  // Shift click handler - opens edit modal or details
+  const handleShiftClick = (shiftId: string) => {
+    console.log("Shift clicked:", shiftId);
+    // TODO: Open shift details modal or edit shift modal
+    // For now, just open the assign worker modal
+    openModal('assignWorker', { shiftId, date: selectedDate });
+  };
+
   return (
     <>
       <EnsureUserV2 />
@@ -555,6 +563,7 @@ function LUZPage() {
                 selectedDate={selectedDate}
                 hasManagerTag={hasManagerTag}
                 getShiftStaffingStatus={getShiftStaffingStatus}
+                onShiftClick={handleShiftClick}
                 onRequestJoin={(shiftId, date) => openModal('requestJoin', { shiftId, date })}
               />
             ) : timelineView === 'week' ? (
@@ -566,6 +575,7 @@ function LUZPage() {
                 assignmentsForWeek={assignmentsForWeek}
                 hasManagerTag={hasManagerTag}
                 getShiftStaffingStatus={getShiftStaffingStatus}
+                onShiftClick={handleShiftClick}
                 onRequestJoin={(shiftId, date) => openModal('requestJoin', { shiftId, date })}
               />
             ) : (
