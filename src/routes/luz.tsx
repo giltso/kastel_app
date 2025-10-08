@@ -172,7 +172,6 @@ function LUZPage() {
     (filters.shifts ? api.shifts.getShiftsForDate : "skip") as any,
     filters.shifts ? { date: selectedDate } : "skip"
   ) || [];
-  const createSampleShifts = useMutation(api.shifts.createSampleShifts);
 
   // Real data queries for assignments
   const assignmentsForDate = useQuery(api.shift_assignments.getAssignmentsForDate, { date: selectedDate }) || [];
@@ -343,15 +342,6 @@ function LUZPage() {
     setSelectedDate(currentDate.toISOString().split('T')[0]);
   };
 
-  const handleCreateSampleShifts = async () => {
-    try {
-      const result = await createSampleShifts({});
-      console.log("Sample shifts created:", result);
-    } catch (error) {
-      console.error("Error creating sample shifts:", error);
-    }
-  };
-
   // Modal handlers
   const openModal = (modalName: keyof typeof modals, data: any = {}) => {
     setModals(prev => ({
@@ -418,11 +408,6 @@ function LUZPage() {
               >
                 <Plus className="w-4 h-4" />
                 Create Shift
-              </button>
-            )}
-            {shiftsForDate.length === 0 && hasManagerTag && (
-              <button className="btn btn-secondary btn-sm" onClick={handleCreateSampleShifts}>
-                🔧 Create Sample Data
               </button>
             )}
           </div>
