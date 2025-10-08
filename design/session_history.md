@@ -2,6 +2,52 @@
 
 detailed history of all sessions. to be updated on new session
 
+### Session 32 - October 8, 2025
+
+**Goal**: Fix week view date selection bug and enhance date navigation UX
+
+**Major Achievements**:
+- ✅ **Week View Date Fix**: Clicking shifts in week view now correctly updates selectedDate
+  - ✅ Fixed issue where all shifts opened with current selectedDate instead of clicked day's date
+  - ✅ Updated `handleShiftClick` to accept optional date parameter
+  - ✅ Modified LUZWeekView to pass date when shift is clicked
+  - ✅ Updated LUZVerticalTimeline interface for consistency
+  - ✅ Verified fix works for Monday (0 workers) and Wednesday (2 workers)
+- ✅ **Smart Date Button**: Enhanced date navigation with dual functionality
+  - ✅ If viewing today: Opens date picker modal to select any date
+  - ✅ If viewing different date: Jumps directly to today
+  - ✅ Added native HTML5 date input modal with auto-close on selection
+  - ✅ Dynamic tooltip changes based on current context
+
+**Technical Implementation**:
+- **Frontend**: [src/routes/luz.tsx:385-392](src/routes/luz.tsx#L385-L392) - Updated handleShiftClick signature and logic
+- **Frontend**: [src/routes/luz.tsx:503-521](src/routes/luz.tsx#L503-L521) - Smart date button with conditional logic
+- **Frontend**: [src/routes/luz.tsx:666-689](src/routes/luz.tsx#L666-L689) - Date picker modal component
+- **Component**: [src/components/LUZWeekView.tsx:31,148](src/components/LUZWeekView.tsx#L31) - Updated interface and onClick handler
+- **Component**: [src/components/LUZVerticalTimeline.tsx:30](src/components/LUZVerticalTimeline.tsx#L30) - Updated interface for consistency
+
+**Issues Resolved**:
+- **Week View Bug**: Same shift template on different days always showed current selectedDate data instead of clicked day
+- **Navigation UX**: Date button had only one function (jump to today), limiting date selection options
+- **User Confusion**: No easy way to pick arbitrary dates when already viewing today
+
+**User Experience Improvements**:
+- Clicking shifts in week view now shows correct date-specific assignments and worker counts
+- Date picker provides quick access to any date when viewing today
+- Single click to return to today from any other date
+- Seamless modal interaction with auto-close on date selection
+
+**Testing Verification**:
+- ✅ Monday shift click shows "Mon, Oct 6" with 0 workers
+- ✅ Wednesday shift click shows "Wed, Oct 8" with 2 workers (גיל צורן and Claude Code)
+- ✅ Date picker opens when clicking date button on today
+- ✅ Selecting Oct 15 in picker updates view and auto-closes modal
+- ✅ Clicking date button on Oct 15 jumps back to today (Oct 8)
+
+**Commits**:
+- `f2664137` - fix: week view now updates selectedDate when clicking shifts on different days
+- `fb357985` - feat: date button now opens picker when on today, jumps to today otherwise
+
 ### Session 31 - October 2, 2025
 
 **Goal**: Fix UI issues and implement manual rental creation for walk-in customers
