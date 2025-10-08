@@ -165,8 +165,10 @@ function LUZPage() {
     editAssignment: { isOpen: false, assignmentId: null as Id<"shift_assignments"> | null },
     reviewRequests: { isOpen: false, shiftId: null as Id<"shifts"> | null },
     approveAssignment: { isOpen: false, assignmentId: null as Id<"shift_assignments"> | null },
-    datePicker: { isOpen: false },
   });
+
+  // Date picker dropdown state
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
 
   // Real data queries
   const shiftsForDate = useQuery(
@@ -492,7 +494,7 @@ function LUZPage() {
           </div>
 
           {/* Date Navigation */}
-          <div className="join">
+          <div className="join relative">
             <button
               className="btn btn-sm join-item"
               onClick={() => navigateDate('prev')}
@@ -503,9 +505,9 @@ function LUZPage() {
             <button
               className="btn btn-sm join-item"
               onClick={() => {
-                // If current date is today, open date picker; otherwise, jump to today
+                // If current date is today, open date picker dropdown; otherwise, jump to today
                 if (selectedDate === getTodayString()) {
-                  openModal('datePicker', {});
+                  setIsDatePickerOpen(!isDatePickerOpen);
                 } else {
                   setSelectedDate(getTodayString());
                 }
@@ -526,6 +528,25 @@ function LUZPage() {
             >
               <ChevronRight className="w-4 h-4" />
             </button>
+
+            {/* Date Picker Dropdown */}
+            {isDatePickerOpen && (
+              <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 card card-compact bg-base-100 z-[1000] w-64 p-4 shadow-xl border border-base-300">
+                <div className="card-body">
+                  <h4 className="font-semibold mb-2">Select Date</h4>
+                  <input
+                    type="date"
+                    className="input input-bordered input-sm w-full"
+                    value={selectedDate}
+                    onChange={(e) => {
+                      setSelectedDate(e.target.value);
+                      setIsDatePickerOpen(false);
+                    }}
+                    autoFocus
+                  />
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
@@ -662,31 +683,6 @@ function LUZPage() {
         onClose={() => closeModal('approveAssignment')}
         onSuccess={handleModalSuccess}
       />
-
-      {/* Date Picker Modal */}
-      {modals.datePicker.isOpen && (
-        <dialog open className="modal">
-          <div className="modal-box">
-            <h3 className="font-bold text-lg mb-4">Select Date</h3>
-            <input
-              type="date"
-              className="input input-bordered w-full"
-              value={selectedDate}
-              onChange={(e) => {
-                setSelectedDate(e.target.value);
-                closeModal('datePicker');
-              }}
-              autoFocus
-            />
-            <div className="modal-action">
-              <button className="btn" onClick={() => closeModal('datePicker')}>Cancel</button>
-            </div>
-          </div>
-          <form method="dialog" className="modal-backdrop">
-            <button onClick={() => closeModal('datePicker')}>close</button>
-          </form>
-        </dialog>
-      )}
     </>
   );
 }
