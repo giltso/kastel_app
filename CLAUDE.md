@@ -151,6 +151,69 @@ When creating feature-specific documentation, use `design/SHIFTS_IMPLEMENTATION.
 
 ## Testing & Validation
 
+### Unit Testing with Vitest
+
+**Test Framework**: Vitest (Jest-compatible, optimized for Vite projects)
+
+**Test Commands**:
+- `pnpm test` - Run tests in watch mode
+- `pnpm test:ui` - Run tests with interactive UI
+- `pnpm test:coverage` - Generate code coverage report
+
+**When to Write Tests**:
+1. **Always write unit tests for new utility functions** - Pure functions in `src/utils/` must have comprehensive test coverage
+2. **Test business logic functions** - Any function with conditional logic, calculations, or data transformations
+3. **Test validation logic** - Permission checks, data validation, edge case handling
+4. **Test after strict typing changes** - When changing from `any` to strict types, verify no functionality broke
+5. **Test complex algorithms** - Timeline positioning, conflict detection, capacity calculations
+
+**Test Structure**:
+```typescript
+import { describe, it, expect } from 'vitest';
+import { functionToTest } from './module';
+
+describe('ModuleName', () => {
+  describe('functionToTest', () => {
+    it('should handle the happy path', () => {
+      const result = functionToTest(validInput);
+      expect(result).toBe(expectedOutput);
+    });
+
+    it('should handle edge cases', () => {
+      const result = functionToTest(edgeCase);
+      expect(result).toBeDefined();
+    });
+
+    it('should throw on invalid input', () => {
+      expect(() => functionToTest(invalidInput)).toThrow();
+    });
+  });
+});
+```
+
+**Test Organization**:
+- Test files: `*.test.ts` or `*.test.tsx` (colocated with source files)
+- Setup file: `src/test/setup.ts` (test utilities and global configuration)
+- Coverage exclusions: `node_modules/`, `convex/_generated/`, config files
+
+**What to Test**:
+- ✅ Pure utility functions (no side effects)
+- ✅ Data transformation functions
+- ✅ Validation logic and permission checks
+- ✅ Complex algorithms (positioning, calculations)
+- ✅ Edge cases and error conditions
+- ❌ React hooks (require mocking - test sparingly)
+- ❌ Convex functions (require backend test environment - future work)
+
+**Test Quality Standards**:
+- **Minimum 3 test cases per function**: happy path, edge case, error condition
+- **Use descriptive test names**: "should calculate capacity correctly when 3 workers assigned"
+- **Test edge cases**: empty arrays, null/undefined, boundary values, malformed data
+- **Type safety**: Tests should catch type errors when strict typing is added
+- **No brittleness**: Tests should focus on behavior, not implementation details
+
+### Integration & UI Testing
+
 - Always follow these steps before squashing or pushing
 - Run `pnpm typecheck` to verify all TypeScript types are valid across the entire project
 - Check background process output for Convex backend errors. Run `pnpm lint` for comprehensive type checking and linting across the codebase
@@ -330,10 +393,18 @@ When creating feature-specific documentation, use `design/SHIFTS_IMPLEMENTATION.
 
 ## Other Guidelines
 
-- When writing typscript code avoid using type Any. 
+### TypeScript Best Practices
+
+- **Avoid `any` type**: Always use strict typing. Use `unknown` for truly unknown types, then narrow with type guards.
+- **Write tests when adding strict types**: When changing from `any` to strict types, write unit tests to verify no functionality broke.
+- **Use type narrowing**: Check for null/undefined before accessing properties (`if (value) { value.property }`).
+- **Prefer interfaces for objects**: Use `interface` for object shapes, `type` for unions/intersections.
+- **Never leave floating promises**: Use `void` when intentionally not awaiting (`void someAsyncFunction()`).
+
+### General Development
+
 - When stuck: check official docs first (docs.convex.dev, tanstack.com, daisyui.com)
 - Verify responsive design at multiple breakpoints
 - Document non-obvious implementation choices in this file
 - Import icons from `lucide-react`
 - When making identical changes to multiple occurrences, use Edit with `replace_all: true` instead of MultiEdit. Avoid MultiEdit whenever possible, it is unreliable.
-- Never leave floating promisses, use void when needed
