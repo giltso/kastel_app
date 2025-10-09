@@ -111,15 +111,10 @@ export function LUZWeekView({
 
                   {/* Day Content Area - Minimum touch-friendly height */}
                   <div className="relative" style={{ minHeight: '576px' }}> {/* 12 hours * 48px = 576px */}
-                    {/* Time Grid Background - Clickable for managers to create shifts */}
+                    {/* Time Grid Background */}
                     <div className="absolute inset-0">
                       {Array.from({ length: 12 }, (_, i) => (
-                        <div
-                          key={i}
-                          className={`h-12 border-b border-base-300/20 ${hasManagerTag && onCreateShift ? 'cursor-pointer hover:bg-base-200/50 transition-colors' : ''}`}
-                          onClick={hasManagerTag && onCreateShift ? () => onCreateShift() : undefined}
-                          title={hasManagerTag ? "Click to create a new shift" : undefined}
-                        ></div>
+                        <div key={i} className="h-12 border-b border-base-300/20"></div>
                       ))}
                     </div>
 
@@ -283,13 +278,17 @@ export function LUZWeekView({
                     );
                   })}
 
-                    {/* Empty state for days with no events */}
+                    {/* Empty state for days with no events - Clickable to create shift */}
                     {shiftsForDate.length === 0 && coursesForDate.length === 0 && rentalsForDate.length === 0 && (
-                      <div className="absolute inset-0 flex items-center justify-center text-base-content/30">
-                        <div className="text-center">
+                      <div
+                        className={`absolute inset-0 flex items-center justify-center text-base-content/30 ${hasManagerTag && onCreateShift ? 'cursor-pointer hover:bg-base-200/30 transition-colors' : ''}`}
+                        onClick={hasManagerTag && onCreateShift ? () => onCreateShift() : undefined}
+                        title={hasManagerTag ? "Click to create a new shift" : undefined}
+                      >
+                        <div className="text-center pointer-events-none">
                           <div className="text-xs">No events</div>
-                          {hasManagerTag && (
-                            <button className="btn btn-xs btn-ghost mt-1">+</button>
+                          {hasManagerTag && onCreateShift && (
+                            <div className="text-2xl mt-1">+</div>
                           )}
                         </div>
                       </div>
