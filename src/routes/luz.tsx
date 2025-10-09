@@ -167,39 +167,8 @@ function LUZPage() {
     approveAssignment: { isOpen: false, assignmentId: null as Id<"shift_assignments"> | null },
   });
 
-  // Date picker dropdown state
-  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
-  const datePickerRef = useRef<HTMLDivElement>(null);
-  const dateInputRef = useRef<HTMLInputElement>(null);
-
-  // Auto-open native date picker when dropdown opens
-  useEffect(() => {
-    if (isDatePickerOpen && dateInputRef.current) {
-      try {
-        dateInputRef.current.showPicker();
-      } catch (error) {
-        // showPicker() not supported in some browsers, fallback to focus
-        dateInputRef.current.focus();
-      }
-    }
-  }, [isDatePickerOpen]);
-
-  // Close date picker when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (datePickerRef.current && !datePickerRef.current.contains(event.target as Node)) {
-        setIsDatePickerOpen(false);
-      }
-    };
-
-    if (isDatePickerOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isDatePickerOpen]);
+  // Hidden date input ref for direct picker
+  const hiddenDateInputRef = useRef<HTMLInputElement>(null);
 
   // Real data queries
   const shiftsForDate = useQuery(
@@ -536,9 +505,9 @@ function LUZPage() {
             <button
               className="btn btn-sm join-item"
               onClick={() => {
-                // If current date is today, open date picker dropdown; otherwise, jump to today
+                // If current date is today, open native date picker directly; otherwise, jump to today
                 if (selectedDate === getTodayString()) {
-                  setIsDatePickerOpen(!isDatePickerOpen);
+                  hiddenDateInputRef.current?.showPicker();
                 } else {
                   setSelectedDate(getTodayString());
                 }
@@ -560,21 +529,15 @@ function LUZPage() {
               <ChevronRight className="w-4 h-4" />
             </button>
 
-            {/* Date Picker Dropdown */}
-            {isDatePickerOpen && (
-              <div ref={datePickerRef} className="absolute top-full mt-2 left-1/2 -translate-x-1/2 bg-base-100 z-[1000] shadow-xl border border-base-300 rounded-lg p-2">
-                <input
-                  ref={dateInputRef}
-                  type="date"
-                  className="input input-bordered input-sm"
-                  value={selectedDate}
-                  onChange={(e) => {
-                    setSelectedDate(e.target.value);
-                    setIsDatePickerOpen(false);
-                  }}
-                />
-              </div>
-            )}
+            {/* Hidden date input for native picker */}
+            <input
+              ref={hiddenDateInputRef}
+              type="date"
+              className="absolute opacity-0 pointer-events-none"
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              tabIndex={-1}
+            />
           </div>
         </div>
 
