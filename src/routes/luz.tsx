@@ -170,6 +170,19 @@ function LUZPage() {
   // Date picker dropdown state
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const datePickerRef = useRef<HTMLDivElement>(null);
+  const dateInputRef = useRef<HTMLInputElement>(null);
+
+  // Auto-open native date picker when dropdown opens
+  useEffect(() => {
+    if (isDatePickerOpen && dateInputRef.current) {
+      try {
+        dateInputRef.current.showPicker();
+      } catch (error) {
+        // showPicker() not supported in some browsers, fallback to focus
+        dateInputRef.current.focus();
+      }
+    }
+  }, [isDatePickerOpen]);
 
   // Close date picker when clicking outside
   useEffect(() => {
@@ -551,6 +564,7 @@ function LUZPage() {
             {isDatePickerOpen && (
               <div ref={datePickerRef} className="absolute top-full mt-2 left-1/2 -translate-x-1/2 bg-base-100 z-[1000] shadow-xl border border-base-300 rounded-lg p-2">
                 <input
+                  ref={dateInputRef}
                   type="date"
                   className="input input-bordered input-sm"
                   value={selectedDate}
@@ -558,7 +572,6 @@ function LUZPage() {
                     setSelectedDate(e.target.value);
                     setIsDatePickerOpen(false);
                   }}
-                  autoFocus
                 />
               </div>
             )}
