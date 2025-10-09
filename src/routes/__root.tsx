@@ -26,6 +26,7 @@ import { useEffect, useState } from "react";
 import { api } from "../../convex/_generated/api";
 import { RoleEmulator } from "@/components/RoleEmulator";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { ViewportTester } from "@/components/ViewportTester";
 import { KastelLogo } from "@/components/KastelLogo";
 import { usePermissionsV2 } from "@/hooks/usePermissionsV2";
 
@@ -205,6 +206,7 @@ function RootComponent() {
                       </nav>
                     </div>
                     <div className="navbar-end gap-2">
+                      {import.meta.env.DEV && <ViewportTester />}
                       <ThemeToggle />
                       <RoleEmulator />
                       <UserButton
@@ -240,6 +242,7 @@ function RootComponent() {
                       </ul>
                     </div>
                     <div className="mt-auto py-4 border-t border-base-300 flex flex-col gap-2 items-center">
+                      {import.meta.env.DEV && <ViewportTester />}
                       <ThemeToggle />
                       <RoleEmulator />
                       <UserButton
