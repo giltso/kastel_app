@@ -2,6 +2,53 @@
 
 detailed history of all sessions. to be updated on new session
 
+### Session 33 - October 9, 2025
+
+**Goal**: Optimize date picker UX for direct native calendar access
+
+**Major Achievements**:
+- ✅ **Direct Native Date Picker**: Completely removed dropdown UI for cleaner UX
+  - ✅ Eliminated intermediate dropdown container
+  - ✅ Native calendar now opens instantly on button click
+  - ✅ Implemented hidden date input with direct showPicker() call
+  - ✅ Reduced code complexity by 50+ lines
+- ✅ **Testing Infrastructure Verified**: Confirmed Vitest setup and existing tests
+  - ✅ 37 tests passing across 2 test files
+  - ✅ Coverage for timeline positioning and LUZ components
+- ✅ **Mobile Responsiveness Tested**: Verified date picker on all breakpoints
+  - ✅ Mobile (375x667): Native picker works perfectly
+  - ✅ Tablet (768x1024): Clean display and functionality
+  - ✅ Desktop (1200x800): Full calendar picker experience
+
+**Technical Implementation**:
+- **Simplified Approach**: Hidden input with `opacity-0` and `pointer-events-none`
+- **Direct API Call**: `hiddenDateInputRef.current?.showPicker()` opens picker instantly
+- **Code Reduction**: Removed dropdown state, click-outside detection, and complex useEffect hooks
+- **File**: [src/routes/luz.tsx:170-171,507-540](src/routes/luz.tsx#L170-L171) - Hidden input implementation
+
+**Issues Resolved**:
+- **Multi-step UX**: Previous implementation required opening dropdown then clicking calendar icon
+- **Visual Clutter**: Dropdown container added unnecessary UI element
+- **Code Complexity**: Multiple state management hooks for simple date selection
+
+**User Experience Improvements**:
+- One-click date selection instead of two-step process
+- No intermediate UI elements to confuse users
+- Instant native calendar picker appearance
+- Maintains smart button behavior (pick date when on today, jump to today otherwise)
+
+**Testing Verification**:
+- ✅ Desktop: Native calendar opens instantly on single click
+- ✅ Mobile: Platform-appropriate date picker opens directly
+- ✅ Tablet: Clean picker display with no dropdown artifacts
+- ✅ Date selection updates page and closes picker automatically
+- ✅ Smart button toggles between pick/jump based on current date
+
+**Commits**:
+- `3b2baf6d` - feat: add click-outside functionality to date picker dropdown
+- `84d881da` - feat: auto-open native calendar picker on single click
+- `1bcdd6a2` - refactor: replace dropdown with direct native date picker (final solution)
+
 ### Session 32 - October 8, 2025
 
 **Goal**: Fix week view date selection bug and enhance date navigation UX
