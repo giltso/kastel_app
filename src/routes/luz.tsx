@@ -422,74 +422,80 @@ function LUZPage() {
 
         {/* Filter Section */}
         <div className="bg-base-100 border border-base-300 rounded-lg p-4 mb-6">
-          <div className="flex items-center gap-6">
+          <div className="flex flex-col md:flex-row md:items-center gap-4">
             <div className="flex items-center gap-2">
               <Filter className="w-4 h-4" />
               <span className="font-medium">View:</span>
             </div>
 
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={filters.shifts}
-                onChange={() => toggleFilter('shifts')}
-                className="checkbox checkbox-sm"
-              />
-              <span>Shifts</span>
-            </label>
+            <div className="flex flex-wrap items-center gap-4">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={filters.shifts}
+                  onChange={() => toggleFilter('shifts')}
+                  className="checkbox checkbox-sm"
+                />
+                <span>Shifts</span>
+              </label>
 
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={filters.courses}
-                onChange={() => toggleFilter('courses')}
-                className="checkbox checkbox-sm"
-              />
-              <span>Education</span>
-            </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={filters.courses}
+                  onChange={() => toggleFilter('courses')}
+                  className="checkbox checkbox-sm"
+                />
+                <span>Education</span>
+              </label>
 
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={filters.rentals}
-                onChange={() => toggleFilter('rentals')}
-                className="checkbox checkbox-sm"
-              />
-              <span>Rentals</span>
-            </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={filters.rentals}
+                  onChange={() => toggleFilter('rentals')}
+                  className="checkbox checkbox-sm"
+                />
+                <span>Rentals</span>
+              </label>
+            </div>
 
-            <div className="ml-auto">
+            <div className="md:ml-auto w-full md:w-auto">
               <input
                 type="text"
                 placeholder="Search..."
-                className="input input-bordered input-sm"
+                className="input input-bordered input-sm w-full"
               />
             </div>
           </div>
         </div>
 
         {/* Timeline View Tabs */}
-        <div className="mb-6 flex items-center justify-between">
+        <div className="mb-6 flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:justify-between">
           <div className="tabs tabs-bordered">
             <button
               className={`tab ${timelineView === 'vertical' ? 'tab-active' : ''}`}
               onClick={() => setTimelineView('vertical')}
+              title="Daily View"
             >
-              Daily View
+              <Calendar className="w-4 h-4 md:mr-2" />
+              <span className="hidden md:inline">Daily View</span>
             </button>
             <button
               className={`tab ${timelineView === 'week' ? 'tab-active' : ''}`}
               onClick={() => setTimelineView('week')}
+              title="Week View"
             >
-              <Calendar className="w-4 h-4 mr-2" />
-              Week View
+              <Calendar className="w-4 h-4 md:mr-2" />
+              <span className="hidden md:inline">Week View</span>
             </button>
             <button
               className={`tab ${timelineView === 'month' ? 'tab-active' : ''}`}
               onClick={() => setTimelineView('month')}
+              title="Month View"
             >
-              <Calendar className="w-4 h-4 mr-2" />
-              Month View
+              <Calendar className="w-4 h-4 md:mr-2" />
+              <span className="hidden md:inline">Month View</span>
             </button>
           </div>
 
@@ -503,7 +509,7 @@ function LUZPage() {
               <ChevronLeft className="w-4 h-4" />
             </button>
             <button
-              className="btn btn-sm join-item"
+              className="btn btn-sm join-item min-w-[120px] sm:min-w-[160px]"
               onClick={() => {
                 // If current date is today, open native date picker directly; otherwise, jump to today
                 if (selectedDate === getTodayString()) {
@@ -514,12 +520,20 @@ function LUZPage() {
               }}
               title={selectedDate === getTodayString() ? "Pick a date" : "Jump to Today"}
             >
-              {new Date(selectedDate + 'T00:00:00').toLocaleDateString(undefined, {
-                weekday: 'short',
-                month: 'short',
-                day: 'numeric',
-                year: 'numeric'
-              })}
+              <span className="sm:hidden">
+                {new Date(selectedDate + 'T00:00:00').toLocaleDateString(undefined, {
+                  month: 'short',
+                  day: 'numeric'
+                })}
+              </span>
+              <span className="hidden sm:inline">
+                {new Date(selectedDate + 'T00:00:00').toLocaleDateString(undefined, {
+                  weekday: 'short',
+                  month: 'short',
+                  day: 'numeric',
+                  year: 'numeric'
+                })}
+              </span>
             </button>
             <button
               className="btn btn-sm join-item"

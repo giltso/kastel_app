@@ -146,28 +146,29 @@ export function LUZMonthView({
         {monthName}
       </h2>
 
-      {/* Month Calendar Grid */}
+      {/* Month Calendar Grid - Mobile optimized */}
       <div className="bg-base-100 border border-base-300 rounded-lg overflow-hidden">
-        {/* Header Row with Day Names */}
+        {/* Header Row with Day Names - Abbreviated on mobile */}
         <div className="grid grid-cols-7 bg-base-200">
           {dayNames.map(dayName => (
-            <div key={dayName} className="p-2 text-center text-xs font-medium border-r border-base-300 last:border-r-0">
-              {dayName}
+            <div key={dayName} className="p-1 sm:p-2 text-center text-[10px] sm:text-xs font-medium border-r border-base-300 last:border-r-0">
+              <span className="hidden sm:inline">{dayName}</span>
+              <span className="sm:hidden">{dayName.charAt(0)}</span>
             </div>
           ))}
         </div>
 
-        {/* Calendar Grid */}
+        {/* Calendar Grid - Touch-friendly sizing */}
         <div className="grid grid-cols-7">
           {monthGrid.map(day => {
             const dayStatus = getDayStatus(day.date);
 
-            // Day cell styling based on status and month
+            // Day cell styling based on status and month - Mobile optimized
             const dayClasses = [
-              'aspect-square border-r border-b border-base-300 last:border-r-0 p-1 cursor-pointer transition-colors',
-              'hover:bg-base-200 relative text-xs',
+              'aspect-square border-r border-b border-base-300 last:border-r-0 p-0.5 sm:p-1 cursor-pointer transition-colors',
+              'hover:bg-base-200 active:scale-95 relative text-xs min-h-[44px] sm:min-h-0', // iOS touch target
               day.isCurrentMonth ? 'bg-base-100' : 'bg-base-200/50 text-base-content/50',
-              day.isToday ? 'ring-2 ring-primary' : '',
+              day.isToday ? 'ring-2 ring-primary ring-inset' : '',
               day.isSelected ? 'bg-primary/20' : '',
               dayStatus.status === 'understaffed' ? 'bg-error/10' :
               dayStatus.status === 'overstaffed' ? 'bg-warning/10' :
@@ -180,57 +181,55 @@ export function LUZMonthView({
                 className={dayClasses}
                 onClick={() => onDateClick?.(day.date)}
               >
-                {/* Day Number */}
-                <div className={`font-medium ${day.isToday ? 'text-primary' : ''}`}>
+                {/* Day Number - Larger on mobile for readability */}
+                <div className={`font-semibold text-[11px] sm:text-xs ${day.isToday ? 'text-primary' : ''}`}>
                   {day.dayNumber}
                 </div>
 
-                {/* Event Indicators */}
-                {day.isCurrentMonth && dayStatus.shiftsCount > 0 && (
-                  <div className="absolute bottom-1 left-1 right-1 space-y-1">
-                    {/* Shifts indicator */}
-                    <div className="flex items-center justify-between">
-                      <div className="text-xs">
-                        {dayStatus.shiftsCount} shifts
+                {/* Simplified Event Indicators for Mobile */}
+                {day.isCurrentMonth && (dayStatus.shiftsCount > 0 || dayStatus.coursesCount > 0 || dayStatus.rentalsCount > 0) && (
+                  <div className="flex flex-col gap-0.5 mt-0.5">
+                    {/* Compact shift count with status dot */}
+                    {dayStatus.shiftsCount > 0 && (
+                      <div className="flex items-center justify-between gap-1">
+                        <span className="text-[9px] sm:text-[10px] font-medium truncate">
+                          <span className="hidden sm:inline">S:</span>{dayStatus.shiftsCount}
+                        </span>
+                        {(dayStatus.understaffedCount ?? 0) > 0 && (
+                          <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-error rounded-full flex-shrink-0"></div>
+                        )}
+                        {(dayStatus.understaffedCount ?? 0) === 0 && (dayStatus.overstaffedCount ?? 0) > 0 && (
+                          <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-warning rounded-full flex-shrink-0"></div>
+                        )}
+                        {(dayStatus.understaffedCount ?? 0) === 0 && (dayStatus.overstaffedCount ?? 0) === 0 && (dayStatus.staffedCount ?? 0) > 0 && (
+                          <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-success rounded-full flex-shrink-0"></div>
+                        )}
                       </div>
-                      {(dayStatus.understaffedCount ?? 0) > 0 && (
-                        <div className="w-2 h-2 bg-error rounded-full"></div>
+                    )}
+
+                    {/* Show assignment count only on larger screens */}
+                    {dayStatus.assignmentsCount > 0 && (
+                      <div className="hidden sm:block text-[9px] text-base-content/70 truncate">
+                        {dayStatus.assignmentsCount}a
+                      </div>
+                    )}
+
+                    {/* Compact indicators for courses/rentals */}
+                    <div className="flex gap-1 text-[8px] sm:text-[9px]">
+                      {dayStatus.coursesCount > 0 && (
+                        <span className="text-secondary">C:{dayStatus.coursesCount}</span>
                       )}
-                      {(dayStatus.understaffedCount ?? 0) === 0 && (dayStatus.overstaffedCount ?? 0) > 0 && (
-                        <div className="w-2 h-2 bg-warning rounded-full"></div>
-                      )}
-                      {(dayStatus.understaffedCount ?? 0) === 0 && (dayStatus.overstaffedCount ?? 0) === 0 && (dayStatus.staffedCount ?? 0) > 0 && (
-                        <div className="w-2 h-2 bg-success rounded-full"></div>
+                      {dayStatus.rentalsCount > 0 && (
+                        <span className="text-accent">R:{dayStatus.rentalsCount}</span>
                       )}
                     </div>
-
-                    {/* Assignments indicator */}
-                    {dayStatus.assignmentsCount > 0 && (
-                      <div className="text-xs text-base-content/70">
-                        {dayStatus.assignmentsCount} assigned
-                      </div>
-                    )}
-
-                    {/* Courses indicator */}
-                    {dayStatus.coursesCount > 0 && (
-                      <div className="text-xs text-secondary">
-                        {dayStatus.coursesCount} courses
-                      </div>
-                    )}
-
-                    {/* Rentals indicator */}
-                    {dayStatus.rentalsCount > 0 && (
-                      <div className="text-xs text-accent">
-                        {dayStatus.rentalsCount} rentals
-                      </div>
-                    )}
                   </div>
                 )}
 
-                {/* Empty day indicator */}
+                {/* Empty day indicator - smaller on mobile */}
                 {day.isCurrentMonth && dayStatus.shiftsCount === 0 && dayStatus.coursesCount === 0 && dayStatus.rentalsCount === 0 && (
                   <div className="absolute inset-0 flex items-center justify-center text-base-content/30">
-                    <div className="w-1 h-1 bg-base-content/20 rounded-full"></div>
+                    <div className="w-0.5 h-0.5 sm:w-1 sm:h-1 bg-base-content/20 rounded-full"></div>
                   </div>
                 )}
               </div>
@@ -239,55 +238,55 @@ export function LUZMonthView({
         </div>
       </div>
 
-      {/* Month Summary */}
-      <div className="mt-4 grid grid-cols-4 gap-4 text-center text-sm">
+      {/* Month Summary - Mobile responsive grid */}
+      <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4 text-center">
         <div className="p-2 bg-info/10 border border-info/20 rounded">
-          <div className="font-bold">
+          <div className="text-lg sm:text-xl font-bold">
             {Object.values(monthData).reduce((sum, day) => sum + day.shifts.length, 0)}
           </div>
-          <div className="text-xs">Total Shifts</div>
+          <div className="text-[10px] sm:text-xs leading-tight">Total<br className="sm:hidden" /><span className="hidden sm:inline"> </span>Shifts</div>
         </div>
         <div className="p-2 bg-success/10 border border-success/20 rounded">
-          <div className="font-bold">
+          <div className="text-lg sm:text-xl font-bold">
             {Object.values(monthData).reduce((sum, day) =>
               sum + day.assignments.filter(a => a.status === 'confirmed').length, 0
             )}
           </div>
-          <div className="text-xs">Confirmed</div>
+          <div className="text-[10px] sm:text-xs leading-tight">Confirmed</div>
         </div>
         <div className="p-2 bg-secondary/10 border border-secondary/20 rounded">
-          <div className="font-bold">
+          <div className="text-lg sm:text-xl font-bold">
             {Object.values(monthData).reduce((sum, day) => sum + day.courses.length, 0)}
           </div>
-          <div className="text-xs">Total Courses</div>
+          <div className="text-[10px] sm:text-xs leading-tight">Total<br className="sm:hidden" /><span className="hidden sm:inline"> </span>Courses</div>
         </div>
         <div className="p-2 bg-base-200 border border-base-300 rounded">
-          <div className="font-bold">
+          <div className="text-lg sm:text-xl font-bold">
             {Object.keys(monthData).filter(date => {
               const dayData = monthData[date];
               return dayData.shifts.length > 0 || dayData.courses.length > 0;
             }).length}
           </div>
-          <div className="text-xs">Active Days</div>
+          <div className="text-[10px] sm:text-xs leading-tight">Active<br className="sm:hidden" /><span className="hidden sm:inline"> </span>Days</div>
         </div>
       </div>
 
-      {/* Legend */}
-      <div className="mt-4 flex flex-wrap gap-4 text-xs">
+      {/* Legend - Compact on mobile */}
+      <div className="mt-4 flex flex-wrap gap-2 sm:gap-4 text-[10px] sm:text-xs">
         <div className="flex items-center gap-1">
-          <div className="w-3 h-3 bg-success rounded-full"></div>
-          <span>Fully Staffed</span>
+          <div className="w-2 h-2 sm:w-3 sm:h-3 bg-success rounded-full"></div>
+          <span>Staffed</span>
         </div>
         <div className="flex items-center gap-1">
-          <div className="w-3 h-3 bg-warning rounded-full"></div>
-          <span>Overstaffed</span>
+          <div className="w-2 h-2 sm:w-3 sm:h-3 bg-warning rounded-full"></div>
+          <span>Over</span>
         </div>
         <div className="flex items-center gap-1">
-          <div className="w-3 h-3 bg-error rounded-full"></div>
-          <span>Understaffed</span>
+          <div className="w-2 h-2 sm:w-3 sm:h-3 bg-error rounded-full"></div>
+          <span>Under</span>
         </div>
         <div className="flex items-center gap-1">
-          <div className="w-3 h-3 border-2 border-primary rounded-full"></div>
+          <div className="w-2 h-2 sm:w-3 sm:h-3 border-2 border-primary rounded-full"></div>
           <span>Today</span>
         </div>
       </div>

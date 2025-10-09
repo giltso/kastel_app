@@ -1,5 +1,6 @@
-import { Users } from "lucide-react";
+import { Users, ChevronDown } from "lucide-react";
 import { usePermissionsV2 } from "@/hooks/usePermissionsV2";
+import { useState, useEffect } from "react";
 
 /**
  * LUZ Overview Component
@@ -9,6 +10,7 @@ import { usePermissionsV2 } from "@/hooks/usePermissionsV2";
  * - Manager-only pending approvals section with action buttons
  * - Assignment filtering ensures data consistency with timeline views
  * - Quick stats showing confirmed vs pending assignments
+ * - Collapsible on mobile to prioritize calendar view
  *
  * DATA FILTERING:
  * - visibleAssignments: filters by shiftsForDate to match timeline data
@@ -20,7 +22,7 @@ import { usePermissionsV2 } from "@/hooks/usePermissionsV2";
  * - Line 62-64: Assignment filtering by shiftsForDate prevents data conflicts
  *
  * SEARCH KEYWORDS: overview, dashboard, pending approvals, assignment filtering,
- * manager permissions, quick stats, data consistency, visible assignments
+ * manager permissions, quick stats, data consistency, visible assignments, collapsible
  */
 
 interface LUZOverviewProps {
@@ -55,12 +57,40 @@ export function LUZOverview({
   onEditAssignment
 }: LUZOverviewProps) {
   const { user } = usePermissionsV2();
+
+  // Collapsible state - default to collapsed on mobile only
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  // On mount, check screen size and set default state
+  useEffect(() => {
+    const updateExpandedState = () => {
+      // Auto-expand on desktop (lg breakpoint = 1024px)
+      setIsExpanded(window.innerWidth >= 1024);
+    };
+
+    updateExpandedState();
+    window.addEventListener('resize', updateExpandedState);
+    return () => window.removeEventListener('resize', updateExpandedState);
+  }, []);
+
   return (
-    <div className="bg-base-100 border border-base-300 rounded-lg p-4">
-      <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-        <Users className="w-5 h-5" />
-        Overview
-      </h2>
+    <div className="bg-base-100 border border-base-300 rounded-lg overflow-hidden">
+      {/* Header - Always visible, clickable on mobile */}
+      <button
+        className="w-full p-4 flex items-center justify-between lg:cursor-default"
+        onClick={() => setIsExpanded(!isExpanded)}
+      >
+        <h2 className="text-xl font-semibold flex items-center gap-2">
+          <Users className="w-5 h-5" />
+          Overview
+        </h2>
+        <ChevronDown
+          className={`w-5 h-5 transition-transform lg:hidden ${isExpanded ? 'rotate-180' : ''}`}
+        />
+      </button>
+
+      {/* Content - Collapsible on mobile, always visible on desktop */}
+      <div className={`${isExpanded ? 'block' : 'hidden'} lg:block px-4 pb-4`}>
 
       {/* Pending Actions */}
       {hasManagerTag && pendingAssignments && pendingAssignments.length > 0 && (
@@ -202,6 +232,7 @@ export function LUZOverview({
           <div className="text-lg font-bold">{pendingAssignments?.length || 0}</div>
           <div className="text-xs">Pending</div>
         </div>
+      </div>
       </div>
     </div>
   );

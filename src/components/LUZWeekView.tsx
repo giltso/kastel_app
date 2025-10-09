@@ -50,29 +50,35 @@ export function LUZWeekView({
         Weekly Schedule
       </h2>
 
-      {/* Week Grid Container */}
-      <div className="relative overflow-x-auto">
+      {/* Week Grid Container - Enhanced for mobile scrolling */}
+      <div className="relative overflow-x-auto overflow-y-hidden">
+        {/* Scroll shadow indicators for mobile */}
+        <div className="absolute left-16 top-0 bottom-0 w-4 bg-gradient-to-r from-base-100 to-transparent pointer-events-none z-20 md:hidden"></div>
+        <div className="absolute right-0 top-0 bottom-0 w-4 bg-gradient-to-l from-base-100 to-transparent pointer-events-none z-20 md:hidden"></div>
+
         {/* Combined Header and Content Structure */}
-        <div className="relative" style={{ minHeight: '600px' }}>
+        <div className="relative" style={{ minHeight: '600px', minWidth: '768px' }}> {/* Ensure minimum width for 7 columns */}
           {/* Time Labels Column */}
-          <div className="absolute left-0 top-0 w-16 z-10 bg-base-100">
+          <div className="absolute left-0 top-0 w-12 sm:w-16 z-10 bg-base-100">
             {/* Time header */}
-            <div className="h-12 flex items-center justify-center text-xs font-medium bg-base-200 border-b border-base-300/30 rounded-tl">
-              Time
+            <div className="h-12 flex items-center justify-center text-[10px] sm:text-xs font-medium bg-base-200 border-b border-base-300/30 rounded-tl">
+              <span className="hidden sm:inline">Time</span>
+              <span className="sm:hidden">⏱</span>
             </div>
-            {/* Time labels */}
+            {/* Time labels - Abbreviated on mobile */}
             {Array.from({ length: 12 }, (_, i) => {
               const hour = i + 8;
               return (
-                <div key={hour} className="h-12 flex items-center justify-center text-xs bg-base-100 border-b border-base-300/30">
-                  {hour}:00
+                <div key={hour} className="h-12 flex items-center justify-center text-[10px] sm:text-xs bg-base-100 border-b border-base-300/30">
+                  <span className="hidden sm:inline">{hour}:00</span>
+                  <span className="sm:hidden">{hour}</span>
                 </div>
               );
             })}
           </div>
 
           {/* Day Headers and Content */}
-          <div className="ml-16 grid grid-cols-7 gap-2">
+          <div className="ml-12 sm:ml-16 grid grid-cols-7 gap-1 sm:gap-2">
             {weekDates.map((date, dayIndex) => {
               const dateObj = new Date(date + 'T00:00:00');
               // Use actual date calculation instead of array index
@@ -95,13 +101,13 @@ export function LUZWeekView({
 
               return (
                 <div key={date} className="relative">
-                  {/* Day Header */}
-                  <div className="h-14 p-2 text-center bg-base-200 rounded-tr text-sm font-semibold border-b border-base-300/30 mb-2">
-                    <div>{dayName}</div>
-                    <div className="text-xs text-base-content/70 font-normal">{dayNumber}</div>
+                  {/* Day Header - Optimized for mobile */}
+                  <div className="h-12 sm:h-14 p-1 sm:p-2 text-center bg-base-200 rounded-tr text-xs sm:text-sm font-semibold border-b border-base-300/30 mb-1 sm:mb-2">
+                    <div className="text-[11px] sm:text-sm">{dayName}</div>
+                    <div className="text-[10px] sm:text-xs text-base-content/70 font-normal">{dayNumber}</div>
                   </div>
 
-                  {/* Day Content Area */}
+                  {/* Day Content Area - Minimum touch-friendly height */}
                   <div className="relative" style={{ minHeight: '576px' }}> {/* 12 hours * 48px = 576px */}
                     {/* Time Grid Background */}
                     <div className="absolute inset-0">
@@ -137,22 +143,23 @@ export function LUZWeekView({
                     return (
                       <div
                         key={shift._id}
-                        className={`absolute ${shiftColorClasses} rounded text-xs overflow-hidden cursor-pointer hover:shadow-lg transition-shadow`}
+                        className={`absolute ${shiftColorClasses} rounded text-xs overflow-hidden cursor-pointer hover:shadow-lg transition-shadow active:scale-95`}
                         style={{
                           left: position.left,
                           width: position.width,
                           top: `${topPos}px`,
-                          height: `${height}px`,
-                          padding: '2px'
+                          height: `${Math.max(height, 44)}px`, // Minimum 44px touch target height
+                          padding: '4px',
+                          minHeight: '44px' // iOS touch target guideline
                         }}
                         onClick={() => onShiftClick?.(shift._id, date)}
                       >
-                        <div className="font-medium truncate" style={{ pointerEvents: 'none' }}>{shift.name}</div>
-                        <div className="text-xs text-base-content/70 truncate" style={{ pointerEvents: 'none' }}>
-                          {shift.storeHours.openTime}-{shift.storeHours.closeTime}
+                        <div className="font-medium truncate text-[10px] sm:text-xs leading-tight" style={{ pointerEvents: 'none' }}>{shift.name}</div>
+                        <div className="text-[9px] sm:text-xs text-base-content/70 truncate leading-tight" style={{ pointerEvents: 'none' }}>
+                          {shift.storeHours.openTime.slice(0,5)}-{shift.storeHours.closeTime.slice(0,5)}
                         </div>
-                        <div className="text-xs mb-1" style={{ pointerEvents: 'none' }}>
-                          {staffingStatus.currentWorkers}/{staffingStatus.minWorkers} workers
+                        <div className="text-[9px] sm:text-xs mb-1 leading-tight" style={{ pointerEvents: 'none' }}>
+                          {staffingStatus.currentWorkers}/{staffingStatus.minWorkers}
                         </div>
 
                         {/* Worker assignments within shift body - IMPROVED VISIBILITY */}
@@ -288,25 +295,25 @@ export function LUZWeekView({
         </div>
       </div>
 
-      {/* Week Summary */}
-      <div className="mt-4 grid grid-cols-3 gap-4 text-center text-sm">
-        <div className="p-2 bg-success/10 border border-success/20 rounded">
-          <div className="font-bold">
+      {/* Week Summary - Responsive sizing */}
+      <div className="mt-4 grid grid-cols-3 gap-2 sm:gap-4 text-center">
+        <div className="p-2 sm:p-3 bg-success/10 border border-success/20 rounded">
+          <div className="text-lg sm:text-xl font-bold">
             {Object.values(assignmentsForWeek).flat().filter(a => a.status === 'confirmed').length}
           </div>
-          <div className="text-xs">Total Assignments</div>
+          <div className="text-[10px] sm:text-xs leading-tight">Total<br className="sm:hidden" /><span className="hidden sm:inline"> </span>Assignments</div>
         </div>
-        <div className="p-2 bg-info/10 border border-info/20 rounded">
-          <div className="font-bold">
+        <div className="p-2 sm:p-3 bg-info/10 border border-info/20 rounded">
+          <div className="text-lg sm:text-xl font-bold">
             {Object.values(shiftsForWeek).flat().length}
           </div>
-          <div className="text-xs">Total Shifts</div>
+          <div className="text-[10px] sm:text-xs leading-tight">Total<br className="sm:hidden" /><span className="hidden sm:inline"> </span>Shifts</div>
         </div>
-        <div className="p-2 bg-secondary/10 border border-secondary/20 rounded">
-          <div className="font-bold">
+        <div className="p-2 sm:p-3 bg-secondary/10 border border-secondary/20 rounded">
+          <div className="text-lg sm:text-xl font-bold">
             {Object.values(coursesForWeek).flat().length}
           </div>
-          <div className="text-xs">Total Courses</div>
+          <div className="text-[10px] sm:text-xs leading-tight">Total<br className="sm:hidden" /><span className="hidden sm:inline"> </span>Courses</div>
         </div>
       </div>
     </div>

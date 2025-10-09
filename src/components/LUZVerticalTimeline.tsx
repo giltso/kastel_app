@@ -49,7 +49,7 @@ export function LUZVerticalTimeline({
         Daily Schedule
       </h2>
 
-      {/* Vertical Timeline - Same data as horizontal, different layout */}
+      {/* Vertical Timeline - Mobile optimized */}
       <div className="relative">
         {/* Time Grid Background */}
         <div className="absolute left-0 top-8 w-full h-[768px]"> {/* 12 hours * 64px = 768px */}
@@ -58,21 +58,25 @@ export function LUZVerticalTimeline({
           ))}
         </div>
 
-        {/* Time Labels Column */}
-        <div className="absolute left-0 top-0 w-16 border-r border-base-300">
-          <div className="text-xs font-medium text-center py-2 border-b border-base-300 bg-base-100">Time</div>
+        {/* Time Labels Column - Narrower on mobile */}
+        <div className="absolute left-0 top-0 w-10 sm:w-16 border-r border-base-300">
+          <div className="text-[10px] sm:text-xs font-medium text-center py-2 border-b border-base-300 bg-base-100">
+            <span className="hidden sm:inline">Time</span>
+            <span className="sm:hidden">⏱</span>
+          </div>
           {Array.from({ length: 12 }, (_, i) => {
             const hour = i + 8;
             return (
-              <div key={hour} className="h-16 flex items-center justify-center text-xs bg-base-100">
-                {hour}:00
+              <div key={hour} className="h-16 flex items-center justify-center text-[10px] sm:text-xs bg-base-100">
+                <span className="hidden sm:inline">{hour}:00</span>
+                <span className="sm:hidden">{hour}</span>
               </div>
             );
           })}
         </div>
 
-        {/* Content Area */}
-        <div className="ml-16 relative min-h-[800px]">
+        {/* Content Area - Adjust margin for narrower time column */}
+        <div className="ml-10 sm:ml-16 relative min-h-[800px]">
           {/* NEW POSITIONING ALGORITHM: Time-based proportional width allocation */}
           {(() => {
             // Calculate positions using the new algorithm with 5px padding
@@ -117,44 +121,49 @@ export function LUZVerticalTimeline({
                       return (
                         <div
                           key={shift._id}
-                          className="absolute cursor-pointer"
+                          className="absolute cursor-pointer hover:opacity-90 active:scale-[0.98] transition-all"
                           style={{
                             left: position.left,
                             width: position.width,
                             top: `${topPos}px`,
-                            height: `${height}px`,
-                            padding: '5px'
+                            height: `${Math.max(height, 88)}px`, // Minimum 88px for touch targets (44px header + 44px body)
+                            padding: '5px',
+                            minHeight: '88px'
                           }}
                           onClick={() => onShiftClick?.(shift._id)}
                         >
-                          {/* Header - Connected to shift body */}
+                          {/* Header - Connected to shift body, mobile responsive */}
                           <div
                             className={`absolute ${headerColorClasses} px-2 py-1 rounded-t`}
                             style={{
-                              top: '-35px', // Connected to shift body
+                              top: '-40px', // Slightly larger for mobile
                               left: '5px',
                               right: '5px',
-                              height: '35px',
+                              height: '40px',
+                              minHeight: '40px',
                               zIndex: 10,
                               pointerEvents: 'none' // Allow clicks to pass through to parent
                             }}
                           >
-                            <div className="flex justify-between items-center h-full">
-                              <div>
-                                <div className="font-medium text-xs text-base-content">{shift.name}</div>
-                                <div className="text-xs text-base-content/80">
-                                  {shift.storeHours.openTime} - {shift.storeHours.closeTime}
+                            <div className="flex justify-between items-center h-full gap-2">
+                              <div className="flex-1 min-w-0">
+                                <div className="font-medium text-[11px] sm:text-xs text-base-content truncate">{shift.name}</div>
+                                <div className="text-[10px] sm:text-xs text-base-content/80 truncate">
+                                  {shift.storeHours.openTime.slice(0,5)} - {shift.storeHours.closeTime.slice(0,5)}
                                 </div>
                               </div>
-                              <div className="text-right">
-                                <div className="text-xs font-bold text-base-content">
+                              <div className="text-right flex-shrink-0">
+                                <div className="text-[11px] sm:text-xs font-bold text-base-content">
                                   {staffingStatus.currentWorkers}/{staffingStatus.minWorkers}
                                 </div>
                                 <div className={`badge badge-xs text-base-content ${
                                   staffingStatus.status === 'understaffed' ? 'badge-error' :
                                   staffingStatus.status === 'staffed' ? 'badge-success' : 'badge-warning'
                                 }`}>
-                                  {staffingStatus.status}
+                                  <span className="hidden sm:inline">{staffingStatus.status}</span>
+                                  <span className="sm:hidden text-[9px]">
+                                    {staffingStatus.status === 'understaffed' ? '!' : staffingStatus.status === 'staffed' ? '✓' : '⚠'}
+                                  </span>
                                 </div>
                               </div>
                             </div>
@@ -191,20 +200,23 @@ export function LUZVerticalTimeline({
                                   return (
                                     <div
                                       key={`${assignment._id}-${slotIndex}`}
-                                      className={`absolute rounded px-2 py-1 ${
+                                      className={`absolute rounded px-1 sm:px-2 py-1 ${
                                         assignment.status === 'confirmed'
                                           ? 'bg-success/30 border border-success'
                                           : 'bg-warning/30 border border-warning'
                                       }`}
                                       style={{
                                         top: `${relativeStart}%`,
-                                        height: `${relativeHeight}%`,
+                                        height: `${Math.max(relativeHeight, 15)}%`, // Minimum height for readability
                                         left: `${workerIndex * 25}%`, // Same horizontal position for all slots from same worker
-                                        width: '20%',
+                                        width: '22%',
+                                        minHeight: '32px' // Ensure minimum touch-friendly height
                                       }}
                                     >
-                                      <div className="text-xs font-medium text-base-content">{assignment.worker?.name}</div>
-                                      <div className="text-xs text-base-content">{timeSlot.startTime} - {timeSlot.endTime}</div>
+                                      <div className="text-[10px] sm:text-xs font-medium text-base-content truncate leading-tight">{assignment.worker?.name}</div>
+                                      <div className="text-[9px] sm:text-xs text-base-content truncate leading-tight">
+                                        {timeSlot.startTime.slice(0,5)}-{timeSlot.endTime.slice(0,5)}
+                                      </div>
                                     </div>
                                   );
                                 });
