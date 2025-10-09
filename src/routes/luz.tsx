@@ -399,9 +399,9 @@ function LUZPage() {
       <EnsureUserV2 />
       <div className="max-w-[1600px] mx-auto p-4">
         {/* LUZ Header */}
-        <div className="flex items-start gap-2 mb-6">
+        <div className="flex flex-col items-center gap-2 mb-6 md:flex-row md:items-start">
           <Nut className="w-6 h-6 text-amber-600 mt-1" />
-          <div>
+          <div className="text-center md:text-left">
             <h1 className="text-3xl font-bold">LUZ</h1>
             <p className="text-base-content/70">Unified Scheduling Hub</p>
           </div>
@@ -458,31 +458,25 @@ function LUZPage() {
         </div>
 
         {/* Timeline View Tabs */}
-        <div className="mb-6 flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:justify-between">
+        <div className="mb-6 flex flex-col items-center gap-4 sm:flex-row sm:justify-between">
           <div className="tabs tabs-bordered">
             <button
               className={`tab ${timelineView === 'vertical' ? 'tab-active' : ''}`}
               onClick={() => setTimelineView('vertical')}
-              title="Daily View"
             >
-              <Calendar className="w-4 h-4 md:mr-2" />
-              <span className="hidden md:inline">Daily View</span>
+              Day
             </button>
             <button
               className={`tab ${timelineView === 'week' ? 'tab-active' : ''}`}
               onClick={() => setTimelineView('week')}
-              title="Week View"
             >
-              <Calendar className="w-4 h-4 md:mr-2" />
-              <span className="hidden md:inline">Week View</span>
+              Week
             </button>
             <button
               className={`tab ${timelineView === 'month' ? 'tab-active' : ''}`}
               onClick={() => setTimelineView('month')}
-              title="Month View"
             >
-              <Calendar className="w-4 h-4 md:mr-2" />
-              <span className="hidden md:inline">Month View</span>
+              Month
             </button>
           </div>
 

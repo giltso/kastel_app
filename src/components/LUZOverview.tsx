@@ -77,15 +77,15 @@ export function LUZOverview({
     <div className="bg-base-100 border border-base-300 rounded-lg overflow-hidden">
       {/* Header - Always visible, clickable on mobile */}
       <button
-        className="w-full p-4 flex items-center justify-between lg:cursor-default"
+        className="w-full p-3 flex items-center justify-between lg:cursor-default lg:p-4"
         onClick={() => setIsExpanded(!isExpanded)}
       >
-        <h2 className="text-xl font-semibold flex items-center gap-2">
+        <h2 className="text-lg font-semibold flex items-center gap-2 mx-auto lg:mx-0 lg:text-xl">
           <Users className="w-5 h-5" />
           Overview
         </h2>
         <ChevronDown
-          className={`w-5 h-5 transition-transform lg:hidden ${isExpanded ? 'rotate-180' : ''}`}
+          className={`w-5 h-5 transition-transform lg:hidden absolute right-3 ${isExpanded ? 'rotate-180' : ''}`}
         />
       </button>
 
