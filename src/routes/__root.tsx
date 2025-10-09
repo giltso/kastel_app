@@ -104,7 +104,7 @@ function MobileNavigationLinks({ onLinkClick }: { onLinkClick: () => void }) {
           activeProps={{
             className: "active",
           }}
-          className="flex items-center p-2"
+          className="flex items-center justify-end p-2"
         >
           Home
         </Link>
@@ -117,7 +117,7 @@ function MobileNavigationLinks({ onLinkClick }: { onLinkClick: () => void }) {
             activeProps={{
               className: "active",
             }}
-            className="flex items-center p-2"
+            className="flex items-center justify-end p-2"
           >
             Tools
           </Link>
@@ -131,7 +131,7 @@ function MobileNavigationLinks({ onLinkClick }: { onLinkClick: () => void }) {
             activeProps={{
               className: "active",
             }}
-            className="flex items-center p-2"
+            className="flex items-center justify-end p-2"
           >
             Educational
           </Link>
@@ -145,7 +145,7 @@ function MobileNavigationLinks({ onLinkClick }: { onLinkClick: () => void }) {
             activeProps={{
               className: "active",
             }}
-            className="flex items-center p-2"
+            className="flex items-center justify-end p-2"
           >
             Roles
           </Link>
@@ -236,12 +236,12 @@ function RootComponent() {
                   ></label>
                   <div className="menu p-4 w-64 min-h-full bg-base-200 text-base-content flex flex-col">
                     <div className="flex-1">
-                      <div className="menu-title mb-4">Menu</div>
+                      <div className="menu-title mb-4 text-right">Menu</div>
                       <ul className="space-y-2">
                         <MobileNavigationLinks onLinkClick={() => setIsSidebarOpen(false)} />
                       </ul>
                     </div>
-                    <div className="mt-auto py-4 border-t border-base-300 flex flex-col gap-2 items-center">
+                    <div className="mt-auto py-4 border-t border-base-300 flex flex-col gap-2 items-end">
                       {import.meta.env.DEV && <ViewportTester />}
                       <ThemeToggle />
                       <RoleEmulator />
