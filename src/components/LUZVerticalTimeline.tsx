@@ -29,6 +29,7 @@ interface LUZVerticalTimelineProps {
   getShiftStaffingStatus: (shift: any, assignedWorkers: any[]) => any;
   onShiftClick?: (shiftId: string, date?: string) => void;
   onRequestJoin?: (shiftId: string, date: string) => void;
+  onCreateShift?: () => void;
 }
 
 export function LUZVerticalTimeline({
@@ -40,7 +41,8 @@ export function LUZVerticalTimeline({
   hasManagerTag,
   getShiftStaffingStatus,
   onShiftClick,
-  onRequestJoin
+  onRequestJoin,
+  onCreateShift
 }: LUZVerticalTimelineProps) {
   return (
     <div className="bg-base-100 border border-base-300 rounded-lg p-4">
@@ -51,10 +53,15 @@ export function LUZVerticalTimeline({
 
       {/* Vertical Timeline - Mobile optimized */}
       <div className="relative">
-        {/* Time Grid Background */}
+        {/* Time Grid Background - Clickable for managers to create shifts */}
         <div className="absolute left-0 top-8 w-full h-[768px]"> {/* 12 hours * 64px = 768px */}
           {Array.from({ length: 12 }, (_, i) => (
-            <div key={i} className="h-16 border-b border-base-300/30"></div>
+            <div
+              key={i}
+              className={`h-16 border-b border-base-300/30 ${hasManagerTag && onCreateShift ? 'cursor-pointer hover:bg-base-200/50 transition-colors' : ''}`}
+              onClick={hasManagerTag && onCreateShift ? () => onCreateShift() : undefined}
+              title={hasManagerTag ? "Click to create a new shift" : undefined}
+            ></div>
           ))}
         </div>
 

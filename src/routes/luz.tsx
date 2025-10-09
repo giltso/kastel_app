@@ -13,7 +13,7 @@ import { AssignWorkerModal } from "@/components/modals/AssignWorkerModal";
 import { EditAssignmentModal } from "@/components/modals/EditAssignmentModal";
 import { ReviewRequestModal } from "@/components/modals/ReviewRequestModal";
 import { ApproveAssignmentModal } from "@/components/modals/ApproveAssignmentModal";
-import { Calendar, Filter, Plus, Nut, ChevronLeft, ChevronRight } from "lucide-react";
+import { Calendar, Filter, Nut, ChevronLeft, ChevronRight } from "lucide-react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Id } from "../../convex/_generated/dataModel";
@@ -399,24 +399,11 @@ function LUZPage() {
       <EnsureUserV2 />
       <div className="max-w-[1600px] mx-auto p-4">
         {/* LUZ Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-start gap-2">
-            <Nut className="w-6 h-6 text-amber-600 mt-1" />
-            <div>
-              <h1 className="text-3xl font-bold">LUZ</h1>
-              <p className="text-base-content/70">Unified Scheduling Hub</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-4">
-            {hasManagerTag && (
-              <button
-                className="btn btn-primary btn-sm"
-                onClick={() => openModal('createEditShift')}
-              >
-                <Plus className="w-4 h-4" />
-                Create Shift
-              </button>
-            )}
+        <div className="flex items-start gap-2 mb-6">
+          <Nut className="w-6 h-6 text-amber-600 mt-1" />
+          <div>
+            <h1 className="text-3xl font-bold">LUZ</h1>
+            <p className="text-base-content/70">Unified Scheduling Hub</p>
           </div>
         </div>
 
@@ -587,6 +574,7 @@ function LUZPage() {
                 getShiftStaffingStatus={getShiftStaffingStatus}
                 onShiftClick={handleShiftClick}
                 onRequestJoin={(shiftId, date) => openModal('requestJoin', { shiftId, date })}
+                onCreateShift={() => openModal('createEditShift')}
               />
             ) : timelineView === 'week' ? (
               <LUZWeekView
@@ -599,6 +587,7 @@ function LUZPage() {
                 getShiftStaffingStatus={getShiftStaffingStatus}
                 onShiftClick={handleShiftClick}
                 onRequestJoin={(shiftId, date) => openModal('requestJoin', { shiftId, date })}
+                onCreateShift={() => openModal('createEditShift')}
               />
             ) : (
               <LUZMonthView

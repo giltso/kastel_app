@@ -30,6 +30,7 @@ interface LUZWeekViewProps {
   getShiftStaffingStatus: (shift: any, assignedWorkers: any[]) => any;
   onShiftClick?: (shiftId: string, date?: string) => void;
   onRequestJoin?: (shiftId: string, date: string) => void;
+  onCreateShift?: () => void;
 }
 
 export function LUZWeekView({
@@ -41,7 +42,8 @@ export function LUZWeekView({
   hasManagerTag,
   getShiftStaffingStatus,
   onShiftClick,
-  onRequestJoin
+  onRequestJoin,
+  onCreateShift
 }: LUZWeekViewProps) {
   return (
     <div className="bg-base-100 border border-base-300 rounded-lg p-4">
@@ -109,10 +111,15 @@ export function LUZWeekView({
 
                   {/* Day Content Area - Minimum touch-friendly height */}
                   <div className="relative" style={{ minHeight: '576px' }}> {/* 12 hours * 48px = 576px */}
-                    {/* Time Grid Background */}
+                    {/* Time Grid Background - Clickable for managers to create shifts */}
                     <div className="absolute inset-0">
                       {Array.from({ length: 12 }, (_, i) => (
-                        <div key={i} className="h-12 border-b border-base-300/20"></div>
+                        <div
+                          key={i}
+                          className={`h-12 border-b border-base-300/20 ${hasManagerTag && onCreateShift ? 'cursor-pointer hover:bg-base-200/50 transition-colors' : ''}`}
+                          onClick={hasManagerTag && onCreateShift ? () => onCreateShift() : undefined}
+                          title={hasManagerTag ? "Click to create a new shift" : undefined}
+                        ></div>
                       ))}
                     </div>
 
