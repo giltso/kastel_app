@@ -395,8 +395,8 @@ export function LUZVerticalTimeline({
             <div className="text-center">
               <Calendar className="w-12 h-12 mx-auto mb-2 opacity-50" />
               <p>No events scheduled for {selectedDate}</p>
-              {hasManagerTag && (
-                <button className="btn btn-sm btn-primary mt-2">
+              {hasManagerTag && onCreateShift && (
+                <button className="btn btn-sm btn-primary mt-2" onClick={onCreateShift}>
                   Create First Event
                 </button>
               )}
