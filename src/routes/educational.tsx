@@ -46,9 +46,18 @@ function EducationalPage() {
 
   // Get unique categories
   const categories = Array.from(new Set(courses?.map(c => c.category) || []));
-  const filteredCourses = courses?.filter(c =>
-    categoryFilter === "all" || c.category === categoryFilter
+
+  // Get set of enrolled course IDs for customers
+  const enrolledCourseIds = new Set(
+    isCustomer ? userEnrollments?.map(e => e.courseId) || [] : []
   );
+
+  // Filter courses by category and exclude enrolled courses for customers
+  const filteredCourses = courses?.filter(c => {
+    const matchesCategory = categoryFilter === "all" || c.category === categoryFilter;
+    const notEnrolled = !isCustomer || !enrolledCourseIds.has(c._id);
+    return matchesCategory && notEnrolled;
+  });
 
   return (
     <>
