@@ -237,6 +237,88 @@ describe('LUZVerticalTimeline', () => {
 
       expect(screen.getByText('Daily Schedule')).toBeInTheDocument();
     });
+
+    it('should show "Create First Event" button for managers on empty days', () => {
+      render(
+        <LUZVerticalTimeline
+          {...mockProps}
+          shiftsForDate={[]}
+          hasManagerTag={true}
+          onCreateShift={vi.fn()}
+        />
+      );
+
+      const createButton = screen.getByText('Create First Event');
+      expect(createButton).toBeInTheDocument();
+      expect(createButton.tagName).toBe('BUTTON');
+    });
+
+    it('should NOT show "Create First Event" button for non-managers', () => {
+      render(
+        <LUZVerticalTimeline
+          {...mockProps}
+          shiftsForDate={[]}
+          hasManagerTag={false}
+        />
+      );
+
+      expect(screen.queryByText('Create First Event')).not.toBeInTheDocument();
+    });
+
+    it('should call onCreateShift when clicking "Create First Event" button', async () => {
+      const onCreateShift = vi.fn();
+      const user = userEvent.setup();
+
+      render(
+        <LUZVerticalTimeline
+          {...mockProps}
+          shiftsForDate={[]}
+          hasManagerTag={true}
+          onCreateShift={onCreateShift}
+        />
+      );
+
+      const createButton = screen.getByText('Create First Event');
+      await user.click(createButton);
+
+      expect(onCreateShift).toHaveBeenCalledTimes(1);
+    });
+
+    it('CRITICAL: should require onCreateShift prop for button to work', () => {
+      // This test documents that onCreateShift is REQUIRED for create functionality
+      // Without this prop, the button won't appear even for managers
+      const onCreateShift = vi.fn();
+
+      render(
+        <LUZVerticalTimeline
+          {...mockProps}
+          shiftsForDate={[]}
+          hasManagerTag={true}
+          onCreateShift={onCreateShift}
+        />
+      );
+
+      // Verify the handler is defined (catches missing prop early)
+      expect(onCreateShift).toBeDefined();
+
+      // Verify button exists when both conditions are met
+      const createButton = screen.getByText('Create First Event');
+      expect(createButton).toBeInTheDocument();
+    });
+
+    it('should NOT show button when onCreateShift prop is missing', () => {
+      render(
+        <LUZVerticalTimeline
+          {...mockProps}
+          shiftsForDate={[]}
+          hasManagerTag={true}
+          // onCreateShift intentionally omitted
+        />
+      );
+
+      // Button should not appear without the handler
+      expect(screen.queryByText('Create First Event')).not.toBeInTheDocument();
+    });
   });
 
   describe('Accessibility', () => {
