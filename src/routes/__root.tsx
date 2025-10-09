@@ -188,7 +188,7 @@ function RootComponent() {
                     <div className="navbar-start">
                       <label
                         htmlFor="drawer-toggle"
-                        className="btn btn-square btn-ghost drawer-button lg:hidden mr-2"
+                        className="btn btn-square btn-ghost drawer-button md:hidden mr-2"
                       >
                         <Menu className="w-5 h-5" />
                       </label>
@@ -200,7 +200,7 @@ function RootComponent() {
                         Kastel
                       </Link>
                     </div>
-                    <div className="navbar-center hidden lg:flex">
+                    <div className="navbar-center hidden md:flex">
                       <nav className="flex">
                         <NavigationLinks onLinkClick={() => setIsSidebarOpen(false)} />
                       </nav>
