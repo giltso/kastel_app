@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { usePermissionsV2 } from "@/hooks/usePermissionsV2";
 import { EnsureUserV2 } from "@/components/EnsureUserV2";
 import { LUZOverview } from "@/components/LUZOverview";
@@ -169,6 +169,24 @@ function LUZPage() {
 
   // Date picker dropdown state
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
+  const datePickerRef = useRef<HTMLDivElement>(null);
+
+  // Close date picker when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (datePickerRef.current && !datePickerRef.current.contains(event.target as Node)) {
+        setIsDatePickerOpen(false);
+      }
+    };
+
+    if (isDatePickerOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isDatePickerOpen]);
 
   // Real data queries
   const shiftsForDate = useQuery(
@@ -531,7 +549,7 @@ function LUZPage() {
 
             {/* Date Picker Dropdown */}
             {isDatePickerOpen && (
-              <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 bg-base-100 z-[1000] shadow-xl border border-base-300 rounded-lg p-2">
+              <div ref={datePickerRef} className="absolute top-full mt-2 left-1/2 -translate-x-1/2 bg-base-100 z-[1000] shadow-xl border border-base-300 rounded-lg p-2">
                 <input
                   type="date"
                   className="input input-bordered input-sm"
