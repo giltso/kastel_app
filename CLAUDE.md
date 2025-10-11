@@ -186,6 +186,32 @@ This project follows a structured multi-session development approach with emphas
 
 2. **If approaching 5-hour limit**: Update documentation before doing anything else, add current todo list to PROJECT_OVERVIEW.md
 
+#### Context Compacting Before Big Features
+
+**When to initiate context compact:**
+- Before starting a major new feature that will take multiple sessions
+- When conversation history is long and contains completed work no longer needed
+- Before switching to a completely different area of the codebase (only if the new work will be substantial/multi-session)
+- When planning a significant refactor or architectural change
+
+**How to request:**
+Ask the user: "This looks like a major feature. Should I initiate a context compact before we begin? This will create a clean summary of current state while preserving relevant history."
+
+**What gets preserved:**
+- Current implementation status from PROJECT_OVERVIEW.md
+- Recent session history (last 1-2 sessions)
+- Pending tasks and known issues
+- Key architectural decisions
+- Current branch state and uncommitted work
+
+**What gets compressed:**
+- Detailed implementation discussions from completed features
+- Resolved bugs and their fixes
+- Outdated approaches that were abandoned
+- Verbose troubleshooting sessions
+
+**Benefits:** Faster responses, clearer focus, reduced tokens, better feature organization.
+
 #### Task Management Workflow
 For major tasks, follow this systematic approach:
 
