@@ -1,3 +1,15 @@
+/**
+ * LUZ (Unified Scheduling Hub) - Main Calendar Page
+ *
+ * Design Documentation:
+ * - Architecture: design/REDESIGN_V2.md (V2 system architecture)
+ * - LUZ Interface: design/LUZ_CALENDAR_REDESIGN.md (complete UI specifications)
+ * - Implementation: design/SHIFTS_IMPLEMENTATION.md (modal system & workflows)
+ * - Shift Design: design/SHIFT_REDESIGN.md (population-based shift philosophy)
+ *
+ * Backend: convex/shifts.ts, convex/shift_assignments.ts
+ */
+
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useRef, useEffect } from "react";
 import { usePermissionsV2 } from "@/hooks/usePermissionsV2";

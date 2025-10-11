@@ -1,5 +1,17 @@
 # V2 Shift System Redesign
 
+📍 **Navigation:**
+- **Parent**: [REDESIGN_V2.md](REDESIGN_V2.md) → **SHIFT_REDESIGN.md** (you are here)
+
+**Related Documents:**
+- **LUZ Interface**: [LUZ_CALENDAR_REDESIGN.md](LUZ_CALENDAR_REDESIGN.md) - Complete UI specifications for shift display
+- **Implementation**: [SHIFTS_IMPLEMENTATION.md](SHIFTS_IMPLEMENTATION.md) - Code-level modal system and backend integration
+- **Schema**: [convex/schema.ts](../convex/schema.ts) - Actual database implementation
+
+**Purpose**: Population-based shift architecture design, database schema specifications, and workflow definitions.
+
+---
+
 **Date:** 2025-09-16 (Session 23)
 **Status:** 🔄 DESIGN PHASE - COMPREHENSIVE SPECIFICATIONS COMPLETE
 **Context:** V2 Redesign - Complete rebuild of shift system for LUZ integration

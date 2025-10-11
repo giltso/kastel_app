@@ -1,3 +1,14 @@
+/**
+ * Shift Worker Assignment Management - Backend
+ *
+ * Design Documentation:
+ * - Design Philosophy: design/SHIFT_REDESIGN.md (dual approval workflows & database schema)
+ * - Implementation: design/SHIFTS_IMPLEMENTATION.md (assignment logic & approval workflows)
+ * - LUZ Interface: design/LUZ_CALENDAR_REDESIGN.md (how assignments display in UI)
+ *
+ * Frontend: src/routes/luz.tsx, src/components/modals/AssignWorkerModal.tsx, ApproveAssignmentModal.tsx
+ */
+
 import { ConvexError, v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { Doc, Id } from "./_generated/dataModel";

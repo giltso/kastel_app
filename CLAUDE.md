@@ -217,6 +217,46 @@ For major tasks, follow this systematic approach:
 #### New Feature Documentation
 When creating feature-specific documentation, use `design/SHIFTS_IMPLEMENTATION.md` as template structure.
 
+### Documentation Navigation
+
+**Document Hierarchy:**
+```
+CLAUDE.md (Technical Guidelines) ← You are here
+    └── design/PROJECT_OVERVIEW.md (Project State & Implementation Status)
+        └── design/REDESIGN_V2.md (Main V2 Architecture & Role System)
+            ├── design/SHIFT_REDESIGN.md (Shift Philosophy & Database Schema)
+            │   ├── design/SHIFTS_IMPLEMENTATION.md (Code Implementation & Modals)
+            │   └── design/LUZ_CALENDAR_REDESIGN.md (Complete LUZ UI Specs)
+            └── [Other Feature Docs]
+```
+
+**Quick Navigation:**
+- **Technical Guidelines**: CLAUDE.md (this file) - Coding standards, Git workflow, TDD, testing
+- **Project Status**: [design/PROJECT_OVERVIEW.md](design/PROJECT_OVERVIEW.md) - Current implementation, priorities, roadmap
+- **Session History**: [design/session_history.md](design/session_history.md) - Development timeline (read last 2 sessions)
+- **V2 Architecture**: [design/REDESIGN_V2.md](design/REDESIGN_V2.md) - Role system, high-level design
+- **Shift System**: [design/SHIFT_REDESIGN.md](design/SHIFT_REDESIGN.md) - Population-based architecture
+- **LUZ Interface**: [design/LUZ_CALENDAR_REDESIGN.md](design/LUZ_CALENDAR_REDESIGN.md) - Complete UI specifications
+- **Implementation**: [design/SHIFTS_IMPLEMENTATION.md](design/SHIFTS_IMPLEMENTATION.md) - Modal system, backend integration
+
+**Document Purposes:**
+
+| Document | Purpose | Update Frequency |
+|----------|---------|------------------|
+| CLAUDE.md | Technical standards & workflows | When patterns change |
+| PROJECT_OVERVIEW.md | Current status & priorities | After major milestones |
+| session_history.md | Development history | End of each session |
+| REDESIGN_V2.md | V2 architecture & roles | During design changes |
+| SHIFT_REDESIGN.md | Shift system design philosophy | When architecture evolves |
+| SHIFTS_IMPLEMENTATION.md | Code-level implementation | During feature development |
+| LUZ_CALENDAR_REDESIGN.md | Complete UI specifications | UI changes or new features |
+
+**Navigation Tips:**
+- Each design doc includes navigation links at the top pointing to parent/child documents
+- Design docs reference related code files (e.g., `convex/shifts.ts`, `src/routes/luz.tsx`)
+- When working on a feature, read parent design docs first, then implementation docs
+- Always check if documentation exists before creating new files
+
 ## Testing & Validation
 
 ### Unit Testing with Vitest

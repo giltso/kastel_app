@@ -1,7 +1,20 @@
 # Shifts System Implementation Design
 
+📍 **Navigation:**
+- **Parent Design**: [SHIFT_REDESIGN.md](SHIFT_REDESIGN.md) → **SHIFTS_IMPLEMENTATION.md** (you are here)
+
+**Related:**
+- **Architecture**: [REDESIGN_V2.md](REDESIGN_V2.md) - Role system and high-level architecture
+- **LUZ Interface**: [LUZ_CALENDAR_REDESIGN.md](LUZ_CALENDAR_REDESIGN.md) - UI context and timeline specifications
+- **Backend**: [convex/shifts.ts](../convex/shifts.ts), [convex/shift_assignments.ts](../convex/shift_assignments.ts)
+- **Frontend**: [src/routes/luz.tsx](../src/routes/luz.tsx) - Main LUZ page with modal management
+
+**Purpose**: Code-level implementation details, modal system architecture, and backend integration specifications.
+
+---
+
 **Date:** 2025-09-28
-**Status:** in work - COMPREHENSIVE MODAL SYSTEM 
+**Status:** in work - COMPREHENSIVE MODAL SYSTEM
 
 ## 🎯 FUNCTIONAL DESIGN
 

@@ -1,3 +1,14 @@
+/**
+ * Shift Template Management - Backend
+ *
+ * Design Documentation:
+ * - Design Philosophy: design/SHIFT_REDESIGN.md (population-based architecture & database schema)
+ * - Implementation: design/SHIFTS_IMPLEMENTATION.md (business logic & validation)
+ * - LUZ Interface: design/LUZ_CALENDAR_REDESIGN.md (how shifts display in UI)
+ *
+ * Frontend: src/routes/luz.tsx (main calendar), src/components/modals/*ShiftModal*.tsx
+ */
+
 import { ConvexError, v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { Doc, Id } from "./_generated/dataModel";

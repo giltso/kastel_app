@@ -1,5 +1,18 @@
 # Kastel App V2 Redesign Document
 
+📍 **Navigation:**
+- **Parent**: [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) → **REDESIGN_V2.md** (you are here)
+- **Technical Guidelines**: [../CLAUDE.md](../CLAUDE.md) - Coding standards and workflows
+
+**Child Design Documents:**
+- **Shift System Design**: [SHIFT_REDESIGN.md](SHIFT_REDESIGN.md) - Population-based architecture and database schema
+- **LUZ Interface**: [LUZ_CALENDAR_REDESIGN.md](LUZ_CALENDAR_REDESIGN.md) - Complete UI specifications
+- **Implementation Details**: [SHIFTS_IMPLEMENTATION.md](SHIFTS_IMPLEMENTATION.md) - Code-level architecture
+
+**Purpose**: Main V2 architecture document defining role system, high-level design, and system integration.
+
+---
+
 ## 🎯 Redesign Overview
 
 ### **Critical Decision: Major Simplification**
