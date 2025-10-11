@@ -2,6 +2,63 @@
 
 detailed history of all sessions. to be updated on new session
 
+### Session 35 - October 11, 2025 (Documentation Navigation & Consolidation)
+
+**Goal**: Consolidate design documentation to eliminate duplicates and implement comprehensive navigation system
+
+**Major Achievements**:
+- ✅ **Documentation Consolidation**: Eliminated duplicate content across 4 design documents
+  - ✅ Deleted outdated claude-workflow.md (content migrated to CLAUDE.md)
+  - ✅ Consolidated REDESIGN_V2.md (removed LUZ/shift duplicates, added references)
+  - ✅ Consolidated SHIFT_REDESIGN.md (removed LUZ interface and role system duplicates)
+  - ✅ Consolidated SHIFTS_IMPLEMENTATION.md (removed schema and authorization duplicates)
+  - ✅ Updated LUZ_CALENDAR_REDESIGN.md (added parent document references)
+- ✅ **Navigation System Implementation**: Complete bidirectional navigation across all documentation
+  - ✅ Added navigation sections to PROJECT_OVERVIEW.md, REDESIGN_V2.md, SHIFT_REDESIGN.md, SHIFTS_IMPLEMENTATION.md
+  - ✅ Added comprehensive "Documentation Navigation" section to CLAUDE.md with hierarchy and quick links
+  - ✅ Added design doc references to key code files (src/routes/luz.tsx, convex/shifts.ts, convex/shift_assignments.ts)
+  - ✅ Created NAVIGATION_PLAN.md → Implemented → Deleted (temporary implementation guide)
+- ✅ **Context Compacting Section**: Added guidance for context compacting before major features
+  - ✅ When to compact (multi-session features, long conversations, substantial codebase switches)
+  - ✅ What to preserve (status, pending tasks, decisions, branch state)
+  - ✅ What to compress (completed discussions, resolved bugs, abandoned approaches)
+
+**Technical Implementation**:
+- **Single Source of Truth**: Each topic now has one authoritative document
+  - REDESIGN_V2.md: Role system and high-level architecture
+  - SHIFT_REDESIGN.md: Shift philosophy and database schema
+  - SHIFTS_IMPLEMENTATION.md: Code implementation details
+  - LUZ_CALENDAR_REDESIGN.md: Complete LUZ interface specifications
+- **Bidirectional Links**: Parent ↔ Child ↔ Sibling document references throughout
+- **Code-to-Design Links**: All key implementation files link back to design documentation
+- **Central Navigation Hub**: CLAUDE.md provides document hierarchy and quick access links
+
+**Files Modified**:
+- **Deleted**: design/claude-workflow.md (content moved to CLAUDE.md)
+- **Consolidated**: design/REDESIGN_V2.md (3 edits), design/SHIFT_REDESIGN.md (2 edits), design/SHIFTS_IMPLEMENTATION.md (2 edits)
+- **Enhanced**: design/LUZ_CALENDAR_REDESIGN.md (navigation added), CLAUDE.md (navigation + context compacting sections)
+- **Code References**: src/routes/luz.tsx, convex/shifts.ts, convex/shift_assignments.ts (design doc header comments)
+
+**Documentation Quality Improvements**:
+- Eliminated duplicate role system specifications (now only in REDESIGN_V2.md)
+- Eliminated duplicate database schema details (now only in SHIFT_REDESIGN.md)
+- Eliminated duplicate LUZ interface specs (now only in LUZ_CALENDAR_REDESIGN.md)
+- Added clear "👉 See [DOCUMENT.md] for..." references throughout
+- Created document hierarchy visualization in CLAUDE.md
+
+**Commits**:
+- `9a4bb40a` - docs: consolidate design documentation to eliminate duplicates
+- `7e86424c` - docs: implement navigation system across all documentation and code
+- `3ee4816f` - docs: add context compacting section to CLAUDE.md
+
+**Benefits Achieved**:
+- **Developer Onboarding**: Clear document hierarchy makes finding information faster
+- **Maintenance**: Single source of truth prevents documentation drift
+- **Context Awareness**: Every document explains its purpose and when to update it
+- **Code-Design Traceability**: Developers can easily navigate from code to design docs and back
+
+**Status**: Documentation consolidation and navigation system complete. All design docs now follow consistent structure with clear hierarchy and bidirectional linking.
+
 ### Session 34 - October 9, 2025 (Mobile Integration & Testing)
 
 **Goal**: Mobile optimization for LUZ interface and comprehensive testing infrastructure
