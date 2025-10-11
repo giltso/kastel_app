@@ -42,7 +42,7 @@ Always follow the guidelines in this file, unless explicitly told otherwise by t
 - **One successful test case is insufficient** - Test edge cases, error conditions, malformed data, concurrent operations
 - **Frontend crashes are critical bugs** - `.includes()` on undefined, missing null checks, unhandled errors
 - **Schema validation failures block production** - Cannot deploy with inconsistent data models
-- **Error handling is mandatory** - User-friendly messages, graceful failures, proper validation
+- **Error handling is expected** - User-friendly messages, graceful failures, proper validation
 
 ### Implementation Completion Criteria
 Before marking any feature as "complete":

@@ -306,328 +306,39 @@ Flow: Worker A → Worker B → Manager → Final Assignment
 
 ## 🏗️ LUZ INTERFACE ARCHITECTURE
 
-### **Layout Structure (70/30 Split)**
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    LUZ TAB HEADER                           │
-├─────────────────────────────────────────────────────────────┤
-│ FILTER SECTION (Always Visible Top Bar)                    │
-│ ☑ Shifts  ☑ Education  ☑ Rentals  [Search: _______]       │
-├─────────────────────────────────────────────────────────────┤
-│ MAIN CONTENT AREA                                          │
-│ ┌─────────────────────────────┐ ┌─────────────────────────┐ │
-│ │        OVERVIEW            │ │       CALENDAR           │ │
-│ │    (Left 30%)              │ │     (Right 70%)          │ │
-│ │                            │ │                          │ │
-│ │ Action-oriented display    │ │ Visual scheduling        │ │
-│ │ - Pending approvals        │ │ interface with           │ │
-│ │ - Items needing attention  │ │ interactive elements     │ │
-│ │ - Role-specific actions    │ │ - Click to join shifts   │ │
-│ │ - Quick bulk operations    │ │ - Drag & drop assign     │ │
-│ │                            │ │ - Status indicators      │ │
-│ └─────────────────────────────┘ └─────────────────────────┘ │
-└─────────────────────────────────────────────────────────────┘
-```
+**Complete LUZ interface specifications documented in [LUZ_CALENDAR_REDESIGN.md](LUZ_CALENDAR_REDESIGN.md)**
 
-### **Filter System Specifications**
+**Key Integration Points for Shift System:**
+- **70/30 Split Layout**: Overview section shows action items + Calendar section displays shift timeline
+- **Population-Based Display**: Visual indicators show hourly requirements vs. current staffing (e.g., "2/3 workers")
+- **Manager Workflow**: Drag-and-drop worker assignment, gap warnings, coverage status dashboard
+- **Worker Workflow**: Click-to-join available shifts, view personal schedule, request extra hours
+- **Real-time Capacity**: Live updates show understaffed (red), optimal (green), overstaffed (orange) states
 
-#### **Core V2 Filters**
-```typescript
-interface LuzFilters {
-  // Primary item type filters
-  shifts: boolean,      // Show shift templates, requests, assignments
-  education: boolean,   // Show courses, enrollments, instructor assignments
-  rentals: boolean,     // Show tool rentals, requests, returns
-
-  // Search and date filtering
-  searchQuery: string,  // Text search across titles, descriptions, participants
-  dateRange: {
-    start: string,      // "2025-09-16"
-    end: string,        // "2025-09-23"
-  },
-
-  // Status-based filtering (context-dependent)
-  statusFilters: {
-    pending: boolean,     // Items requiring approval/action
-    approved: boolean,    // Approved but not yet active items
-    active: boolean,      // Currently active/in-progress items
-    completed: boolean,   // Finished/historical items
-  }
-}
-```
-
-#### **Role-Based Filter Defaults**
-```typescript
-// Worker Role - Focus on personal actions and assignments
-workerDefaults: {
-  shifts: true,         // Primary focus - their shift assignments
-  education: false,     // Only if they're also instructor
-  rentals: false,       // Only if they need tool access permissions
-  statusFilters: {
-    pending: true,      // Show items they need to approve
-    approved: true,     // Show their confirmed assignments
-    active: true,       // Show current active shifts
-    completed: false    // Hide historical items by default
-  }
-}
-
-// Manager Role - Focus on approvals and oversight
-managerDefaults: {
-  shifts: true,         // Shift oversight and approvals
-  education: true,      // Course approvals if also instructor
-  rentals: true,        // Tool rental approvals
-  statusFilters: {
-    pending: true,      // Primary focus - items needing approval
-    approved: false,    // Don't clutter with already approved items
-    active: true,       // Show active shifts for oversight
-    completed: false    // Historical items only when specifically needed
-  }
-}
-
-// Instructor Role - Focus on education management
-instructorDefaults: {
-  shifts: false,        // Only if they're also worker
-  education: true,      // Primary focus - course management
-  rentals: false,       // Generally don't need tool oversight
-  statusFilters: {
-    pending: true,      // Student enrollment requests
-    approved: true,     // Approved courses and enrollments
-    active: true,       // Currently running courses
-    completed: false    // Historical courses when needed
-  }
-}
-```
-
-### **LUZ Interface Specifications - Vertical Timeline Design**
-
-#### **Manager's LUZ Interface (70/30 Split)**
-```
-┌─────────────────────────────────────────────────────────────┐
-│                         LUZ - Monday Sept 16                │
-├─────────────────────────────────────────────────────────────┤
-│ ☑ Shifts  ☑ Education  ☑ Rentals  [Search: _______]       │
-├─────────────────────────────────────────────────────────────┤
-│ ┌─────────────────────────────┐ ┌─────────────────────────┐ │
-│ │        OVERVIEW            │ │       CALENDAR           │ │
-│ │    (Left 30%)              │ │     (Right 70%)          │ │
-│ │                            │ │                          │ │
-│ │ 🚨 STAFFING ALERTS (3)     │ │ Daily Coverage Timeline  │ │
-│ │                            │ │                          │ │
-│ │ ⚠️ Morning Gap 9-11AM      │ │ ┌─────┬─────┬─────────┐  │ │
-│ │ Need 1 worker              │ │ │Time │ Req │ Workers  │  │ │
-│ │ [Quick Assign]             │ │ ├─────┼─────┼─────────┤  │ │
-│ │                            │ │ │8 AM │  2  │ ██ Sarah │  │ │
-│ │ 🚨 Afternoon Rush 3-6PM    │ │ │     │     │ ██ Mike  │  │ │
-│ │ Need 2 more workers        │ │ ├─────┼─────┼─────────┤  │ │
-│ │ [Quick Assign]             │ │ │9 AM │  1  │ ██ Sarah │  │ │
-│ │                            │ │ │     │     │ 🚨 Gap   │  │ │
-│ │ 👥 AVAILABLE WORKERS       │ │ ├─────┼─────┼─────────┤  │ │
-│ │ ✅ Sarah M. (Mornings)     │ │ │10AM │  1  │ 🚨 Empty │  │ │
-│ │ ✅ Mike L.  (Split)        │ │ ├─────┼─────┼─────────┤  │ │
-│ │ ✅ Lisa K.  (Afternoons)   │ │ │11AM │  1  │ 🚨 Empty │  │ │
-│ │ ✅ John D.  (Flexible)     │ │ ├─────┼─────┼─────────┤  │ │
-│ │                            │ │ │12PM │  2  │ ██ Mike  │  │ │
-│ │ 📊 COVERAGE STATUS         │ │ │     │     │ 🚨 Gap   │  │ │
-│ │ • 8 hours need coverage    │ │ ├─────┼─────┼─────────┤  │ │
-│ │ • 2 critical gaps          │ │ │1 PM │  2  │ ██ Lisa  │  │ │
-│ │ • 4 workers available      │ │ │     │     │ 🚨 Gap   │  │ │
-│ │                            │ │ ├─────┼─────┼─────────┤  │ │
-│ │ [Drag workers to assign]   │ │ │2 PM │  2  │ ██ Lisa  │  │ │
-│ │ [Auto-suggest coverage]    │ │ │     │     │ ██ John  │  │ │
-│ │                            │ │ ├─────┼─────┼─────────┤  │ │
-│ │                            │ │ │3 PM │  3  │ ██ Lisa  │  │ │
-│ │                            │ │ │     │     │ ██ John  │  │ │
-│ │                            │ │ │     │     │ 🚨 Gap   │  │ │
-│ │                            │ │ ├─────┼─────┼─────────┤  │ │
-│ │                            │ │ │4-7PM│ 3-2 │[Scrollable] │ │
-│ │                            │ │ └─────┴─────┴─────────┘  │ │
-│ └─────────────────────────────┘ └─────────────────────────┘ │
-└─────────────────────────────────────────────────────────────┘
-```
-
-#### **Worker's LUZ Interface (70/30 Split)**
-```
-┌─────────────────────────────────────────────────────────────┐
-│                         LUZ - Hi Sarah!                    │
-├─────────────────────────────────────────────────────────────┤
-│ ☑ Shifts  ☐ Education  ☐ Rentals  [Search: _______]       │
-├─────────────────────────────────────────────────────────────┤
-│ ┌─────────────────────────────┐ ┌─────────────────────────┐ │
-│ │        OVERVIEW            │ │       CALENDAR           │ │
-│ │    (Left 30%)              │ │     (Right 70%)          │ │
-│ │                            │ │                          │ │
-│ │ 📅 MY SCHEDULE             │ │ My Week Schedule         │ │
-│ │                            │ │                          │ │
-│ │ ✅ TODAY (Monday)          │ │ ┌───────────────────────┐ │ │
-│ │ 8:00 AM - 2:00 PM          │ │ │ MON │ TUE │ WED │ THU │ │ │
-│ │ Status: Confirmed          │ │ ├─────┼─────┼─────┼─────┤ │ │
-│ │ [Check In] [Report Issue]  │ │ │ 8AM │ 8AM │     │ 8AM │ │ │
-│ │                            │ │ │ ██  │ ██  │     │ ██  │ │ │
-│ │ 📋 THIS WEEK               │ │ │ ██  │ ██  │     │ ██  │ │ │
-│ │ • Tue: 8AM-2PM ✅         │ │ │ ██  │ ██  │     │ ██  │ │ │
-│ │ • Wed: Available           │ │ │ ██  │ ██  │     │ ██  │ │ │
-│ │ • Thu: 8AM-2PM ✅         │ │ │ ██  │ ██  │     │ ██  │ │ │
-│ │ • Fri: 8AM-2PM ✅         │ │ │2PM  │2PM  │     │2PM  │ │ │
-│ │                            │ │ └─────┴─────┴─────┴─────┘ │ │
-│ │ 💼 EXTRA HOURS AVAILABLE   │ │                          │ │
-│ │                            │ │ Today Detail:            │ │
-│ │ 🟡 Wednesday 12PM-6PM      │ │ ┌─────┬─────────────────┐ │ │
-│ │ "Good fit for you!"        │ │ │8 AM │ ████ My Shift   │ │ │
-│ │ [Request These Hours]      │ │ │9 AM │ ████ My Shift   │ │ │
-│ │                            │ │ │10AM │ ████ My Shift   │ │ │
-│ │ 🟡 Friday Extra 2PM-4PM    │ │ │11AM │ ████ My Shift   │ │ │
-│ │ "Optional overtime"        │ │ │12PM │ ████ My Shift   │ │ │
-│ │ [Request These Hours]      │ │ │1 PM │ ████ My Shift   │ │ │
-│ │                            │ │ │2 PM │ [Off Duty]     │ │ │
-│ │ ⚙️  QUICK ACTIONS          │ │ │3 PM │ [Off Duty]     │ │ │
-│ │ [Request Time Off]         │ │ │...  │ [Scrollable]   │ │ │
-│ │ [Update Availability]      │ │ └─────┴─────────────────┘ │ │
-│ │ [View Payroll]             │ │                          │ │
-│ └─────────────────────────────┘ └─────────────────────────┘ │
-└─────────────────────────────────────────────────────────────┘
-```
-
-### **Calendar Section Specifications (Right 70%)**
-
-#### **Interactive Calendar Features**
-```typescript
-interface CalendarInteractions {
-  // Core interaction capabilities
-  clickToView: boolean,      // Click any item to see detailed information
-  dragAndDrop: boolean,      // Drag shifts/courses to reschedule (managers)
-  rightClickMenu: boolean,   // Context menu for quick actions
-
-  // Shift-specific interactions
-  shiftInteractions: {
-    workerClickToJoin: boolean,    // Workers click empty shifts to request
-    managerDragAssign: boolean,    // Managers drag workers onto shifts
-    switchRequestInit: boolean,    // Right-click assigned shift for switch options
-    capacityWarnings: boolean,     // Visual warnings for understaffed/overstaffed
-  },
-
-  // Visual status system
-  statusColors: {
-    pending: "#fbbf24",       // yellow - pending approvals
-    approved: "#10b981",      // green - approved/confirmed
-    understaffed: "#ef4444",  // red - needs more workers
-    overstaffed: "#f97316",   // orange - too many workers
-    active: "#3b82f6",        // blue - currently in progress
-    completed: "#6b7280",     // gray - finished
-  }
-}
-```
-
-#### **Calendar Item Display Components**
-
-##### **Shift Calendar Items**
-```typescript
-interface ShiftCalendarItem {
-  // Core display information
-  title: string,              // "Morning Operations"
-  timeRange: string,          // "9:00 AM - 5:00 PM"
-  capacity: string,           // "2/3 workers" (current/required)
-  status: ShiftStatus,        // Determines color coding
-  assignedWorkers: string[],  // ["Sarah M.", "John D."]
-
-  // Role-based interactive elements
-  canJoin: boolean,           // Show "Join Shift" button for eligible workers
-  canAssign: boolean,         // Show assignment dropdown for managers
-  canSwitch: boolean,         // Show switch options for assigned workers
-
-  // Status indicators
-  pendingCount?: number,      // "2 pending requests" badge for managers
-  isUnderstaffed: boolean,    // Visual alert for capacity issues
-  hasConflicts: boolean,      // Warning for scheduling conflicts
-}
-```
-
-##### **Course Calendar Items**
-```typescript
-interface CourseCalendarItem {
-  // Core information
-  title: string,              // "Woodworking 101"
-  timeRange: string,          // "2:00 PM - 4:00 PM"
-  enrollment: string,         // "5/8 students" (enrolled/capacity)
-  instructor: string,         // "Prof. Sarah Smith"
-  location?: string,          // "Workshop A"
-
-  // Interactive capabilities
-  canEnroll: boolean,         // Show "Enroll" button for eligible customers
-  canManage: boolean,         // Show management options for instructors
-  canApprove: boolean,        // Show approval options for managers
-
-  // Status information
-  enrollmentStatus: string,   // "Open", "Full", "Pending Approval"
-  materialsReady: boolean,    // Indicator for course preparation
-}
-```
-
-##### **Tool Rental Calendar Items**
-```typescript
-interface RentalCalendarItem {
-  // Core rental information
-  title: string,              // "Drill #3 - Customer Rental"
-  customer: string,           // "John Smith"
-  timeRange: string,          // "10:00 AM - 2:00 PM"
-  status: RentalStatus,       // "active", "returned", "overdue", "requested"
-  toolCondition: string,      // "Good", "Needs Maintenance", "Damaged"
-
-  // Worker interaction options
-  canMarkReturned: boolean,   // Show "Mark Returned" for workers
-  canExtendRental: boolean,   // Show extension options
-  canReportIssue: boolean,    // Report tool problems
-
-  // Status indicators
-  isOverdue: boolean,         // Visual alert for overdue rentals
-  requiresInspection: boolean, // Post-return inspection needed
-}
-```
+👉 **See [LUZ_CALENDAR_REDESIGN.md](LUZ_CALENDAR_REDESIGN.md) for complete LUZ specifications including:**
+- Detailed filter system design
+- Interactive calendar features
+- Role-based interface variations
+- Timeline rendering algorithms
+- Mobile responsiveness specs
 
 ---
 
 ## 🔒 V2 PERMISSION SYSTEM
 
-### **Role Structure: Staff + Tags**
-```
-Staff Base Role (isStaff: true)
-├── Worker Tag (workerTag: true)
-│   ├── Can view and request shift assignments
-│   ├── Can approve manager assignments to them
-│   ├── Can initiate switch requests with other workers
-│   └── Can see public shift information (times, basic details)
-├── Instructor Tag (instructorTag: true)
-│   ├── Can create and manage courses
-│   ├── Can approve student enrollments
-│   ├── Can see course-related information in LUZ
-│   └── Can be assigned as course instructor
-└── Manager Tag (managerTag: true, requires workerTag: true)
-    ├── All Worker Tag permissions
-    ├── Can create and modify shift templates
-    ├── Can approve worker shift requests
-    ├── Can assign workers to shifts
-    ├── Can approve switch requests
-    ├── Can see all shift information including assignments
-    └── Can access reporting and oversight tools
+**Complete permission system documented in [REDESIGN_V2.md](REDESIGN_V2.md#-redifined-role-system)**
 
-Customer Base Role (isStaff: false)
-└── Rental Approved Tag (rentalApprovedTag: true)
-    ├── Can request tool rentals
-    ├── Can see tool availability
-    └── Can enroll in courses
-```
+**Shift System Permission Summary:**
+- **Staff (Base)**: View public shift information (times, descriptions)
+- **Staff + Worker Tag**: Request assignments, approve manager assignments to self, initiate switch requests
+- **Staff + Manager Tag**: Create shift templates, assign workers, approve all requests, access full reporting
+- **Staff + Instructor Tag**: View shift times for course scheduling context (no operational shift permissions)
 
-### **Permission Matrix for Shift System**
-| Action | Staff Base | +Worker | +Instructor | +Manager |
-|--------|------------|---------|-------------|----------|
-| View shift times | ✅ Public info | ✅ Public info | ✅ Public info | ✅ All info |
-| See assigned workers | ❌ | ✅ Limited | ❌ Unless assigned | ✅ All assignments |
-| Request shift assignment | ❌ | ✅ | ❌ Unless worker tag | ✅ |
-| Approve manager assignments | ❌ | ✅ To self | ❌ Unless worker tag | ✅ To self |
-| Create shift templates | ❌ | ❌ | ❌ | ✅ |
-| Assign workers to shifts | ❌ | ❌ | ❌ | ✅ |
-| Approve worker requests | ❌ | ❌ | ❌ | ✅ |
-| Approve switch requests | ❌ | ❌ | ❌ | ✅ |
-| View work hour reports | ❌ | ✅ Own only | ❌ Unless worker tag | ✅ All workers |
+👉 **See [REDESIGN_V2.md](REDESIGN_V2.md#-redifined-role-system) for:**
+- Complete role structure and tag definitions
+- Full permission matrix across all features
+- Business rule requirements (e.g., Manager requires Worker tag)
+- Future considerations (Staff as Customer scenarios)
 
 ---
 

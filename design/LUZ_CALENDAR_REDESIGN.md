@@ -1,7 +1,21 @@
 # LUZ Calendar System Redesign
 
+**Parent Design Documents**: [REDESIGN_V2.md](REDESIGN_V2.md) → [SHIFT_REDESIGN.md](SHIFT_REDESIGN.md) → **LUZ_CALENDAR_REDESIGN.md** (you are here)
+
 **Context:** V2 Redesign - Unified scheduling interface with detailed interaction logic
 **Status:** 🚀 TIMELINE VIEWS FUNCTIONAL - POPULATION STATUS IN PROGRESS
+
+**Related Implementation**: [SHIFTS_IMPLEMENTATION.md](SHIFTS_IMPLEMENTATION.md) (code-level implementation details)
+
+---
+
+📍 **Navigation Guide:**
+- **Architecture Overview**: See [REDESIGN_V2.md](REDESIGN_V2.md#-luz-system---unified-scheduling-hub) for high-level LUZ architecture
+- **Shift System Design**: See [SHIFT_REDESIGN.md](SHIFT_REDESIGN.md) for population-based shift philosophy and database schema
+- **Code Implementation**: See [SHIFTS_IMPLEMENTATION.md](SHIFTS_IMPLEMENTATION.md) for modal system and backend integration
+- **Permission System**: See [REDESIGN_V2.md](REDESIGN_V2.md#-redifined-role-system) for role-based access control
+
+---
 
 ---
 

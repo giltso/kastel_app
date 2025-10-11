@@ -92,46 +92,28 @@
   - [ ] *Define reporting access*
     - the shift tool should create reports on hours worked. the reports can be made for each worker, for any specified time period. the formating and styling will be handeled later.
 
-#### **LUZ Interface Design Progress**
+#### **LUZ Interface Specifications**
 
-**Detailed Specifications Created** (documented in `LUZ_CALENDAR_REDESIGN.md`):
-- **70/30 Layout Architecture**: Overview section (30%) + Calendar timeline (70%) specified
-- **Three-View System**: Daily (tool rental focus) → Weekly (shift planning) → Monthly (strategic planning) designed
-- **Role-Based Interactions**: Complete specifications for Base Staff, Workers, Instructors, and Managers across all views
-- **Visual Design System**: Color coding, typography, spacing, and responsive design specifications defined
-- **Drag-and-Drop Logic**: Manager assignment workflows with real-time updates and validation designed
-- **Coverage Gap Indicators**: Visual status system for staffing analysis specified
+**Complete LUZ interface specifications documented in [LUZ_CALENDAR_REDESIGN.md](LUZ_CALENDAR_REDESIGN.md)**
 
-**Key Design Decisions Made:**
-- **View-Specific Priorities**: Each view optimized for specific user tasks and time horizons
-- **Cumulative Role Permissions**: Base Staff → Workers → Instructors → Managers with additive capabilities
-- **Dual Approval System**: Manager assignments require worker approval for autonomy
-- **Course Writer Hierarchy**: Owner vs helper instructor distinction with appropriate permissions
-- **Mobile Responsiveness**: Touch-friendly interactions and stacked layouts specified
+**High-Level Overview:**
+- **70/30 Split Layout**: Overview section (left 30%) + Calendar timeline (right 70%)
+- **Three Views**: Day, Week, Month - each optimized for different user workflows
+- **Role-Adaptive Interface**: Different permissions and capabilities for Base Staff, Workers, Instructors, Managers
+- **Real-time Updates**: Live capacity indicators, assignment tracking, conflict detection
 
-**Filter System (Question 2):**
-- **V2 Minimum**: Basic tag system to differentiate Shifts, Education (courses), and Rentals
-- **Future Phase**: Comprehensive filtering model to be designed separately
-- **Implementation**: Simple tag-based filtering for now
+**Key Design Decisions:**
+- Dual approval workflows (manager↔worker consent required)
+- Population-based shift system (hourly requirements, not fixed shifts)
+- Unified calendar for shifts, courses, and tool rentals
+- Mobile-responsive with touch-friendly interactions
 
-**Manager Approval Workflow (Question 5):**
-- Checkbox selection system for each pending request
-- "Select All" button for bulk operations
-- Mixed-mode approval: select specific requests for bulk processing
-- Individual approval remains available
-
-**Recurring Shift Modifications (Question 6):**
-- **Edit Dialog Options**:
-  - "Edit this occurrence only" (creates exception)
-  - "Edit this and all future occurrences" (modifies pattern going forward)
-- **Temporal Rule**: Past shifts are immutable for reporting integrity
-- **Design Principle**: Shifts exist for action (present/future), become historical records (past)
-
-**Worker Switch Request Flow (Question 4):**
-- Request queues in system (no in-app notifications in V2)
-- External communication for notifications (DM outside site)
-- Worker B denial ends request immediately
-- Worker B approval sends to manager for final decision 
+👉 **See [LUZ_CALENDAR_REDESIGN.md](LUZ_CALENDAR_REDESIGN.md) for complete specifications including:**
+- Detailed drag-and-drop logic
+- Timeline rendering algorithms
+- Mobile responsiveness specs
+- Performance optimization strategies
+- Interactive element specifications 
 
 - **Instructors**:
   - [ ] *Define course-related shift access*
@@ -141,56 +123,25 @@
     - If instructor also has Worker tag: gains full worker shift permissions (additive system)
     - Base Instructor (no Worker tag): sees only public shift timing for course scheduling context
 
-#### **Core Functionality**
+#### **Core Shift System Functionality**
 
-**Shift System Specifications Designed** (documented in `SHIFT_REDESIGN.md`):
+**Complete shift system design documented in [SHIFT_REDESIGN.md](SHIFT_REDESIGN.md)**
 
-- **Define shift**: Population-based hourly requirements specified instead of fixed shift types
-  - Flexible worker accommodations (full-day, split-shift, partial, offset workers)
-  - Hourly staffing requirements with min/optimal worker counts designed
-  - Human oversight with information-driven manager decisions specified
+**High-Level Summary:**
+- **Population-Based Framework**: Hourly staffing requirements (not fixed shift slots)
+- **Flexible Worker Accommodations**: Full-day, split-shift, partial, offset arrangements
+- **Dual Approval Workflows**: Manager assigns → worker approves OR worker requests → manager approves
+- **Worker Self-Service**: Request additional hours, time off, schedule changes
+- **Shift Swapping**: Worker-to-worker swap requests with manager final approval
 
-- **Define shift creation process**: Template-based system designed for recurring operations
-  - Manager creation of shift templates with hourly population requirements
-  - Recurring day patterns (monday-sunday flexibility) specified
-  - Store hours integration with operational requirements designed
+👉 **See [SHIFT_REDESIGN.md](SHIFT_REDESIGN.md) for complete specifications including:**
+- Detailed workflow diagrams
+- Database schema (shifts_v2, shift_assignments_v2, worker_hour_requests_v2)
+- Assignment algorithms and validation logic
+- Reporting specifications
+- Success metrics and future enhancements
 
-- **Define assignment workflows**: Dual approval system with worker autonomy designed
-  - Manager assignment of workers to flexible hour ranges
-  - Worker approval requirement for all assignments (dual consent) specified
-  - Worker self-service opportunities for additional hours designed
-  - Swap system with peer approval workflows specified
-
-- **Define documentation requirements**: Simplified scheduling focus designed
-  - Assignment tracking without complex time tracking
-  - Break period management (paid/unpaid) specified
-  - Assignment notes and metadata designed
-  - Manager assignment history tracking planned
-
-- **Define reporting features**: Basic operational reporting designed
-  - Weekly/monthly work hours reports by worker
-  - Coverage analysis and gap identification specified
-  - Assignment status tracking designed
-  - Future: Time tracking integration separate from scheduling
-
-#### **Data Model**
-
-**Schema Design Specifications** (documented in `SHIFT_REDESIGN.md`):
-
-- **Design shift schema**: `shifts_v2` table with population-based requirements designed
-  - Hourly requirements array (hour, minWorkers, optimalWorkers) specified
-  - Store hours integration and recurrence patterns designed
-  - Template-based approach for operational consistency specified
-
-- **Design assignment relationships**: `shift_assignments_v2` with flexible hours designed
-  - Worker-template-date relationships specified
-  - Flexible hour ranges (startTime/endTime arrays) designed
-  - Break period management and assignment metadata specified
-
-- **Design documentation structure**: `worker_hour_requests_v2` for self-service designed
-  - Worker-initiated requests for additional hours specified
-  - Manager review and approval workflows designed
-  - Request status tracking and opportunity matching specified
+**Code implementation details in [SHIFTS_IMPLEMENTATION.md](SHIFTS_IMPLEMENTATION.md)**
 
 ---
 
@@ -362,16 +313,24 @@ Legend: H=Home, C=Courses, L=LUZ, T=Tool Rental
 
 ## 🗂️ Database Schema V2
 
-### **Core Tables**
-- [ ] **Users**: *Define simplified user schema*
-- [ ] **Shifts**: *Design new shift data model (will be "shifts" after migration)*
-- [ ] **Tools**: *Keep existing, document any changes*
-- [ ] **Courses**: *Keep existing, document any changes*
+**Complete database schema documented in [SHIFT_REDESIGN.md](SHIFT_REDESIGN.md) and implemented in [convex/schema.ts](../convex/schema.ts)**
+
+### **Core V2 Tables (Implemented)**
+- ✅ **users**: V2 tag-based role system (`isStaff`, `workerTag`, `instructorTag`, `toolHandlerTag`, `managerTag`, `rentalApprovedTag`)
+- ✅ **shifts**: Population-based shift templates with hourly requirements and recurrence patterns
+- ✅ **shift_assignments**: Flexible worker assignments with dual approval workflows
+- ✅ **worker_hour_requests**: Worker self-service requests (join, switch, extra hours, time off)
+- ✅ **courses**: Course templates with session support (single, multi-meeting)
+- ✅ **course_sessions**: Individual session scheduling for multi-meeting courses
+- ✅ **tools**: Tool inventory management
+- ✅ **tool_rentals**: Rental workflows with manual rental support
 
 ### **Removed Tables**
 - ❌ **Events**: Complete removal
 - ❌ **Suggestions**: Complete removal
 - ❌ **Professional Services**: Complete removal
+
+👉 **See [SHIFT_REDESIGN.md](SHIFT_REDESIGN.md) for detailed schema specifications and [convex/schema.ts](../convex/schema.ts) for implementation**
 
 ---
 

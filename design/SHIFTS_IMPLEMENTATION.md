@@ -39,35 +39,14 @@ The shifts system provides **recurring operational scheduling** for workers acro
 
 ### **Database Schema Design**
 
-#### **1. Shifts Table (Templates)**
-```typescript
-shifts: {
-  name: string,                    // "Morning Shift", "Evening Shift"
-  description?: string,            // Optional details
-  type?: "operational" | "maintenance" | "educational",
-  startTime: string,              // "09:00" (HH:MM format)
-  endTime: string,                // "17:00" (HH:MM format)
-  recurringDays: DayName[],       // ["monday", "tuesday", "wednesday"]
-  requiredWorkers: number,        // Target staffing (2)
-  maxWorkers?: number,            // Capacity limit (defaults to requiredWorkers + 2)
-  isActive: boolean,              // Enable/disable shifts
-  createdBy: Id<"users">,         // Manager who created
-  color?: string                  // Hex color for calendar display
-}
-```
+**Complete schema specifications in [SHIFT_REDESIGN.md](SHIFT_REDESIGN.md#-v2-database-schema-design---simplified-human-oversight) and [convex/schema.ts](../convex/schema.ts)**
 
-#### **2. Shift Assignments Table (Instances)**
-```typescript
-shift_assignments: {
-  shiftId: Id<"shifts">,          // Reference to shift template
-  workerId: Id<"users">,          // Assigned worker
-  date: string,                   // "2025-09-13" (ISO date)
-  assignmentType: "manager_assigned" | "self_signed",
-  assignedBy: Id<"users">,        // Who made the assignment
-  status: "assigned" | "confirmed" | "completed" | "no_show" | "cancelled",
-  notes?: string                  // Optional assignment notes
-}
-```
+**Core V2 Tables:**
+- **shifts**: Population-based templates with hourly requirements and recurrence
+- **shift_assignments**: Flexible worker assignments with dual approval workflows
+- **worker_hour_requests**: Worker self-service requests (join, switch, extra hours)
+
+👉 **See [SHIFT_REDESIGN.md](SHIFT_REDESIGN.md#-v2-database-schema-design---simplified-human-oversight) for detailed schema design**
 
 ### **Core Business Logic**
 
@@ -153,23 +132,14 @@ const runsOnSelectedDay = shift.recurringDays.includes(selectedDayOfWeek);
 
 ## 🔒 AUTHORIZATION MATRIX
 
-### **Permission Levels**
+**Complete permission system documented in [REDESIGN_V2.md](REDESIGN_V2.md#-redifined-role-system)**
 
-| Action | Guest | Customer | Worker | Manager | Dev |
-|--------|-------|----------|--------|---------|-----|
-| View Shifts | ❌ | ❌ | ✅ | ✅ | ✅ |
-| Self-Assign | ❌ | ❌ | ✅ | ✅ | ✅ |
-| Create Shifts | ❌ | ❌ | ❌ | ✅ | ✅ |
-| Assign Others | ❌ | ❌ | ❌ | ✅ | ✅ |
-| Manage Capacity | ❌ | ❌ | ❌ | ✅ | ✅ |
+**Implementation Summary (V2 Tag-Based):**
+- **Staff + Worker Tag**: View shifts, self-assign, approve manager assignments to self
+- **Staff + Manager Tag**: All worker permissions + create shifts, assign workers, approve requests
+- **Dev Role**: Full emulation capabilities for testing all permission combinations
 
-### **Role Logic Implementation**
-```typescript
-// Permission checks in backend
-const effectiveRole = user.emulatingRole || user.role;
-const canManageShifts = ["manager", "dev"].includes(effectiveRole);
-const canSelfAssign = ["worker", "manager", "dev"].includes(effectiveRole);
-```
+👉 **See [REDESIGN_V2.md](REDESIGN_V2.md#-redifined-role-system) for complete permission matrix and role requirements**
 
 ---
 
