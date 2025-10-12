@@ -7,9 +7,34 @@
   "createCourse": "Create Course",
   "editCourse": "Edit Course",
   "courseDetails": "Course Details",
+  "educationalPrograms": "Educational Programs",
   "educationalCourses": "Educational Courses",
   "learnFromExperts": "Learn from experts with hands-on workshops",
   "coveringTopics": "covering woodworking, electrical, and more",
+  "allCourses": "All Courses",
+  "availableCourses": "Available Courses",
+  "myEnrollments": "My Enrollments",
+  "descriptions": {
+    "manageCoursesEnrollments": "Manage your courses and student enrollments",
+    "browseCoursesEnrollments": "Browse courses and manage your enrollments",
+    "discoverOfferings": "Discover our educational offerings"
+  },
+  "stats": {
+    "totalCourses": "Total Courses",
+    "active": "active",
+    "totalEnrollments": "Total Enrollments",
+    "confirmed": "confirmed",
+    "pendingApprovals": "Pending Approvals",
+    "awaitingReview": "Awaiting review"
+  },
+  "messages": {
+    "noCoursesAvailable": "No courses available yet",
+    "noCoursesInCategory": "No courses in {{category}} category",
+    "createFirstCourse": "Create Your First Course",
+    "readyToLearn": "Ready to learn?",
+    "signInToEnroll": "Sign in to enroll in courses and start your educational journey.",
+    "enrolled": "Enrolled"
+  },
   "instructor": {
     "instructor": "Instructor",
     "instructors": "Instructors",

@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { usePermissionsV2 } from "@/hooks/usePermissionsV2";
+import { useLanguage } from "@/hooks/useLanguage";
 import { EnsureUserV2 } from "@/components/EnsureUserV2";
 import { GraduationCap, Plus, BookOpen, Users } from "lucide-react";
 import { useQuery } from "convex/react";
@@ -16,6 +17,7 @@ export const Route = createFileRoute("/educational")({
 });
 
 function EducationalPage() {
+  const { t } = useLanguage();
   const {
     user,
     isLoading,
@@ -67,13 +69,13 @@ function EducationalPage() {
         <div className="flex items-center gap-3 mb-6">
           <GraduationCap className="w-8 h-8 text-primary" />
           <div>
-            <h1 className="text-3xl font-bold">Educational Programs</h1>
+            <h1 className="text-3xl font-bold">{t("courses:educationalPrograms")}</h1>
             <p className="text-base-content/70">
               {isStaff && hasInstructorTag
-                ? "Manage your courses and student enrollments"
+                ? t("courses:descriptions.manageCoursesEnrollments")
                 : isCustomer
-                ? "Browse courses and manage your enrollments"
-                : "Discover our educational offerings"}
+                ? t("courses:descriptions.browseCoursesEnrollments")
+                : t("courses:descriptions.discoverOfferings")}
             </p>
           </div>
         </div>
@@ -85,27 +87,27 @@ function EducationalPage() {
               <div className="stat-figure text-primary">
                 <BookOpen className="w-8 h-8" />
               </div>
-              <div className="stat-title">Total Courses</div>
+              <div className="stat-title">{t("courses:stats.totalCourses")}</div>
               <div className="stat-value">{stats.totalCourses}</div>
-              <div className="stat-desc">{stats.activeCourses} active</div>
+              <div className="stat-desc">{stats.activeCourses} {t("courses:stats.active")}</div>
             </div>
 
             <div className="stat">
               <div className="stat-figure text-secondary">
                 <Users className="w-8 h-8" />
               </div>
-              <div className="stat-title">Total Enrollments</div>
+              <div className="stat-title">{t("courses:stats.totalEnrollments")}</div>
               <div className="stat-value">{stats.totalEnrollments}</div>
-              <div className="stat-desc">{stats.confirmedEnrollments} confirmed</div>
+              <div className="stat-desc">{stats.confirmedEnrollments} {t("courses:stats.confirmed")}</div>
             </div>
 
             <div className="stat">
               <div className="stat-figure text-warning">
                 <GraduationCap className="w-8 h-8" />
               </div>
-              <div className="stat-title">Pending Approvals</div>
+              <div className="stat-title">{t("courses:stats.pendingApprovals")}</div>
               <div className="stat-value text-warning">{stats.pendingEnrollments}</div>
-              <div className="stat-desc">Awaiting review</div>
+              <div className="stat-desc">{t("courses:stats.awaitingReview")}</div>
             </div>
           </div>
         )}
@@ -118,7 +120,7 @@ function EducationalPage() {
               className="btn btn-primary"
             >
               <Plus className="w-4 h-4" />
-              Create Course
+              {t("courses:createCourse")}
             </button>
           </div>
         )}
@@ -131,7 +133,7 @@ function EducationalPage() {
                 onClick={() => setCategoryFilter("all")}
                 className={`tab ${categoryFilter === "all" ? "tab-active" : ""}`}
               >
-                All Courses
+                {t("courses:allCourses")}
               </button>
               {categories.map(category => (
                 <button
@@ -149,7 +151,7 @@ function EducationalPage() {
         {/* My Enrollments (Customers) */}
         {isCustomer && userEnrollments && userEnrollments.length > 0 && (
           <div className="mb-8">
-            <h2 className="text-2xl font-bold mb-4">My Enrollments</h2>
+            <h2 className="text-2xl font-bold mb-4">{t("courses:myEnrollments")}</h2>
             <div className="grid grid-cols-1 gap-4">
               {userEnrollments.map(enrollment => (
                 <div key={enrollment._id} className="card bg-base-200 shadow-sm">
@@ -161,12 +163,12 @@ function EducationalPage() {
                       </div>
                       <div className="flex gap-2">
                         <div className={`badge ${getEnrollmentStatusBadge(enrollment.status)}`}>
-                          {enrollment.status}
+                          {t(`courses:enrollment.${enrollment.status}`)}
                         </div>
                       </div>
                     </div>
                     <div className="text-sm opacity-60 mt-2">
-                      Enrolled: {enrollment.enrollmentDate}
+                      {t("courses:messages.enrolled")}: {enrollment.enrollmentDate}
                     </div>
                   </div>
                 </div>
@@ -178,7 +180,7 @@ function EducationalPage() {
         {/* Course Grid */}
         <div>
           <h2 className="text-2xl font-bold mb-4">
-            {hasInstructorTag ? "All Courses" : "Available Courses"}
+            {hasInstructorTag ? t("courses:allCourses") : t("courses:availableCourses")}
           </h2>
 
           {!filteredCourses || filteredCourses.length === 0 ? (
@@ -186,8 +188,8 @@ function EducationalPage() {
               <GraduationCap className="w-16 h-16 mx-auto opacity-20 mb-4" />
               <p className="text-lg opacity-60">
                 {categoryFilter === "all"
-                  ? "No courses available yet"
-                  : `No courses in ${categoryFilter} category`}
+                  ? t("courses:messages.noCoursesAvailable")
+                  : t("courses:messages.noCoursesInCategory", { category: categoryFilter })}
               </p>
               {hasInstructorTag && (
                 <button
@@ -195,7 +197,7 @@ function EducationalPage() {
                   className="btn btn-primary mt-4"
                 >
                   <Plus className="w-4 h-4" />
-                  Create Your First Course
+                  {t("courses:messages.createFirstCourse")}
                 </button>
               )}
             </div>
@@ -222,8 +224,8 @@ function EducationalPage() {
         {isGuest && (
           <div className="alert alert-info mt-8">
             <div>
-              <h3 className="font-bold">Ready to learn?</h3>
-              <p className="text-sm">Sign in to enroll in courses and start your educational journey.</p>
+              <h3 className="font-bold">{t("courses:messages.readyToLearn")}</h3>
+              <p className="text-sm">{t("courses:messages.signInToEnroll")}</p>
             </div>
           </div>
         )}

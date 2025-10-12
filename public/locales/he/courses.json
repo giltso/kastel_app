@@ -7,9 +7,34 @@
   "createCourse": "יצירת קורס",
   "editCourse": "עריכת קורס",
   "courseDetails": "פרטי הקורס",
+  "educationalPrograms": "תוכניות לימודיות",
   "educationalCourses": "קורסים לימודיים",
   "learnFromExperts": "למד ממומחים בסדנאות מעשיות",
   "coveringTopics": "הכוללות עבודות עץ, חשמל ועוד",
+  "allCourses": "כל הקורסים",
+  "availableCourses": "קורסים זמינים",
+  "myEnrollments": "ההרשמות שלי",
+  "descriptions": {
+    "manageCoursesEnrollments": "נהל את הקורסים שלך והרשמות תלמידים",
+    "browseCoursesEnrollments": "עיון בקורסים וניהול ההרשמות שלך",
+    "discoverOfferings": "גלה את ההיצע הלימודי שלנו"
+  },
+  "stats": {
+    "totalCourses": "סך הכל קורסים",
+    "active": "פעילים",
+    "totalEnrollments": "סך הכל הרשמות",
+    "confirmed": "מאושרות",
+    "pendingApprovals": "אישורים ממתינים",
+    "awaitingReview": "ממתינים לבדיקה"
+  },
+  "messages": {
+    "noCoursesAvailable": "אין קורסים זמינים עדיין",
+    "noCoursesInCategory": "אין קורסים בקטגוריה {{category}}",
+    "createFirstCourse": "צור את הקורס הראשון שלך",
+    "readyToLearn": "מוכנים ללמוד?",
+    "signInToEnroll": "התחבר כדי להרשם לקורסים ולהתחיל את מסע הלימוד שלך.",
+    "enrolled": "נרשם"
+  },
   "instructor": {
     "instructor": "מדריך",
     "instructors": "מדריכים",
