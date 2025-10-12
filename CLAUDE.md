@@ -466,6 +466,187 @@ When using a component you aren't familiar with, always check its docs page.
 - Each color has matching `-content` variant for contrasting text
 - Custom themes use OKLCH format, create at [theme generator](https://daisyui.com/theme-generator/)
 
+## Internationalization (i18next)
+
+**Stack**: i18next + react-i18next + i18next-browser-languagedetector + i18next-http-backend
+
+### Supported Languages
+- **English (en)**: Default fallback language, source of truth for all translations
+- **Hebrew (he)**: Primary working language, RTL support enabled
+- **Russian (ru)**: Structure in place, marked "Coming Soon"
+- **French (fr)**: Structure in place, marked "Coming Soon"
+
+### Directory Structure
+```
+public/locales/
+  ├── en/          # English translations (complete)
+  │   ├── common.json      # Shared UI elements, actions, errors
+  │   ├── auth.json        # Authentication flows
+  │   ├── shifts.json      # LUZ calendar, shift management
+  │   ├── tools.json       # Tool rental system
+  │   ├── courses.json     # Educational courses
+  │   └── roles.json       # Role management
+  ├── he/          # Hebrew translations (placeholder)
+  ├── ru/          # Russian (empty structure)
+  └── fr/          # French (empty structure)
+```
+
+### Configuration
+- **Config file**: `src/i18n/config.ts`
+- **Custom hook**: `src/hooks/useLanguage.ts` - Use this instead of raw `useTranslation()`
+- **Component**: `src/components/LanguageSwitcher.tsx` - Language dropdown in header
+- **RTL Detection**: Automatic `dir` attribute switching on `<html>` element
+- **Language Detection**: Auto-detects from localStorage → navigator → HTML tag
+- **Persistence**: User's language choice saved to localStorage as `i18nextLng`
+
+### Usage in Components
+
+**Import the custom hook:**
+```tsx
+import { useLanguage } from '@/hooks/useLanguage';
+
+function MyComponent() {
+  const { t, isRTL, currentLanguage } = useLanguage();
+
+  return (
+    <div>
+      <h1>{t('common:app.name')}</h1>
+      <p>{t('shifts:luz.subtitle')}</p>
+      {isRTL && <span>RTL mode active</span>}
+    </div>
+  );
+}
+```
+
+**Translation key format:**
+- Use namespace prefix: `namespace:key.path`
+- Examples:
+  - `t('common:actions.save')` → "Save"
+  - `t('auth:signIn')` → "Sign in"
+  - `t('shifts:luz.title')` → "LUZ"
+  - `t('tools:rental.status')` → "Rental Status"
+
+### Best Practices
+
+1. **Always use namespaces** - Never put all strings in one file
+   - `common.json`: Shared across app (nav, actions, errors, time)
+   - Feature-specific: One namespace per major feature
+
+2. **Organize translations hierarchically**:
+   ```json
+   {
+     "shift": {
+       "title": "Shift",
+       "createShift": "Create Shift",
+       "staffing": {
+         "minWorkers": "Min Workers",
+         "optimalWorkers": "Optimal Workers"
+       }
+     }
+   }
+   ```
+
+3. **Use the custom `useLanguage()` hook** instead of raw `useTranslation()`
+   - Provides `isRTL` and `direction` for layout adjustments
+   - Provides `currentLanguage` for conditional logic
+   - Provides `changeLanguage()` function
+
+4. **Handle pluralization properly**:
+   ```json
+   {
+     "itemCount": "{{count}} item",
+     "itemCount_other": "{{count}} items"
+   }
+   ```
+
+5. **Interpolation for dynamic values**:
+   ```tsx
+   t('common:messages.greeting', { name: user.name })
+   // Translation: "Hello, {{name}}!"
+   ```
+
+6. **Date/time formatting** - Use locale-aware formatting:
+   ```tsx
+   new Date(dateString).toLocaleDateString(currentLanguage, options)
+   ```
+
+7. **RTL Layout Considerations**:
+   - Use CSS logical properties: `margin-inline-start` instead of `margin-left`
+   - Test with Hebrew to verify RTL layout
+   - Icons may need mirroring (arrows, chevrons)
+   - Some elements should NOT mirror (logos, certain icons)
+
+8. **Adding new translations**:
+   - Add to English first (source of truth)
+   - Use proper Hebrew text for RTL testing (not just placeholders)
+   - Russian/French can remain empty until needed
+   - Always use meaningful placeholder text that tests string length
+
+9. **Translation file naming**: Must match namespace name
+   - Namespace: `shifts` → File: `shifts.json`
+   - Access: `t('shifts:key')`
+
+10. **Never hardcode user-facing strings** - Always use translation keys
+    - Exception: Developer tools, debug messages, console logs
+
+### RTL (Right-to-Left) Support
+
+**Automatic direction switching:**
+- Hebrew triggers RTL mode automatically
+- HTML `dir` attribute updated: `<html dir="rtl">`
+- All text flows right-to-left
+- No manual intervention needed in most cases
+
+**Testing RTL:**
+1. Switch to Hebrew in LanguageSwitcher
+2. Verify text alignment is correct
+3. Check that longer Hebrew strings don't break layout
+4. Ensure icons point in correct direction
+5. Verify modals, dropdowns, and menus mirror correctly
+
+**Common RTL Issues:**
+- Absolute positioning needs adjustment
+- Custom margins/padding may need logical properties
+- Flex layouts usually work fine with `dir` attribute
+- Grid layouts may need `direction` CSS property
+
+### Adding a New Language
+
+1. Create directory: `public/locales/{language_code}/`
+2. Copy all JSON files from `en/` directory
+3. Translate each key (or leave empty)
+4. Add language to `LANGUAGES` object in `src/i18n/config.ts`:
+   ```typescript
+   {
+     code: {
+       name: 'Language',
+       nativeName: 'Native',
+       dir: 'ltr',
+       flag: '🇫🇷',
+       comingSoon: false  // Remove when ready
+     }
+   }
+   ```
+5. If RTL language: Add code to `RTL_LANGUAGES` array
+
+### Common Issues
+
+**Missing translations:**
+- Falls back to English automatically
+- Check browser console for missing key warnings (in dev mode)
+- Use `debug: true` in config during development
+
+**Direction not switching:**
+- Verify language is in `RTL_LANGUAGES` array
+- Check that `i18n.on('languageChanged')` listener is working
+- Inspect HTML element for `dir` attribute
+
+**Translations not loading:**
+- Verify JSON files are in `public/locales/` (not `src/`)
+- Check file naming matches namespace
+- Verify JSON is valid (no syntax errors)
+- Check network tab for 404 errors on translation files
+
 ## TypeScript Best Practices
 
 - **Avoid `any` type**: Always use strict typing. Use `unknown` for truly unknown types, then narrow with type guards
