@@ -10,7 +10,21 @@
     "shiftManagement": "ניהול משמרות",
     "pendingAssignments": "שיבוצים ממתינים",
     "noPendingAssignments": "אין שיבוצים ממתינים",
-    "fullCalendarView": "תצוגת לוח שנה מלאה"
+    "fullCalendarView": "תצוגת לוח שנה מלאה",
+    "education": "לימודים",
+    "rentals": "השכרות",
+    "search": "חיפוש...",
+    "day": "יום",
+    "week": "שבוע",
+    "month": "חודש",
+    "previousDay": "יום קודם",
+    "nextDay": "יום הבא",
+    "overview": "סקירה",
+    "todaySchedule": "לוח הזמנים של היום",
+    "noAssignmentsForDate": "אין שיבוצים לתאריך שנבחר",
+    "availableShifts": "משמרות זמינות",
+    "dailySchedule": "לוח זמנים יומי",
+    "time": "שעה"
   },
   "shift": {
     "title": "משמרת",

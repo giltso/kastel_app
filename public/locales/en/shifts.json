@@ -10,7 +10,21 @@
     "shiftManagement": "Shift Management",
     "pendingAssignments": "Pending Assignments",
     "noPendingAssignments": "No pending assignments",
-    "fullCalendarView": "Full Calendar View"
+    "fullCalendarView": "Full Calendar View",
+    "education": "Education",
+    "rentals": "Rentals",
+    "search": "Search...",
+    "day": "Day",
+    "week": "Week",
+    "month": "Month",
+    "previousDay": "Previous Day",
+    "nextDay": "Next Day",
+    "overview": "Overview",
+    "todaySchedule": "Today's Schedule",
+    "noAssignmentsForDate": "No assignments for selected date",
+    "availableShifts": "Available Shifts",
+    "dailySchedule": "Daily Schedule",
+    "time": "Time"
   },
   "shift": {
     "title": "Shift",
