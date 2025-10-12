@@ -3,6 +3,7 @@ import { usePermissionsV2 } from "@/hooks/usePermissionsV2";
 import { EnsureUserV2 } from "@/components/EnsureUserV2";
 import { useEffect } from "react";
 import { KastelLogo } from "@/components/KastelLogo";
+import { useLanguage } from "@/hooks/useLanguage";
 
 export const Route = createFileRoute("/")({
   component: V2HomePage,
@@ -65,6 +66,8 @@ function V2HomePage() {
 
 // Guest (Unauthenticated) Home Page
 function GuestHomePage() {
+  const { t } = useLanguage();
+
   return (
     <div className="max-w-4xl mx-auto">
       {/* Hero Section */}
@@ -74,17 +77,16 @@ function GuestHomePage() {
             <div className="flex justify-center mb-6">
               <KastelLogo size={120} className="drop-shadow-lg" />
             </div>
-            <h1 className="text-5xl font-bold">Welcome to Kastel Hardware</h1>
+            <h1 className="text-5xl font-bold">{t("common:home.welcome")}</h1>
             <p className="py-6 text-lg">
-              Your trusted partner for professional tools, educational workshops, and expert services.
-              Discover quality tools, learn new skills, and grow your expertise with us.
+              {t("common:home.welcomeDescription")}
             </p>
             <div className="not-prose space-x-4">
               <Link to="/tools" className="btn btn-primary">
-                Browse Our Tools
+                {t("common:home.browseTools")}
               </Link>
               <Link to="/educational" className="btn btn-secondary">
-                View Courses
+                {t("common:home.viewCourses")}
               </Link>
             </div>
           </div>
@@ -95,30 +97,30 @@ function GuestHomePage() {
       <div className="grid md:grid-cols-3 gap-6 mb-8">
         <div className="card bg-base-100 shadow-xl">
           <div className="card-body text-center">
-            <h2 className="card-title justify-center">🔧 Tool Rental</h2>
-            <p>Professional-grade tools for your projects. From basic hand tools to specialized equipment.</p>
+            <h2 className="card-title justify-center">🔧 {t("common:home.toolRentalTitle")}</h2>
+            <p>{t("common:home.toolRentalDescription")}</p>
             <div className="card-actions justify-center">
-              <Link to="/tools" className="btn btn-primary btn-sm">Browse Tools</Link>
+              <Link to="/tools" className="btn btn-primary btn-sm">{t("common:home.browseTools")}</Link>
             </div>
           </div>
         </div>
 
         <div className="card bg-base-100 shadow-xl">
           <div className="card-body text-center">
-            <h2 className="card-title justify-center">📚 Educational Courses</h2>
-            <p>Learn from experts with hands-on workshops covering woodworking, electrical, and more.</p>
+            <h2 className="card-title justify-center">📚 {t("common:home.educationalTitle")}</h2>
+            <p>{t("common:home.educationalDescription")}</p>
             <div className="card-actions justify-center">
-              <Link to="/educational" className="btn btn-secondary btn-sm">View Courses</Link>
+              <Link to="/educational" className="btn btn-secondary btn-sm">{t("common:home.viewCourses")}</Link>
             </div>
           </div>
         </div>
 
         <div className="card bg-base-100 shadow-xl">
           <div className="card-body text-center">
-            <h2 className="card-title justify-center">🏪 About Us</h2>
-            <p>Family-owned hardware shop serving the community with quality tools and knowledge.</p>
+            <h2 className="card-title justify-center">🏪 {t("common:home.aboutUsTitle")}</h2>
+            <p>{t("common:home.aboutUsDescription")}</p>
             <div className="card-actions justify-center">
-              <button className="btn btn-accent btn-sm" disabled>Learn More</button>
+              <button className="btn btn-accent btn-sm" disabled>{t("common:home.learnMore")}</button>
             </div>
           </div>
         </div>
@@ -127,16 +129,16 @@ function GuestHomePage() {
       {/* Business Information */}
       <div className="card bg-base-100 shadow-xl">
         <div className="card-body">
-          <h2 className="card-title">Store Information</h2>
+          <h2 className="card-title">{t("common:home.storeInformation")}</h2>
           <div className="grid md:grid-cols-2 gap-6">
             <div>
-              <h3 className="font-semibold mb-2">Hours</h3>
-              <p>Monday - Friday: 8:00 AM - 6:00 PM</p>
-              <p>Saturday: 9:00 AM - 5:00 PM</p>
-              <p>Sunday: 10:00 AM - 4:00 PM</p>
+              <h3 className="font-semibold mb-2">{t("common:home.hours")}</h3>
+              <p>{t("common:home.mondayFriday")}</p>
+              <p>{t("common:home.saturday")}</p>
+              <p>{t("common:home.sunday")}</p>
             </div>
             <div>
-              <h3 className="font-semibold mb-2">Contact</h3>
+              <h3 className="font-semibold mb-2">{t("common:home.contact")}</h3>
               <p>📞 (555) 123-4567</p>
               <p>📧 info@kastelhardware.com</p>
               <p>📍 123 Main Street, Hardware City</p>
@@ -151,6 +153,7 @@ function GuestHomePage() {
 // Staff Home Page (LUZ System)
 function StaffHomePage({ user, hasPermission }: { user: any, hasPermission: (p: string) => boolean }) {
   const effective = user?.effectiveRole;
+  const { t } = useLanguage();
 
   return (
     <div className="max-w-7xl mx-auto">
@@ -161,14 +164,14 @@ function StaffHomePage({ user, hasPermission }: { user: any, hasPermission: (p: 
             <div className="flex justify-center mb-4">
               <KastelLogo size={80} className="drop-shadow-lg" />
             </div>
-            <h1 className="text-4xl font-bold">LUZ - Scheduling Hub</h1>
-            <p className="py-4">Welcome to your unified scheduling center, {user?.name}. Manage shifts, tools, and courses all in one place.</p>
+            <h1 className="text-4xl font-bold">{t("common:staff.luzTitle")}</h1>
+            <p className="py-4">{t("common:staff.luzWelcome", { name: user?.name })}</p>
             <div className="flex justify-center gap-2 flex-wrap">
-              <div className="badge badge-primary">Staff</div>
-              {effective?.workerTag && <div className="badge badge-info">Worker</div>}
-              {effective?.instructorTag && <div className="badge badge-secondary">Instructor</div>}
-              {effective?.toolHandlerTag && <div className="badge badge-accent">Tool Handler</div>}
-              {effective?.managerTag && <div className="badge badge-warning">Manager</div>}
+              <div className="badge badge-primary">{t("roles:tags.staff")}</div>
+              {effective?.workerTag && <div className="badge badge-info">{t("roles:tags.worker")}</div>}
+              {effective?.instructorTag && <div className="badge badge-secondary">{t("roles:tags.instructor")}</div>}
+              {effective?.toolHandlerTag && <div className="badge badge-accent">{t("roles:tags.toolHandler")}</div>}
+              {effective?.managerTag && <div className="badge badge-warning">{t("roles:tags.manager")}</div>}
             </div>
           </div>
         </div>
@@ -180,22 +183,22 @@ function StaffHomePage({ user, hasPermission }: { user: any, hasPermission: (p: 
         <div className="lg:col-span-1 space-y-6">
           <div className="card bg-base-100 shadow-xl">
             <div className="card-body">
-              <h2 className="card-title">📊 Today's Overview</h2>
+              <h2 className="card-title">📊 {t("common:staff.todayOverview")}</h2>
               <div className="space-y-3">
                 <div className="p-3 rounded bg-info/10 border border-info/20">
-                  <div className="font-medium text-sm">Shift Management</div>
-                  <div className="text-xs opacity-70">Coming Soon - V2 Implementation</div>
+                  <div className="font-medium text-sm">{t("common:staff.shiftManagement")}</div>
+                  <div className="text-xs opacity-70">{t("common:staff.comingSoonV2")}</div>
                 </div>
                 <div className="p-3 rounded bg-warning/10 border border-warning/20">
-                  <div className="font-medium text-sm">Tool Rentals</div>
+                  <div className="font-medium text-sm">{t("common:staff.toolRentals")}</div>
                   <div className="text-xs opacity-70">
-                    <Link to="/tools" className="link">View Current Rentals →</Link>
+                    <Link to="/tools" className="link">{t("common:staff.viewCurrentRentals")}</Link>
                   </div>
                 </div>
                 <div className="p-3 rounded bg-secondary/10 border border-secondary/20">
-                  <div className="font-medium text-sm">Courses</div>
+                  <div className="font-medium text-sm">{t("common:staff.courses")}</div>
                   <div className="text-xs opacity-70">
-                    <Link to="/educational" className="link">Manage Courses →</Link>
+                    <Link to="/educational" className="link">{t("common:staff.manageCourses")}</Link>
                   </div>
                 </div>
               </div>
@@ -204,21 +207,21 @@ function StaffHomePage({ user, hasPermission }: { user: any, hasPermission: (p: 
 
           <div className="card bg-base-100 shadow-xl">
             <div className="card-body">
-              <h2 className="card-title">🎯 Quick Actions</h2>
+              <h2 className="card-title">🎯 {t("common:staff.quickActions")}</h2>
               <div className="space-y-2">
                 {hasPermission("request_tool_rentals") && (
                   <Link to="/tools" className="btn btn-primary btn-sm w-full justify-start">
-                    🔧 Manage Tools
+                    🔧 {t("common:staff.manageTools")}
                   </Link>
                 )}
                 {hasPermission("manage_courses") && (
                   <Link to="/educational" className="btn btn-secondary btn-sm w-full justify-start">
-                    📚 Manage Courses
+                    📚 {t("common:staff.courses")}
                   </Link>
                 )}
                 {hasPermission("access_worker_portal") && (
                   <Link to="/luz" className="btn btn-accent btn-sm w-full justify-start">
-                    📅 Full Calendar View
+                    📅 {t("common:staff.fullCalendarView")}
                   </Link>
                 )}
               </div>
@@ -230,20 +233,17 @@ function StaffHomePage({ user, hasPermission }: { user: any, hasPermission: (p: 
         <div className="lg:col-span-2">
           <div className="card bg-base-100 shadow-xl h-96">
             <div className="card-body">
-              <h2 className="card-title">📅 Calendar Timeline</h2>
+              <h2 className="card-title">📅 {t("common:staff.calendarTimeline")}</h2>
               <div className="flex-1 flex items-center justify-center bg-base-200 rounded-lg">
                 <div className="text-center space-y-4">
                   <div className="text-6xl">🚧</div>
                   <div>
-                    <h3 className="text-xl font-bold">V2 Calendar Coming Soon</h3>
-                    <p className="text-sm opacity-70 mt-2">
-                      The unified LUZ calendar interface is under development.<br/>
-                      For now, use the links above to access individual systems.
-                    </p>
+                    <h3 className="text-xl font-bold">{t("common:staff.v2CalendarComingSoon")}</h3>
+                    <p className="text-sm opacity-70 mt-2" dangerouslySetInnerHTML={{ __html: t("common:staff.v2CalendarDescription") }} />
                   </div>
                   <div className="not-prose">
                     <Link to="/luz" className="btn btn-primary btn-sm">
-                      View LUZ Calendar
+                      {t("common:staff.viewLuzCalendar")}
                     </Link>
                   </div>
                 </div>
@@ -255,16 +255,16 @@ function StaffHomePage({ user, hasPermission }: { user: any, hasPermission: (p: 
 
       {/* Development Info */}
       <div className="mt-8 p-4 rounded bg-info/10 border border-info/20">
-        <h3 className="font-semibold mb-2">🔨 V2 LUZ Development Status</h3>
+        <h3 className="font-semibold mb-2">🔨 {t("common:staff.developmentStatus")}</h3>
         <div className="grid md:grid-cols-3 gap-4 text-sm">
           <div>
-            <strong>Phase 1:</strong> Role System & Navigation ✅
+            <strong>{t("common:staff.phase1")}</strong> {t("common:staff.phase1Text")} ✅
           </div>
           <div>
-            <strong>Phase 2:</strong> LUZ Interface Layout 🚧
+            <strong>{t("common:staff.phase2")}</strong> {t("common:staff.phase2Text")} 🚧
           </div>
           <div>
-            <strong>Phase 3:</strong> Shift Management System 📋
+            <strong>{t("common:staff.phase3")}</strong> {t("common:staff.phase3Text")} 📋
           </div>
         </div>
       </div>
@@ -274,6 +274,8 @@ function StaffHomePage({ user, hasPermission }: { user: any, hasPermission: (p: 
 
 // Customer Home Page
 function CustomerHomePage({ user, hasPermission }: { user: any, hasPermission: (p: string) => boolean }) {
+  const { t } = useLanguage();
+
   return (
     <div className="max-w-4xl mx-auto">
       {/* Hero Section */}
@@ -283,17 +285,16 @@ function CustomerHomePage({ user, hasPermission }: { user: any, hasPermission: (
             <div className="flex justify-center mb-6">
               <KastelLogo size={120} className="drop-shadow-lg" />
             </div>
-            <h1 className="text-5xl font-bold">Welcome to Kastel Hardware</h1>
+            <h1 className="text-5xl font-bold">{t("common:home.welcome")}</h1>
             <p className="py-6 text-lg">
-              Your trusted partner for professional tools, educational workshops, and expert services.
-              Discover quality tools, learn new skills, and grow your expertise with us.
+              {t("common:home.welcomeDescription")}
             </p>
             <div className="not-prose space-x-4">
               <Link to="/tools" className="btn btn-primary">
-                Browse Our Tools
+                {t("common:home.browseTools")}
               </Link>
               <Link to="/educational" className="btn btn-secondary">
-                View Courses
+                {t("common:home.viewCourses")}
               </Link>
             </div>
           </div>
@@ -304,30 +305,30 @@ function CustomerHomePage({ user, hasPermission }: { user: any, hasPermission: (
       <div className="grid md:grid-cols-3 gap-6 mb-8">
         <div className="card bg-base-100 shadow-xl">
           <div className="card-body text-center">
-            <h2 className="card-title justify-center">🔧 Tool Rental</h2>
-            <p>Professional-grade tools for your projects. From basic hand tools to specialized equipment.</p>
+            <h2 className="card-title justify-center">🔧 {t("common:home.toolRentalTitle")}</h2>
+            <p>{t("common:home.toolRentalDescription")}</p>
             <div className="card-actions justify-center">
-              <Link to="/tools" className="btn btn-primary btn-sm">Browse Tools</Link>
+              <Link to="/tools" className="btn btn-primary btn-sm">{t("common:home.browseTools")}</Link>
             </div>
           </div>
         </div>
 
         <div className="card bg-base-100 shadow-xl">
           <div className="card-body text-center">
-            <h2 className="card-title justify-center">📚 Educational Courses</h2>
-            <p>Learn from experts with hands-on workshops covering woodworking, electrical, and more.</p>
+            <h2 className="card-title justify-center">📚 {t("common:home.educationalTitle")}</h2>
+            <p>{t("common:home.educationalDescription")}</p>
             <div className="card-actions justify-center">
-              <Link to="/educational" className="btn btn-secondary btn-sm">View Courses</Link>
+              <Link to="/educational" className="btn btn-secondary btn-sm">{t("common:home.viewCourses")}</Link>
             </div>
           </div>
         </div>
 
         <div className="card bg-base-100 shadow-xl">
           <div className="card-body text-center">
-            <h2 className="card-title justify-center">🏪 About Us</h2>
-            <p>Family-owned hardware shop serving the community with quality tools and knowledge.</p>
+            <h2 className="card-title justify-center">🏪 {t("common:home.aboutUsTitle")}</h2>
+            <p>{t("common:home.aboutUsDescription")}</p>
             <div className="card-actions justify-center">
-              <button className="btn btn-accent btn-sm" disabled>Learn More</button>
+              <button className="btn btn-accent btn-sm" disabled>{t("common:home.learnMore")}</button>
             </div>
           </div>
         </div>
@@ -336,16 +337,16 @@ function CustomerHomePage({ user, hasPermission }: { user: any, hasPermission: (
       {/* Business Information */}
       <div className="card bg-base-100 shadow-xl">
         <div className="card-body">
-          <h2 className="card-title">Store Information</h2>
+          <h2 className="card-title">{t("common:home.storeInformation")}</h2>
           <div className="grid md:grid-cols-2 gap-6">
             <div>
-              <h3 className="font-semibold mb-2">Hours</h3>
-              <p>Monday - Friday: 8:00 AM - 6:00 PM</p>
-              <p>Saturday: 9:00 AM - 5:00 PM</p>
-              <p>Sunday: 10:00 AM - 4:00 PM</p>
+              <h3 className="font-semibold mb-2">{t("common:home.hours")}</h3>
+              <p>{t("common:home.mondayFriday")}</p>
+              <p>{t("common:home.saturday")}</p>
+              <p>{t("common:home.sunday")}</p>
             </div>
             <div>
-              <h3 className="font-semibold mb-2">Contact</h3>
+              <h3 className="font-semibold mb-2">{t("common:home.contact")}</h3>
               <p>📞 (555) 123-4567</p>
               <p>📧 info@kastelhardware.com</p>
               <p>📍 123 Main Street, Hardware City</p>
