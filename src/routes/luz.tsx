@@ -13,6 +13,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useRef, useEffect } from "react";
 import { usePermissionsV2 } from "@/hooks/usePermissionsV2";
+import { useLanguage } from "@/hooks/useLanguage";
 import { EnsureUserV2 } from "@/components/EnsureUserV2";
 import { LUZOverview } from "@/components/LUZOverview";
 import { LUZVerticalTimeline } from "@/components/LUZVerticalTimeline";
@@ -159,6 +160,7 @@ const getShiftStaffingStatus = (shift: any, assignedWorkers: any[]) => {
 };
 
 function LUZPage() {
+  const { t } = useLanguage();
   const { user, isLoading, isAuthenticated, isStaff, hasWorkerTag, hasManagerTag } = usePermissionsV2();
   const [selectedDate, setSelectedDate] = useState(getTodayString());
   const [timelineView, setTimelineView] = useState<'vertical' | 'week' | 'month'>('vertical');
@@ -414,8 +416,8 @@ function LUZPage() {
         <div className="flex flex-col items-center gap-2 mb-6 md:flex-row md:items-start">
           <Nut className="w-6 h-6 text-amber-600 mt-1" />
           <div className="text-center md:text-left">
-            <h1 className="text-3xl font-bold">LUZ</h1>
-            <p className="text-base-content/70">Unified Scheduling Hub</p>
+            <h1 className="text-3xl font-bold">{t("shifts:luz.title")}</h1>
+            <p className="text-base-content/70">{t("shifts:luz.subtitle")}</p>
           </div>
         </div>
 
@@ -424,7 +426,7 @@ function LUZPage() {
           <div className="flex flex-col md:flex-row md:items-center gap-4">
             <div className="flex items-center gap-2">
               <Filter className="w-4 h-4" />
-              <span className="font-medium">View:</span>
+              <span className="font-medium">{t("shifts:luz.viewLabel")}</span>
             </div>
 
             <div className="flex flex-wrap items-center gap-4">
@@ -435,7 +437,7 @@ function LUZPage() {
                   onChange={() => toggleFilter('shifts')}
                   className="checkbox checkbox-sm"
                 />
-                <span>Shifts</span>
+                <span>{t("shifts:shift.shifts")}</span>
               </label>
 
               <label className="flex items-center gap-2 cursor-pointer">
@@ -445,7 +447,7 @@ function LUZPage() {
                   onChange={() => toggleFilter('courses')}
                   className="checkbox checkbox-sm"
                 />
-                <span>Education</span>
+                <span>{t("shifts:luz.education")}</span>
               </label>
 
               <label className="flex items-center gap-2 cursor-pointer">
@@ -455,14 +457,14 @@ function LUZPage() {
                   onChange={() => toggleFilter('rentals')}
                   className="checkbox checkbox-sm"
                 />
-                <span>Rentals</span>
+                <span>{t("shifts:luz.rentals")}</span>
               </label>
             </div>
 
             <div className="md:ml-auto w-full md:w-auto">
               <input
                 type="text"
-                placeholder="Search..."
+                placeholder={t("shifts:luz.search")}
                 className="input input-bordered input-sm w-full"
               />
             </div>
@@ -476,19 +478,19 @@ function LUZPage() {
               className={`tab ${timelineView === 'vertical' ? 'tab-active' : ''}`}
               onClick={() => setTimelineView('vertical')}
             >
-              Day
+              {t("shifts:luz.day")}
             </button>
             <button
               className={`tab ${timelineView === 'week' ? 'tab-active' : ''}`}
               onClick={() => setTimelineView('week')}
             >
-              Week
+              {t("shifts:luz.week")}
             </button>
             <button
               className={`tab ${timelineView === 'month' ? 'tab-active' : ''}`}
               onClick={() => setTimelineView('month')}
             >
-              Month
+              {t("shifts:luz.month")}
             </button>
           </div>
 
@@ -497,7 +499,7 @@ function LUZPage() {
             <button
               className="btn btn-sm join-item"
               onClick={() => navigateDate('prev')}
-              title={timelineView === 'vertical' ? 'Previous Day' : timelineView === 'week' ? 'Previous Week' : 'Previous Month'}
+              title={timelineView === 'vertical' ? t("shifts:luz.previousDay") : timelineView === 'week' ? 'Previous Week' : 'Previous Month'}
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
@@ -531,7 +533,7 @@ function LUZPage() {
             <button
               className="btn btn-sm join-item"
               onClick={() => navigateDate('next')}
-              title={timelineView === 'vertical' ? 'Next Day' : timelineView === 'week' ? 'Next Week' : 'Next Month'}
+              title={timelineView === 'vertical' ? t("shifts:luz.nextDay") : timelineView === 'week' ? 'Next Week' : 'Next Month'}
             >
               <ChevronRight className="w-4 h-4" />
             </button>
