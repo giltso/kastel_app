@@ -1,0 +1,48 @@
+{
+  "title": "ניהול תפקידים",
+  "roles": "תפקידים",
+  "role": "תפקיד",
+  "editRoles": "עריכת תפקידים",
+  "userRoles": "תפקידי משתמש",
+  "permissions": "הרשאות",
+  "tags": {
+    "staff": "צוות",
+    "customer": "לקוח",
+    "guest": "אורח",
+    "worker": "עובד",
+    "manager": "מנהל",
+    "instructor": "מדריך",
+    "toolHandler": "מטפל כלים",
+    "rentalApproved": "מאושר להשכרה"
+  },
+  "actions": {
+    "promoteToStaff": "קידום לצוות",
+    "demoteToCustomer": "הורדה ללקוח",
+    "editUserRole": "עריכת תפקיד משתמש",
+    "updateRoles": "עדכון תפקידים",
+    "roleEmulation": "חיקוי תפקיד",
+    "emulateRole": "חיקוי תפקיד",
+    "stopEmulation": "עצירת חיקוי"
+  },
+  "search": {
+    "searchUsers": "חיפוש משתמשים...",
+    "filterByRole": "סינון לפי תפקיד",
+    "showAll": "הצג הכל",
+    "showStaff": "הצג צוות",
+    "showCustomers": "הצג לקוחות"
+  },
+  "descriptions": {
+    "staffDescription": "חברי צוות יש להם גישה למערכת LUZ",
+    "workerDescription": "יכול לצפות ולהצטרף למשמרות",
+    "managerDescription": "יכול ליצור משמרות ולאשר שיבוצים",
+    "instructorDescription": "יכול ליצור ולנהל קורסים לימודיים",
+    "toolHandlerDescription": "יכול לנהל מלאי כלים והשכרות",
+    "rentalApprovedDescription": "לקוח יכול לבקש השכרת כלים"
+  },
+  "messages": {
+    "rolesUpdated": "התפקידים עודכנו בהצלחה",
+    "failedToUpdate": "עדכון התפקידים נכשל",
+    "emulationActive": "חיקוי תפקיד פעיל",
+    "emulationStopped": "חיקוי תפקיד הופסק"
+  }
+}

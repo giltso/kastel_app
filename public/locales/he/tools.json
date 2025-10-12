@@ -1,0 +1,54 @@
+{
+  "title": "השכרת כלים",
+  "tools": "כלים",
+  "tool": "כלי",
+  "browseTools": "עיון בכלים",
+  "browseOurTools": "עיון בכלים שלנו",
+  "toolRental": "השכרת כלים",
+  "professionalGrade": "כלים ברמה מקצועית לפרויקטים שלך",
+  "fromBasicToSpecialized": "מכלי יד בסיסיים ועד ציוד מיוחד",
+  "manageTools": "ניהול כלים",
+  "rental": {
+    "title": "השכרה",
+    "rentals": "השכרות",
+    "activeRentals": "השכרות פעילות",
+    "requestRental": "בקשת השכרה",
+    "createRental": "יצירת השכרה",
+    "manualRental": "השכרה ידנית",
+    "createManualRental": "יצירת השכרה ידנית",
+    "rentalPeriod": "תקופת השכרה",
+    "startDate": "תאריך התחלה",
+    "endDate": "תאריך סיום",
+    "returnDate": "תאריך החזרה",
+    "dueDate": "תאריך יעד",
+    "status": "סטטוס השכרה",
+    "pending": "ממתין",
+    "approved": "אושר",
+    "active": "פעיל",
+    "returned": "הוחזר",
+    "overdue": "באיחור"
+  },
+  "inventory": {
+    "title": "מלאי",
+    "available": "זמין",
+    "unavailable": "לא זמין",
+    "inUse": "בשימוש",
+    "maintenance": "בתחזוקה",
+    "quantity": "כמות",
+    "totalQuantity": "כמות כוללת",
+    "availableQuantity": "כמות זמינה"
+  },
+  "customer": {
+    "walkIn": "לקוח שהגיע למקום",
+    "nonRegistered": "לקוח לא רשום",
+    "customerName": "שם הלקוח",
+    "customerPhone": "טלפון הלקוח",
+    "customerEmail": "דוא\"ל הלקוח"
+  },
+  "errors": {
+    "notAvailable": "הכלי לא זמין",
+    "invalidDates": "תאריכי השכרה לא תקינים",
+    "failedToCreate": "יצירת ההשכרה נכשלה",
+    "failedToApprove": "אישור ההשכרה נכשל"
+  }
+}

@@ -1,0 +1,54 @@
+{
+  "title": "Tool Rentals",
+  "tools": "Tools",
+  "tool": "Tool",
+  "browseTools": "Browse Tools",
+  "browseOurTools": "Browse Our Tools",
+  "toolRental": "Tool Rental",
+  "professionalGrade": "Professional-grade tools for your projects",
+  "fromBasicToSpecialized": "From basic hand tools to specialized equipment",
+  "manageTools": "Manage Tools",
+  "rental": {
+    "title": "Rental",
+    "rentals": "Rentals",
+    "activeRentals": "Active Rentals",
+    "requestRental": "Request Rental",
+    "createRental": "Create Rental",
+    "manualRental": "Manual Rental",
+    "createManualRental": "Create Manual Rental",
+    "rentalPeriod": "Rental Period",
+    "startDate": "Start Date",
+    "endDate": "End Date",
+    "returnDate": "Return Date",
+    "dueDate": "Due Date",
+    "status": "Rental Status",
+    "pending": "Pending",
+    "approved": "Approved",
+    "active": "Active",
+    "returned": "Returned",
+    "overdue": "Overdue"
+  },
+  "inventory": {
+    "title": "Inventory",
+    "available": "Available",
+    "unavailable": "Unavailable",
+    "inUse": "In Use",
+    "maintenance": "In Maintenance",
+    "quantity": "Quantity",
+    "totalQuantity": "Total Quantity",
+    "availableQuantity": "Available Quantity"
+  },
+  "customer": {
+    "walkIn": "Walk-in Customer",
+    "nonRegistered": "Non-registered customer",
+    "customerName": "Customer Name",
+    "customerPhone": "Customer Phone",
+    "customerEmail": "Customer Email"
+  },
+  "errors": {
+    "notAvailable": "Tool is not available",
+    "invalidDates": "Invalid rental dates",
+    "failedToCreate": "Failed to create rental",
+    "failedToApprove": "Failed to approve rental"
+  }
+}

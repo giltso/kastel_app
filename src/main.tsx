@@ -1,10 +1,11 @@
 import { RouterProvider, createRouter } from "@tanstack/react-router";
-import { StrictMode } from "react";
+import { StrictMode, Suspense } from "react";
 import { createRoot } from "react-dom/client";
 import { QueryClient } from "@tanstack/react-query";
 import { ConvexReactClient } from "convex/react";
 import { ConvexQueryClient } from "@convex-dev/react-query";
 import "./index.css";
+import "./i18n/config"; // Initialize i18n
 
 import { routeTree } from "./routeTree.gen";
 
@@ -39,6 +40,8 @@ declare module "@tanstack/react-router" {
 // Render the app
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <RouterProvider router={router} />
+    <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><span className="loading loading-spinner loading-lg"></span></div>}>
+      <RouterProvider router={router} />
+    </Suspense>
   </StrictMode>,
 );

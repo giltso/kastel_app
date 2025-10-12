@@ -1,0 +1,95 @@
+{
+  "app": {
+    "name": "חומרי בניין כסטל",
+    "tagline": "השותף המהימן שלך לכלים מקצועיים"
+  },
+  "nav": {
+    "home": "דף הבית",
+    "luz": "לוח משמרות LUZ",
+    "shifts": "משמרות",
+    "tools": "כלים",
+    "courses": "קורסים",
+    "roles": "תפקידים",
+    "educational": "לימודים"
+  },
+  "actions": {
+    "save": "שמירה",
+    "cancel": "ביטול",
+    "edit": "עריכה",
+    "delete": "מחיקה",
+    "create": "יצירה",
+    "update": "עדכון",
+    "submit": "שליחה",
+    "close": "סגירה",
+    "confirm": "אישור",
+    "search": "חיפוש",
+    "filter": "סינון",
+    "back": "חזרה",
+    "next": "הבא",
+    "previous": "הקודם",
+    "add": "הוספה",
+    "remove": "הסרה",
+    "clear": "ניקוי",
+    "apply": "החלה",
+    "reset": "איפוס",
+    "loading": "טוען...",
+    "comingSoon": "בקרוב"
+  },
+  "time": {
+    "today": "היום",
+    "day": "יום",
+    "week": "שבוע",
+    "month": "חודש",
+    "morning": "בוקר",
+    "afternoon": "צהריים",
+    "evening": "ערב",
+    "hours": "שעות",
+    "minutes": "דקות"
+  },
+  "days": {
+    "monday": "יום שני",
+    "tuesday": "יום שלישי",
+    "wednesday": "יום רביעי",
+    "thursday": "יום חמישי",
+    "friday": "יום שישי",
+    "saturday": "שבת",
+    "sunday": "יום ראשון",
+    "mon": "ב'",
+    "tue": "ג'",
+    "wed": "ד'",
+    "thu": "ה'",
+    "fri": "ו'",
+    "sat": "ש'",
+    "sun": "א'"
+  },
+  "status": {
+    "active": "פעיל",
+    "inactive": "לא פעיל",
+    "pending": "ממתין לאישור",
+    "approved": "אושר",
+    "rejected": "נדחה",
+    "confirmed": "מאושר",
+    "cancelled": "בוטל",
+    "completed": "הושלם",
+    "inProgress": "בתהליך"
+  },
+  "errors": {
+    "generic": "אירעה שגיאה. אנא נסה שנית.",
+    "required": "שדה זה הוא חובה",
+    "invalidEmail": "כתובת דוא\"ל לא תקינה",
+    "invalidPhone": "מספר טלפון לא תקין",
+    "networkError": "שגיאת רשת. אנא בדוק את החיבור שלך.",
+    "unauthorized": "אין לך הרשאה לבצע פעולה זו",
+    "notFound": "המשאב לא נמצא",
+    "serverError": "שגיאת שרת. אנא נסה שנית מאוחר יותר."
+  },
+  "messages": {
+    "success": "הצלחה!",
+    "saved": "נשמר בהצלחה",
+    "deleted": "נמחק בהצלחה",
+    "updated": "עודכן בהצלחה",
+    "created": "נוצר בהצלחה",
+    "noResults": "לא נמצאו תוצאות",
+    "loading": "טוען..."
+  }
+}

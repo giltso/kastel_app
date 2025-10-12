@@ -28,7 +28,9 @@ import { RoleEmulator } from "@/components/RoleEmulator";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { ViewportTester } from "@/components/ViewportTester";
 import { KastelLogo } from "@/components/KastelLogo";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { usePermissionsV2 } from "@/hooks/usePermissionsV2";
+import { useLanguage } from "@/hooks/useLanguage";
 
 export const Route = createRootRouteWithContext<{
   queryClient: QueryClient;
@@ -39,6 +41,7 @@ export const Route = createRootRouteWithContext<{
 
 function NavigationLinks({ onLinkClick }: { onLinkClick: () => void }) {
   const { checkPermission, isStaff } = usePermissionsV2();
+  const { t } = useLanguage();
 
   return (
     <>
@@ -50,7 +53,7 @@ function NavigationLinks({ onLinkClick }: { onLinkClick: () => void }) {
         }}
         onClick={onLinkClick}
       >
-        Home
+        {t("common:nav.home")}
       </Link>
       {checkPermission("request_tool_rentals") && (
         <Link
@@ -61,7 +64,7 @@ function NavigationLinks({ onLinkClick }: { onLinkClick: () => void }) {
           }}
           onClick={onLinkClick}
         >
-          Tools
+          {t("common:nav.tools")}
         </Link>
       )}
       {checkPermission("browse_courses") && (
@@ -73,7 +76,7 @@ function NavigationLinks({ onLinkClick }: { onLinkClick: () => void }) {
           }}
           onClick={onLinkClick}
         >
-          Educational
+          {t("common:nav.educational")}
         </Link>
       )}
       {checkPermission("manage_staff_roles") && (
@@ -85,7 +88,7 @@ function NavigationLinks({ onLinkClick }: { onLinkClick: () => void }) {
           }}
           onClick={onLinkClick}
         >
-          Roles
+          {t("common:nav.roles")}
         </Link>
       )}
     </>
@@ -94,6 +97,7 @@ function NavigationLinks({ onLinkClick }: { onLinkClick: () => void }) {
 
 function MobileNavigationLinks({ onLinkClick }: { onLinkClick: () => void }) {
   const { checkPermission, isStaff } = usePermissionsV2();
+  const { t } = useLanguage();
 
   return (
     <>
@@ -106,7 +110,7 @@ function MobileNavigationLinks({ onLinkClick }: { onLinkClick: () => void }) {
           }}
           className="flex items-center justify-end p-2"
         >
-          Home
+          {t("common:nav.home")}
         </Link>
       </li>
       {checkPermission("request_tool_rentals") && (
@@ -119,7 +123,7 @@ function MobileNavigationLinks({ onLinkClick }: { onLinkClick: () => void }) {
             }}
             className="flex items-center justify-end p-2"
           >
-            Tools
+            {t("common:nav.tools")}
           </Link>
         </li>
       )}
@@ -133,7 +137,7 @@ function MobileNavigationLinks({ onLinkClick }: { onLinkClick: () => void }) {
             }}
             className="flex items-center justify-end p-2"
           >
-            Educational
+            {t("common:nav.educational")}
           </Link>
         </li>
       )}
@@ -147,7 +151,7 @@ function MobileNavigationLinks({ onLinkClick }: { onLinkClick: () => void }) {
             }}
             className="flex items-center justify-end p-2"
           >
-            Roles
+            {t("common:nav.roles")}
           </Link>
         </li>
       )}
@@ -158,6 +162,7 @@ function MobileNavigationLinks({ onLinkClick }: { onLinkClick: () => void }) {
 function RootComponent() {
   const { queryClient, convexClient: convex } = Route.useRouteContext();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const { t } = useLanguage();
 
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
@@ -207,6 +212,7 @@ function RootComponent() {
                     </div>
                     <div className="navbar-end gap-2">
                       {import.meta.env.DEV && <ViewportTester />}
+                      <LanguageSwitcher />
                       <ThemeToggle />
                       <RoleEmulator />
                       <UserButton
@@ -243,6 +249,7 @@ function RootComponent() {
                     </div>
                     <div className="mt-auto py-4 border-t border-base-300 flex flex-col gap-2 items-end">
                       {import.meta.env.DEV && <ViewportTester />}
+                      <LanguageSwitcher />
                       <ThemeToggle />
                       <RoleEmulator />
                       <UserButton
@@ -267,15 +274,16 @@ function RootComponent() {
                       Kastel
                     </h1>
                   </div>
-                  <div className="navbar-end">
+                  <div className="navbar-end gap-2">
+                    <LanguageSwitcher />
                     <SignInButton mode="modal">
                       <button className="btn btn-primary btn-sm">
-                        Sign in
+                        {t("auth:signIn")}
                       </button>
                     </SignInButton>
                     <SignUpButton mode="modal">
                       <button className="btn btn-ghost btn-sm ml-2">
-                        Sign up
+                        {t("auth:signUp")}
                       </button>
                     </SignUpButton>
                   </div>

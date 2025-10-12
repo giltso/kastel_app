@@ -1,0 +1,60 @@
+{
+  "title": "Educational Courses",
+  "courses": "Courses",
+  "course": "Course",
+  "viewCourses": "View Courses",
+  "manageCourses": "Manage Courses",
+  "createCourse": "Create Course",
+  "editCourse": "Edit Course",
+  "courseDetails": "Course Details",
+  "educationalCourses": "Educational Courses",
+  "learnFromExperts": "Learn from experts with hands-on workshops",
+  "coveringTopics": "covering woodworking, electrical, and more",
+  "instructor": {
+    "instructor": "Instructor",
+    "instructors": "Instructors",
+    "instructorTag": "Instructor",
+    "selectInstructor": "Select Instructor"
+  },
+  "enrollment": {
+    "enroll": "Enroll",
+    "enrollment": "Enrollment",
+    "enrollmentRequest": "Enrollment Request",
+    "enrolledStudents": "Enrolled Students",
+    "enrollmentStatus": "Enrollment Status",
+    "pending": "Pending",
+    "approved": "Approved",
+    "rejected": "Rejected",
+    "waitlist": "Waitlist",
+    "capacity": "Capacity",
+    "spotsAvailable": "spots available",
+    "fullyCourse": "Course Full"
+  },
+  "session": {
+    "session": "Session",
+    "sessions": "Sessions",
+    "singleSession": "Single Session",
+    "multiSession": "Multi-Session Course",
+    "sessionDate": "Session Date",
+    "sessionTime": "Session Time",
+    "numberOfSessions": "Number of Sessions"
+  },
+  "details": {
+    "courseName": "Course Name",
+    "courseDescription": "Course Description",
+    "duration": "Duration",
+    "level": "Level",
+    "beginner": "Beginner",
+    "intermediate": "Intermediate",
+    "advanced": "Advanced",
+    "materials": "Materials",
+    "materialsIncluded": "Materials Included",
+    "bringYourOwn": "Bring Your Own"
+  },
+  "errors": {
+    "failedToCreate": "Failed to create course",
+    "failedToEnroll": "Failed to enroll in course",
+    "courseFull": "Course is full",
+    "alreadyEnrolled": "Already enrolled in this course"
+  }
+}

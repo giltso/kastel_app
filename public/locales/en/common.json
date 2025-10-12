@@ -1,0 +1,95 @@
+{
+  "app": {
+    "name": "Kastel Hardware",
+    "tagline": "Your trusted partner for professional tools"
+  },
+  "nav": {
+    "home": "Home",
+    "luz": "LUZ Calendar",
+    "shifts": "Shifts",
+    "tools": "Tools",
+    "courses": "Courses",
+    "roles": "Roles",
+    "educational": "Educational"
+  },
+  "actions": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "edit": "Edit",
+    "delete": "Delete",
+    "create": "Create",
+    "update": "Update",
+    "submit": "Submit",
+    "close": "Close",
+    "confirm": "Confirm",
+    "search": "Search",
+    "filter": "Filter",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "add": "Add",
+    "remove": "Remove",
+    "clear": "Clear",
+    "apply": "Apply",
+    "reset": "Reset",
+    "loading": "Loading...",
+    "comingSoon": "Coming Soon"
+  },
+  "time": {
+    "today": "Today",
+    "day": "Day",
+    "week": "Week",
+    "month": "Month",
+    "morning": "Morning",
+    "afternoon": "Afternoon",
+    "evening": "Evening",
+    "hours": "Hours",
+    "minutes": "Minutes"
+  },
+  "days": {
+    "monday": "Monday",
+    "tuesday": "Tuesday",
+    "wednesday": "Wednesday",
+    "thursday": "Thursday",
+    "friday": "Friday",
+    "saturday": "Saturday",
+    "sunday": "Sunday",
+    "mon": "Mon",
+    "tue": "Tue",
+    "wed": "Wed",
+    "thu": "Thu",
+    "fri": "Fri",
+    "sat": "Sat",
+    "sun": "Sun"
+  },
+  "status": {
+    "active": "Active",
+    "inactive": "Inactive",
+    "pending": "Pending",
+    "approved": "Approved",
+    "rejected": "Rejected",
+    "confirmed": "Confirmed",
+    "cancelled": "Cancelled",
+    "completed": "Completed",
+    "inProgress": "In Progress"
+  },
+  "errors": {
+    "generic": "An error occurred. Please try again.",
+    "required": "This field is required",
+    "invalidEmail": "Invalid email address",
+    "invalidPhone": "Invalid phone number",
+    "networkError": "Network error. Please check your connection.",
+    "unauthorized": "You are not authorized to perform this action",
+    "notFound": "Resource not found",
+    "serverError": "Server error. Please try again later."
+  },
+  "messages": {
+    "success": "Success!",
+    "saved": "Saved successfully",
+    "deleted": "Deleted successfully",
+    "updated": "Updated successfully",
+    "created": "Created successfully",
+    "noResults": "No results found",
+    "loading": "Loading..."
+  }
+}

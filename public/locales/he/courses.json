@@ -1,0 +1,60 @@
+{
+  "title": "קורסים לימודיים",
+  "courses": "קורסים",
+  "course": "קורס",
+  "viewCourses": "צפייה בקורסים",
+  "manageCourses": "ניהול קורסים",
+  "createCourse": "יצירת קורס",
+  "editCourse": "עריכת קורס",
+  "courseDetails": "פרטי הקורס",
+  "educationalCourses": "קורסים לימודיים",
+  "learnFromExperts": "למד ממומחים בסדנאות מעשיות",
+  "coveringTopics": "הכוללות עבודות עץ, חשמל ועוד",
+  "instructor": {
+    "instructor": "מדריך",
+    "instructors": "מדריכים",
+    "instructorTag": "מדריך",
+    "selectInstructor": "בחירת מדריך"
+  },
+  "enrollment": {
+    "enroll": "הרשמה",
+    "enrollment": "הרשמה",
+    "enrollmentRequest": "בקשת הרשמה",
+    "enrolledStudents": "תלמידים רשומים",
+    "enrollmentStatus": "סטטוס הרשמה",
+    "pending": "ממתין",
+    "approved": "אושר",
+    "rejected": "נדחה",
+    "waitlist": "רשימת המתנה",
+    "capacity": "קיבולת",
+    "spotsAvailable": "מקומות פנויים",
+    "fullyCourse": "הקורס מלא"
+  },
+  "session": {
+    "session": "מפגש",
+    "sessions": "מפגשים",
+    "singleSession": "מפגש בודד",
+    "multiSession": "קורס רב מפגשי",
+    "sessionDate": "תאריך מפגש",
+    "sessionTime": "שעת מפגש",
+    "numberOfSessions": "מספר מפגשים"
+  },
+  "details": {
+    "courseName": "שם הקורס",
+    "courseDescription": "תיאור הקורס",
+    "duration": "משך",
+    "level": "רמה",
+    "beginner": "מתחילים",
+    "intermediate": "בינוני",
+    "advanced": "מתקדמים",
+    "materials": "חומרים",
+    "materialsIncluded": "חומרים כלולים",
+    "bringYourOwn": "הבא חומרים משלך"
+  },
+  "errors": {
+    "failedToCreate": "יצירת הקורס נכשלה",
+    "failedToEnroll": "ההרשמה לקורס נכשלה",
+    "courseFull": "הקורס מלא",
+    "alreadyEnrolled": "כבר רשום לקורס זה"
+  }
+}

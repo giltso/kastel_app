@@ -1,0 +1,48 @@
+{
+  "title": "Role Management",
+  "roles": "Roles",
+  "role": "Role",
+  "editRoles": "Edit Roles",
+  "userRoles": "User Roles",
+  "permissions": "Permissions",
+  "tags": {
+    "staff": "Staff",
+    "customer": "Customer",
+    "guest": "Guest",
+    "worker": "Worker",
+    "manager": "Manager",
+    "instructor": "Instructor",
+    "toolHandler": "Tool Handler",
+    "rentalApproved": "Rental Approved"
+  },
+  "actions": {
+    "promoteToStaff": "Promote to Staff",
+    "demoteToCustomer": "Demote to Customer",
+    "editUserRole": "Edit User Role",
+    "updateRoles": "Update Roles",
+    "roleEmulation": "Role Emulation",
+    "emulateRole": "Emulate Role",
+    "stopEmulation": "Stop Emulation"
+  },
+  "search": {
+    "searchUsers": "Search users...",
+    "filterByRole": "Filter by Role",
+    "showAll": "Show All",
+    "showStaff": "Show Staff",
+    "showCustomers": "Show Customers"
+  },
+  "descriptions": {
+    "staffDescription": "Staff members have access to LUZ system",
+    "workerDescription": "Can view and join shifts",
+    "managerDescription": "Can create shifts and approve assignments",
+    "instructorDescription": "Can create and manage educational courses",
+    "toolHandlerDescription": "Can manage tool inventory and rentals",
+    "rentalApprovedDescription": "Customer can request tool rentals"
+  },
+  "messages": {
+    "rolesUpdated": "Roles updated successfully",
+    "failedToUpdate": "Failed to update roles",
+    "emulationActive": "Role emulation active",
+    "emulationStopped": "Role emulation stopped"
+  }
+}
