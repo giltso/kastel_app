@@ -6,6 +6,7 @@ import { useState } from "react";
 import { Hammer, Plus, Edit, Trash2, Calendar, User, Clock, DollarSign, Package, History, Search, UserPlus } from "lucide-react";
 import { api } from "../../convex/_generated/api";
 import { usePermissionsV2 } from "@/hooks/usePermissionsV2";
+import { useLanguage } from "@/hooks/useLanguage";
 import { CreateManualRentalModal } from "@/components/modals/CreateManualRentalModal";
 
 const toolsQueryOptions = convexQuery(api.tools.listTools, {});
@@ -16,6 +17,7 @@ export const Route = createFileRoute("/tools")({
 });
 
 function ToolsPage() {
+  const { t } = useLanguage();
   const { isStaff, hasToolHandlerTag, hasRentalApprovedTag, isAuthenticated } = usePermissionsV2();
   const isToolHandler = isStaff && hasToolHandlerTag;
   const isRentalApproved = !isStaff && hasRentalApprovedTag;
@@ -24,16 +26,16 @@ function ToolsPage() {
   let description, ViewComponent;
 
   if (isToolHandler) {
-    description = "Manage tool inventory and rental requests";
+    description = t("tools:descriptions.manageInventory");
     ViewComponent = OperationalView;
   } else if (isRentalApproved) {
-    description = "Browse and rent available tools";
+    description = t("tools:descriptions.browseAndRent");
     ViewComponent = CustomerView;
   } else {
-    description = "Discover our professional tool collection";
+    description = t("tools:descriptions.discoverCollection");
     ViewComponent = GuestView;
   }
-  
+
   return (
     <Authenticated>
       <div className="max-w-7xl mx-auto">
@@ -41,7 +43,7 @@ function ToolsPage() {
           <div>
             <h1 className="text-2xl font-bold flex items-center gap-2">
               <Hammer className="w-6 h-6" />
-              Tool Rental
+              {t("tools:toolRental")}
             </h1>
             <p className="text-base-content/70">
               {description}
@@ -56,6 +58,7 @@ function ToolsPage() {
 }
 
 function OperationalView() {
+  const { t } = useLanguage();
   const { data: tools } = useSuspenseQuery(toolsQueryOptions);
   const { data: rentals } = useSuspenseQuery(toolRentalsQueryOptions);
   const [showAddTool, setShowAddTool] = useState(false);
@@ -72,39 +75,39 @@ function OperationalView() {
           className="btn btn-primary"
         >
           <Plus className="w-4 h-4" />
-          Add Tool
+          {t("tools:addTool")}
         </button>
         <button
           onClick={() => setShowManualRental(true)}
           className="btn btn-secondary"
         >
           <UserPlus className="w-4 h-4" />
-          Manual Rental
+          {t("tools:rental.manualRental")}
         </button>
         <button
           onClick={() => setShowRentalHistory(true)}
           className="btn btn-outline"
         >
           <History className="w-4 h-4" />
-          Rental History
+          {t("tools:rental.rentalHistory")}
         </button>
       </div>
 
       {/* Tabs */}
       <div className="tabs tabs-border">
-        <button 
+        <button
           className={`tab ${activeTab === "inventory" ? "tab-active" : ""}`}
           onClick={() => setActiveTab("inventory")}
         >
           <Package className="w-4 h-4 mr-2" />
-          Inventory ({tools.length})
+          {t("tools:inventory.title")} ({tools.length})
         </button>
-        <button 
+        <button
           className={`tab ${activeTab === "rentals" ? "tab-active" : ""}`}
           onClick={() => setActiveTab("rentals")}
         >
           <Calendar className="w-4 h-4 mr-2" />
-          Rentals ({rentals.length})
+          {t("tools:rental.rentals")} ({rentals.length})
         </button>
       </div>
 
@@ -133,6 +136,7 @@ function OperationalView() {
 }
 
 function CustomerView() {
+  const { t } = useLanguage();
   const { data: tools } = useSuspenseQuery(toolsQueryOptions);
   const { data: myRentals } = useSuspenseQuery(toolRentalsQueryOptions);
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
@@ -152,15 +156,15 @@ function CustomerView() {
       {myRentals.length > 0 && (
         <div className="card bg-base-100 shadow-sm">
           <div className="card-body">
-            <h2 className="card-title">My Current Rentals</h2>
+            <h2 className="card-title">{t("tools:rental.myCurrentRentals")}</h2>
             <div className="overflow-x-auto">
               <table className="table table-sm">
                 <thead>
                   <tr>
-                    <th>Tool</th>
-                    <th>Status</th>
-                    <th>Return Date</th>
-                    <th>Total Cost</th>
+                    <th>{t("tools:tool")}</th>
+                    <th>{t("tools:rental.status")}</th>
+                    <th>{t("tools:rental.returnDate")}</th>
+                    <th>{t("tools:rental.totalCost")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -193,7 +197,7 @@ function CustomerView() {
               selectedCategory === category ? "btn-primary" : "btn-outline"
             }`}
           >
-            {category === "all" ? "All Tools" : category.charAt(0).toUpperCase() + category.slice(1)}
+            {category === "all" ? t("tools:allTools") : category.charAt(0).toUpperCase() + category.slice(1)}
           </button>
         ))}
       </div>
@@ -210,23 +214,23 @@ function CustomerView() {
               
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-base-content/60">Brand:</span>
+                  <span className="text-base-content/60">{t("tools:fields.brand")}:</span>
                   <span>{tool.brand || "N/A"}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-base-content/60">Model:</span>
+                  <span className="text-base-content/60">{t("tools:fields.model")}:</span>
                   <span>{tool.model || "N/A"}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-base-content/60">Condition:</span>
+                  <span className="text-base-content/60">{t("tools:fields.condition")}:</span>
                   <span className={`badge ${getConditionBadgeColor(tool.condition)}`}>
-                    {tool.condition}
+                    {t(`tools:condition.${tool.condition}`)}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-base-content/60">Price per day:</span>
+                  <span className="text-base-content/60">{t("tools:pricePerDay")}:</span>
                   <span className="font-semibold">
-                    {tool.rentalPricePerDay === 0 ? "Free" : `$${tool.rentalPricePerDay}`}
+                    {tool.rentalPricePerDay === 0 ? t("tools:free") : `$${tool.rentalPricePerDay}`}
                   </span>
                 </div>
               </div>
@@ -237,7 +241,7 @@ function CustomerView() {
                   className="btn btn-primary btn-sm"
                   disabled={!tool.isAvailable}
                 >
-                  {tool.isAvailable ? "Request Rental" : "Unavailable"}
+                  {tool.isAvailable ? t("tools:rental.requestRental") : t("tools:inventory.unavailable")}
                 </button>
               </div>
             </div>
@@ -257,6 +261,7 @@ function CustomerView() {
 }
 
 function GuestView() {
+  const { t } = useLanguage();
   const { data: tools } = useSuspenseQuery(toolsQueryOptions);
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
 
@@ -285,7 +290,7 @@ function GuestView() {
               selectedCategory === category ? "btn-primary" : "btn-outline"
             }`}
           >
-            {category === "all" ? "All Tools" : category.charAt(0).toUpperCase() + category.slice(1)}
+            {category === "all" ? t("tools:allTools") : category.charAt(0).toUpperCase() + category.slice(1)}
           </button>
         ))}
       </div>
@@ -301,6 +306,8 @@ function GuestView() {
 }
 
 function GuestToolCard({ tool }: { tool: any }) {
+  const { t } = useLanguage();
+
   return (
     <div className="card bg-base-200 shadow-sm">
       <div className="card-body">
@@ -308,37 +315,37 @@ function GuestToolCard({ tool }: { tool: any }) {
         {tool.description && (
           <p className="text-sm opacity-70 line-clamp-3">{tool.description}</p>
         )}
-        
+
         <div className="space-y-2 text-sm">
           <div className="flex justify-between">
-            <span className="text-base-content/60">Brand:</span>
+            <span className="text-base-content/60">{t("tools:fields.brand")}:</span>
             <span>{tool.brand || "N/A"}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-base-content/60">Model:</span>
+            <span className="text-base-content/60">{t("tools:fields.model")}:</span>
             <span>{tool.model || "N/A"}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-base-content/60">Category:</span>
+            <span className="text-base-content/60">{t("tools:fields.category")}:</span>
             <span className="badge badge-outline">{tool.category}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-base-content/60">Condition:</span>
+            <span className="text-base-content/60">{t("tools:fields.condition")}:</span>
             <span className={`badge ${getConditionBadgeColor(tool.condition)}`}>
-              {tool.condition}
+              {t(`tools:condition.${tool.condition}`)}
             </span>
           </div>
           <div className="flex justify-between">
-            <span className="text-base-content/60">Price per day:</span>
+            <span className="text-base-content/60">{t("tools:pricePerDay")}:</span>
             <span className="font-semibold">
-              {tool.rentalPricePerDay === 0 ? "Free" : `$${tool.rentalPricePerDay}`}
+              {tool.rentalPricePerDay === 0 ? t("tools:free") : `$${tool.rentalPricePerDay}`}
             </span>
           </div>
         </div>
 
         <div className="card-actions justify-end mt-4">
           <button className="btn btn-primary btn-sm">
-            Sign in to rent
+            {t("tools:signInToRent")}
           </button>
         </div>
       </div>
@@ -347,6 +354,8 @@ function GuestToolCard({ tool }: { tool: any }) {
 }
 
 function InventoryTable({ tools }: { tools: any[] }) {
+  const { t } = useLanguage();
+
   return (
     <div className="card bg-base-100 shadow-sm">
       <div className="card-body">
@@ -354,13 +363,13 @@ function InventoryTable({ tools }: { tools: any[] }) {
           <table className="table">
             <thead>
               <tr>
-                <th>Tool</th>
-                <th>Category</th>
-                <th>Condition</th>
-                <th>Price/Day</th>
-                <th>Status</th>
-                <th>Location</th>
-                <th>Actions</th>
+                <th>{t("tools:tool")}</th>
+                <th>{t("tools:fields.category")}</th>
+                <th>{t("tools:fields.condition")}</th>
+                <th>{t("tools:pricePerDay")}</th>
+                <th>{t("tools:rental.status")}</th>
+                <th>{t("tools:fields.location")}</th>
+                <th>{t("tools:rental.actions")}</th>
               </tr>
             </thead>
             <tbody>
@@ -379,13 +388,13 @@ function InventoryTable({ tools }: { tools: any[] }) {
                   <td>{tool.category}</td>
                   <td>
                     <div className={`badge ${getConditionBadgeColor(tool.condition)}`}>
-                      {tool.condition}
+                      {t(`tools:condition.${tool.condition}`)}
                     </div>
                   </td>
-                  <td>{tool.rentalPricePerDay === 0 ? "Free" : `$${tool.rentalPricePerDay}`}</td>
+                  <td>{tool.rentalPricePerDay === 0 ? t("tools:free") : `$${tool.rentalPricePerDay}`}</td>
                   <td>
                     <div className={`badge ${tool.isAvailable ? "badge-success" : "badge-error"}`}>
-                      {tool.isAvailable ? "Available" : "Rented"}
+                      {tool.isAvailable ? t("tools:inventory.available") : t("tools:rented")}
                     </div>
                   </td>
                   <td>{tool.location || "—"}</td>
@@ -410,6 +419,7 @@ function InventoryTable({ tools }: { tools: any[] }) {
 }
 
 function RentalsTable({ rentals }: { rentals: any[] }) {
+  const { t } = useLanguage();
   const approveRental = useMutation(api.tools.updateRentalStatus);
 
   const handleStatusUpdate = async (rentalId: string, status: string) => {
@@ -430,27 +440,27 @@ function RentalsTable({ rentals }: { rentals: any[] }) {
           <table className="table">
             <thead>
               <tr>
-                <th>Tool</th>
-                <th>Renter</th>
-                <th>Rental Period</th>
-                <th>Total Cost</th>
-                <th>Status</th>
-                <th>Actions</th>
+                <th>{t("tools:tool")}</th>
+                <th>{t("tools:rental.renter")}</th>
+                <th>{t("tools:rental.rentalPeriod")}</th>
+                <th>{t("tools:rental.totalCost")}</th>
+                <th>{t("tools:rental.status")}</th>
+                <th>{t("tools:rental.actions")}</th>
               </tr>
             </thead>
             <tbody>
               {rentals.map((rental) => (
                 <tr key={rental._id}>
-                  <td>{rental.tool?.name || "Unknown Tool"}</td>
+                  <td>{rental.tool?.name || t("tools:fields.unknownTool")}</td>
                   <td>
                     {rental.isManualRental ? (
                       <div>
                         <div className="font-medium">{rental.nonUserRenterName}</div>
                         <div className="text-xs text-base-content/60">{rental.nonUserRenterContact}</div>
-                        <div className="badge badge-sm badge-outline mt-1">Walk-in</div>
+                        <div className="badge badge-sm badge-outline mt-1">{t("tools:rental.walkIn")}</div>
                       </div>
                     ) : (
-                      rental.renterUser?.name || "Unknown User"
+                      rental.renterUser?.name || t("tools:fields.unknownUser")
                     )}
                   </td>
                   <td>
@@ -464,41 +474,41 @@ function RentalsTable({ rentals }: { rentals: any[] }) {
                   <td>${rental.totalCost.toFixed(2)}</td>
                   <td>
                     <div className={`badge ${getStatusBadgeColor(rental.status)}`}>
-                      {rental.status}
+                      {t(`tools:rental.${rental.status}`)}
                     </div>
                   </td>
                   <td>
                     <div className="flex gap-1">
                       {rental.status === "pending" && (
                         <>
-                          <button 
+                          <button
                             onClick={() => handleStatusUpdate(rental._id, "approved")}
                             className="btn btn-success btn-xs"
                           >
-                            Approve
+                            {t("tools:rental.approve")}
                           </button>
-                          <button 
+                          <button
                             onClick={() => handleStatusUpdate(rental._id, "cancelled")}
                             className="btn btn-error btn-xs"
                           >
-                            Reject
+                            {t("tools:rental.reject")}
                           </button>
                         </>
                       )}
                       {rental.status === "approved" && (
-                        <button 
+                        <button
                           onClick={() => handleStatusUpdate(rental._id, "active")}
                           className="btn btn-primary btn-xs"
                         >
-                          Start Rental
+                          {t("tools:rental.startRental")}
                         </button>
                       )}
                       {rental.status === "active" && (
-                        <button 
+                        <button
                           onClick={() => handleStatusUpdate(rental._id, "returned")}
                           className="btn btn-success btn-xs"
                         >
-                          Mark Returned
+                          {t("tools:rental.markReturned")}
                         </button>
                       )}
                     </div>
@@ -514,6 +524,7 @@ function RentalsTable({ rentals }: { rentals: any[] }) {
 }
 
 function AddToolModal({ onClose }: { onClose: () => void }) {
+  const { t } = useLanguage();
   const addTool = useMutation(api.tools.addTool);
   const [formData, setFormData] = useState({
     name: "",
@@ -541,12 +552,12 @@ function AddToolModal({ onClose }: { onClose: () => void }) {
   return (
     <dialog className="modal modal-open">
       <div className="modal-box max-w-2xl">
-        <h3 className="font-bold text-lg mb-4">Add New Tool</h3>
-        
+        <h3 className="font-bold text-lg mb-4">{t("tools:addNewTool")}</h3>
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="form-control">
-              <label className="label">Tool Name*</label>
+              <label className="label">{t("tools:fields.toolName")}*</label>
               <input
                 type="text"
                 className="input input-bordered"
@@ -555,22 +566,22 @@ function AddToolModal({ onClose }: { onClose: () => void }) {
                 required
               />
             </div>
-            
+
             <div className="form-control">
-              <label className="label">Category*</label>
+              <label className="label">{t("tools:fields.category")}*</label>
               <input
                 type="text"
                 className="input input-bordered"
                 value={formData.category}
                 onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
-                placeholder="e.g., drill, saw, hammer"
+                placeholder={t("tools:fields.categoryPlaceholder")}
                 required
               />
             </div>
           </div>
 
           <div className="form-control">
-            <label className="label">Description</label>
+            <label className="label">{t("tools:fields.description")}</label>
             <textarea
               className="textarea textarea-bordered"
               value={formData.description}
@@ -580,7 +591,7 @@ function AddToolModal({ onClose }: { onClose: () => void }) {
 
           <div className="grid grid-cols-2 gap-4">
             <div className="form-control">
-              <label className="label">Brand</label>
+              <label className="label">{t("tools:fields.brand")}</label>
               <input
                 type="text"
                 className="input input-bordered"
@@ -588,9 +599,9 @@ function AddToolModal({ onClose }: { onClose: () => void }) {
                 onChange={(e) => setFormData(prev => ({ ...prev, brand: e.target.value }))}
               />
             </div>
-            
+
             <div className="form-control">
-              <label className="label">Model</label>
+              <label className="label">{t("tools:fields.model")}</label>
               <input
                 type="text"
                 className="input input-bordered"
@@ -602,21 +613,21 @@ function AddToolModal({ onClose }: { onClose: () => void }) {
 
           <div className="grid grid-cols-2 gap-4">
             <div className="form-control">
-              <label className="label">Condition</label>
+              <label className="label">{t("tools:fields.condition")}</label>
               <select
                 className="select select-bordered"
                 value={formData.condition}
                 onChange={(e) => setFormData(prev => ({ ...prev, condition: e.target.value as any }))}
               >
-                <option value="excellent">Excellent</option>
-                <option value="good">Good</option>
-                <option value="fair">Fair</option>
-                <option value="needs_repair">Needs Repair</option>
+                <option value="excellent">{t("tools:condition.excellent")}</option>
+                <option value="good">{t("tools:condition.good")}</option>
+                <option value="fair">{t("tools:condition.fair")}</option>
+                <option value="needs_repair">{t("tools:condition.needsRepair")}</option>
               </select>
             </div>
-            
+
             <div className="form-control">
-              <label className="label">Price per Day ($)</label>
+              <label className="label">{t("tools:fields.pricePerDay")}</label>
               <input
                 type="number"
                 step="0.01"
@@ -629,22 +640,22 @@ function AddToolModal({ onClose }: { onClose: () => void }) {
           </div>
 
           <div className="form-control">
-            <label className="label">Location in Shop</label>
+            <label className="label">{t("tools:fields.locationInShop")}</label>
             <input
               type="text"
               className="input input-bordered"
               value={formData.location}
               onChange={(e) => setFormData(prev => ({ ...prev, location: e.target.value }))}
-              placeholder="e.g., Aisle 3, Shelf B"
+              placeholder={t("tools:fields.locationPlaceholder")}
             />
           </div>
 
           <div className="modal-action">
             <button type="button" onClick={onClose} className="btn">
-              Cancel
+              {t("common:actions.cancel")}
             </button>
             <button type="submit" className="btn btn-primary">
-              Add Tool
+              {t("tools:addTool")}
             </button>
           </div>
         </form>
@@ -653,15 +664,16 @@ function AddToolModal({ onClose }: { onClose: () => void }) {
   );
 }
 
-function RentalRequestModal({ 
-  toolId, 
-  tool, 
-  onClose 
-}: { 
-  toolId: string; 
-  tool: any; 
-  onClose: () => void; 
+function RentalRequestModal({
+  toolId,
+  tool,
+  onClose
+}: {
+  toolId: string;
+  tool: any;
+  onClose: () => void;
 }) {
+  const { t } = useLanguage();
   const createRequest = useMutation(api.tools.createRentalRequest);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
@@ -693,21 +705,21 @@ function RentalRequestModal({
   return (
     <dialog className="modal modal-open">
       <div className="modal-box">
-        <h3 className="font-bold text-lg mb-4">Request Tool Rental</h3>
-        
+        <h3 className="font-bold text-lg mb-4">{t("tools:rental.requestToolRental")}</h3>
+
         <div className="mb-4 p-4 bg-base-200 rounded-lg">
           <h4 className="font-semibold">{tool.name}</h4>
           <p className="text-sm text-base-content/70">{tool.description}</p>
           <p className="text-sm mt-2">
-            <span className="font-medium">Price: </span>
-            {tool.rentalPricePerDay === 0 ? "Free" : `$${tool.rentalPricePerDay}/day`}
+            <span className="font-medium">{t("tools:rental.price")}: </span>
+            {tool.rentalPricePerDay === 0 ? t("tools:free") : `$${tool.rentalPricePerDay}/day`}
           </p>
         </div>
-        
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="form-control">
-              <label className="label">Start Date</label>
+              <label className="label">{t("tools:rental.startDate")}</label>
               <input
                 type="date"
                 className="input input-bordered"
@@ -717,9 +729,9 @@ function RentalRequestModal({
                 required
               />
             </div>
-            
+
             <div className="form-control">
-              <label className="label">End Date</label>
+              <label className="label">{t("tools:rental.endDate")}</label>
               <input
                 type="date"
                 className="input input-bordered"
@@ -734,27 +746,27 @@ function RentalRequestModal({
           {startDate && endDate && (
             <div className="alert alert-info">
               <div>
-                <span className="font-semibold">Total Cost: ${calculateCost().toFixed(2)}</span>
+                <span className="font-semibold">{t("tools:rental.totalCost")}: ${calculateCost().toFixed(2)}</span>
               </div>
             </div>
           )}
 
           <div className="form-control">
-            <label className="label">Notes (Optional)</label>
+            <label className="label">{t("tools:fields.notesOptional")}</label>
             <textarea
               className="textarea textarea-bordered"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder="Any special requirements or notes..."
+              placeholder={t("tools:fields.notesPlaceholder")}
             />
           </div>
 
           <div className="modal-action">
             <button type="button" onClick={onClose} className="btn">
-              Cancel
+              {t("common:actions.cancel")}
             </button>
             <button type="submit" className="btn btn-primary">
-              Submit Request
+              {t("tools:rental.submitRequest")}
             </button>
           </div>
         </form>
@@ -764,6 +776,7 @@ function RentalRequestModal({
 }
 
 function RentalHistoryModal({ onClose }: { onClose: () => void }) {
+  const { t } = useLanguage();
   const [toolFilter, setToolFilter] = useState("");
   const [renterFilter, setRenterFilter] = useState("");
 
@@ -802,7 +815,7 @@ function RentalHistoryModal({ onClose }: { onClose: () => void }) {
         <div className="flex justify-between items-center mb-4">
           <h3 className="font-bold text-lg flex items-center gap-2">
             <History className="w-5 h-5" />
-            Rental History
+            {t("tools:rental.rentalHistory")}
           </h3>
           <button onClick={onClose} className="btn btn-sm btn-circle btn-ghost">
             ✕
@@ -813,7 +826,7 @@ function RentalHistoryModal({ onClose }: { onClose: () => void }) {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
           <div className="form-control">
             <label className="label">
-              <span className="label-text">Search by Tool</span>
+              <span className="label-text">{t("tools:fields.searchByTool")}</span>
             </label>
             <div className="input-group">
               <span className="bg-base-200 px-3 flex items-center">
@@ -821,7 +834,7 @@ function RentalHistoryModal({ onClose }: { onClose: () => void }) {
               </span>
               <input
                 type="text"
-                placeholder="Tool name..."
+                placeholder={t("tools:fields.toolNamePlaceholder")}
                 className="input input-bordered flex-1"
                 value={toolFilter}
                 onChange={(e) => setToolFilter(e.target.value)}
@@ -831,7 +844,7 @@ function RentalHistoryModal({ onClose }: { onClose: () => void }) {
 
           <div className="form-control">
             <label className="label">
-              <span className="label-text">Search by Renter</span>
+              <span className="label-text">{t("tools:fields.searchByRenter")}</span>
             </label>
             <div className="input-group">
               <span className="bg-base-200 px-3 flex items-center">
@@ -839,7 +852,7 @@ function RentalHistoryModal({ onClose }: { onClose: () => void }) {
               </span>
               <input
                 type="text"
-                placeholder="Renter name or email..."
+                placeholder={t("tools:fields.renterPlaceholder")}
                 className="input input-bordered flex-1"
                 value={renterFilter}
                 onChange={(e) => setRenterFilter(e.target.value)}
@@ -850,8 +863,8 @@ function RentalHistoryModal({ onClose }: { onClose: () => void }) {
 
         {/* Results Summary */}
         <div className="mb-4 text-sm text-base-content/70">
-          Showing {history.length} rental{history.length !== 1 ? 's' : ''}
-          {(toolFilter || renterFilter) && ' (filtered)'}
+          {t("tools:messages.showingRentals", { count: history.length })}
+          {(toolFilter || renterFilter) && ` ${t("tools:messages.filtered")}`}
         </div>
 
         {/* History Table */}
@@ -859,11 +872,11 @@ function RentalHistoryModal({ onClose }: { onClose: () => void }) {
           <table className="table table-sm">
             <thead>
               <tr>
-                <th>Tool</th>
-                <th>Renter</th>
-                <th>Rental Period</th>
-                <th>Total Cost</th>
-                <th>Status</th>
+                <th>{t("tools:tool")}</th>
+                <th>{t("tools:rental.renter")}</th>
+                <th>{t("tools:rental.rentalPeriod")}</th>
+                <th>{t("tools:rental.totalCost")}</th>
+                <th>{t("tools:rental.status")}</th>
               </tr>
             </thead>
             <tbody>
@@ -871,7 +884,7 @@ function RentalHistoryModal({ onClose }: { onClose: () => void }) {
                 <tr key={rental._id} className="hover">
                   <td>
                     <div>
-                      <div className="font-medium">{rental.tool?.name || 'Unknown Tool'}</div>
+                      <div className="font-medium">{rental.tool?.name || t("tools:fields.unknownTool")}</div>
                       <div className="text-xs text-base-content/60">{rental.tool?.category}</div>
                     </div>
                   </td>
@@ -880,11 +893,11 @@ function RentalHistoryModal({ onClose }: { onClose: () => void }) {
                       <div>
                         <div className="font-medium">{rental.nonUserRenterName}</div>
                         <div className="text-xs text-base-content/60">{rental.nonUserRenterContact}</div>
-                        <div className="badge badge-xs badge-outline mt-1">Walk-in</div>
+                        <div className="badge badge-xs badge-outline mt-1">{t("tools:rental.walkIn")}</div>
                       </div>
                     ) : (
                       <div>
-                        <div className="font-medium">{rental.renterUser?.name || 'Unknown User'}</div>
+                        <div className="font-medium">{rental.renterUser?.name || t("tools:fields.unknownUser")}</div>
                         <div className="text-xs text-base-content/60">{rental.renterUser?.email}</div>
                       </div>
                     )}
@@ -899,7 +912,7 @@ function RentalHistoryModal({ onClose }: { onClose: () => void }) {
                   </td>
                   <td>
                     <span className={`badge badge-sm ${getStatusBadgeColor(rental.status)}`}>
-                      {rental.status}
+                      {t(`tools:rental.${rental.status}`)}
                     </span>
                   </td>
                 </tr>
@@ -910,16 +923,16 @@ function RentalHistoryModal({ onClose }: { onClose: () => void }) {
 
         {history.length === 0 && (
           <div className="text-center py-8 text-base-content/60">
-            {toolFilter || renterFilter ? 
-              'No rentals match your search criteria.' : 
-              'No rental history found.'
+            {toolFilter || renterFilter ?
+              t("tools:messages.noRentalsMatch") :
+              t("tools:messages.noRentalHistory")
             }
           </div>
         )}
 
         <div className="modal-action">
           <button onClick={onClose} className="btn">
-            Close
+            {t("common:actions.close")}
           </button>
         </div>
       </div>
