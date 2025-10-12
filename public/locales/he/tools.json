@@ -8,25 +8,51 @@
   "professionalGrade": "כלים ברמה מקצועית לפרויקטים שלך",
   "fromBasicToSpecialized": "מכלי יד בסיסיים ועד ציוד מיוחד",
   "manageTools": "ניהול כלים",
+  "addTool": "הוספת כלי",
+  "addNewTool": "הוספת כלי חדש",
+  "allTools": "כל הכלים",
+  "free": "חינם",
+  "pricePerDay": "מחיר ליום",
+  "signInToRent": "התחבר כדי לשכור",
+  "rented": "מושכר",
+  "descriptions": {
+    "manageInventory": "ניהול מלאי כלים ובקשות השכרה",
+    "browseAndRent": "עיון ושכירת כלים זמינים",
+    "discoverCollection": "גלה את אוסף הכלים המקצועי שלנו"
+  },
   "rental": {
     "title": "השכרה",
     "rentals": "השכרות",
     "activeRentals": "השכרות פעילות",
+    "myCurrentRentals": "ההשכרות הנוכחיות שלי",
     "requestRental": "בקשת השכרה",
     "createRental": "יצירת השכרה",
     "manualRental": "השכרה ידנית",
     "createManualRental": "יצירת השכרה ידנית",
+    "requestToolRental": "בקשת השכרת כלי",
+    "rentalHistory": "היסטוריית השכרות",
     "rentalPeriod": "תקופת השכרה",
     "startDate": "תאריך התחלה",
     "endDate": "תאריך סיום",
     "returnDate": "תאריך החזרה",
     "dueDate": "תאריך יעד",
-    "status": "סטטוס השכרה",
+    "totalCost": "עלות כוללת",
+    "price": "מחיר",
+    "status": "סטטוס",
     "pending": "ממתין",
     "approved": "אושר",
     "active": "פעיל",
     "returned": "הוחזר",
-    "overdue": "באיחור"
+    "overdue": "באיחור",
+    "cancelled": "בוטל",
+    "renter": "שוכר",
+    "actions": "פעולות",
+    "approve": "אישור",
+    "reject": "דחייה",
+    "startRental": "התחלת השכרה",
+    "markReturned": "סימון כהוחזר",
+    "submitRequest": "שליחת בקשה",
+    "walkIn": "לקוח שהגיע"
   },
   "inventory": {
     "title": "מלאי",
@@ -38,6 +64,35 @@
     "totalQuantity": "כמות כוללת",
     "availableQuantity": "כמות זמינה"
   },
+  "fields": {
+    "toolName": "שם הכלי",
+    "category": "קטגוריה",
+    "description": "תיאור",
+    "brand": "מותג",
+    "model": "דגם",
+    "serialNumber": "מספר סידורי",
+    "condition": "מצב",
+    "location": "מיקום",
+    "locationInShop": "מיקום בחנות",
+    "notes": "הערות",
+    "notesOptional": "הערות (אופציונלי)",
+    "pricePerDay": "מחיר ליום ($)",
+    "searchByTool": "חיפוש לפי כלי",
+    "searchByRenter": "חיפוש לפי שוכר",
+    "toolNamePlaceholder": "שם הכלי...",
+    "renterPlaceholder": "שם או דוא\"ל של השוכר...",
+    "categoryPlaceholder": "למשל: מקדחה, מסור, פטיש",
+    "locationPlaceholder": "למשל: מעבר 3, מדף B",
+    "notesPlaceholder": "דרישות מיוחדות או הערות...",
+    "unknownTool": "כלי לא ידוע",
+    "unknownUser": "משתמש לא ידוע"
+  },
+  "condition": {
+    "excellent": "מצוין",
+    "good": "טוב",
+    "fair": "סביר",
+    "needsRepair": "דורש תיקון"
+  },
   "customer": {
     "walkIn": "לקוח שהגיע למקום",
     "nonRegistered": "לקוח לא רשום",
@@ -45,10 +100,19 @@
     "customerPhone": "טלפון הלקוח",
     "customerEmail": "דוא\"ל הלקוח"
   },
+  "messages": {
+    "showingRentals": "מציג השכרה אחת",
+    "showingRentals_other": "מציג {{count}} השכרות",
+    "filtered": "(מסונן)",
+    "noRentalsMatch": "אין השכרות התואמות את קריטריוני החיפוש.",
+    "noRentalHistory": "לא נמצאה היסטוריית השכרות."
+  },
   "errors": {
     "notAvailable": "הכלי לא זמין",
     "invalidDates": "תאריכי השכרה לא תקינים",
     "failedToCreate": "יצירת ההשכרה נכשלה",
-    "failedToApprove": "אישור ההשכרה נכשל"
+    "failedToApprove": "אישור ההשכרה נכשל",
+    "failedToUpdate": "עדכון סטטוס ההשכרה נכשל",
+    "failedToAdd": "הוספת הכלי נכשלה"
   }
 }

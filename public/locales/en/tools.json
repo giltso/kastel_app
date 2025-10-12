@@ -8,25 +8,51 @@
   "professionalGrade": "Professional-grade tools for your projects",
   "fromBasicToSpecialized": "From basic hand tools to specialized equipment",
   "manageTools": "Manage Tools",
+  "addTool": "Add Tool",
+  "addNewTool": "Add New Tool",
+  "allTools": "All Tools",
+  "free": "Free",
+  "pricePerDay": "Price per day",
+  "signInToRent": "Sign in to rent",
+  "rented": "Rented",
+  "descriptions": {
+    "manageInventory": "Manage tool inventory and rental requests",
+    "browseAndRent": "Browse and rent available tools",
+    "discoverCollection": "Discover our professional tool collection"
+  },
   "rental": {
     "title": "Rental",
     "rentals": "Rentals",
     "activeRentals": "Active Rentals",
+    "myCurrentRentals": "My Current Rentals",
     "requestRental": "Request Rental",
     "createRental": "Create Rental",
     "manualRental": "Manual Rental",
     "createManualRental": "Create Manual Rental",
+    "requestToolRental": "Request Tool Rental",
+    "rentalHistory": "Rental History",
     "rentalPeriod": "Rental Period",
     "startDate": "Start Date",
     "endDate": "End Date",
     "returnDate": "Return Date",
     "dueDate": "Due Date",
+    "totalCost": "Total Cost",
+    "price": "Price",
     "status": "Rental Status",
     "pending": "Pending",
     "approved": "Approved",
     "active": "Active",
     "returned": "Returned",
-    "overdue": "Overdue"
+    "overdue": "Overdue",
+    "cancelled": "Cancelled",
+    "renter": "Renter",
+    "actions": "Actions",
+    "approve": "Approve",
+    "reject": "Reject",
+    "startRental": "Start Rental",
+    "markReturned": "Mark Returned",
+    "submitRequest": "Submit Request",
+    "walkIn": "Walk-in"
   },
   "inventory": {
     "title": "Inventory",
@@ -38,6 +64,35 @@
     "totalQuantity": "Total Quantity",
     "availableQuantity": "Available Quantity"
   },
+  "fields": {
+    "toolName": "Tool Name",
+    "category": "Category",
+    "description": "Description",
+    "brand": "Brand",
+    "model": "Model",
+    "serialNumber": "Serial Number",
+    "condition": "Condition",
+    "location": "Location",
+    "locationInShop": "Location in Shop",
+    "notes": "Notes",
+    "notesOptional": "Notes (Optional)",
+    "pricePerDay": "Price per Day ($)",
+    "searchByTool": "Search by Tool",
+    "searchByRenter": "Search by Renter",
+    "toolNamePlaceholder": "Tool name...",
+    "renterPlaceholder": "Renter name or email...",
+    "categoryPlaceholder": "e.g., drill, saw, hammer",
+    "locationPlaceholder": "e.g., Aisle 3, Shelf B",
+    "notesPlaceholder": "Any special requirements or notes...",
+    "unknownTool": "Unknown Tool",
+    "unknownUser": "Unknown User"
+  },
+  "condition": {
+    "excellent": "Excellent",
+    "good": "Good",
+    "fair": "Fair",
+    "needsRepair": "Needs Repair"
+  },
   "customer": {
     "walkIn": "Walk-in Customer",
     "nonRegistered": "Non-registered customer",
@@ -45,10 +100,19 @@
     "customerPhone": "Customer Phone",
     "customerEmail": "Customer Email"
   },
+  "messages": {
+    "showingRentals": "Showing {{count}} rental",
+    "showingRentals_other": "Showing {{count}} rentals",
+    "filtered": "(filtered)",
+    "noRentalsMatch": "No rentals match your search criteria.",
+    "noRentalHistory": "No rental history found."
+  },
   "errors": {
     "notAvailable": "Tool is not available",
     "invalidDates": "Invalid rental dates",
     "failedToCreate": "Failed to create rental",
-    "failedToApprove": "Failed to approve rental"
+    "failedToApprove": "Failed to approve rental",
+    "failedToUpdate": "Failed to update rental status",
+    "failedToAdd": "Failed to add tool"
   }
 }
