@@ -33,7 +33,14 @@
     "totalAssignments": "Total Assignments",
     "totalShifts": "Total Shifts",
     "totalCourses": "Total Courses",
-    "rental": "Rental"
+    "rental": "Rental",
+    "activeDays": "Active Days",
+    "assignmentsShort": "a",
+    "coursesShort": "C",
+    "rentalsShort": "R",
+    "shiftsShort": "S",
+    "statusOver": "Over",
+    "statusUnder": "Under"
   },
   "shift": {
     "title": "Shift",

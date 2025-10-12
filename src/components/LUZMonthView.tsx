@@ -1,4 +1,5 @@
 import { Calendar } from "lucide-react";
+import { useLanguage } from "@/hooks/useLanguage";
 
 /**
  * LUZ Month View Component
@@ -39,6 +40,8 @@ export function LUZMonthView({
   getShiftStaffingStatus,
   onDateClick
 }: LUZMonthViewProps) {
+  const { t, currentLanguage } = useLanguage();
+
   // Generate calendar grid for the month
   const generateMonthGrid = (dateString: string) => {
     // Parse date components to avoid timezone issues
@@ -88,10 +91,18 @@ export function LUZMonthView({
   };
 
   const monthGrid = generateMonthGrid(selectedDate);
-  const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const dayNames = [
+    t("common:days.sun"),
+    t("common:days.mon"),
+    t("common:days.tue"),
+    t("common:days.wed"),
+    t("common:days.thu"),
+    t("common:days.fri"),
+    t("common:days.sat")
+  ];
 
-  // Get month name for header
-  const monthName = new Date(selectedDate + 'T00:00:00').toLocaleDateString('en-US', {
+  // Get month name for header - Use locale-aware formatting
+  const monthName = new Date(selectedDate + 'T00:00:00').toLocaleDateString(currentLanguage, {
     month: 'long',
     year: 'numeric'
   });
@@ -150,8 +161,8 @@ export function LUZMonthView({
       <div className="bg-base-100 border border-base-300 rounded-lg overflow-hidden">
         {/* Header Row with Day Names - Abbreviated on mobile */}
         <div className="grid grid-cols-7 bg-base-200">
-          {dayNames.map(dayName => (
-            <div key={dayName} className="p-1 sm:p-2 text-center text-[10px] sm:text-xs font-medium border-r border-base-300 last:border-r-0">
+          {dayNames.map((dayName, index) => (
+            <div key={`day-${index}`} className="p-1 sm:p-2 text-center text-[10px] sm:text-xs font-medium border-r border-base-300 last:border-r-0">
               <span className="hidden sm:inline">{dayName}</span>
               <span className="sm:hidden">{dayName.charAt(0)}</span>
             </div>
@@ -193,7 +204,7 @@ export function LUZMonthView({
                     {dayStatus.shiftsCount > 0 && (
                       <div className="flex items-center justify-between gap-1">
                         <span className="text-[9px] sm:text-[10px] font-medium truncate">
-                          <span className="hidden sm:inline">S:</span>{dayStatus.shiftsCount}
+                          <span className="hidden sm:inline">{t("shifts:luz.shiftsShort")}:</span>{dayStatus.shiftsCount}
                         </span>
                         {(dayStatus.understaffedCount ?? 0) > 0 && (
                           <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-error rounded-full flex-shrink-0"></div>
@@ -210,17 +221,17 @@ export function LUZMonthView({
                     {/* Show assignment count only on larger screens */}
                     {dayStatus.assignmentsCount > 0 && (
                       <div className="hidden sm:block text-[9px] text-base-content/70 truncate">
-                        {dayStatus.assignmentsCount}a
+                        {dayStatus.assignmentsCount}{t("shifts:luz.assignmentsShort")}
                       </div>
                     )}
 
                     {/* Compact indicators for courses/rentals */}
                     <div className="flex gap-1 text-[8px] sm:text-[9px]">
                       {dayStatus.coursesCount > 0 && (
-                        <span className="text-secondary">C:{dayStatus.coursesCount}</span>
+                        <span className="text-secondary">{t("shifts:luz.coursesShort")}:{dayStatus.coursesCount}</span>
                       )}
                       {dayStatus.rentalsCount > 0 && (
-                        <span className="text-accent">R:{dayStatus.rentalsCount}</span>
+                        <span className="text-accent">{t("shifts:luz.rentalsShort")}:{dayStatus.rentalsCount}</span>
                       )}
                     </div>
                   </div>
@@ -244,7 +255,7 @@ export function LUZMonthView({
           <div className="text-lg sm:text-xl font-bold">
             {Object.values(monthData).reduce((sum, day) => sum + day.shifts.length, 0)}
           </div>
-          <div className="text-[10px] sm:text-xs leading-tight">Total<br className="sm:hidden" /><span className="hidden sm:inline"> </span>Shifts</div>
+          <div className="text-[10px] sm:text-xs leading-tight">{t("shifts:luz.totalShifts")}</div>
         </div>
         <div className="p-2 bg-success/10 border border-success/20 rounded">
           <div className="text-lg sm:text-xl font-bold">
@@ -252,13 +263,13 @@ export function LUZMonthView({
               sum + day.assignments.filter(a => a.status === 'confirmed').length, 0
             )}
           </div>
-          <div className="text-[10px] sm:text-xs leading-tight">Confirmed</div>
+          <div className="text-[10px] sm:text-xs leading-tight">{t("shifts:luz.confirmedCount")}</div>
         </div>
         <div className="p-2 bg-secondary/10 border border-secondary/20 rounded">
           <div className="text-lg sm:text-xl font-bold">
             {Object.values(monthData).reduce((sum, day) => sum + day.courses.length, 0)}
           </div>
-          <div className="text-[10px] sm:text-xs leading-tight">Total<br className="sm:hidden" /><span className="hidden sm:inline"> </span>Courses</div>
+          <div className="text-[10px] sm:text-xs leading-tight">{t("shifts:luz.totalCourses")}</div>
         </div>
         <div className="p-2 bg-base-200 border border-base-300 rounded">
           <div className="text-lg sm:text-xl font-bold">
@@ -267,7 +278,7 @@ export function LUZMonthView({
               return dayData.shifts.length > 0 || dayData.courses.length > 0;
             }).length}
           </div>
-          <div className="text-[10px] sm:text-xs leading-tight">Active<br className="sm:hidden" /><span className="hidden sm:inline"> </span>Days</div>
+          <div className="text-[10px] sm:text-xs leading-tight">{t("shifts:luz.activeDays")}</div>
         </div>
       </div>
 
@@ -275,19 +286,19 @@ export function LUZMonthView({
       <div className="mt-4 flex flex-wrap gap-2 sm:gap-4 text-[10px] sm:text-xs">
         <div className="flex items-center gap-1">
           <div className="w-2 h-2 sm:w-3 sm:h-3 bg-success rounded-full"></div>
-          <span>Staffed</span>
+          <span>{t("shifts:staffing.staffed")}</span>
         </div>
         <div className="flex items-center gap-1">
           <div className="w-2 h-2 sm:w-3 sm:h-3 bg-warning rounded-full"></div>
-          <span>Over</span>
+          <span>{t("shifts:luz.statusOver")}</span>
         </div>
         <div className="flex items-center gap-1">
           <div className="w-2 h-2 sm:w-3 sm:h-3 bg-error rounded-full"></div>
-          <span>Under</span>
+          <span>{t("shifts:luz.statusUnder")}</span>
         </div>
         <div className="flex items-center gap-1">
           <div className="w-2 h-2 sm:w-3 sm:h-3 border-2 border-primary rounded-full"></div>
-          <span>Today</span>
+          <span>{t("common:time.today")}</span>
         </div>
       </div>
     </div>
