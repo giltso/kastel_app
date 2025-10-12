@@ -24,10 +24,16 @@
     "noAssignmentsForDate": "אין שיבוצים לתאריך שנבחר",
     "availableShifts": "משמרות זמינות",
     "dailySchedule": "לוח זמנים יומי",
+    "weeklySchedule": "לוח זמנים שבועי",
     "time": "שעה",
     "noShiftsAvailable": "אין משמרות זמינות ליום זה",
     "confirmedCount": "מאושרים",
-    "pendingCount": "ממתינים"
+    "pendingCount": "ממתינים",
+    "noEvents": "אין אירועים",
+    "totalAssignments": "סה\"כ שיבוצים",
+    "totalShifts": "סה\"כ משמרות",
+    "totalCourses": "סה\"כ קורסים",
+    "rental": "השכרה"
   },
   "shift": {
     "title": "משמרת",

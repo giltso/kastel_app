@@ -1,5 +1,6 @@
 import { Calendar } from "lucide-react";
 import { calculateTimelinePositions } from "@/utils/timelinePositioning";
+import { useLanguage } from "@/hooks/useLanguage";
 
 /**
  * LUZ Week View Component
@@ -45,11 +46,13 @@ export function LUZWeekView({
   onRequestJoin,
   onCreateShift
 }: LUZWeekViewProps) {
+  const { t } = useLanguage();
+
   return (
     <div className="bg-base-100 border border-base-300 rounded-lg p-4">
       <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
         <Calendar className="w-5 h-5" />
-        Weekly Schedule
+        {t("shifts:luz.weeklySchedule")}
       </h2>
 
       {/* Week Grid Container - Enhanced for mobile scrolling */}
@@ -64,8 +67,8 @@ export function LUZWeekView({
           <div className="absolute left-0 top-0 w-12 sm:w-16 z-10 bg-base-100">
             {/* Time header */}
             <div className="h-12 flex items-center justify-center text-[10px] sm:text-xs font-medium bg-base-200 border-b border-base-300/30 rounded-tl">
-              <span className="hidden sm:inline">Time</span>
-              <span className="sm:hidden">⏱</span>
+              <span className="hidden sm:inline">{t("common:time.time")}</span>
+              <span className="sm:hidden">{t("common:time.timeLabel")}</span>
             </div>
             {/* Time labels - Abbreviated on mobile */}
             {Array.from({ length: 12 }, (_, i) => {
@@ -237,7 +240,7 @@ export function LUZWeekView({
                           {course.schedule.startTime}-{course.schedule.endTime}
                         </div>
                         <div className="text-xs">
-                          {course.enrolledStudents?.length || 0} students
+                          {course.enrolledStudents?.length || 0} {t("shifts:staffing.students")}
                         </div>
                       </div>
                     );
@@ -267,7 +270,7 @@ export function LUZWeekView({
                           padding: '2px'
                         }}
                       >
-                        <div className="font-medium truncate">{rental.tool?.name || 'Rental'}</div>
+                        <div className="font-medium truncate">{rental.tool?.name || t("shifts:luz.rental")}</div>
                         <div className="text-xs text-base-content/70 truncate">
                           {rental.renterUser?.name}
                         </div>
@@ -286,7 +289,7 @@ export function LUZWeekView({
                         title={hasManagerTag ? "Click to create a new shift" : undefined}
                       >
                         <div className="text-center pointer-events-none">
-                          <div className="text-xs">No events</div>
+                          <div className="text-xs">{t("shifts:luz.noEvents")}</div>
                           {hasManagerTag && onCreateShift && (
                             <div className="text-2xl mt-1">+</div>
                           )}
@@ -307,19 +310,19 @@ export function LUZWeekView({
           <div className="text-lg sm:text-xl font-bold">
             {Object.values(assignmentsForWeek).flat().filter(a => a.status === 'confirmed').length}
           </div>
-          <div className="text-[10px] sm:text-xs leading-tight">Total<br className="sm:hidden" /><span className="hidden sm:inline"> </span>Assignments</div>
+          <div className="text-[10px] sm:text-xs leading-tight">{t("shifts:luz.totalAssignments")}</div>
         </div>
         <div className="p-2 sm:p-3 bg-info/10 border border-info/20 rounded">
           <div className="text-lg sm:text-xl font-bold">
             {Object.values(shiftsForWeek).flat().length}
           </div>
-          <div className="text-[10px] sm:text-xs leading-tight">Total<br className="sm:hidden" /><span className="hidden sm:inline"> </span>Shifts</div>
+          <div className="text-[10px] sm:text-xs leading-tight">{t("shifts:luz.totalShifts")}</div>
         </div>
         <div className="p-2 sm:p-3 bg-secondary/10 border border-secondary/20 rounded">
           <div className="text-lg sm:text-xl font-bold">
             {Object.values(coursesForWeek).flat().length}
           </div>
-          <div className="text-[10px] sm:text-xs leading-tight">Total<br className="sm:hidden" /><span className="hidden sm:inline"> </span>Courses</div>
+          <div className="text-[10px] sm:text-xs leading-tight">{t("shifts:luz.totalCourses")}</div>
         </div>
       </div>
     </div>
