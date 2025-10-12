@@ -1,5 +1,6 @@
 import { Users, ChevronDown } from "lucide-react";
 import { usePermissionsV2 } from "@/hooks/usePermissionsV2";
+import { useLanguage } from "@/hooks/useLanguage";
 import { useState, useEffect } from "react";
 
 /**
@@ -56,6 +57,7 @@ export function LUZOverview({
   onAssignWorker,
   onEditAssignment
 }: LUZOverviewProps) {
+  const { t } = useLanguage();
   const { user } = usePermissionsV2();
 
   // Collapsible state - default to collapsed on mobile only
@@ -82,7 +84,7 @@ export function LUZOverview({
       >
         <h2 className="text-lg font-semibold flex items-center gap-2 mx-auto lg:mx-0 lg:text-xl">
           <Users className="w-5 h-5" />
-          Overview
+          {t("shifts:luz.overview")}
         </h2>
         <ChevronDown
           className={`w-5 h-5 transition-transform lg:hidden absolute right-3 ${isExpanded ? 'rotate-180' : ''}`}
@@ -95,7 +97,7 @@ export function LUZOverview({
       {/* Pending Actions */}
       {hasManagerTag && pendingAssignments && pendingAssignments.length > 0 && (
         <div className="mb-6">
-          <h3 className="font-medium mb-3 text-warning">Pending Approvals ({pendingAssignments.length})</h3>
+          <h3 className="font-medium mb-3 text-warning">{t("shifts:assignment.pending")} ({pendingAssignments.length})</h3>
           <div className="space-y-2">
             {pendingAssignments.slice(0, 3).map((assignment) => (
               <div key={assignment._id} className="p-3 bg-warning/10 border border-warning/20 rounded-lg">
@@ -109,13 +111,13 @@ export function LUZOverview({
                       className="btn btn-xs btn-success"
                       onClick={() => onApproveAssignment?.(assignment._id)}
                     >
-                      Approve
+                      {t("shifts:assignment.approved")}
                     </button>
                     <button
                       className="btn btn-xs btn-error"
                       onClick={() => onRejectAssignment?.(assignment._id)}
                     >
-                      Reject
+                      {t("shifts:assignment.rejected")}
                     </button>
                   </div>
                 </div>
@@ -127,7 +129,7 @@ export function LUZOverview({
                   className="btn btn-sm btn-outline"
                   onClick={() => onReviewRequests?.()}
                 >
-                  View All ({pendingAssignments.length})
+                  {t("common:actions.viewAll")} ({pendingAssignments.length})
                 </button>
               </div>
             )}
@@ -137,7 +139,7 @@ export function LUZOverview({
 
       {/* Today's Assignments Summary - Filtered by active shifts only */}
       <div className="mb-6">
-        <h3 className="font-medium mb-3">Today's Schedule</h3>
+        <h3 className="font-medium mb-3">{t("shifts:luz.todaySchedule")}</h3>
         {(() => {
           // Filter assignments to only show those for shifts that are displayed
           const visibleAssignments = assignmentsForDate?.filter(assignment =>
@@ -156,13 +158,13 @@ export function LUZOverview({
                     assignment.status === 'confirmed' ? 'badge-success' :
                     assignment.status.includes('pending') ? 'badge-warning' : 'badge-neutral'
                   }`}>
-                    {assignment.status}
+                    {t(`shifts:assignment.${assignment.status}`)}
                   </div>
                 </div>
               ))}
             </div>
           ) : (
-            <p className="text-base-content/50 text-sm">No assignments for selected date</p>
+            <p className="text-base-content/50 text-sm">{t("shifts:luz.noAssignmentsForDate")}</p>
           );
         })()}
       </div>
@@ -170,7 +172,7 @@ export function LUZOverview({
       {/* Available Shifts */}
       {filters.shifts && shiftsForDate && (
         <div className="mb-6">
-          <h3 className="font-medium mb-3">Available Shifts</h3>
+          <h3 className="font-medium mb-3">{t("shifts:luz.availableShifts")}</h3>
           {shiftsForDate.length > 0 ? (
             <div className="space-y-2">
               {shiftsForDate.map((shift) => {
@@ -192,7 +194,7 @@ export function LUZOverview({
                           className="btn btn-xs btn-warning"
                           onClick={() => onEditAssignment?.(userAssignment._id)}
                         >
-                          Edit Assignment
+                          {t("shifts:assignment.editAssignment")}
                         </button>
                       ) : (
                         // Show Request to Join button if user doesn't have assignment
@@ -200,7 +202,7 @@ export function LUZOverview({
                           className="btn btn-xs btn-primary"
                           onClick={() => onRequestJoin?.(shift._id, new Date().toISOString().split('T')[0])}
                         >
-                          Request to Join
+                          {t("shifts:assignment.requestJoin")}
                         </button>
                       )}
                       {hasManagerTag && (
@@ -208,7 +210,7 @@ export function LUZOverview({
                           className="btn btn-xs btn-secondary"
                           onClick={() => onAssignWorker?.(shift._id, new Date().toISOString().split('T')[0])}
                         >
-                          Assign a Worker
+                          {t("shifts:assignment.assignWorker")}
                         </button>
                       )}
                     </div>
@@ -217,7 +219,7 @@ export function LUZOverview({
               })}
             </div>
           ) : (
-            <p className="text-base-content/50 text-sm">No shifts available for this day</p>
+            <p className="text-base-content/50 text-sm">{t("shifts:luz.noShiftsAvailable")}</p>
           )}
         </div>
       )}
@@ -226,11 +228,11 @@ export function LUZOverview({
       <div className="grid grid-cols-2 gap-2 text-center">
         <div className="p-2 bg-success/10 border border-success/20 rounded">
           <div className="text-lg font-bold">{assignmentsForDate?.filter(a => a.status === 'confirmed').length || 0}</div>
-          <div className="text-xs">Confirmed</div>
+          <div className="text-xs">{t("shifts:luz.confirmedCount")}</div>
         </div>
         <div className="p-2 bg-warning/10 border border-warning/20 rounded">
           <div className="text-lg font-bold">{pendingAssignments?.length || 0}</div>
-          <div className="text-xs">Pending</div>
+          <div className="text-xs">{t("shifts:luz.pendingCount")}</div>
         </div>
       </div>
       </div>

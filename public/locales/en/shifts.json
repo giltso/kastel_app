@@ -24,7 +24,10 @@
     "noAssignmentsForDate": "No assignments for selected date",
     "availableShifts": "Available Shifts",
     "dailySchedule": "Daily Schedule",
-    "time": "Time"
+    "time": "Time",
+    "noShiftsAvailable": "No shifts available for this day",
+    "confirmedCount": "Confirmed",
+    "pendingCount": "Pending"
   },
   "shift": {
     "title": "Shift",

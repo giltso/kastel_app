@@ -24,7 +24,10 @@
     "noAssignmentsForDate": "אין שיבוצים לתאריך שנבחר",
     "availableShifts": "משמרות זמינות",
     "dailySchedule": "לוח זמנים יומי",
-    "time": "שעה"
+    "time": "שעה",
+    "noShiftsAvailable": "אין משמרות זמינות ליום זה",
+    "confirmedCount": "מאושרים",
+    "pendingCount": "ממתינים"
   },
   "shift": {
     "title": "משמרת",
