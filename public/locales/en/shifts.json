@@ -71,7 +71,11 @@
     "understaffed": "Understaffed",
     "staffed": "Staffed",
     "overstaffed": "Overstaffed",
-    "autoUpdating": "Auto-updating"
+    "autoUpdating": "Auto-updating",
+    "noEventsScheduled": "No events scheduled for {{date}}",
+    "createFirstEvent": "Create First Event",
+    "students": "students",
+    "status": "Status"
   },
   "assignment": {
     "assignWorker": "Assign Worker",

@@ -44,7 +44,9 @@
     "afternoon": "צהריים",
     "evening": "ערב",
     "hours": "שעות",
-    "minutes": "דקות"
+    "minutes": "דקות",
+    "time": "שעה",
+    "timeLabel": "⏱"
   },
   "days": {
     "monday": "יום שני",

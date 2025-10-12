@@ -71,7 +71,11 @@
     "understaffed": "חוסר באיוש",
     "staffed": "מאויש",
     "overstaffed": "עודף איוש",
-    "autoUpdating": "מתעדכן אוטומטית"
+    "autoUpdating": "מתעדכן אוטומטית",
+    "noEventsScheduled": "אין אירועים מתוכננים עבור {{date}}",
+    "createFirstEvent": "יצירת אירוע ראשון",
+    "students": "תלמידים",
+    "status": "סטטוס"
   },
   "assignment": {
     "assignWorker": "שיבוץ עובד",

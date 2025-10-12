@@ -1,5 +1,6 @@
 import { Calendar } from "lucide-react";
 import { calculateTimelinePositions } from "@/utils/timelinePositioning";
+import { useLanguage } from "@/hooks/useLanguage";
 
 /**
  * LUZ Vertical Timeline Component
@@ -44,11 +45,13 @@ export function LUZVerticalTimeline({
   onRequestJoin,
   onCreateShift
 }: LUZVerticalTimelineProps) {
+  const { t } = useLanguage();
+
   return (
     <div className="bg-base-100 border border-base-300 rounded-lg p-4">
       <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
         <Calendar className="w-5 h-5" />
-        Daily Schedule
+        {t("shifts:luz.dailySchedule")}
       </h2>
 
       {/* Vertical Timeline - Mobile optimized */}
@@ -63,8 +66,8 @@ export function LUZVerticalTimeline({
         {/* Time Labels Column - Narrower on mobile */}
         <div className="absolute left-0 top-0 w-10 sm:w-16 border-r border-base-300">
           <div className="text-[10px] sm:text-xs font-medium text-center py-2 border-b border-base-300 bg-base-100">
-            <span className="hidden sm:inline">Time</span>
-            <span className="sm:hidden">⏱</span>
+            <span className="hidden sm:inline">{t("common:time.time")}</span>
+            <span className="sm:hidden">{t("common:time.timeLabel")}</span>
           </div>
           {Array.from({ length: 12 }, (_, i) => {
             const hour = i + 8;
@@ -162,7 +165,7 @@ export function LUZVerticalTimeline({
                                   staffingStatus.status === 'understaffed' ? 'badge-error' :
                                   staffingStatus.status === 'staffed' ? 'badge-success' : 'badge-warning'
                                 }`}>
-                                  <span className="hidden sm:inline">{staffingStatus.status}</span>
+                                  <span className="hidden sm:inline">{t(`shifts:staffing.${staffingStatus.status}`)}</span>
                                   <span className="sm:hidden text-[9px]">
                                     {staffingStatus.status === 'understaffed' ? '!' : staffingStatus.status === 'staffed' ? '✓' : '⚠'}
                                   </span>
@@ -315,7 +318,7 @@ export function LUZVerticalTimeline({
                           <div className="bg-secondary/30 border-b border-secondary/50 px-2 py-1 rounded-t">
                             <div className="font-medium text-sm text-base-content">{course.title}</div>
                             <div className="text-xs text-base-content/80">
-                              {course.schedule.startTime} - {course.schedule.endTime} • {course.enrolledStudents?.length || 0} students • {course.instructor?.name}
+                              {course.schedule.startTime} - {course.schedule.endTime} • {course.enrolledStudents?.length || 0} {t("shifts:staffing.students")} • {course.instructor?.name}
                             </div>
                           </div>
 
@@ -367,7 +370,7 @@ export function LUZVerticalTimeline({
                     >
                       {/* Tab-style Header */}
                       <div className="bg-accent/30 border-b border-accent/50 px-2 py-1 rounded-t">
-                        <div className="font-medium text-sm text-base-content">{rental.tool?.name || 'Tool Rental'}</div>
+                        <div className="font-medium text-sm text-base-content">{rental.tool?.name || t("common:home.toolRentalTitle")}</div>
                         <div className="text-xs text-base-content/80">
                           {rental.rentalStartDate} - {rental.rentalEndDate} • {rental.renterUser?.name} • ${rental.totalCost}
                         </div>
@@ -376,7 +379,7 @@ export function LUZVerticalTimeline({
                       {/* Rental details area */}
                       <div className="relative px-3 py-2">
                         <div className="text-xs">
-                          <div className="mb-1"><strong>Status:</strong> {rental.status}</div>
+                          <div className="mb-1"><strong>{t("shifts:staffing.status")}:</strong> {rental.status}</div>
                           {rental.notes && <div className="text-xs text-base-content/70 mt-2">{rental.notes}</div>}
                         </div>
                       </div>
@@ -394,10 +397,10 @@ export function LUZVerticalTimeline({
           <div className="flex items-center justify-center h-full text-base-content/50 absolute inset-0">
             <div className="text-center">
               <Calendar className="w-12 h-12 mx-auto mb-2 opacity-50" />
-              <p>No events scheduled for {selectedDate}</p>
+              <p>{t("shifts:staffing.noEventsScheduled", { date: selectedDate })}</p>
               {hasManagerTag && onCreateShift && (
                 <button className="btn btn-sm btn-primary mt-2" onClick={onCreateShift}>
-                  Create First Event
+                  {t("shifts:staffing.createFirstEvent")}
                 </button>
               )}
             </div>

@@ -44,7 +44,9 @@
     "afternoon": "Afternoon",
     "evening": "Evening",
     "hours": "Hours",
-    "minutes": "Minutes"
+    "minutes": "Minutes",
+    "time": "Time",
+    "timeLabel": "⏱"
   },
   "days": {
     "monday": "Monday",
