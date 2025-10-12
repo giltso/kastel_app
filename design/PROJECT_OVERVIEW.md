@@ -103,6 +103,49 @@
 - 🚧 **Audit Trail**: Role change tracking not implemented
 - 🚧 **Bulk Operations**: Import/export functionality not implemented
 
+### 5. Internationalization (i18n) - IN PROGRESS
+**Implementation Status:**
+- ✅ **i18n Infrastructure**: Complete setup with i18next + react-i18next + browser language detection
+- ✅ **Translation Files**: 6 namespaces (common, auth, shifts, tools, courses, roles) with Hebrew + English
+- ✅ **Language Switcher**: Dropdown component with live language switching and persistence
+- ✅ **RTL Support**: Automatic text direction switching for Hebrew (right-to-left)
+- ✅ **Home Page**: Full translation for guest, customer, and staff views (30+ keys)
+- ✅ **Navigation**: Header, menu, and sign-in/out buttons translated
+- ✅ **Staff Dashboard**: LUZ hub, quick actions, development status translated
+- 🚧 **LUZ Calendar**: Mostly translated, a few hardcoded strings remain
+- 🚧 **Modals**: 11/12 modals have translation hooks, EditRoleModal needs completion
+- 🚧 **Tools Page**: Needs translation implementation
+- 🚧 **Educational Page**: Needs translation implementation
+- 🚧 **Roles Page**: Needs translation implementation
+
+**Supported Languages:**
+- **Hebrew (עברית)** - Primary working language, complete with RTL support
+- **English** - Default fallback, source of truth for translations
+- **Russian (Русский)** - Structure ready, marked "Coming Soon"
+- **French (Français)** - Structure ready, marked "Coming Soon"
+
+**Technical Details:**
+- **Custom Hook**: `useLanguage()` provides `t()`, `isRTL`, `currentLanguage`, `changeLanguage()`
+- **Namespace Pattern**: Use `t("namespace:key.path")` for organized translations
+- **Variable Interpolation**: Support for dynamic values like `{{name}}` in translations
+- **HTML Direction**: Automatic `dir="rtl"` attribute on `<html>` element for Hebrew
+- **Persistence**: Language preference saved to localStorage
+- **Detection Order**: localStorage → navigator → htmlTag
+
+**Translation Organization:**
+```
+public/locales/
+  ├── en/                    # English (source of truth)
+  │   ├── common.json        # App name, nav, actions, time, home, staff (30+ keys)
+  │   ├── auth.json          # Sign in/out, access control
+  │   ├── shifts.json        # LUZ calendar, shift management, assignments
+  │   ├── tools.json         # Tool rentals, inventory, customer management
+  │   ├── courses.json       # Educational courses, instructors, enrollment
+  │   └── roles.json         # Role management, permissions, tags
+  └── he/                    # Hebrew (production-ready)
+      └── [same structure]
+```
+
 ## 🏗️ Technical Architecture
 
 ### Frontend Stack

@@ -3,6 +3,7 @@ import { useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { Id } from "../../../convex/_generated/dataModel";
 import { X, Shield, UserPlus, UserMinus } from "lucide-react";
+import { useLanguage } from "@/hooks/useLanguage";
 
 interface EditRoleModalProps {
   isOpen: boolean;
@@ -24,6 +25,7 @@ interface EditRoleModalProps {
 }
 
 export function EditRoleModal({ isOpen, onClose, user, onSuccess }: EditRoleModalProps) {
+  const { t } = useLanguage();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -46,7 +48,7 @@ export function EditRoleModal({ isOpen, onClose, user, onSuccess }: EditRoleModa
 
       // Validation: Manager requires Worker
       if (role === 'managerTag' && newRoles.managerTag && !newRoles.workerTag) {
-        setError("Manager tag requires Worker tag");
+        setError(t("roles:messages.managerRequiresWorker"));
         return prev;
       }
 
@@ -67,7 +69,7 @@ export function EditRoleModal({ isOpen, onClose, user, onSuccess }: EditRoleModa
     try {
       // Validate manager requires worker
       if (roles.managerTag && !roles.workerTag) {
-        setError("Manager tag requires Worker tag");
+        setError(t("roles:messages.managerRequiresWorker"));
         setIsSubmitting(false);
         return;
       }
@@ -84,7 +86,7 @@ export function EditRoleModal({ isOpen, onClose, user, onSuccess }: EditRoleModa
       onSuccess?.();
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to update roles");
+      setError(err instanceof Error ? err.message : t("roles:messages.failedToUpdate"));
     } finally {
       setIsSubmitting(false);
     }
@@ -106,14 +108,14 @@ export function EditRoleModal({ isOpen, onClose, user, onSuccess }: EditRoleModa
       onSuccess?.();
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to promote to staff");
+      setError(err instanceof Error ? err.message : t("roles:messages.failedToPromote"));
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleDemoteToCustomer = async () => {
-    if (!confirm(`Are you sure you want to demote ${user.name} to customer? All staff tags will be removed.`)) {
+    if (!confirm(t("roles:modal.demoteConfirm", { name: user.name }))) {
       return;
     }
 
@@ -125,7 +127,7 @@ export function EditRoleModal({ isOpen, onClose, user, onSuccess }: EditRoleModa
       onSuccess?.();
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to demote to customer");
+      setError(err instanceof Error ? err.message : t("roles:messages.failedToDemote"));
     } finally {
       setIsSubmitting(false);
     }
@@ -142,7 +144,7 @@ export function EditRoleModal({ isOpen, onClose, user, onSuccess }: EditRoleModa
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-bold text-lg flex items-center gap-2">
             <Shield className="w-5 h-5" />
-            Edit Roles - {user.name}
+            {t("roles:modal.editRolesTitle")} - {user.name}
           </h3>
           <button
             className="btn btn-sm btn-circle btn-ghost"
@@ -160,7 +162,7 @@ export function EditRoleModal({ isOpen, onClose, user, onSuccess }: EditRoleModa
             {user.email && <div className="text-base-content/70">{user.email}</div>}
             <div className="mt-2">
               <span className={`badge ${isStaff ? 'badge-primary' : 'badge-warning'}`}>
-                {isStaff ? 'Staff Member' : 'Customer'}
+                {isStaff ? t("roles:modal.staffMember") : t("roles:tags.customer")}
               </span>
             </div>
           </div>
@@ -175,15 +177,15 @@ export function EditRoleModal({ isOpen, onClose, user, onSuccess }: EditRoleModa
 
         {/* Role Toggles */}
         <div className="space-y-4 mb-6">
-          <h4 className="font-semibold text-sm">Role Tags</h4>
+          <h4 className="font-semibold text-sm">{t("roles:modal.roleTags")}</h4>
 
           {/* Staff Tags (only for staff members) */}
           {isStaff && (
             <>
               <label className="flex items-center justify-between p-3 bg-base-200 rounded-lg cursor-pointer hover:bg-base-300">
                 <div>
-                  <div className="font-medium">Worker Tag</div>
-                  <div className="text-xs text-base-content/70">Access to LUZ system and shift management</div>
+                  <div className="font-medium">{t("roles:tags.worker")}</div>
+                  <div className="text-xs text-base-content/70">{t("roles:descriptions.workerTag")}</div>
                 </div>
                 <input
                   type="checkbox"
@@ -196,8 +198,8 @@ export function EditRoleModal({ isOpen, onClose, user, onSuccess }: EditRoleModa
 
               <label className="flex items-center justify-between p-3 bg-base-200 rounded-lg cursor-pointer hover:bg-base-300">
                 <div>
-                  <div className="font-medium">Manager Tag</div>
-                  <div className="text-xs text-base-content/70">Role management and shift approval (requires Worker)</div>
+                  <div className="font-medium">{t("roles:tags.manager")}</div>
+                  <div className="text-xs text-base-content/70">{t("roles:descriptions.managerTag")}</div>
                 </div>
                 <input
                   type="checkbox"
@@ -210,8 +212,8 @@ export function EditRoleModal({ isOpen, onClose, user, onSuccess }: EditRoleModa
 
               <label className="flex items-center justify-between p-3 bg-base-200 rounded-lg cursor-pointer hover:bg-base-300">
                 <div>
-                  <div className="font-medium">Instructor Tag</div>
-                  <div className="text-xs text-base-content/70">Course management and educational content</div>
+                  <div className="font-medium">{t("roles:tags.instructor")}</div>
+                  <div className="text-xs text-base-content/70">{t("roles:descriptions.instructorTag")}</div>
                 </div>
                 <input
                   type="checkbox"
@@ -224,8 +226,8 @@ export function EditRoleModal({ isOpen, onClose, user, onSuccess }: EditRoleModa
 
               <label className="flex items-center justify-between p-3 bg-base-200 rounded-lg cursor-pointer hover:bg-base-300">
                 <div>
-                  <div className="font-medium">Tool Handler Tag</div>
-                  <div className="text-xs text-base-content/70">Tool inventory and rental processing</div>
+                  <div className="font-medium">{t("roles:tags.toolHandler")}</div>
+                  <div className="text-xs text-base-content/70">{t("roles:descriptions.toolHandlerTag")}</div>
                 </div>
                 <input
                   type="checkbox"
@@ -242,8 +244,8 @@ export function EditRoleModal({ isOpen, onClose, user, onSuccess }: EditRoleModa
           {!isStaff && (
             <label className="flex items-center justify-between p-3 bg-base-200 rounded-lg cursor-pointer hover:bg-base-300">
               <div>
-                <div className="font-medium">Rental Approved</div>
-                <div className="text-xs text-base-content/70">Can request and rent tools</div>
+                <div className="font-medium">{t("roles:tags.rentalApproved")}</div>
+                <div className="text-xs text-base-content/70">{t("roles:descriptions.rentalApprovedTag")}</div>
               </div>
               <input
                 type="checkbox"
@@ -266,7 +268,7 @@ export function EditRoleModal({ isOpen, onClose, user, onSuccess }: EditRoleModa
               disabled={isSubmitting}
             >
               <UserMinus className="w-4 h-4" />
-              Remove from Staff
+              {t("roles:actions.removeFromStaff")}
             </button>
           ) : (
             <button
@@ -275,7 +277,7 @@ export function EditRoleModal({ isOpen, onClose, user, onSuccess }: EditRoleModa
               disabled={isSubmitting}
             >
               <UserPlus className="w-4 h-4" />
-              Add to Staff
+              {t("roles:actions.addToStaff")}
             </button>
           )}
 
@@ -287,14 +289,14 @@ export function EditRoleModal({ isOpen, onClose, user, onSuccess }: EditRoleModa
             onClick={onClose}
             disabled={isSubmitting}
           >
-            Cancel
+            {t("common:actions.cancel")}
           </button>
           <button
             className="btn btn-primary"
             onClick={handleSaveRoles}
             disabled={isSubmitting}
           >
-            {isSubmitting ? <span className="loading loading-spinner" /> : 'Save Changes'}
+            {isSubmitting ? <span className="loading loading-spinner" /> : t("roles:actions.saveChanges")}
           </button>
         </div>
       </div>

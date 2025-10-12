@@ -22,7 +22,10 @@
     "updateRoles": "עדכון תפקידים",
     "roleEmulation": "חיקוי תפקיד",
     "emulateRole": "חיקוי תפקיד",
-    "stopEmulation": "עצירת חיקוי"
+    "stopEmulation": "עצירת חיקוי",
+    "addToStaff": "הוספה לצוות",
+    "removeFromStaff": "הסרה מהצוות",
+    "saveChanges": "שמירת שינויים"
   },
   "search": {
     "searchUsers": "חיפוש משתמשים...",
@@ -37,12 +40,28 @@
     "managerDescription": "יכול ליצור משמרות ולאשר שיבוצים",
     "instructorDescription": "יכול ליצור ולנהל קורסים לימודיים",
     "toolHandlerDescription": "יכול לנהל מלאי כלים והשכרות",
-    "rentalApprovedDescription": "לקוח יכול לבקש השכרת כלים"
+    "rentalApprovedDescription": "לקוח יכול לבקש השכרת כלים",
+    "workerTag": "גישה למערכת LUZ וניהול משמרות",
+    "managerTag": "ניהול תפקידים ואישור שיבוצים (דורש תג עובד)",
+    "instructorTag": "ניהול קורסים ותוכן לימודי",
+    "toolHandlerTag": "ניהול מלאי כלים ועיבוד השכרות",
+    "rentalApprovedTag": "יכול לבקש ולשכור כלים"
+  },
+  "modal": {
+    "editRolesTitle": "עריכת תפקידים",
+    "roleTags": "תגי תפקיד",
+    "staffMember": "חבר צוות",
+    "staffTags": "תגי צוות",
+    "customerTags": "תגי לקוח",
+    "demoteConfirm": "האם אתה בטוח שברצונך להוריד את {{name}} ללקוח? כל תגי הצוות יוסרו."
   },
   "messages": {
     "rolesUpdated": "התפקידים עודכנו בהצלחה",
     "failedToUpdate": "עדכון התפקידים נכשל",
     "emulationActive": "חיקוי תפקיד פעיל",
-    "emulationStopped": "חיקוי תפקיד הופסק"
+    "emulationStopped": "חיקוי תפקיד הופסק",
+    "managerRequiresWorker": "תג מנהל דורש תג עובד",
+    "failedToPromote": "קידום לצוות נכשל",
+    "failedToDemote": "הורדה ללקוח נכשלה"
   }
 }

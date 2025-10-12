@@ -22,7 +22,10 @@
     "updateRoles": "Update Roles",
     "roleEmulation": "Role Emulation",
     "emulateRole": "Emulate Role",
-    "stopEmulation": "Stop Emulation"
+    "stopEmulation": "Stop Emulation",
+    "addToStaff": "Add to Staff",
+    "removeFromStaff": "Remove from Staff",
+    "saveChanges": "Save Changes"
   },
   "search": {
     "searchUsers": "Search users...",
@@ -37,12 +40,28 @@
     "managerDescription": "Can create shifts and approve assignments",
     "instructorDescription": "Can create and manage educational courses",
     "toolHandlerDescription": "Can manage tool inventory and rentals",
-    "rentalApprovedDescription": "Customer can request tool rentals"
+    "rentalApprovedDescription": "Customer can request tool rentals",
+    "workerTag": "Access to LUZ system and shift management",
+    "managerTag": "Role management and shift approval (requires Worker)",
+    "instructorTag": "Course management and educational content",
+    "toolHandlerTag": "Tool inventory and rental processing",
+    "rentalApprovedTag": "Can request and rent tools"
+  },
+  "modal": {
+    "editRolesTitle": "Edit Roles",
+    "roleTags": "Role Tags",
+    "staffMember": "Staff Member",
+    "staffTags": "Staff Tags",
+    "customerTags": "Customer Tags",
+    "demoteConfirm": "Are you sure you want to demote {{name}} to customer? All staff tags will be removed."
   },
   "messages": {
     "rolesUpdated": "Roles updated successfully",
     "failedToUpdate": "Failed to update roles",
     "emulationActive": "Role emulation active",
-    "emulationStopped": "Role emulation stopped"
+    "emulationStopped": "Role emulation stopped",
+    "managerRequiresWorker": "Manager tag requires Worker tag",
+    "failedToPromote": "Failed to promote to staff",
+    "failedToDemote": "Failed to demote to customer"
   }
 }
