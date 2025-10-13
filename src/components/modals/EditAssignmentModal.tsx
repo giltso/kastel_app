@@ -85,7 +85,7 @@ export function EditAssignmentModal({
       onSuccess?.();
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to submit edit request");
+      setError(err instanceof Error ? err.message : t("shifts:assignment.failedToSubmitEditRequest"));
     } finally {
       setIsSubmitting(false);
     }
@@ -118,7 +118,10 @@ export function EditAssignmentModal({
             hasOverlap: true,
             slot1Index: i,
             slot2Index: j,
-            message: `Time slots ${i + 1} (${slot1.startTime}-${slot1.endTime}) and ${j + 1} (${slot2.startTime}-${slot2.endTime}) overlap`
+            slot1: i + 1,
+            slot2: j + 1,
+            time1: `${slot1.startTime}-${slot1.endTime}`,
+            time2: `${slot2.startTime}-${slot2.endTime}`,
           };
         }
       }
@@ -143,13 +146,13 @@ export function EditAssignmentModal({
     return (
       <div className="modal modal-open">
         <div className="modal-box">
-          <h3 className="font-bold text-lg mb-4">Cannot Edit Assignment</h3>
+          <h3 className="font-bold text-lg mb-4">{t("shifts:assignment.cannotEditAssignment")}</h3>
           <div className="alert alert-info">
             <AlertCircle className="w-4 h-4" />
-            <span>You can only edit your own assignments or you need manager permissions.</span>
+            <span>{t("shifts:assignment.canOnlyEditOwnAssignments")}</span>
           </div>
           <div className="modal-action">
-            <button className="btn" onClick={onClose}>Close</button>
+            <button className="btn" onClick={onClose}>{t("common:actions.close")}</button>
           </div>
         </div>
       </div>
@@ -162,7 +165,7 @@ export function EditAssignmentModal({
         {/* Header */}
         <div className="flex justify-between items-start p-6 border-b border-base-300 flex-shrink-0">
           <div>
-            <h3 className="font-bold text-xl">Edit Assignment</h3>
+            <h3 className="font-bold text-xl">{t("shifts:assignment.editAssignment")}</h3>
             <p className="text-base-content/70 mt-1">{shift.name}</p>
           </div>
           <button
@@ -180,19 +183,19 @@ export function EditAssignmentModal({
             <div className="bg-base-100 rounded-lg border border-base-300 p-4 mb-6">
               <h4 className="font-semibold mb-3 flex items-center gap-2">
                 <Calendar className="w-4 h-4" />
-                Current Assignment & Coverage
+                {t("shifts:assignment.currentAssignmentCoverage")}
               </h4>
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-base-content/70">Date:</span>
-                  <span>{new Date(assignment.date).toLocaleDateString()}</span>
+                  <span className="text-base-content/70">{t("shifts:shift.date")}:</span>
+                  <span>{new Date(assignment.date).toLocaleDateString(currentLanguage)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-base-content/70">Shift Hours:</span>
+                  <span className="text-base-content/70">{t("shifts:assignment.shiftHours")}:</span>
                   <span>{shift.storeHours.openTime} - {shift.storeHours.closeTime}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-base-content/70">Status:</span>
+                  <span className="text-base-content/70">{t("shifts:staffing.status")}:</span>
                   <span className={`badge badge-sm ${
                     assignment.status === 'confirmed' ? 'badge-success' :
                     assignment.status.includes('pending') ? 'badge-warning' : 'badge-neutral'
@@ -203,7 +206,7 @@ export function EditAssignmentModal({
 
                 {/* Coverage Timeline with Requirements */}
                 <div className="pt-2 border-t border-base-300">
-                  <div className="font-medium text-base-content/90 mb-2">Time Coverage:</div>
+                  <div className="font-medium text-base-content/90 mb-2">{t("shifts:assignment.timeCoverage")}:</div>
                   <div className="space-y-1.5">
                     {(() => {
                       // Create a combined timeline showing assigned hours and gaps
@@ -277,10 +280,10 @@ export function EditAssignmentModal({
                             <div className="flex-1">
                               <div className="font-medium">
                                 {slot.startTime} - {slot.endTime}
-                                {!slot.isAssigned && <span className="ml-1 text-warning">(Gap)</span>}
+                                {!slot.isAssigned && <span className="ml-1 text-warning">({t("shifts:assignment.gap")})</span>}
                               </div>
                               <div className="text-base-content/60">
-                                {req.minWorkers}-{req.optimalWorkers} workers needed
+                                {t("shifts:assignment.workersNeeded", { min: req.minWorkers, optimal: req.optimalWorkers })}
                                 {req.notes && ` · ${req.notes}`}
                               </div>
                             </div>
@@ -299,7 +302,7 @@ export function EditAssignmentModal({
                 <div className="flex justify-between items-center mb-3">
                   <h4 className="font-semibold flex items-center gap-2">
                     <Clock className="w-4 h-4" />
-                    New Hours
+                    {t("shifts:assignment.newHoursLabel")}
                   </h4>
                   <button
                     type="button"
@@ -307,13 +310,13 @@ export function EditAssignmentModal({
                     onClick={addTimeSlot}
                   >
                     <Plus className="w-3 h-3" />
-                    Add Time Slot
+                    {t("shifts:assignment.addTimeSlot")}
                   </button>
                 </div>
 
                 {selectedHours.length === 0 ? (
                   <div className="text-sm text-base-content/60 p-3 bg-base-200 rounded border">
-                    No changes to hours. Current assignment hours will be kept.
+                    {t("shifts:assignment.noChangesToHours")}
                   </div>
                 ) : (
                   <>
@@ -331,7 +334,7 @@ export function EditAssignmentModal({
                               onChange={(e) => updateTimeSlot(index, 'startTime', e.target.value)}
                               className={`input input-bordered input-sm ${isInvolved ? 'input-error' : ''}`}
                             />
-                            <span>to</span>
+                            <span>{t("common:time.to")}</span>
                             <input
                               type="time"
                               value={slot.endTime}
@@ -354,7 +357,14 @@ export function EditAssignmentModal({
                     {overlapCheck.hasOverlap && (
                       <div className="alert alert-error mt-3">
                         <AlertCircle className="w-4 h-4" />
-                        <span className="text-sm">{overlapCheck.message}</span>
+                        <span className="text-sm">
+                          {t("shifts:assignment.overlapWarning", {
+                            slot1: overlapCheck.slot1,
+                            time1: overlapCheck.time1,
+                            slot2: overlapCheck.slot2,
+                            time2: overlapCheck.time2
+                          })}
+                        </span>
                       </div>
                     )}
                   </>
@@ -363,13 +373,13 @@ export function EditAssignmentModal({
 
               {/* Request Notes */}
               <div className="bg-base-100 rounded-lg border border-base-300 p-4 mb-6">
-                <h4 className="font-semibold mb-3">Edit Notes (Optional)</h4>
+                <h4 className="font-semibold mb-3">{t("shifts:assignment.editNotes")}</h4>
                 <textarea
                   value={requestNotes}
                   onChange={(e) => setRequestNotes(e.target.value)}
                   className="textarea textarea-bordered w-full"
                   rows={3}
-                  placeholder="Explain what changes you're requesting and why..."
+                  placeholder={t("shifts:assignment.editNotesPlaceholder")}
                 />
               </div>
 
@@ -386,13 +396,13 @@ export function EditAssignmentModal({
                 <div className="alert alert-warning mb-4">
                   <AlertCircle className="w-4 h-4" />
                   <div>
-                    <div className="font-medium">Deletion Request</div>
+                    <div className="font-medium">{t("shifts:assignment.deletionRequest")}</div>
                     <div className="text-sm">
                       {hasManagerTag && assignment.workerId === user?._id
-                        ? "Removing all time slots will delete this assignment immediately."
+                        ? t("shifts:assignment.removeAllSlotsDeleteImmediate")
                         : hasManagerTag
-                        ? "Removing all time slots will request deletion. Worker approval required."
-                        : "Removing all time slots will request deletion. Manager approval required."}
+                        ? t("shifts:assignment.removeAllSlotsRequestDeletionWorkerApproval")
+                        : t("shifts:assignment.removeAllSlotsRequestDeletionManagerApproval")}
                     </div>
                   </div>
                 </div>
@@ -400,25 +410,25 @@ export function EditAssignmentModal({
 
               {/* Submit Section */}
               <div className="bg-base-100 border border-base-300 rounded-lg p-4 mb-6">
-                <h4 className="font-medium mb-2">Edit Summary</h4>
+                <h4 className="font-medium mb-2">{t("shifts:assignment.editSummary")}</h4>
                 <ul className="text-sm text-base-content/70 space-y-1">
                   {hasManagerTag ? (
                     <>
-                      <li>• As a manager, your edit will create a new confirmed assignment</li>
-                      <li>• The original assignment will be replaced immediately</li>
-                      <li>• Changes will be effective right away</li>
+                      <li>• {t("shifts:assignment.managerEditConfirmed")}</li>
+                      <li>• {t("shifts:assignment.originalAssignmentReplaced")}</li>
+                      <li>• {t("shifts:assignment.changesEffectiveImmediately")}</li>
                     </>
                   ) : assignment.workerId === user?._id ? (
                     <>
-                      <li>• Your edit request will need manager approval</li>
-                      <li>• Original assignment stays active until approved</li>
-                      <li>• You'll be notified once a decision is made</li>
+                      <li>• {t("shifts:assignment.workerEditNeedsApproval")}</li>
+                      <li>• {t("shifts:assignment.originalAssignmentStaysActive")}</li>
+                      <li>• {t("shifts:assignment.notifiedOnDecision")}</li>
                     </>
                   ) : (
                     <>
-                      <li>• Edit request will be sent to the worker and managers</li>
-                      <li>• Requires approval from both worker and management</li>
-                      <li>• Original assignment remains until approved</li>
+                      <li>• {t("shifts:assignment.editRequestSentToWorkerManagers")}</li>
+                      <li>• {t("shifts:assignment.requiresApprovalBoth")}</li>
+                      <li>• {t("shifts:assignment.originalAssignmentRemains")}</li>
                     </>
                   )}
                 </ul>
@@ -431,7 +441,7 @@ export function EditAssignmentModal({
                   onClick={onClose}
                   disabled={isSubmitting}
                 >
-                  Cancel
+                  {t("common:actions.cancel")}
                 </button>
                 <button
                   type="submit"
@@ -441,12 +451,12 @@ export function EditAssignmentModal({
                   {isSubmitting ? (
                     <>
                       <span className="loading loading-spinner loading-sm"></span>
-                      {hasManagerTag ? 'Applying Changes...' : 'Submitting Edit...'}
+                      {hasManagerTag ? t("shifts:assignment.applyingChanges") : t("shifts:assignment.submittingEdit")}
                     </>
                   ) : (
                     <>
                       <Edit className="w-4 h-4" />
-                      {hasManagerTag ? 'Apply Changes' : 'Submit Edit Request'}
+                      {hasManagerTag ? t("shifts:assignment.applyChanges") : t("shifts:assignment.submitEditRequest")}
                     </>
                   )}
                 </button>
@@ -458,7 +468,7 @@ export function EditAssignmentModal({
           <div className="w-80 bg-base-50 border-l border-base-300 p-6 overflow-y-auto">
             <h4 className="font-semibold mb-4 flex items-center gap-2">
               <Users className="w-4 h-4" />
-              Current Assignment Timeline
+              {t("shifts:assignment.currentAssignmentTimeline")}
             </h4>
 
             {/* Vertical Timeline Container */}
@@ -496,28 +506,28 @@ export function EditAssignmentModal({
                       <div className="flex-1 relative">
                         {isAssigned && (
                           <div className="bg-primary/20 border-l-2 border-primary rounded-r px-2 py-1">
-                            <div className="text-xs font-medium text-primary">Current</div>
+                            <div className="text-xs font-medium text-primary">{t("shifts:assignment.current")}</div>
                           </div>
                         )}
 
                         {/* New Assignment Preview (if different) */}
                         {selectedHours.length > 0 && wouldBeAssigned && !isAssigned && (
                           <div className="bg-success/20 border-l-2 border-success rounded-r px-2 py-1">
-                            <div className="text-xs font-medium text-success">New</div>
+                            <div className="text-xs font-medium text-success">{t("shifts:assignment.new")}</div>
                           </div>
                         )}
 
                         {/* Removed Assignment (if current but not in new) */}
                         {selectedHours.length > 0 && isAssigned && !wouldBeAssigned && (
                           <div className="bg-error/20 border-l-2 border-error rounded-r px-2 py-1">
-                            <div className="text-xs font-medium text-error">Removing</div>
+                            <div className="text-xs font-medium text-error">{t("shifts:assignment.removing")}</div>
                           </div>
                         )}
 
                         {/* No assignment */}
                         {!isAssigned && !wouldBeAssigned && (
                           <div className="bg-base-200 border-l-2 border-base-300 rounded-r px-2 py-1">
-                            <div className="text-xs text-base-content/40">Unassigned</div>
+                            <div className="text-xs text-base-content/40">{t("shifts:assignment.unassigned")}</div>
                           </div>
                         )}
                       </div>
@@ -531,23 +541,23 @@ export function EditAssignmentModal({
             <div className="mt-4 space-y-2 text-xs">
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 bg-primary/20 border-l-2 border-primary rounded-r"></div>
-                <span>Current Assignment</span>
+                <span>{t("shifts:assignment.current")} {t("shifts:assignment.assignmentSummary")}</span>
               </div>
               {selectedHours.length > 0 && (
                 <>
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 bg-success/20 border-l-2 border-success rounded-r"></div>
-                    <span>New Hours</span>
+                    <span>{t("shifts:assignment.newHours")}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 bg-error/20 border-l-2 border-error rounded-r"></div>
-                    <span>Removing</span>
+                    <span>{t("shifts:assignment.removing")}</span>
                   </div>
                 </>
               )}
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 bg-base-200 border-l-2 border-base-300 rounded-r"></div>
-                <span>Unassigned</span>
+                <span>{t("shifts:assignment.unassigned")}</span>
               </div>
             </div>
           </div>

@@ -103,7 +103,7 @@
 - 🚧 **Audit Trail**: Role change tracking not implemented
 - 🚧 **Bulk Operations**: Import/export functionality not implemented
 
-### 5. Internationalization (i18n) - IN PROGRESS
+### 5. Internationalization (i18n) - 60% COMPLETE
 **Implementation Status:**
 - ✅ **i18n Infrastructure**: Complete setup with i18next + react-i18next + browser language detection
 - ✅ **Translation Files**: 6 namespaces (common, auth, shifts, tools, courses, roles) with Hebrew + English
@@ -112,8 +112,11 @@
 - ✅ **Home Page**: Full translation for guest, customer, and staff views (30+ keys)
 - ✅ **Navigation**: Header, menu, and sign-in/out buttons translated
 - ✅ **Staff Dashboard**: LUZ hub, quick actions, development status translated
-- 🚧 **LUZ Calendar**: Mostly translated, a few hardcoded strings remain
-- 🚧 **Modals**: 11/12 modals have translation hooks, EditRoleModal needs completion
+- ✅ **LUZ Main Page**: All views (day/week/month), overview panel, search - 100% translated
+- ✅ **LUZ Components**: LUZOverview, LUZVerticalTimeline, LUZWeekView, LUZMonthView - fully translated
+- ✅ **LUZ Modals (4/7)**: ShiftDetailsModal, CreateEditShiftModal, RequestJoinShiftModal, AssignWorkerModal - fully translated
+- 🔄 **EditAssignmentModal**: Translation keys added (35+), component translation 10% complete
+- 🚧 **Remaining Modals (2/7)**: ReviewRequestModal, ApproveAssignmentModal need translation
 - 🚧 **Tools Page**: Needs translation implementation
 - 🚧 **Educational Page**: Needs translation implementation
 - 🚧 **Roles Page**: Needs translation implementation
