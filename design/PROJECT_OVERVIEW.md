@@ -103,20 +103,20 @@
 - 🚧 **Audit Trail**: Role change tracking not implemented
 - 🚧 **Bulk Operations**: Import/export functionality not implemented
 
-### 5. Internationalization (i18n) - 60% COMPLETE
+### 5. Internationalization (i18n) - 75% COMPLETE
 **Implementation Status:**
 - ✅ **i18n Infrastructure**: Complete setup with i18next + react-i18next + browser language detection
-- ✅ **Translation Files**: 6 namespaces (common, auth, shifts, tools, courses, roles) with Hebrew + English
+- ✅ **Translation Files**: 6 namespaces with 400+ keys in Hebrew + English (shifts.json alone has 260+ keys)
 - ✅ **Language Switcher**: Dropdown component with live language switching and persistence
 - ✅ **RTL Support**: Automatic text direction switching for Hebrew (right-to-left)
 - ✅ **Home Page**: Full translation for guest, customer, and staff views (30+ keys)
 - ✅ **Navigation**: Header, menu, and sign-in/out buttons translated
 - ✅ **Staff Dashboard**: LUZ hub, quick actions, development status translated
 - ✅ **LUZ Main Page**: All views (day/week/month), overview panel, search - 100% translated
-- ✅ **LUZ Components**: LUZOverview, LUZVerticalTimeline, LUZWeekView, LUZMonthView - fully translated
-- ✅ **LUZ Modals (4/7)**: ShiftDetailsModal, CreateEditShiftModal, RequestJoinShiftModal, AssignWorkerModal - fully translated
-- 🔄 **EditAssignmentModal**: Translation keys added (35+), component translation 10% complete
-- 🚧 **Remaining Modals (2/7)**: ReviewRequestModal, ApproveAssignmentModal need translation
+- ✅ **LUZ Components**: LUZOverview, LUZVerticalTimeline, LUZWeekView, LUZMonthView - fully translated with locale-aware dates
+- ✅ **LUZ Modals (5/7)**: ShiftDetailsModal, CreateEditShiftModal, RequestJoinShiftModal, AssignWorkerModal, EditAssignmentModal - fully translated
+- 🔄 **ReviewRequestModal**: Translation keys added (35+), component translation in progress
+- 🚧 **ApproveAssignmentModal**: Final LUZ modal needing translation
 - 🚧 **Tools Page**: Needs translation implementation
 - 🚧 **Educational Page**: Needs translation implementation
 - 🚧 **Roles Page**: Needs translation implementation
