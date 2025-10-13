@@ -4,6 +4,7 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { Id } from "../../../convex/_generated/dataModel";
 import { usePermissionsV2 } from "@/hooks/usePermissionsV2";
+import { useLanguage } from "@/hooks/useLanguage";
 
 interface RequestJoinShiftModalProps {
   shiftId: Id<"shifts"> | null;
@@ -20,6 +21,7 @@ export function RequestJoinShiftModal({
   onClose,
   onSuccess,
 }: RequestJoinShiftModalProps) {
+  const { t, currentLanguage } = useLanguage();
   const { user, hasManagerTag } = usePermissionsV2();
   const [requestNotes, setRequestNotes] = useState("");
   const [selectedHours, setSelectedHours] = useState<{ startTime: string; endTime: string }[]>([]);
@@ -76,7 +78,7 @@ export function RequestJoinShiftModal({
       onSuccess?.();
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to submit request");
+      setError(err instanceof Error ? err.message : t("shifts:assignment.failedToSubmitRequest"));
     } finally {
       setIsSubmitting(false);
     }
@@ -109,7 +111,10 @@ export function RequestJoinShiftModal({
             hasOverlap: true,
             slot1Index: i,
             slot2Index: j,
-            message: `Time slots ${i + 1} (${slot1.startTime}-${slot1.endTime}) and ${j + 1} (${slot2.startTime}-${slot2.endTime}) overlap`
+            slot1: i + 1,
+            slot2: j + 1,
+            time1: `${slot1.startTime}-${slot1.endTime}`,
+            time2: `${slot2.startTime}-${slot2.endTime}`,
           };
         }
       }
@@ -127,13 +132,13 @@ export function RequestJoinShiftModal({
     return (
       <div className="modal modal-open">
         <div className="modal-box">
-          <h3 className="font-bold text-lg mb-4">Already Assigned</h3>
+          <h3 className="font-bold text-lg mb-4">{t("shifts:assignment.alreadyAssigned")}</h3>
           <div className="alert alert-info">
             <AlertCircle className="w-4 h-4" />
-            <span>You already have an assignment for this shift on {new Date(selectedDate).toLocaleDateString()}.</span>
+            <span>{t("shifts:assignment.alreadyAssignedMessage", { date: new Date(selectedDate).toLocaleDateString(currentLanguage) })}</span>
           </div>
           <div className="modal-action">
-            <button className="btn" onClick={onClose}>Close</button>
+            <button className="btn" onClick={onClose}>{t("common:actions.close")}</button>
           </div>
         </div>
       </div>
@@ -145,8 +150,8 @@ export function RequestJoinShiftModal({
       <div className="modal-box max-w-2xl">
         <div className="flex justify-between items-start mb-6">
           <div>
-            <h3 className="font-bold text-xl">Request to Join Shift</h3>
-            <p className="text-base-content/70 mt-1">Submit a request to join this shift</p>
+            <h3 className="font-bold text-xl">{t("shifts:assignment.requestJoinShift")}</h3>
+            <p className="text-base-content/70 mt-1">{t("shifts:assignment.submitRequestToJoin")}</p>
           </div>
           <button
             className="btn btn-sm btn-circle btn-ghost"
@@ -158,7 +163,7 @@ export function RequestJoinShiftModal({
 
         {/* Shift Information */}
         <div className="bg-base-200 rounded-lg p-4 mb-6">
-          <h4 className="font-semibold mb-3">Shift Details</h4>
+          <h4 className="font-semibold mb-3">{t("shifts:shift.shiftDetails")}</h4>
           <div className="grid md:grid-cols-2 gap-4 text-sm">
             <div className="flex items-center gap-2">
               <Calendar className="w-4 h-4" />
@@ -170,10 +175,10 @@ export function RequestJoinShiftModal({
             </div>
             <div className="flex items-center gap-2">
               <Users className="w-4 h-4" />
-              <span>Date: {new Date(selectedDate).toLocaleDateString()}</span>
+              <span>{t("shifts:shift.date")}: {new Date(selectedDate).toLocaleDateString(currentLanguage)}</span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="capitalize">{shift.type} shift</span>
+              <span>{t(`shifts:types.${shift.type}`)}</span>
             </div>
           </div>
         </div>
@@ -183,8 +188,7 @@ export function RequestJoinShiftModal({
           <div className="alert alert-warning mb-6">
             <AlertCircle className="w-4 h-4" />
             <span>
-              You already have {userAssignmentsOnDate.length} assignment(s) on this date.
-              Please ensure there are no scheduling conflicts.
+              {t("shifts:assignment.conflictWarning", { count: userAssignmentsOnDate.length })}
             </span>
           </div>
         )}
@@ -193,20 +197,23 @@ export function RequestJoinShiftModal({
           {/* Time Preferences (Optional) */}
           <div className="mb-6">
             <div className="flex justify-between items-center mb-3">
-              <label className="font-medium">Preferred Hours (Optional)</label>
+              <label className="font-medium">{t("shifts:assignment.preferredHours")}</label>
               <button
                 type="button"
                 className="btn btn-xs btn-outline"
                 onClick={addTimeSlot}
               >
                 <Plus className="w-3 h-3" />
-                Add Time Slot
+                {t("shifts:assignment.addTimeSlot")}
               </button>
             </div>
 
             {selectedHours.length === 0 ? (
               <div className="text-sm text-base-content/60 p-3 bg-base-100 rounded border">
-                No specific hours selected. You'll be considered for the full shift: {shift.storeHours.openTime} - {shift.storeHours.closeTime}
+                {t("shifts:assignment.noSpecificHours", {
+                  openTime: shift.storeHours.openTime,
+                  closeTime: shift.storeHours.closeTime
+                })}
               </div>
             ) : (
               <>
@@ -247,7 +254,14 @@ export function RequestJoinShiftModal({
                 {overlapCheck.hasOverlap && (
                   <div className="alert alert-error mt-3">
                     <AlertCircle className="w-4 h-4" />
-                    <span className="text-sm">{overlapCheck.message}</span>
+                    <span className="text-sm">
+                      {t("shifts:assignment.overlapWarning", {
+                        slot1: overlapCheck.slot1,
+                        time1: overlapCheck.time1,
+                        slot2: overlapCheck.slot2,
+                        time2: overlapCheck.time2
+                      })}
+                    </span>
                   </div>
                 )}
               </>
@@ -256,13 +270,13 @@ export function RequestJoinShiftModal({
 
           {/* Request Notes */}
           <div className="mb-6">
-            <label className="block font-medium mb-2">Additional Notes (Optional)</label>
+            <label className="block font-medium mb-2">{t("shifts:assignment.additionalNotes")}</label>
             <textarea
               value={requestNotes}
               onChange={(e) => setRequestNotes(e.target.value)}
               className="textarea textarea-bordered w-full"
               rows={3}
-              placeholder="Any additional information about your request, availability, or special considerations..."
+              placeholder={t("shifts:assignment.additionalNotesPlaceholder")}
             />
           </div>
 
@@ -276,19 +290,19 @@ export function RequestJoinShiftModal({
 
           {/* Submit Section */}
           <div className="bg-base-100 border border-base-300 rounded-lg p-4 mb-6">
-            <h4 className="font-medium mb-2">Request Summary</h4>
+            <h4 className="font-medium mb-2">{t("shifts:assignment.requestSummary")}</h4>
             <ul className="text-sm text-base-content/70 space-y-1">
               {hasManagerTag ? (
                 <>
-                  <li>• As a manager, your request will be automatically approved</li>
-                  <li>• Your assignment will be confirmed immediately</li>
-                  <li>• You can view your confirmed assignment in the assignments dashboard</li>
+                  <li>• {t("shifts:assignment.managerAutoApprove1")}</li>
+                  <li>• {t("shifts:assignment.managerAutoApprove2")}</li>
+                  <li>• {t("shifts:assignment.managerAutoApprove3")}</li>
                 </>
               ) : (
                 <>
-                  <li>• Your request will be sent to managers for approval</li>
-                  <li>• You'll be notified once a decision is made</li>
-                  <li>• You can view the status in your assignments dashboard</li>
+                  <li>• {t("shifts:assignment.workerApproval1")}</li>
+                  <li>• {t("shifts:assignment.workerApproval2")}</li>
+                  <li>• {t("shifts:assignment.workerApproval3")}</li>
                 </>
               )}
             </ul>
@@ -301,7 +315,7 @@ export function RequestJoinShiftModal({
               onClick={onClose}
               disabled={isSubmitting}
             >
-              Cancel
+              {t("common:actions.cancel")}
             </button>
             <button
               type="submit"
@@ -311,12 +325,12 @@ export function RequestJoinShiftModal({
               {isSubmitting ? (
                 <>
                   <span className="loading loading-spinner loading-sm"></span>
-                  {hasManagerTag ? 'Auto-approving...' : 'Submitting...'}
+                  {hasManagerTag ? t("shifts:assignment.autoApproving") : t("shifts:assignment.submitting")}
                 </>
               ) : hasManagerTag ? (
-                'Submit Request (Auto-approved)'
+                t("shifts:assignment.submitRequestAutoApproved")
               ) : (
-                'Submit Request'
+                t("shifts:assignment.submitRequest")
               )}
             </button>
           </div>
