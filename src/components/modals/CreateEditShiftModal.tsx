@@ -4,6 +4,7 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { Id } from "../../../convex/_generated/dataModel";
 import { usePermissionsV2 } from "@/hooks/usePermissionsV2";
+import { useLanguage } from "@/hooks/useLanguage";
 
 interface CreateEditShiftModalProps {
   shiftId?: Id<"shifts"> | null; // If provided, we're editing; if null/undefined, we're creating
@@ -21,19 +22,19 @@ interface HourlyRequirement {
 }
 
 const DAYS_OF_WEEK = [
-  { value: "sunday", label: "Sunday" },
-  { value: "monday", label: "Monday" },
-  { value: "tuesday", label: "Tuesday" },
-  { value: "wednesday", label: "Wednesday" },
-  { value: "thursday", label: "Thursday" },
-  { value: "friday", label: "Friday" },
-  { value: "saturday", label: "Saturday" },
+  { value: "sunday", key: "sunday" },
+  { value: "monday", key: "monday" },
+  { value: "tuesday", key: "tuesday" },
+  { value: "wednesday", key: "wednesday" },
+  { value: "thursday", key: "thursday" },
+  { value: "friday", key: "friday" },
+  { value: "saturday", key: "saturday" },
 ] as const;
 
 const SHIFT_TYPES = [
-  { value: "operational", label: "Operational" },
-  { value: "maintenance", label: "Maintenance" },
-  { value: "special", label: "Special" },
+  { value: "operational", key: "operational" },
+  { value: "maintenance", key: "maintenance" },
+  { value: "special", key: "special" },
 ] as const;
 
 const PRESET_COLORS = [
@@ -54,6 +55,7 @@ export function CreateEditShiftModal({
   onSuccess,
 }: CreateEditShiftModalProps) {
   const { hasManagerTag } = usePermissionsV2();
+  const { t } = useLanguage();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isAutoUpdatingRequirements, setIsAutoUpdatingRequirements] = useState(false);
@@ -186,21 +188,21 @@ export function CreateEditShiftModal({
     try {
       // Validation
       if (!formData.name.trim()) {
-        throw new Error("Shift name is required");
+        throw new Error(t("shifts:form.nameRequired"));
       }
 
       if (formData.recurringDays.length === 0) {
-        throw new Error("At least one recurring day must be selected");
+        throw new Error(t("shifts:form.selectOneDay"));
       }
 
       if (hourlyRequirements.length === 0) {
-        throw new Error("At least one hourly requirement is needed");
+        throw new Error(t("shifts:form.oneRequirement"));
       }
 
       // Validate hourly requirements
       for (const req of hourlyRequirements) {
         if (req.minWorkers < 0 || req.optimalWorkers < req.minWorkers) {
-          throw new Error("Optimal workers must be >= minimum workers >= 0");
+          throw new Error(t("shifts:form.optimalGreaterThanMin"));
         }
       }
 
@@ -232,7 +234,7 @@ export function CreateEditShiftModal({
       onSuccess?.(resultId);
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to save shift");
+      setError(err instanceof Error ? err.message : t("shifts:errors.failedToSave"));
     } finally {
       setIsSubmitting(false);
     }
@@ -246,10 +248,10 @@ export function CreateEditShiftModal({
         <div className="flex justify-between items-start mb-6">
           <div>
             <h3 className="font-bold text-2xl">
-              {isEditing ? "Edit Shift Template" : "Create New Shift Template"}
+              {isEditing ? t("shifts:shift.editShiftTemplate") : t("shifts:shift.createShiftTemplate")}
             </h3>
             <p className="text-base-content/70 mt-1">
-              {isEditing ? "Modify shift template settings" : "Define a new recurring shift template"}
+              {isEditing ? t("shifts:form.modifyTemplate") : t("shifts:form.defineNewTemplate")}
             </p>
           </div>
           <button
@@ -263,26 +265,26 @@ export function CreateEditShiftModal({
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Basic Information */}
           <div className="bg-base-200 rounded-lg p-4">
-            <h4 className="font-semibold mb-4">Basic Information</h4>
+            <h4 className="font-semibold mb-4">{t("shifts:form.basicInformation")}</h4>
 
             <div className="grid md:grid-cols-2 gap-4">
               <div>
                 <label className="label">
-                  <span className="label-text font-medium">Shift Name *</span>
+                  <span className="label-text font-medium">{t("shifts:shift.shiftName")} *</span>
                 </label>
                 <input
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                   className="input input-bordered w-full"
-                  placeholder="e.g., Daily Operations, Weekend Coverage"
+                  placeholder={t("shifts:form.shiftNamePlaceholder")}
                   required
                 />
               </div>
 
               <div>
                 <label className="label">
-                  <span className="label-text font-medium">Shift Type</span>
+                  <span className="label-text font-medium">{t("shifts:shift.shiftType")}</span>
                 </label>
                 <select
                   value={formData.type}
@@ -291,7 +293,7 @@ export function CreateEditShiftModal({
                 >
                   {SHIFT_TYPES.map(type => (
                     <option key={type.value} value={type.value}>
-                      {type.label}
+                      {t(`shifts:types.${type.key}`)}
                     </option>
                   ))}
                 </select>
@@ -300,26 +302,26 @@ export function CreateEditShiftModal({
 
             <div className="mt-4">
               <label className="label">
-                <span className="label-text font-medium">Description</span>
+                <span className="label-text font-medium">{t("shifts:form.description")}</span>
               </label>
               <textarea
                 value={formData.description}
                 onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                 className="textarea textarea-bordered w-full"
                 rows={2}
-                placeholder="Optional description of this shift..."
+                placeholder={t("shifts:form.optionalDescription")}
               />
             </div>
           </div>
 
           {/* Schedule Configuration */}
           <div className="bg-base-200 rounded-lg p-4">
-            <h4 className="font-semibold mb-4">Schedule Configuration</h4>
+            <h4 className="font-semibold mb-4">{t("shifts:schedule.scheduleConfiguration")}</h4>
 
             <div className="grid md:grid-cols-2 gap-4 mb-4">
               <div>
                 <label className="label">
-                  <span className="label-text font-medium">Opening Time</span>
+                  <span className="label-text font-medium">{t("shifts:schedule.openingTime")}</span>
                 </label>
                 <input
                   type="time"
@@ -331,7 +333,7 @@ export function CreateEditShiftModal({
 
               <div>
                 <label className="label">
-                  <span className="label-text font-medium">Closing Time</span>
+                  <span className="label-text font-medium">{t("shifts:schedule.closingTime")}</span>
                 </label>
                 <input
                   type="time"
@@ -344,7 +346,7 @@ export function CreateEditShiftModal({
 
             <div>
               <label className="label">
-                <span className="label-text font-medium">Recurring Days *</span>
+                <span className="label-text font-medium">{t("shifts:schedule.recurringDays")} *</span>
               </label>
               <div className="grid grid-cols-4 md:grid-cols-7 gap-2">
                 {DAYS_OF_WEEK.map(day => (
@@ -355,7 +357,7 @@ export function CreateEditShiftModal({
                       onChange={() => handleDayToggle(day.value)}
                       className="checkbox checkbox-sm"
                     />
-                    <span className="text-sm">{day.label.slice(0, 3)}</span>
+                    <span className="text-sm">{t(`common:days.${day.key}`).slice(0, 3)}</span>
                   </label>
                 ))}
               </div>
@@ -364,10 +366,10 @@ export function CreateEditShiftModal({
 
           {/* Visual Settings */}
           <div className="bg-base-200 rounded-lg p-4">
-            <h4 className="font-semibold mb-4">Visual Settings</h4>
+            <h4 className="font-semibold mb-4">{t("shifts:form.visualSettings")}</h4>
             <div>
               <label className="label">
-                <span className="label-text font-medium">Color Theme</span>
+                <span className="label-text font-medium">{t("shifts:form.colorTheme")}</span>
               </label>
               <div className="flex gap-2 flex-wrap">
                 {PRESET_COLORS.map(color => (
@@ -389,11 +391,11 @@ export function CreateEditShiftModal({
           <div className="bg-base-200 rounded-lg p-4">
             <div className="flex justify-between items-center mb-4">
               <div className="flex items-center gap-2">
-                <h4 className="font-semibold">Hourly Staffing Requirements</h4>
+                <h4 className="font-semibold">{t("shifts:staffing.hourlyStaffingRequirements")}</h4>
                 {isAutoUpdatingRequirements && (
                   <div className="badge badge-info badge-sm">
                     <span className="loading loading-spinner loading-xs mr-1"></span>
-                    Auto-updating
+                    {t("shifts:staffing.autoUpdating")}
                   </div>
                 )}
               </div>
@@ -403,14 +405,14 @@ export function CreateEditShiftModal({
                 onClick={generateHourlySlots}
               >
                 <Plus className="w-4 h-4" />
-                Generate from Hours
+                {t("shifts:staffing.generateFromHours")}
               </button>
             </div>
 
             {hourlyRequirements.length === 0 ? (
               <div className="text-center py-6 text-base-content/60">
-                <p>No hourly requirements defined.</p>
-                <p className="text-sm">Click "Generate from Hours" to create slots based on your schedule.</p>
+                <p>{t("shifts:staffing.noRequirements")}</p>
+                <p className="text-sm">{t("shifts:staffing.clickGenerate")}</p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -418,7 +420,7 @@ export function CreateEditShiftModal({
                   <div key={index} className="bg-base-100 rounded-lg p-3">
                     <div className="grid md:grid-cols-5 gap-3 items-end">
                       <div>
-                        <label className="label-text text-sm font-medium">Start Time</label>
+                        <label className="label-text text-sm font-medium">{t("shifts:assignment.startTime")}</label>
                         <input
                           type="time"
                           value={req.startTime}
@@ -428,7 +430,7 @@ export function CreateEditShiftModal({
                       </div>
 
                       <div>
-                        <label className="label-text text-sm font-medium">End Time</label>
+                        <label className="label-text text-sm font-medium">{t("shifts:assignment.endTime")}</label>
                         <input
                           type="time"
                           value={req.endTime}
@@ -438,7 +440,7 @@ export function CreateEditShiftModal({
                       </div>
 
                       <div>
-                        <label className="label-text text-sm font-medium">Min Workers</label>
+                        <label className="label-text text-sm font-medium">{t("shifts:staffing.minWorkers")}</label>
                         <input
                           type="number"
                           min="0"
@@ -449,7 +451,7 @@ export function CreateEditShiftModal({
                       </div>
 
                       <div>
-                        <label className="label-text text-sm font-medium">Optimal Workers</label>
+                        <label className="label-text text-sm font-medium">{t("shifts:staffing.optimalWorkers")}</label>
                         <input
                           type="number"
                           min="0"
@@ -476,7 +478,7 @@ export function CreateEditShiftModal({
                         value={req.notes || ""}
                         onChange={(e) => updateHourlyRequirement(index, 'notes', e.target.value)}
                         className="input input-bordered input-sm w-full"
-                        placeholder="Optional notes for this time range..."
+                        placeholder={t("shifts:form.optionalNotes")}
                       />
                     </div>
                   </div>
@@ -501,7 +503,7 @@ export function CreateEditShiftModal({
               onClick={onClose}
               disabled={isSubmitting}
             >
-              Cancel
+              {t("common:actions.cancel")}
             </button>
             <button
               type="submit"
@@ -511,12 +513,12 @@ export function CreateEditShiftModal({
               {isSubmitting ? (
                 <>
                   <span className="loading loading-spinner loading-sm"></span>
-                  {isEditing ? "Updating..." : "Creating..."}
+                  {isEditing ? t("shifts:form.updating") : t("shifts:form.creating")}
                 </>
               ) : (
                 <>
                   <Save className="w-4 h-4" />
-                  {isEditing ? "Update Shift" : "Create Shift"}
+                  {isEditing ? t("shifts:form.updateShift") : t("shifts:form.createShift")}
                 </>
               )}
             </button>
