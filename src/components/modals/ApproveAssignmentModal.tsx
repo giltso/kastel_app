@@ -4,6 +4,7 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { Id } from "../../../convex/_generated/dataModel";
 import { usePermissionsV2 } from "@/hooks/usePermissionsV2";
+import { useLanguage } from "@/hooks/useLanguage";
 
 interface ApproveAssignmentModalProps {
   assignmentId: Id<"shift_assignments"> | null;
@@ -18,6 +19,7 @@ export function ApproveAssignmentModal({
   onClose,
   onSuccess,
 }: ApproveAssignmentModalProps) {
+  const { t, currentLanguage } = useLanguage();
   const { user, hasWorkerTag, hasManagerTag } = usePermissionsV2();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -50,7 +52,7 @@ export function ApproveAssignmentModal({
       onSuccess?.();
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to approve assignment");
+      setError(err instanceof Error ? err.message : t("shifts:assignment.failedToApproveAssignment"));
     } finally {
       setIsSubmitting(false);
     }
@@ -70,21 +72,21 @@ export function ApproveAssignmentModal({
       onSuccess?.();
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to reject assignment");
+      setError(err instanceof Error ? err.message : t("shifts:assignment.failedToRejectAssignment"));
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const formatTime = (timeSlots: any[]) => {
-    if (!timeSlots || timeSlots.length === 0) return "No time specified";
+    if (!timeSlots || timeSlots.length === 0) return t("shifts:assignment.noTimeSpecified");
     return timeSlots.map(slot => `${slot.startTime}-${slot.endTime}`).join(', ');
   };
 
   const formatBreaks = (breakPeriods: any[]) => {
-    if (!breakPeriods || breakPeriods.length === 0) return "No breaks scheduled";
+    if (!breakPeriods || breakPeriods.length === 0) return t("shifts:assignment.noBreaksScheduled");
     return breakPeriods.map(bp =>
-      `${bp.startTime}-${bp.endTime} ${bp.isPaid ? '(Paid)' : '(Unpaid)'}`
+      `${bp.startTime}-${bp.endTime} ${bp.isPaid ? t("shifts:assignment.paidLabel") : t("shifts:assignment.unpaidLabel")}`
     ).join(', ');
   };
 
@@ -106,26 +108,26 @@ export function ApproveAssignmentModal({
     return (
       <div className="modal modal-open">
         <div className="modal-box">
-          <h3 className="font-bold text-lg mb-4">Assignment Not Available</h3>
+          <h3 className="font-bold text-lg mb-4">{t("shifts:assignment.assignmentNotAvailable")}</h3>
           <div className="alert alert-info">
             <AlertCircle className="w-4 h-4" />
             <span>
               {specificAssignment.status === 'pending_worker_approval' && specificAssignment.workerId !== user?._id
-                ? "This assignment is for another worker"
+                ? t("shifts:assignment.assignmentForAnotherWorker")
                 : specificAssignment.status === 'pending_manager_approval' && !hasManagerTag
-                ? "Only managers can approve this assignment"
+                ? t("shifts:assignment.onlyManagersCanApprove")
                 : specificAssignment.status === 'pending_worker_approval' && !hasWorkerTag
-                ? "You need worker permissions to approve this assignment"
+                ? t("shifts:assignment.needWorkerPermissions")
                 : specificAssignment.status === 'confirmed'
-                ? "This assignment has already been approved"
+                ? t("shifts:assignment.assignmentAlreadyApproved")
                 : specificAssignment.status === 'rejected'
-                ? "This assignment has already been rejected"
-                : "This assignment is not pending your approval"
+                ? t("shifts:assignment.assignmentAlreadyRejected")
+                : t("shifts:assignment.notPendingYourApproval")
               }
             </span>
           </div>
           <div className="modal-action">
-            <button className="btn" onClick={onClose}>Close</button>
+            <button className="btn" onClick={onClose}>{t("common:actions.close")}</button>
           </div>
         </div>
       </div>
@@ -137,11 +139,11 @@ export function ApproveAssignmentModal({
       <div className="modal-box max-w-3xl">
         <div className="flex justify-between items-start mb-6">
           <div>
-            <h3 className="font-bold text-xl">Assignment Approval Required</h3>
+            <h3 className="font-bold text-xl">{t("shifts:assignment.assignmentApprovalRequired")}</h3>
             <p className="text-base-content/70 mt-1">
               {specificAssignment.status === 'pending_worker_approval'
-                ? "Please review and approve or reject this assignment for yourself"
-                : "Please review and approve or reject this worker's shift request"
+                ? t("shifts:assignment.reviewApproveRejectSelf")
+                : t("shifts:assignment.reviewApproveRejectWorker")
               }
             </p>
           </div>
@@ -157,28 +159,28 @@ export function ApproveAssignmentModal({
         <div className="bg-base-200 rounded-lg p-6 mb-6">
           <h4 className="font-semibold mb-4 flex items-center gap-2">
             <Calendar className="w-5 h-5" />
-            Assignment Details
+            {t("shifts:assignment.assignmentDetailsTitle")}
           </h4>
 
           <div className="grid md:grid-cols-2 gap-6">
             {/* Shift Information */}
             <div>
-              <h5 className="font-medium mb-3">Shift Information</h5>
+              <h5 className="font-medium mb-3">{t("shifts:assignment.shiftInformation")}</h5>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-base-content/70">Shift Name:</span>
+                  <span className="text-base-content/70">{t("shifts:assignment.shiftNameLabel")}:</span>
                   <span className="font-medium">{specificAssignment.shift?.name}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-base-content/70">Date:</span>
-                  <span className="font-medium">{new Date(specificAssignment.date).toLocaleDateString()}</span>
+                  <span className="text-base-content/70">{t("shifts:shift.date")}:</span>
+                  <span className="font-medium">{new Date(specificAssignment.date).toLocaleDateString(currentLanguage)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-base-content/70">Type:</span>
+                  <span className="text-base-content/70">{t("shifts:assignment.typeLabel")}:</span>
                   <span className="font-medium capitalize">{specificAssignment.shift?.type}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-base-content/70">Assigned by:</span>
+                  <span className="text-base-content/70">{t("shifts:assignment.assignedByLabel")}:</span>
                   <span className="font-medium">{specificAssignment.assignedBy?.name}</span>
                 </div>
               </div>
@@ -186,24 +188,24 @@ export function ApproveAssignmentModal({
 
             {/* Schedule Details */}
             <div>
-              <h5 className="font-medium mb-3">Your Schedule</h5>
+              <h5 className="font-medium mb-3">{t("shifts:assignment.yourSchedule")}</h5>
               <div className="space-y-2 text-sm">
                 <div>
-                  <span className="text-base-content/70">Working Hours:</span>
+                  <span className="text-base-content/70">{t("shifts:assignment.workingHours")}:</span>
                   <div className="font-medium mt-1">
                     {formatTime(specificAssignment.assignedHours)}
                   </div>
                 </div>
                 <div>
-                  <span className="text-base-content/70">Break Periods:</span>
+                  <span className="text-base-content/70">{t("shifts:assignment.breakPeriodsColon")}:</span>
                   <div className="font-medium mt-1">
                     {formatBreaks(specificAssignment.breakPeriods || [])}
                   </div>
                 </div>
                 <div>
-                  <span className="text-base-content/70">Assignment Date:</span>
+                  <span className="text-base-content/70">{t("shifts:assignment.assignmentDate")}:</span>
                   <div className="font-medium mt-1">
-                    {new Date(specificAssignment.assignedAt).toLocaleString()}
+                    {new Date(specificAssignment.assignedAt).toLocaleString(currentLanguage)}
                   </div>
                 </div>
               </div>
@@ -213,7 +215,7 @@ export function ApproveAssignmentModal({
           {/* Assignment Notes */}
           {specificAssignment.assignmentNotes && (
             <div className="mt-6 pt-4 border-t border-base-300">
-              <h5 className="font-medium mb-2">Assignment Notes</h5>
+              <h5 className="font-medium mb-2">{t("shifts:assignment.assignmentNotesTitle")}</h5>
               <div className="bg-base-100 rounded p-3 text-sm">
                 {specificAssignment.assignmentNotes}
               </div>
@@ -225,22 +227,22 @@ export function ApproveAssignmentModal({
         <div className="bg-base-100 border border-base-300 rounded-lg p-4 mb-6">
           <h4 className="font-medium mb-3 flex items-center gap-2">
             <AlertCircle className="w-4 h-4 text-info" />
-            Important Information
+            {t("shifts:assignment.importantInformation")}
           </h4>
           <ul className="text-sm text-base-content/70 space-y-1">
             {specificAssignment.status === 'pending_worker_approval' ? (
               <>
-                <li>• Approving this assignment confirms your availability for the specified time</li>
-                <li>• Once approved, this assignment becomes part of your schedule</li>
-                <li>• If you reject, the manager will be notified and may offer alternatives</li>
-                <li>• You can discuss any concerns with your manager before deciding</li>
+                <li>• {t("shifts:assignment.approveConfirmsAvailability")}</li>
+                <li>• {t("shifts:assignment.becomesPartOfSchedule")}</li>
+                <li>• {t("shifts:assignment.rejectNotifiesManager")}</li>
+                <li>• {t("shifts:assignment.discussConcerns")}</li>
               </>
             ) : (
               <>
-                <li>• Approving confirms this worker will be scheduled for the requested shift</li>
-                <li>• The worker has already indicated their availability for this time</li>
-                <li>• If you reject, the worker will be notified and can request alternative times</li>
-                <li>• Consider staffing needs and shift coverage when making your decision</li>
+                <li>• {t("shifts:assignment.approveConfirmsWorkerScheduled")}</li>
+                <li>• {t("shifts:assignment.workerIndicatedAvailability")}</li>
+                <li>• {t("shifts:assignment.rejectNotifiesWorker")}</li>
+                <li>• {t("shifts:assignment.considerStaffingNeeds")}</li>
               </>
             )}
           </ul>
@@ -262,7 +264,7 @@ export function ApproveAssignmentModal({
             onClick={onClose}
             disabled={isSubmitting}
           >
-            Cancel
+            {t("common:actions.cancel")}
           </button>
           <button
             className="btn btn-error"
@@ -272,12 +274,12 @@ export function ApproveAssignmentModal({
             {isSubmitting ? (
               <>
                 <span className="loading loading-spinner loading-sm"></span>
-                Rejecting...
+                {t("shifts:assignment.rejecting")}
               </>
             ) : (
               <>
                 <XCircle className="w-4 h-4" />
-                Reject Assignment
+                {t("shifts:assignment.rejectAssignment")}
               </>
             )}
           </button>
@@ -289,12 +291,12 @@ export function ApproveAssignmentModal({
             {isSubmitting ? (
               <>
                 <span className="loading loading-spinner loading-sm"></span>
-                Approving...
+                {t("shifts:assignment.approving")}
               </>
             ) : (
               <>
                 <CheckCircle className="w-4 h-4" />
-                Approve Assignment
+                {t("shifts:assignment.approveAssignment")}
               </>
             )}
           </button>
