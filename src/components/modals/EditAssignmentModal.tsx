@@ -4,6 +4,7 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { Id } from "../../../convex/_generated/dataModel";
 import { usePermissionsV2 } from "@/hooks/usePermissionsV2";
+import { useLanguage } from "@/hooks/useLanguage";
 
 interface EditAssignmentModalProps {
   assignmentId: Id<"shift_assignments"> | null;
@@ -18,6 +19,7 @@ export function EditAssignmentModal({
   onClose,
   onSuccess,
 }: EditAssignmentModalProps) {
+  const { t, currentLanguage } = useLanguage();
   const { user, hasManagerTag } = usePermissionsV2();
   const [requestNotes, setRequestNotes] = useState("");
   const [selectedHours, setSelectedHours] = useState<{ startTime: string; endTime: string }[]>([]);
