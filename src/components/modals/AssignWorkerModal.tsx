@@ -4,6 +4,7 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { Id } from "../../../convex/_generated/dataModel";
 import { usePermissionsV2 } from "@/hooks/usePermissionsV2";
+import { useLanguage } from "@/hooks/useLanguage";
 
 interface AssignWorkerModalProps {
   shiftId: Id<"shifts"> | null;
@@ -31,6 +32,7 @@ export function AssignWorkerModal({
   onClose,
   onSuccess,
 }: AssignWorkerModalProps) {
+  const { t, currentLanguage } = useLanguage();
   const { hasManagerTag, user } = usePermissionsV2();
   const [selectedWorkerId, setSelectedWorkerId] = useState<Id<"users"> | "">("");
   const [assignedHours, setAssignedHours] = useState<TimeSlot[]>([]);
@@ -149,7 +151,10 @@ export function AssignWorkerModal({
             hasOverlap: true,
             slot1Index: i,
             slot2Index: j,
-            message: `Time slots ${i + 1} (${slot1.startTime}-${slot1.endTime}) and ${j + 1} (${slot2.startTime}-${slot2.endTime}) overlap`
+            slot1: i + 1,
+            slot2: j + 1,
+            time1: `${slot1.startTime}-${slot1.endTime}`,
+            time2: `${slot2.startTime}-${slot2.endTime}`,
           };
         }
       }
@@ -170,26 +175,26 @@ export function AssignWorkerModal({
     try {
       // Validation
       if (assignedHours.length === 0) {
-        throw new Error("At least one time slot must be assigned");
+        throw new Error(t("shifts:assignment.atLeastOneTimeSlot"));
       }
 
       // Validate time slots
       for (const slot of assignedHours) {
         if (slot.startTime >= slot.endTime) {
-          throw new Error("End time must be after start time for all slots");
+          throw new Error(t("shifts:assignment.endTimeAfterStartTime"));
         }
 
         // Check if within shift bounds
         if (slot.startTime < shift.storeHours.openTime ||
             slot.endTime > shift.storeHours.closeTime) {
-          throw new Error("Assigned hours must be within shift operating hours");
+          throw new Error(t("shifts:assignment.assignedHoursWithinShift"));
         }
       }
 
       // Validate break periods
       for (const breakPeriod of breakPeriods) {
         if (breakPeriod.startTime >= breakPeriod.endTime) {
-          throw new Error("Break end time must be after start time");
+          throw new Error(t("shifts:assignment.breakEndAfterStart"));
         }
       }
 
@@ -211,7 +216,7 @@ export function AssignWorkerModal({
       setBreakPeriods([]);
       // Keep assignedHours for potential next assignment
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to assign worker");
+      setError(err instanceof Error ? err.message : t("shifts:assignment.failedToAssignWorker"));
     } finally {
       setIsSubmitting(false);
     }
@@ -224,9 +229,12 @@ export function AssignWorkerModal({
       <div className="modal-box max-w-4xl max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-start mb-6">
           <div>
-            <h3 className="font-bold text-xl">Assign Worker to Shift</h3>
+            <h3 className="font-bold text-xl">{t("shifts:assignment.assignWorkerToShift")}</h3>
             <p className="text-base-content/70 mt-1">
-              Assign a worker to {shift.name} on {new Date(selectedDate).toLocaleDateString()}
+              {t("shifts:assignment.assignWorkerToShiftDesc", {
+                shiftName: shift.name,
+                date: new Date(selectedDate).toLocaleDateString(currentLanguage)
+              })}
             </p>
           </div>
           <button
@@ -239,7 +247,7 @@ export function AssignWorkerModal({
 
         {/* Shift Information */}
         <div className="bg-base-200 rounded-lg p-4 mb-6">
-          <h4 className="font-semibold mb-3">Shift Details</h4>
+          <h4 className="font-semibold mb-3">{t("shifts:shift.shiftDetails")}</h4>
           <div className="grid md:grid-cols-3 gap-4 text-sm">
             <div className="flex items-center gap-2">
               <Clock className="w-4 h-4" />
@@ -247,17 +255,17 @@ export function AssignWorkerModal({
             </div>
             <div className="flex items-center gap-2">
               <Users className="w-4 h-4" />
-              <span>{currentAssignments.length} currently assigned</span>
+              <span>{t("shifts:assignment.currentlyAssigned", { count: currentAssignments.length })}</span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="capitalize">{shift.type} shift</span>
+              <span>{t(`shifts:types.${shift.type}`)}</span>
             </div>
           </div>
 
           {/* Current Assignments Preview */}
           {currentAssignments.length > 0 && (
             <div className="mt-3">
-              <div className="text-sm font-medium mb-2">Currently Assigned:</div>
+              <div className="text-sm font-medium mb-2">{t("shifts:assignment.currentlyAssignedLabel")}</div>
               <div className="flex flex-wrap gap-2">
                 {currentAssignments.map((assignment) => (
                   <div key={assignment._id} className="badge badge-outline">
@@ -273,7 +281,7 @@ export function AssignWorkerModal({
           {/* Worker Selection */}
           <div>
             <label className="label">
-              <span className="label-text font-medium">Select Worker *</span>
+              <span className="label-text font-medium">{t("shifts:assignment.selectWorker")}</span>
             </label>
 
             {/* Search */}
@@ -284,7 +292,7 @@ export function AssignWorkerModal({
                 value={workerSearch}
                 onChange={(e) => setWorkerSearch(e.target.value)}
                 className="input input-bordered w-full pl-10"
-                placeholder="Search workers by name..."
+                placeholder={t("shifts:assignment.searchWorkersByName")}
               />
             </div>
 
@@ -295,7 +303,7 @@ export function AssignWorkerModal({
               className="select select-bordered w-full"
               required
             >
-              <option value="">Select a worker...</option>
+              <option value="">{t("shifts:assignment.selectAWorker")}</option>
               {availableWorkers.map((worker) => (
                 <option key={worker._id} value={worker._id}>
                   {worker.name} {worker.email ? `(${worker.email})` : ""}
@@ -306,8 +314,8 @@ export function AssignWorkerModal({
             {availableWorkers.length === 0 && (
               <div className="text-sm text-base-content/60 mt-2">
                 {workerSearch
-                  ? "No workers found matching your search"
-                  : "No available workers (all may be already assigned to this shift)"
+                  ? t("shifts:assignment.noWorkersFound")
+                  : t("shifts:assignment.noAvailableWorkers")
                 }
               </div>
             )}
@@ -316,14 +324,14 @@ export function AssignWorkerModal({
           {/* Assigned Hours */}
           <div>
             <div className="flex justify-between items-center mb-3">
-              <label className="label-text font-medium">Assigned Hours *</label>
+              <label className="label-text font-medium">{t("shifts:assignment.assignedHoursRequired")}</label>
               <button
                 type="button"
                 className="btn btn-xs btn-outline"
                 onClick={addTimeSlot}
               >
                 <Plus className="w-3 h-3" />
-                Add Time Slot
+                {t("shifts:assignment.addTimeSlot")}
               </button>
             </div>
 
@@ -343,7 +351,7 @@ export function AssignWorkerModal({
                         className={`input input-bordered input-sm ${isInvolved ? 'input-error' : ''}`}
                         required
                       />
-                      <span className="text-sm">to</span>
+                      <span className="text-sm">{t("common:time.to")}</span>
                       <input
                         type="time"
                         value={slot.endTime}
@@ -369,7 +377,14 @@ export function AssignWorkerModal({
               {overlapCheck.hasOverlap && (
                 <div className="alert alert-error mt-3">
                   <AlertCircle className="w-4 h-4" />
-                  <span className="text-sm">{overlapCheck.message}</span>
+                  <span className="text-sm">
+                    {t("shifts:assignment.overlapWarning", {
+                      slot1: overlapCheck.slot1,
+                      time1: overlapCheck.time1,
+                      slot2: overlapCheck.slot2,
+                      time2: overlapCheck.time2
+                    })}
+                  </span>
                 </div>
               )}
             </>
@@ -378,20 +393,20 @@ export function AssignWorkerModal({
           {/* Break Periods */}
           <div>
             <div className="flex justify-between items-center mb-3">
-              <label className="label-text font-medium">Break Periods (Optional)</label>
+              <label className="label-text font-medium">{t("shifts:assignment.breakPeriods")}</label>
               <button
                 type="button"
                 className="btn btn-xs btn-outline"
                 onClick={addBreakPeriod}
               >
                 <Plus className="w-3 h-3" />
-                Add Break
+                {t("shifts:assignment.addBreak")}
               </button>
             </div>
 
             {breakPeriods.length === 0 ? (
               <div className="text-sm text-base-content/60 p-3 bg-base-100 rounded border">
-                No break periods defined. Click "Add Break" to schedule breaks.
+                {t("shifts:assignment.noBreakPeriods")}
               </div>
             ) : (
               <div className="space-y-2">
@@ -403,7 +418,7 @@ export function AssignWorkerModal({
                       onChange={(e) => updateBreakPeriod(index, 'startTime', e.target.value)}
                       className="input input-bordered input-sm"
                     />
-                    <span className="text-sm">to</span>
+                    <span className="text-sm">{t("common:time.to")}</span>
                     <input
                       type="time"
                       value={breakPeriod.endTime}
@@ -417,7 +432,7 @@ export function AssignWorkerModal({
                         onChange={(e) => updateBreakPeriod(index, 'isPaid', e.target.checked)}
                         className="checkbox checkbox-xs"
                       />
-                      <span className="text-xs">Paid</span>
+                      <span className="text-xs">{t("shifts:assignment.paid")}</span>
                     </label>
                     <button
                       type="button"
@@ -435,25 +450,25 @@ export function AssignWorkerModal({
           {/* Assignment Notes */}
           <div>
             <label className="label">
-              <span className="label-text font-medium">Assignment Notes (Optional)</span>
+              <span className="label-text font-medium">{t("shifts:assignment.assignmentNotes")}</span>
             </label>
             <textarea
               value={assignmentNotes}
               onChange={(e) => setAssignmentNotes(e.target.value)}
               className="textarea textarea-bordered w-full"
               rows={3}
-              placeholder="Any specific instructions, requirements, or notes for this assignment..."
+              placeholder={t("shifts:assignment.assignmentNotesPlaceholder")}
             />
           </div>
 
           {/* Assignment Summary */}
           <div className="bg-base-100 border border-base-300 rounded-lg p-4">
-            <h4 className="font-medium mb-2">Assignment Summary</h4>
+            <h4 className="font-medium mb-2">{t("shifts:assignment.assignmentSummary")}</h4>
             <ul className="text-sm text-base-content/70 space-y-1">
-              <li>• Worker will receive a notification to approve this assignment</li>
-              <li>• Assignment becomes active once worker approves</li>
-              <li>• You can modify assignments before worker approval</li>
-              <li>• Break periods are optional and can be adjusted as needed</li>
+              <li>• {t("shifts:assignment.workerNotification")}</li>
+              <li>• {t("shifts:assignment.assignmentBecomesActive")}</li>
+              <li>• {t("shifts:assignment.canModifyBeforeApproval")}</li>
+              <li>• {t("shifts:assignment.breakPeriodsOptional")}</li>
             </ul>
           </div>
 
@@ -472,7 +487,7 @@ export function AssignWorkerModal({
               onClick={onClose}
               disabled={isSubmitting}
             >
-              Cancel
+              {t("common:actions.cancel")}
             </button>
             <button
               type="submit"
@@ -482,17 +497,17 @@ export function AssignWorkerModal({
               {isSubmitting ? (
                 <>
                   <span className="loading loading-spinner loading-sm"></span>
-                  Assigning...
+                  {t("shifts:assignment.assigning")}
                 </>
               ) : isManagerSelfAssignment ? (
                 <>
                   <UserPlus className="w-4 h-4" />
-                  Assign Myself (Auto-approved)
+                  {t("shifts:assignment.assignMyself")}
                 </>
               ) : (
                 <>
                   <UserPlus className="w-4 h-4" />
-                  Assign Worker
+                  {t("shifts:assignment.assignWorker")}
                 </>
               )}
             </button>
