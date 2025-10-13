@@ -72,7 +72,12 @@
     "optimal": "Optimal",
     "hourlyRequirementsTimeline": "Hourly Requirements Timeline",
     "wellStaffed": "Well Staffed",
-    "statusMinimum": "Minimum"
+    "statusMinimum": "Minimum",
+    "confirmed": "Confirmed",
+    "pendingWorker": "Pending Worker",
+    "pendingManager": "Pending Manager",
+    "rejected": "Rejected",
+    "review": "Review"
   },
   "types": {
     "operational": "Operational",

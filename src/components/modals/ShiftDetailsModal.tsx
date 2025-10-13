@@ -3,6 +3,7 @@ import { useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { Id } from "../../../convex/_generated/dataModel";
 import { usePermissionsV2 } from "@/hooks/usePermissionsV2";
+import { useLanguage } from "@/hooks/useLanguage";
 
 interface ShiftDetailsModalProps {
   shiftId: Id<"shifts"> | null;
@@ -30,6 +31,7 @@ export function ShiftDetailsModal({
   onReviewRequests,
 }: ShiftDetailsModalProps) {
   const { user, hasWorkerTag, hasManagerTag } = usePermissionsV2();
+  const { t, currentLanguage } = useLanguage();
 
   // Fetch shift details
   const shift = useQuery(
@@ -114,24 +116,24 @@ export function ShiftDetailsModal({
             <div className="bg-base-200 rounded-lg p-4">
               <h4 className="font-semibold mb-3 flex items-center gap-2 text-sm">
                 <Clock className="w-4 h-4" />
-                Schedule Details
+                {t("shifts:shift.scheduleDetails")}
               </h4>
               <div className="space-y-1.5 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-base-content/70">Date:</span>
-                  <span className="font-medium">{new Date(selectedDate).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}</span>
+                  <span className="text-base-content/70">{t("shifts:shift.date")}:</span>
+                  <span className="font-medium">{new Date(selectedDate).toLocaleDateString(currentLanguage, { weekday: 'short', month: 'short', day: 'numeric' })}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-base-content/70">Hours:</span>
+                  <span className="text-base-content/70">{t("shifts:shift.hours")}:</span>
                   <span className="font-medium">{shift.storeHours.openTime} - {shift.storeHours.closeTime}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-base-content/70">Type:</span>
-                  <span className="font-medium capitalize">{shift.type}</span>
+                  <span className="text-base-content/70">{t("shifts:shift.type")}:</span>
+                  <span className="font-medium capitalize">{t(`shifts:types.${shift.type}`)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-base-content/70">Days:</span>
-                  <span className="font-medium text-xs">{shift.recurringDays.map(day => day.charAt(0).toUpperCase() + day.slice(1, 3)).join(', ')}</span>
+                  <span className="text-base-content/70">{t("shifts:shift.days")}:</span>
+                  <span className="font-medium text-xs">{shift.recurringDays.map(day => t(`common:days.${day.toLowerCase()}`)).join(', ')}</span>
                 </div>
               </div>
             </div>
@@ -140,27 +142,27 @@ export function ShiftDetailsModal({
             <div className="bg-base-200 rounded-lg p-4">
               <h4 className="font-semibold mb-3 flex items-center gap-2 text-sm">
                 <Users className="w-4 h-4" />
-                Staffing Status
+                {t("shifts:staffing.staffingStatus")}
               </h4>
               {staffingStatus && (
                 <div className="space-y-2">
                   <div className={`badge badge-${staffingStatus.color} badge-md`}>
-                    {staffingStatus.status === 'understaffed' && 'Understaffed'}
-                    {staffingStatus.status === 'minimum' && 'Minimum'}
-                    {staffingStatus.status === 'good' && 'Well Staffed'}
-                    {staffingStatus.status === 'overstaffed' && 'Overstaffed'}
+                    {staffingStatus.status === 'understaffed' && t("shifts:staffing.understaffed")}
+                    {staffingStatus.status === 'minimum' && t("shifts:shift.statusMinimum")}
+                    {staffingStatus.status === 'good' && t("shifts:shift.wellStaffed")}
+                    {staffingStatus.status === 'overstaffed' && t("shifts:staffing.overstaffed")}
                   </div>
                   <div className="text-sm space-y-1">
                     <div className="flex justify-between">
-                      <span className="text-base-content/70">Current:</span>
+                      <span className="text-base-content/70">{t("shifts:shift.current")}:</span>
                       <span className="font-medium">{staffingStatus.confirmedWorkers}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-base-content/70">Minimum:</span>
+                      <span className="text-base-content/70">{t("shifts:shift.minimum")}:</span>
                       <span className="font-medium">{staffingStatus.minWorkers}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-base-content/70">Optimal:</span>
+                      <span className="text-base-content/70">{t("shifts:shift.optimal")}:</span>
                       <span className="font-medium">{staffingStatus.optimalWorkers}</span>
                     </div>
                   </div>
@@ -174,7 +176,7 @@ export function ShiftDetailsModal({
             <div className="bg-base-200 rounded-lg p-4">
               <h4 className="font-semibold mb-3 flex items-center gap-2 text-sm">
                 <Calendar className="w-4 h-4" />
-                Hourly Requirements Timeline
+                {t("shifts:shift.hourlyRequirementsTimeline")}
               </h4>
 
               {/* Vertical Timeline Container */}
@@ -306,10 +308,10 @@ export function ShiftDetailsModal({
 
         {/* Current Assignments - Compact version */}
         <div className="mb-4">
-          <h4 className="font-semibold mb-2 text-sm">Current Assignments</h4>
+          <h4 className="font-semibold mb-2 text-sm">{t("shifts:shift.currentAssignments")}</h4>
           {shiftAssignments.length === 0 ? (
             <div className="text-base-content/60 text-center py-2 text-sm">
-              No assignments for this date
+              {t("shifts:shift.noAssignmentsForDate")}
             </div>
           ) : (
             <div className="space-y-1">
@@ -324,10 +326,10 @@ export function ShiftDetailsModal({
                         assignment.status === 'pending_manager_approval' ? 'badge-info' :
                         'badge-error'
                       }`}>
-                        {assignment.status === 'confirmed' ? 'Confirmed' :
-                         assignment.status === 'pending_worker_approval' ? 'Pending Worker' :
-                         assignment.status === 'pending_manager_approval' ? 'Pending Manager' :
-                         'Rejected'}
+                        {assignment.status === 'confirmed' ? t("shifts:shift.confirmed") :
+                         assignment.status === 'pending_worker_approval' ? t("shifts:shift.pendingWorker") :
+                         assignment.status === 'pending_manager_approval' ? t("shifts:shift.pendingManager") :
+                         t("shifts:shift.rejected")}
                       </div>
                     </div>
 
@@ -358,16 +360,16 @@ export function ShiftDetailsModal({
         {/* Pending Actions for Current User - Compact */}
         {pendingWorkerApprovals.length > 0 && (
           <div className="mb-3 p-3 bg-warning/10 border border-warning/20 rounded-lg">
-            <h4 className="font-semibold text-warning mb-2 text-sm">Action Required</h4>
-            <p className="text-xs mb-2">You have {pendingWorkerApprovals.length} pending assignment(s).</p>
+            <h4 className="font-semibold text-warning mb-2 text-sm">{t("shifts:shift.actionRequired")}</h4>
+            <p className="text-xs mb-2">{t("shifts:shift.pendingAssignmentsCount", { count: pendingWorkerApprovals.length })}</p>
             {pendingWorkerApprovals.map((assignment) => (
               <div key={assignment._id} className="flex justify-between items-center">
-                <span className="text-xs">Assignment by {assignment.assignedBy?.name}</span>
+                <span className="text-xs">{t("shifts:shift.assignmentBy", { name: assignment.assignedBy?.name })}</span>
                 <button
                   className="btn btn-xs btn-success"
                   onClick={() => onApproveAssignment?.(assignment._id)}
                 >
-                  Approve
+                  {t("shifts:shift.approve")}
                 </button>
               </div>
             ))}
@@ -388,7 +390,7 @@ export function ShiftDetailsModal({
                       onClick={() => onRequestJoin(shift._id, selectedDate)}
                     >
                       <Plus className="w-3 h-3" />
-                      Request to Join
+                      {t("shifts:assignment.requestJoin")}
                     </button>
                   )
                 ) : (
@@ -400,10 +402,10 @@ export function ShiftDetailsModal({
                       myAssignment.status === 'pending_manager_approval' ? 'badge-info' :
                       'badge-error'
                     }`}>
-                      {myAssignment.status === 'confirmed' ? 'Confirmed' :
-                       myAssignment.status === 'pending_worker_approval' ? 'Pending Worker' :
-                       myAssignment.status === 'pending_manager_approval' ? 'Pending Manager' :
-                       'Rejected'}
+                      {myAssignment.status === 'confirmed' ? t("shifts:shift.confirmed") :
+                       myAssignment.status === 'pending_worker_approval' ? t("shifts:shift.pendingWorker") :
+                       myAssignment.status === 'pending_manager_approval' ? t("shifts:shift.pendingManager") :
+                       t("shifts:shift.rejected")}
                     </div>
                     {onEditAssignment && (
                       <button
@@ -411,7 +413,7 @@ export function ShiftDetailsModal({
                         onClick={() => onEditAssignment(myAssignment._id)}
                       >
                         <Edit className="w-3 h-3" />
-                        Edit
+                        {t("common:actions.edit")}
                       </button>
                     )}
                   </div>
@@ -427,7 +429,7 @@ export function ShiftDetailsModal({
                   onClick={() => onEditShift?.(shift._id)}
                 >
                   <Edit className="w-3 h-3" />
-                  Edit Shift
+                  {t("shifts:shift.editShift")}
                 </button>
 
                 <button
@@ -435,7 +437,7 @@ export function ShiftDetailsModal({
                   onClick={() => onAssignWorker?.(shift._id, selectedDate)}
                 >
                   <UserPlus className="w-3 h-3" />
-                  Assign Worker
+                  {t("shifts:assignment.assignWorker")}
                 </button>
 
                 {pendingManagerApprovals.length > 0 && (
@@ -444,7 +446,7 @@ export function ShiftDetailsModal({
                     onClick={() => onReviewRequests?.(shift._id)}
                   >
                     <CheckCircle className="w-3 h-3" />
-                    Review ({pendingManagerApprovals.length})
+                    {t("shifts:shift.review")} ({pendingManagerApprovals.length})
                   </button>
                 )}
               </>
@@ -453,7 +455,7 @@ export function ShiftDetailsModal({
 
           {/* Close button */}
           <button className="btn btn-sm" onClick={onClose}>
-            Close
+            {t("common:actions.close")}
           </button>
         </div>
       </div>
