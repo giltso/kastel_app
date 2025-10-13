@@ -4,6 +4,7 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { Id } from "../../../convex/_generated/dataModel";
 import { usePermissionsV2 } from "@/hooks/usePermissionsV2";
+import { useLanguage } from "@/hooks/useLanguage";
 
 interface ReviewRequestModalProps {
   shiftId?: Id<"shifts"> | null; // If provided, filter to specific shift
@@ -20,6 +21,7 @@ export function ReviewRequestModal({
   onClose,
   onSuccess,
 }: ReviewRequestModalProps) {
+  const { t, currentLanguage } = useLanguage();
   const { hasManagerTag } = usePermissionsV2();
   const [selectedRequests, setSelectedRequests] = useState<Set<Id<"shift_assignments">>>(new Set());
   const [statusFilter, setStatusFilter] = useState<RequestStatus>("all");
@@ -83,7 +85,7 @@ export function ReviewRequestModal({
       const promises = Array.from(selectedRequests).map(requestId => {
         return action === 'approve'
           ? approveAssignment({ assignmentId: requestId })
-          : rejectAssignment({ assignmentId: requestId, reason: "Bulk rejection by manager" });
+          : rejectAssignment({ assignmentId: requestId, reason: t("shifts:assignment.bulkRejectionByManager") });
       });
 
       await Promise.all(promises);
@@ -91,7 +93,7 @@ export function ReviewRequestModal({
       setSelectedRequests(new Set());
       onSuccess?.();
     } catch (err) {
-      setError(err instanceof Error ? err.message : `Failed to ${action} requests`);
+      setError(err instanceof Error ? err.message : t("shifts:assignment.failedToApproveRejectBulk", { action }));
     } finally {
       setIsSubmitting(false);
     }
@@ -110,7 +112,7 @@ export function ReviewRequestModal({
 
       onSuccess?.();
     } catch (err) {
-      setError(err instanceof Error ? err.message : `Failed to ${action} request`);
+      setError(err instanceof Error ? err.message : t("shifts:assignment.failedToApproveReject", { action }));
     } finally {
       setIsSubmitting(false);
     }
@@ -119,16 +121,16 @@ export function ReviewRequestModal({
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'pending_manager_approval':
-        return <div className="badge badge-warning">Manager Approval Needed</div>;
+        return <div className="badge badge-warning">{t("shifts:assignment.managerApprovalNeeded")}</div>;
       case 'pending_worker_approval':
-        return <div className="badge badge-info">Worker Approval Needed</div>;
+        return <div className="badge badge-info">{t("shifts:assignment.workerApprovalNeeded")}</div>;
       default:
         return <div className="badge badge-ghost">{status}</div>;
     }
   };
 
   const formatTime = (timeSlots: any[]) => {
-    if (!timeSlots || timeSlots.length === 0) return "No time specified";
+    if (!timeSlots || timeSlots.length === 0) return t("shifts:assignment.noTimeSpecified");
     return timeSlots.map(slot => `${slot.startTime}-${slot.endTime}`).join(', ');
   };
 
@@ -139,9 +141,9 @@ export function ReviewRequestModal({
       <div className="modal-box max-w-6xl max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-start mb-6">
           <div>
-            <h3 className="font-bold text-2xl">Review Assignment Requests</h3>
+            <h3 className="font-bold text-2xl">{t("shifts:assignment.reviewAssignmentRequests")}</h3>
             <p className="text-base-content/70 mt-1">
-              {shiftId ? "Shift-specific requests" : "All pending assignment requests"}
+              {shiftId ? t("shifts:assignment.shiftSpecificRequests") : t("shifts:assignment.allPendingRequests")}
             </p>
           </div>
           <button
@@ -155,19 +157,19 @@ export function ReviewRequestModal({
         {/* Summary Statistics */}
         <div className="grid md:grid-cols-3 gap-4 mb-6">
           <div className="stat bg-base-200 rounded-lg">
-            <div className="stat-title">Manager Approval</div>
+            <div className="stat-title">{t("shifts:assignment.managerApprovalStat")}</div>
             <div className="stat-value text-warning">{groupedRequests.pending_manager_approval.length}</div>
-            <div className="stat-desc">Worker requests</div>
+            <div className="stat-desc">{t("shifts:assignment.workerRequests")}</div>
           </div>
           <div className="stat bg-base-200 rounded-lg">
-            <div className="stat-title">Worker Approval</div>
+            <div className="stat-title">{t("shifts:assignment.workerApprovalStat")}</div>
             <div className="stat-value text-info">{groupedRequests.pending_worker_approval.length}</div>
-            <div className="stat-desc">Manager assignments</div>
+            <div className="stat-desc">{t("shifts:assignment.managerAssignments")}</div>
           </div>
           <div className="stat bg-base-200 rounded-lg">
-            <div className="stat-title">Total Pending</div>
+            <div className="stat-title">{t("shifts:assignment.totalPendingStat")}</div>
             <div className="stat-value">{filteredAssignments.length}</div>
-            <div className="stat-desc">All requests</div>
+            <div className="stat-desc">{t("shifts:assignment.allRequests")}</div>
           </div>
         </div>
 
@@ -181,9 +183,9 @@ export function ReviewRequestModal({
                 onChange={(e) => setStatusFilter(e.target.value as RequestStatus)}
                 className="select select-bordered select-sm"
               >
-                <option value="all">All Requests</option>
-                <option value="pending_manager_approval">Need Manager Approval</option>
-                <option value="pending_worker_approval">Need Worker Approval</option>
+                <option value="all">{t("shifts:assignment.allRequestsFilter")}</option>
+                <option value="pending_manager_approval">{t("shifts:assignment.needManagerApproval")}</option>
+                <option value="pending_worker_approval">{t("shifts:assignment.needWorkerApproval")}</option>
               </select>
             </div>
 
@@ -195,7 +197,7 @@ export function ReviewRequestModal({
                   onChange={handleSelectAll}
                   className="checkbox checkbox-sm"
                 />
-                <span className="text-sm">Select All ({filteredAssignments.length})</span>
+                <span className="text-sm">{t("shifts:assignment.selectAllCount", { count: filteredAssignments.length })}</span>
               </label>
             )}
           </div>
@@ -208,7 +210,7 @@ export function ReviewRequestModal({
                 disabled={isSubmitting}
               >
                 <CheckCircle className="w-4 h-4" />
-                Approve Selected ({selectedRequests.size})
+                {t("shifts:assignment.approveSelected", { count: selectedRequests.size })}
               </button>
               <button
                 className="btn btn-sm btn-error"
@@ -216,7 +218,7 @@ export function ReviewRequestModal({
                 disabled={isSubmitting}
               >
                 <XCircle className="w-4 h-4" />
-                Reject Selected ({selectedRequests.size})
+                {t("shifts:assignment.rejectSelected", { count: selectedRequests.size })}
               </button>
             </div>
           )}
@@ -227,11 +229,11 @@ export function ReviewRequestModal({
           {filteredAssignments.length === 0 ? (
             <div className="text-center py-12 text-base-content/60">
               <AlertCircle className="w-12 h-12 mx-auto mb-4 opacity-50" />
-              <h4 className="text-lg font-medium mb-2">No Pending Requests</h4>
+              <h4 className="text-lg font-medium mb-2">{t("shifts:assignment.noPendingRequests")}</h4>
               <p>
                 {statusFilter === "all"
-                  ? "All assignment requests have been processed"
-                  : `No requests with status: ${statusFilter.replace(/_/g, ' ')}`
+                  ? t("shifts:assignment.allRequestsProcessed")
+                  : t("shifts:assignment.noRequestsWithStatus", { status: statusFilter.replace(/_/g, ' ') })
                 }
               </p>
             </div>
@@ -266,15 +268,15 @@ export function ReviewRequestModal({
                           </div>
                           <div className="flex items-center gap-2">
                             <Clock className="w-4 h-4" />
-                            <span>{new Date(assignment.date).toLocaleDateString()}</span>
+                            <span>{new Date(assignment.date).toLocaleDateString(currentLanguage)}</span>
                           </div>
                         </div>
 
                         <div>
                           <div className="text-base-content/70">
-                            <div>Hours: {formatTime(assignment.assignedHours)}</div>
-                            <div>Assigned by: {assignment.assignedBy?.name}</div>
-                            <div>Request time: {new Date(assignment.assignedAt).toLocaleString()}</div>
+                            <div>{t("shifts:assignment.hoursLabel")}: {formatTime(assignment.assignedHours)}</div>
+                            <div>{t("shifts:assignment.assignedByLabel")}: {assignment.assignedBy?.name}</div>
+                            <div>{t("shifts:assignment.requestTimeLabel")}: {new Date(assignment.assignedAt).toLocaleString(currentLanguage)}</div>
                           </div>
                         </div>
                       </div>
@@ -284,7 +286,7 @@ export function ReviewRequestModal({
                         <div className="mt-4 pt-4 border-t border-base-300">
                           {assignment.assignmentNotes && (
                             <div className="mb-3">
-                              <div className="font-medium text-sm mb-1">Notes:</div>
+                              <div className="font-medium text-sm mb-1">{t("shifts:assignment.notesLabel")}:</div>
                               <div className="text-sm text-base-content/70 bg-base-100 p-2 rounded">
                                 {assignment.assignmentNotes}
                               </div>
@@ -293,12 +295,12 @@ export function ReviewRequestModal({
 
                           {assignment.breakPeriods && assignment.breakPeriods.length > 0 && (
                             <div>
-                              <div className="font-medium text-sm mb-1">Break Periods:</div>
+                              <div className="font-medium text-sm mb-1">{t("shifts:assignment.breakPeriodsLabel")}:</div>
                               <div className="text-sm">
                                 {assignment.breakPeriods.map((breakPeriod, index) => (
                                   <div key={index} className="text-base-content/70">
                                     {breakPeriod.startTime} - {breakPeriod.endTime}
-                                    {breakPeriod.isPaid ? " (Paid)" : " (Unpaid)"}
+                                    {breakPeriod.isPaid ? ` ${t("shifts:assignment.paidLabel")}` : ` ${t("shifts:assignment.unpaidLabel")}`}
                                   </div>
                                 ))}
                               </div>
@@ -328,22 +330,22 @@ export function ReviewRequestModal({
                           disabled={isSubmitting}
                         >
                           <CheckCircle className="w-4 h-4" />
-                          Approve
+                          {t("shifts:shift.approve")}
                         </button>
                         <button
                           className="btn btn-sm btn-error"
-                          onClick={() => handleSingleAction(assignment._id, 'reject', "Rejected by manager")}
+                          onClick={() => handleSingleAction(assignment._id, 'reject', t("shifts:assignment.rejectedByManager"))}
                           disabled={isSubmitting}
                         >
                           <XCircle className="w-4 h-4" />
-                          Reject
+                          {t("shifts:assignment.rejectAssignment")}
                         </button>
                       </>
                     )}
 
                     {assignment.status === 'pending_worker_approval' && (
                       <div className="text-sm text-base-content/60">
-                        Waiting for worker approval
+                        {t("shifts:assignment.waitingForWorkerApproval")}
                       </div>
                     )}
                   </div>
@@ -367,7 +369,7 @@ export function ReviewRequestModal({
             onClick={onClose}
             disabled={isSubmitting}
           >
-            {isSubmitting ? "Processing..." : "Close"}
+            {isSubmitting ? t("shifts:assignment.processing") : t("common:actions.close")}
           </button>
         </div>
       </div>
