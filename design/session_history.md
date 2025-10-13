@@ -2,6 +2,79 @@
 
 detailed history of all sessions. to be updated on new session
 
+### Session 36 - October 13, 2025 (i18n Translation Completion - All LUZ Modals)
+
+**Goal**: Complete internationalization translation for all remaining LUZ modals (continued from Session 35 context)
+
+**Major Achievements**:
+- ✅ **ApproveAssignmentModal Translation Complete**: Final 7th modal fully translated
+  - ✅ Added 33 English + Hebrew translation keys (lines 259-291 in shifts.json)
+  - ✅ Translated permission error modal with 7 different scenarios
+  - ✅ Translated role-based modal headers and subtitles (worker vs manager perspectives)
+  - ✅ Translated assignment details section (shift info, schedule, notes)
+  - ✅ Translated important information bullets (8 different messages for worker/manager)
+  - ✅ Translated action buttons with dynamic loading states (approving/rejecting)
+  - ✅ Implemented locale-aware date/time formatting with currentLanguage
+- ✅ **LUZ System i18n Complete (7/7 Modals)**: All shift management modals fully translated
+  - ✅ ShiftDetailsModal, CreateEditShiftModal, RequestJoinShiftModal, AssignWorkerModal
+  - ✅ EditAssignmentModal, ReviewRequestModal, ApproveAssignmentModal
+- ✅ **Documentation Updates**: Updated PROJECT_OVERVIEW.md to reflect 85% i18n completion
+
+**Translation Statistics**:
+- **Total Translation Keys**: 500+ across 6 namespaces (Hebrew + English)
+- **shifts.json Growth**: 290+ keys (up from 260+)
+- **Lines of Code Translated**: 2,500+ lines across all LUZ components and modals
+- **i18n Completion**: 85% (up from 75%)
+
+**Technical Implementation**:
+- **ApproveAssignmentModal**: [src/components/modals/ApproveAssignmentModal.tsx](src/components/modals/ApproveAssignmentModal.tsx)
+  - Added useLanguage hook with t() function and currentLanguage extraction
+  - Translated error messages (lines 55, 75) with t("shifts:assignment.failedToApprove/Reject")
+  - Translated formatTime/formatBreaks default messages (lines 82, 87)
+  - Translated permission error modal (lines 111-130) with 7 conditional scenarios
+  - Translated modal header and role-based subtitles (lines 142-146)
+  - Translated assignment details section (lines 160-223) with locale-aware dates
+  - Translated important information section (lines 227-249) with worker/manager perspectives
+  - Translated action buttons (lines 261-303) with dynamic states
+- **Translation Files**:
+  - [public/locales/en/shifts.json:259-291](public/locales/en/shifts.json#L259-L291) - English keys
+  - [public/locales/he/shifts.json:259-291](public/locales/he/shifts.json#L259-L291) - Hebrew translations
+
+**Key Features Implemented**:
+- **Role-Based Messaging**: Different translations for worker vs manager approval workflows
+- **Permission Scenarios**: 7 different error messages for various permission/status combinations
+- **Locale-Aware Formatting**: All dates use `toLocaleDateString(currentLanguage)` and `toLocaleString(currentLanguage)`
+- **Dynamic Button States**: Loading states with "Approving..." and "Rejecting..." translations
+- **Break Period Formatting**: Paid/Unpaid labels translated dynamically
+
+**Required Testing Before Production**:
+- 🧪 **Language Switching**: Test switching between Hebrew/English across all modals
+- 🧪 **RTL Layout**: Verify Hebrew text displays correctly with proper right-to-left direction
+- 🧪 **Locale-Aware Dates**: Confirm dates format correctly for each language (Hebrew dates in Hebrew format, English in English format)
+- 🧪 **Role-Based Messages**: Test all 7 permission scenarios in ApproveAssignmentModal show correct translations
+- 🧪 **Worker vs Manager Flows**: Verify different translation messages display for worker and manager approval workflows
+- 🧪 **Dynamic States**: Test loading states show translated "Approving..." and "Rejecting..." text
+- 🧪 **Long String Handling**: Test Hebrew translations with longer strings don't break layout
+- 🧪 **Mobile RTL**: Verify RTL text direction works correctly on mobile devices (375px width)
+- 🧪 **Missing Key Fallback**: Confirm missing translations fall back to English gracefully
+- 🧪 **Modal Interactions**: Test all modals open/close correctly with translated content
+
+**Commits Made**:
+1. `abed7eb3` - feat: complete ApproveAssignmentModal i18n translation - final LUZ modal (7/7)
+2. `d714b216` - docs: update PROJECT_OVERVIEW to reflect i18n progress - 85% complete
+
+**Current i18n Status**:
+- ✅ **LUZ System (100%)**: All components, views, and 7 modals fully translated
+- ✅ **Home Page (100%)**: Guest, customer, and staff views translated
+- ✅ **Navigation (100%)**: Header, menu, and authentication elements translated
+- 🚧 **Tools Page**: Needs translation implementation
+- 🚧 **Educational Page**: Needs translation implementation
+- 🚧 **Roles Page**: Needs translation implementation
+
+**Next Session Priority**: Deployment preparation (as requested by user) - focus on deployment blockers, environment configuration, production readiness checklist
+
+**Status**: All 7 LUZ modals translation complete. LUZ system fully internationalized with Hebrew + English support, locale-aware date formatting, and RTL text direction. Testing required before production deployment.
+
 ### Session 35 - October 11, 2025 (Documentation Navigation & Consolidation)
 
 **Goal**: Consolidate design documentation to eliminate duplicates and implement comprehensive navigation system
