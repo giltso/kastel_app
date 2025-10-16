@@ -11,6 +11,9 @@ node_modules
 dist
 dist-ssr
 *.local
+*.local.*
+.env.local
+.env.local.*
 CLAUDE.local.md
 
 # Editor directories and files
