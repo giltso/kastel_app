@@ -23,101 +23,298 @@
 ## 👥 User Roles & Permissions
 
 ### V2 Tag-Based Role System (CURRENT)
-*Clean, additive permission system - see REDESIGN_V2.md for complete specifications*
 
-**Base Roles:**
-- **Staff** (`isStaff: true`): Internal employees with additive permission tags
-- **Customer**: External authenticated users requiring services
-- **Guest**: Public visitors (unauthenticated, accessed via logout)
+**Core Implementation:**
+The V2 system uses an additive tag-based permission model where staff members have a base `isStaff` role combined with specific permission tags that unlock functionality. This design allows flexible permission combinations (e.g., Staff+Worker+Manager) without rigid hierarchical roles.
 
-**Staff Permission Tags (Additive & Combinable):**
-- **Worker Tag** (`workerTag`): Access to LUZ portal, shift requests and management
-- **Manager Tag** (`managerTag`): Approval workflows, shift scheduling (requires Worker Tag)
-- **Instructor Tag** (`instructorTag`): Course management and educational content
-- **Tool Handler Tag** (`toolHandlerTag`): Tool inventory and rental operations
+**Key Implementation Files:**
+- **Backend**: [convex/users_v2.ts](../convex/users_v2.ts) - User management queries, role validation, and permission enforcement
+- **Frontend**: [src/hooks/usePermissionsV2.ts](../src/hooks/usePermissionsV2.ts) - React hook providing `hasWorkerTag`, `hasManagerTag`, etc. for UI permission checks
+- **Schema**: [convex/schema.ts](../convex/schema.ts) - Database schema with `isStaff`, `workerTag`, `managerTag`, `instructorTag`, `toolHandlerTag` fields
+- **Dev Tools**: [src/components/RoleEmulator.tsx](../src/components/RoleEmulator.tsx) - Role emulation dropdown for testing different permission combinations
 
-**Customer Permission Tags (Item-Specific):**
-- **Rental Approved Tag** (`rentalApprovedTag`): Approved for tool rental bookings
-- **Student Tag**: Per-course access after enrollment (temporary)
+---
 
-### V2 Permission Highlights
-- **LUZ System**: Staff+Worker access to unified scheduling hub
-- **Role Emulation**: Development testing with 7 role combinations
-- **Clean Navigation**: Role-based menu items (Home/LUZ/Tools/Courses)
-- **Business Rules**: Manager tag requires Worker tag (enforced)
-- **Additive System**: Multiple tags combine permissions naturally
+### Base Roles
+
+**Staff** (`isStaff: true`)
+Internal employees who can be granted permission tags to access various operational features. The base staff role alone provides access to authenticated areas but no specific operational permissions.
+
+**Implementation**: Staff status check in [convex/users_v2.ts](../convex/users_v2.ts) via `isStaffUser()` function. Navigation routing handled in [src/routes/_authenticated.tsx](../src/routes/_authenticated.tsx).
+
+**Customer**
+External authenticated users who interact with the business for services (tool rentals, course enrollment). Customers have limited permissions and see consumer-focused interfaces.
+
+**Implementation**: Customer interface routing in [src/routes/_authenticated.tsx](../src/routes/_authenticated.tsx). Can be promoted to staff via role management system.
+
+**Guest**
+Public unauthenticated visitors who can browse the public-facing site. Accessed by logging out of the system.
+
+**Implementation**: Public home page at [src/routes/index.tsx](../src/routes/index.tsx) with service previews and business information.
+
+---
+
+### Staff Permission Tags (Additive & Combinable)
+
+**Worker Tag** (`workerTag`)
+Grants access to the LUZ scheduling system where workers can view shifts, request assignments, and manage their own schedule. Workers see shift availability and can submit join requests that require manager approval.
+
+**Implementation:**
+- **Permission Hook**: `usePermissionsV2().hasWorkerTag` checks in components
+- **LUZ Interface**: [src/routes/luz.tsx](../src/routes/luz.tsx) - Main scheduling hub with timeline views (Day/Week/Month)
+- **Backend Logic**: [convex/shift_assignments.ts](../convex/shift_assignments.ts) - Worker self-assignment and request submission
+- **UI Components**: [src/components/modals/RequestJoinShiftModal.tsx](../src/components/modals/RequestJoinShiftModal.tsx) for shift requests
+
+**Manager Tag** (`managerTag`)
+Enables approval workflows, shift template creation, and worker assignment capabilities. Managers inherit all worker permissions and gain additional administrative controls. **Business Rule**: Manager tag requires Worker tag (enforced at database level).
+
+**Implementation:**
+- **Permission Hook**: `usePermissionsV2().hasManagerTag` for UI permission checks
+- **Shift Management**: [convex/shifts.ts](../convex/shifts.ts) - Create/edit shift templates with capacity settings
+- **Approval Workflows**: [src/components/modals/ReviewRequestModal.tsx](../src/components/modals/ReviewRequestModal.tsx) (review worker requests), [src/components/modals/ApproveAssignmentModal.tsx](../src/components/modals/ApproveAssignmentModal.tsx) (approve manager-initiated assignments)
+- **Worker Assignment**: [src/components/modals/AssignWorkerModal.tsx](../src/components/modals/AssignWorkerModal.tsx) for direct assignment
+
+**Instructor Tag** (`instructorTag`)
+Allows creation and management of educational courses, approval of student enrollments, and access to course administration features. Instructors can create both single-session and multi-meeting courses.
+
+**Implementation:**
+- **Permission Hook**: `usePermissionsV2().hasInstructorTag`
+- **Course System**: [convex/courses_v2.ts](../convex/courses_v2.ts) - Course creation, session management, and enrollment approval
+- **UI Interface**: [src/routes/educational.tsx](../src/routes/educational.tsx) - Course management dashboard with student tracking
+
+**Tool Handler Tag** (`toolHandlerTag`)
+Grants access to tool inventory management and rental approval system. Tool handlers can approve customer rental requests and create manual rentals for walk-in customers who don't have app accounts.
+
+**Implementation:**
+- **Permission Hook**: `usePermissionsV2().hasToolHandlerTag`
+- **Rental System**: [convex/tools.ts](../convex/tools.ts) - Tool management, rental approval, and manual rental creation
+- **Manual Rentals**: [src/components/modals/CreateManualRentalModal.tsx](../src/components/modals/CreateManualRentalModal.tsx) - Special feature for pre-approved walk-in customer rentals
+- **UI Interface**: [src/routes/tools.tsx](../src/routes/tools.tsx) - Tool handler operational view
+
+---
+
+### Customer Permission Tags (Item-Specific)
+
+**Rental Approved Tag** (`rentalApprovedTag`)
+Customers with this tag can submit tool rental requests through the app. Approval is granted by staff after verifying customer eligibility (e.g., valid ID, deposit paid).
+
+**Implementation**: Rental request validation in [convex/tools.ts](../convex/tools.ts). Customer rental interface in [src/routes/tools.tsx](../src/routes/tools.tsx).
+
+**Student Tag** (Per-Course, Temporary)
+Granted automatically when a customer enrolls in a course and instructor approves. Tag is course-specific and provides access to course materials and session information.
+
+**Implementation**: Enrollment management in [convex/courses_v2.ts](../convex/courses_v2.ts).
+
+---
+
+### V2 Permission System Features
+
+- **Unified LUZ System**: Staff with Worker tag access the LUZ (scheduling hub) interface at [src/routes/luz.tsx](../src/routes/luz.tsx), providing day/week/month calendar views with shift management
+- **Role Emulation**: Development testing interface ([src/components/RoleEmulator.tsx](../src/components/RoleEmulator.tsx)) allows toggling between 7 role combinations (Guest, Customer, Staff, Staff+Worker, Staff+Manager, etc.)
+- **Dynamic Navigation**: Header menu ([src/components/Header.tsx](../src/components/Header.tsx)) adapts based on user permissions - Workers see "LUZ" tab, Tool Handlers see "Tool Rental" tab, etc.
+- **Business Rule Enforcement**: Manager tag requires Worker tag, enforced in [convex/users_v2.ts](../convex/users_v2.ts) via validation logic
+- **Additive Permission Model**: Multiple tags combine naturally - a user with Worker+Manager+ToolHandler tags has all three sets of permissions simultaneously
 
 ## 🔧 Core Features & Workflows
 
-### 1. LUZ System (Primary Staff Interface) - FULLY FUNCTIONAL
-**Current Implementation Status:**
-- ✅ **Database Schema**: Shift templates and assignments fully functional
-- ✅ **Timeline Views**: Daily, Week, Month views with date-aware click handlers
-- ✅ **Permission System**: Role-based access control working
-- ✅ **Modal System**: Complete 7-modal workflow system operational
-- ✅ **Timeline Integration**: Click handlers working with correct date context
-- ✅ **Assignment Workflows**: Dual approval workflows (manager↔worker) fully implemented
-- ✅ **Date Navigation**: Smart date button with picker modal and jump-to-today functionality
-- ✅ **Real-time Updates**: Backend integration stable with Convex
-- ✅ **Worker Assignment**: Display and interaction fully operational
+### 1. LUZ System (Primary Staff Interface)
 
-**Recent Enhancements:**
-- **Session 32 (Oct 8)**: Week View date fix, smart date button with context-aware navigation
-- **Session 33 (Oct 9)**: Direct native date picker with instant calendar access
-- **Session 34 (Oct 9)**: Mobile UI optimization, click-to-create fixes, comprehensive unit testing (83 tests passing)
+**Overview:**
+LUZ (unified scheduling hub) is the primary interface for staff scheduling and shift management. It provides day/week/month calendar views where workers can browse shifts and request assignments, while managers can create shift templates, assign workers, and approve requests. The system uses a dual approval workflow where both workers and managers must consent to assignments.
 
-### 2. Tool Rental System - FULLY FUNCTIONAL
-- ✅ **Inventory Management**: Tool catalog with CRUD operations functional
-- ✅ **Rental Workflows**: Booking system operational with approval processes
-- ✅ **Manual Rental Creation**: Tool handlers can create rentals for walk-in (non-registered) customers
-- ✅ **Walk-in Customer Support**: Pre-approved rentals for tech-illiterate customers via staff assistance
-- ✅ **Contact Tracking**: Non-user renter name and contact information capture
-- ✅ **LUZ Integration**: Tool rentals visible on calendar timeline
-- ✅ **Staff Management**: Tool handler role with rental management operational
-- ✅ **Customer Experience**: Tool browsing and rental requests functional
-- ✅ **Display Integration**: Manual rentals shown with "Walk-in" badges in rental lists and history
-- 🚧 **Advanced Features**: Overdue tracking and automated reminders pending
+**Core Implementation Files:**
+- **Main Interface**: [src/routes/luz.tsx](../src/routes/luz.tsx) - Main LUZ page with view switching, date navigation, and modal management
+- **Backend**: [convex/shifts.ts](../convex/shifts.ts) (shift templates), [convex/shift_assignments.ts](../convex/shift_assignments.ts) (worker assignments)
+- **Timeline Components**:
+  - [src/components/LUZOverview.tsx](../src/components/LUZOverview.tsx) - Sidebar with shift summaries and quick actions
+  - [src/components/LUZVerticalTimeline.tsx](../src/components/LUZVerticalTimeline.tsx) - Day view with hourly timeline
+  - [src/components/LUZWeekView.tsx](../src/components/LUZWeekView.tsx) - 7-day grid view
+  - [src/components/LUZMonthView.tsx](../src/components/LUZMonthView.tsx) - Calendar month view
+- **Modal System** (7 modals in [src/components/modals/](../src/components/modals/)):
+  - `ShiftDetailsModal.tsx` - View shift details and worker assignments
+  - `CreateEditShiftModal.tsx` - Create/edit shift templates (manager only)
+  - `RequestJoinShiftModal.tsx` - Worker shift join requests
+  - `AssignWorkerModal.tsx` - Manager assigns workers to shifts
+  - `EditAssignmentModal.tsx` - Edit existing worker assignments
+  - `ReviewRequestModal.tsx` - Manager reviews pending worker requests
+  - `ApproveAssignmentModal.tsx` - Worker approves manager-initiated assignments
 
-### 3. Educational Courses - FUNCTIONAL
-- ✅ **Course Management**: Full CRUD operations for courses implemented
-- ✅ **Course Types**: Single-session and multi-meeting courses fully supported
-- ✅ **Session Management**: Multi-meeting courses with independent session scheduling
-- ✅ **3-Step Wizard**: Progressive course creation UI (Basic Info → Sessions → Materials)
-- ✅ **Enrollment System**: Student enrollment with approval workflows functional
-- ✅ **Role Integration**: Instructor permissions with course ownership operational
-- ✅ **Helper Instructors**: Multi-instructor support with permission differentiation
-- ✅ **Student Experience**: Course browsing, enrollment requests, and tracking functional
-- ✅ **Schema**: course_sessions table for multi-meeting courses deployed and tested
-- 🚧 **Recurring Templates**: Future feature for independent course instances
-- 🚧 **Advanced Features**: Course materials management and progress tracking pending
+**Key Features:**
 
-### 4. Role Management System - FUNCTIONAL
-**Implementation Status:**
-- ✅ **V2 Tag-Based Roles**: Full implementation (Staff+Worker+Manager+Instructor+ToolHandler)
-- ✅ **Role Emulation**: Development testing interface operational
-- ✅ **Permission Framework**: Complete access control with role-based filtering
-- ✅ **User Management**: Full CRUD operations with search and filtering
-- ✅ **Role Assignment**: Edit Roles modal with tag toggles functional
-- ✅ **Staff Promotion**: Customer-to-staff promotion with tag assignment
-- ✅ **Staff Demotion**: Staff-to-customer demotion with enrollment cleanup
-- 🚧 **Audit Trail**: Role change tracking not implemented
-- 🚧 **Bulk Operations**: Import/export functionality not implemented
+**Timeline Views**
+The LUZ interface provides three distinct calendar view modes. Day view shows an hourly timeline with shifts displayed as vertical blocks, allowing detailed inspection of worker assignments and shift overlaps. Week view displays a 7-day grid with shifts shown as colored cards in each day's column, making it easy to see weekly patterns. Month view provides a traditional calendar layout with shift indicators as badges, useful for long-term planning. Users can seamlessly switch between views while maintaining their selected date context.
 
-### 5. Internationalization (i18n) - 85% COMPLETE
-**Implementation Status:**
-- ✅ **i18n Infrastructure**: Complete setup with i18next + react-i18next + browser language detection
-- ✅ **Translation Files**: 6 namespaces with 500+ keys in Hebrew + English (shifts.json has 290+ keys)
-- ✅ **Language Switcher**: Dropdown component with live language switching and persistence
-- ✅ **RTL Support**: Automatic text direction switching for Hebrew (right-to-left)
-- ✅ **Home Page**: Full translation for guest, customer, and staff views (30+ keys)
-- ✅ **Navigation**: Header, menu, and sign-in/out buttons translated
-- ✅ **Staff Dashboard**: LUZ hub, quick actions, development status translated
-- ✅ **LUZ Main Page**: All views (day/week/month), overview panel, search - 100% translated
-- ✅ **LUZ Components**: LUZOverview, LUZVerticalTimeline, LUZWeekView, LUZMonthView - fully translated with locale-aware dates
-- ✅ **LUZ Modals (7/7)**: All modals complete - ShiftDetailsModal, CreateEditShiftModal, RequestJoinShiftModal, AssignWorkerModal, EditAssignmentModal, ReviewRequestModal, ApproveAssignmentModal
-- 🚧 **Tools Page**: Needs translation implementation
-- 🚧 **Educational Page**: Needs translation implementation
-- 🚧 **Roles Page**: Needs translation implementation
+**Shift Template Management**
+Managers can create recurring shift patterns that define regular operational scheduling needs. Each shift template includes start/end times, days of week it runs (e.g., Monday-Friday), and worker capacity settings (minimum required, optimal target, maximum allowed). Shift templates are the foundation of the scheduling system - they define when work needs to happen, and then workers are assigned to specific instances of these templates on particular dates. Templates can be edited to adjust capacity or timing, and changes apply to future instances while preserving existing assignments.
+
+**Dual Approval Workflows**
+The system implements bidirectional approval workflows ensuring both parties consent to assignments. In the manager-initiated flow, a manager assigns a worker to a shift, the worker receives the assignment and can approve or reject it, and only after approval does the assignment become confirmed. In the worker-initiated flow, a worker requests to join a shift, the request goes to a manager for review, and upon manager approval the assignment is confirmed. This dual-consent approach prevents unwanted assignments and respects worker preferences while giving managers scheduling control.
+
+**Real-time Synchronization**
+All LUZ data updates in real-time using Convex's reactive query system. When a manager approves a request, all connected clients (other managers, the assigned worker) see the update immediately without page refresh. This enables collaborative scheduling where multiple managers can work simultaneously without conflicts. The system also prevents race conditions - if two managers try to assign the same worker to overlapping shifts, the backend rejects the second attempt with a conflict error.
+
+**Smart Date Navigation**
+The date navigation system provides context-aware functionality. When viewing today's date, the date button opens a native date picker allowing quick jumps to any date. When viewing a past or future date, the same button becomes "Jump to Today" for quick return to current date. This dual-mode behavior reduces clicks for common navigation patterns. The selected date persists across view changes, so switching from day to week to month maintains the same date context.
+
+**Worker Assignment Management**
+Workers appear in shifts as colored indicator badges showing their initials and assignment status. Confirmed assignments display in green, pending approvals in yellow, and conflicts in red. Clicking a shift opens the details modal showing all assigned workers, their time preferences, and approval status. Workers can edit their own assignments (changing hours or adding notes) which triggers a re-approval workflow. Managers can directly assign or unassign workers, with the system preventing double-booking and over-capacity assignments through backend validation.
+
+**Click-to-Create Interactions**
+Managers can create shifts by clicking empty timeline slots in day or week views. Clicking an empty hour in day view opens the create modal pre-filled with that time. Clicking an empty day column in week view opens the modal with that date selected. This direct manipulation approach is faster than navigating to a separate form page. The system checks permissions before showing click handlers - workers see a read-only view without click-to-create capability.
+
+**Testing Coverage:**
+The LUZ system has a budding test suite with 83 passing unit tests covering core timeline components and utility functions. Current coverage includes date helper functions ([src/utils/dateHelpers.test.ts](../src/utils/dateHelpers.test.ts)), positioning algorithms ([src/utils/timelinePositioning.test.ts](../src/utils/timelinePositioning.test.ts)), and component behavior tests ([src/components/LUZVerticalTimeline.test.tsx](../src/components/LUZVerticalTimeline.test.tsx), [src/components/LUZWeekView.test.tsx](../src/components/LUZWeekView.test.tsx)). Pre-deployment Playwright testing validated critical workflows on desktop and mobile viewports.
+
+**Testing Strategy**: The project is in early stages of building comprehensive test coverage. Current focus is on unit testing utility functions and complex business logic. Future expansion planned for integration tests, API endpoint testing, and expanded E2E coverage. See [TEST_DESIGN.md](TEST_DESIGN.md) for testing strategy and expansion roadmap.
+
+### 2. Tool Rental System
+
+**Overview:**
+The tool rental system manages inventory and rental workflows for customers borrowing equipment from the shop. Tool handlers can manage the tool catalog, approve rental requests from customers, and create manual rentals for walk-in customers who don't have app accounts. The system tracks tool availability, rental periods, and return status.
+
+**Core Implementation Files:**
+- **Backend**: [convex/tools.ts](../convex/tools.ts) - Tool inventory, rental workflows, approval logic
+- **Frontend**: [src/routes/tools.tsx](../src/routes/tools.tsx) - Tool handler operational view and customer rental interface
+- **Modals**:
+  - [src/components/modals/CreateManualRentalModal.tsx](../src/components/modals/CreateManualRentalModal.tsx) - Walk-in customer rental creation
+  - Additional rental modals in [src/components/modals/](../src/components/modals/)
+
+**Key Features:**
+
+**Inventory Management**
+Tool handlers can create, edit, and delete tools in the catalog. Each tool includes name, description, daily rental rate, and availability status. Tools marked as unavailable (during maintenance or already rented) don't appear in customer rental requests. The catalog supports both paid and free tool rentals, with daily rates calculated automatically for multi-day bookings.
+
+**Customer Rental Workflow**
+Customers with the rental approved tag can browse the tool catalog and submit rental requests specifying start/end dates and purpose. Requests enter pending status and appear in the tool handler's approval queue. Tool handlers review requests, check customer eligibility, and approve or reject with optional notes. Upon approval, the tool becomes unavailable and the rental enters active status. When the customer returns the tool, the handler marks it returned and the tool becomes available again.
+
+**Manual Rental Creation**
+Tool handlers can create pre-approved rentals for walk-in customers who don't have app accounts. This feature accommodates tech-illiterate customers or situations requiring immediate rentals without registration. The manual rental form captures renter name and contact information (phone or email) and creates the rental in active status, bypassing the approval workflow. Manual rentals display with "Walk-in" badges in rental lists to distinguish them from app-based rentals.
+
+**LUZ Calendar Integration**
+Active tool rentals appear on the LUZ calendar timeline, providing managers visibility into equipment availability alongside shift scheduling. Rental blocks display the tool name and renter, allowing staff to see resource allocation at a glance. Only active rentals appear - pending requests and completed returns are excluded from the timeline view.
+
+**Availability Tracking**
+The system enforces tool availability rules - only one rental per tool at a time. When a rental is approved or manually created, the tool automatically becomes unavailable. When marked as returned, availability is restored. This prevents double-booking and ensures accurate inventory status. Tool handlers can manually override availability for maintenance periods or other operational needs.
+
+**Future Enhancements:**
+Planned features include overdue tracking with automated reminder notifications, rental history analytics, and damage reporting workflows.
+
+### 3. Educational Courses
+
+**Overview:**
+The educational courses system allows instructors to create and manage training courses for customers. Instructors can offer both single-session workshops and multi-meeting courses with independent session scheduling. Customers can browse available courses, submit enrollment requests, and track their course participation. The system handles enrollment approvals, capacity management, and course visibility.
+
+**Core Implementation Files:**
+- **Backend**: [convex/courses_v2.ts](../convex/courses_v2.ts) - Course management, enrollment workflows, session scheduling
+- **Schema**: [convex/schema.ts](../convex/schema.ts) - `courses` and `course_sessions` tables
+- **Frontend**: [src/routes/educational.tsx](../src/routes/educational.tsx) - Instructor dashboard and customer course browsing
+- **Modals**: Course creation, enrollment, and management modals in [src/components/modals/](../src/components/modals/)
+
+**Key Features:**
+
+**Course Types**
+The system supports two course formats. Single-session courses are one-time workshops with a single start/end time, ideal for introductory classes or short skill demonstrations. Multi-meeting courses span multiple sessions over days or weeks, with each session having independent date and time scheduling stored in the `course_sessions` table. This flexibility accommodates different teaching formats - a weekend workshop might have two 4-hour sessions, while a weekly class might have six 2-hour sessions.
+
+**3-Step Course Creation Wizard**
+Instructors use a progressive multi-step form to create courses. Step 1 captures basic information (title, description, category, capacity, pricing). Step 2 handles session scheduling - for single-session courses this is one date/time picker, for multi-meeting courses instructors can add multiple sessions with different dates. Step 3 (future) will handle course materials upload. The wizard validates each step before allowing progression and shows clear visual progress indicators.
+
+**Enrollment Workflow**
+Customers browse courses filtered by category and availability, seeing only future courses that haven't reached capacity. When a customer enrolls, the request enters pending status and appears in the instructor's approval queue. Instructors review enrollment requests, check customer qualifications, and approve or reject with optional feedback. Approved enrollments grant the student tag for that specific course, providing access to course details and materials. The system enforces capacity limits - enrollment requests are blocked when a course reaches maximum students.
+
+**Multi-Instructor Support**
+Courses can have a primary instructor (owner) and helper instructors. The primary instructor has full control - editing course details, managing sessions, and approving enrollments. Helper instructors can view course information and student lists but cannot modify course settings. This supports teaching scenarios where multiple instructors collaborate, with clear ownership hierarchy preventing conflicting course changes.
+
+**LUZ Calendar Integration**
+Course sessions appear on the LUZ calendar timeline, providing visibility into facility scheduling alongside shifts and tool rentals. Each session displays as a colored block showing course name and enrollment count. This unified view helps managers identify scheduling conflicts and facility capacity issues before they become problems.
+
+**Future Enhancements:**
+Planned features include recurring course templates (create new independent instances of popular courses), course materials management (file uploads for handouts and resources), and student progress tracking for multi-meeting courses.
+
+### 4. Role Management System
+
+**Overview:**
+The role management system is an administrative interface (accessed via the Roles tab) that provides staff with tools to manage user accounts, assign permission tags, and control access levels. This is distinct from the V2 permission architecture itself (described in User Roles & Permissions section above) - this section focuses on the **administrative tools** for managing that architecture.
+
+**Core Implementation Files:**
+- **Backend**: [convex/users_v2.ts](../convex/users_v2.ts) - User queries, role updates, promotion/demotion logic
+- **Frontend**: [src/routes/roles.tsx](../src/routes/roles.tsx) - Role management administrative interface (the Roles tab)
+- **Modals**: User edit and role assignment modals in [src/components/modals/](../src/components/modals/)
+- **Dev Tools**: [src/components/RoleEmulator.tsx](../src/components/RoleEmulator.tsx) - Development testing dropdown
+
+**Key Features:**
+
+**User Search and Filtering**
+The Roles tab provides search and filtering capabilities to find and manage users. Administrators can search by name or email, filter by role type (staff vs customer), and filter by specific permission tags (worker, manager, instructor, tool handler). The interface displays users in a sortable table showing name, email, current role badges, and last active date. This centralized view allows quick auditing of who has what permissions.
+
+**Permission Tag Assignment**
+Clicking a user opens the Edit Roles modal showing all available permission tags as interactive toggles. Administrators can enable or disable tags (workerTag, managerTag, instructorTag, toolHandlerTag) individually. The modal shows the current state and allows atomic updates - either all changes succeed or none do, preventing inconsistent permission states. Real-time validation enforces business rules before saving.
+
+**Staff Promotion and Demotion**
+The interface supports converting users between customer and staff status. The "Promote to Staff" action grants the `isStaff` flag and opens the tag assignment modal to select initial permissions. The "Demote to Staff" action removes the staff flag, clears all permission tags, and cleans up related data like instructor course ownership or manager shift assignments. These transitions preserve customer-level data (rental history, course enrollments) while removing operational privileges.
+
+**Business Rule Enforcement**
+The system validates role combinations at both UI and backend levels. Attempting to assign manager tag without worker tag shows an inline error message explaining the requirement. Trying to assign instructor or tool handler tags to non-staff users is blocked. The validation happens in real-time as toggles are clicked, providing immediate feedback. Backend mutations double-check these rules to prevent privilege escalation via API manipulation.
+
+**Role Emulator (Development Tool)**
+The role emulator dropdown (visible only in development environments) allows developers to test permission-based UI without creating multiple user accounts. The dropdown shows toggles for staff status and all permission tags, with a live preview of the effective role combination displayed as badges. Changes apply instantly, allowing rapid testing of different user perspectives. This tool is essential for validating that features appear correctly for each role type.
+
+**Key Distinction:**
+- **User Roles & Permissions (architecture)**: Defines what tags exist, how they combine, what each tag grants access to
+- **Role Management System (this section)**: Administrative interface for assigning those tags to users
+
+**Future Enhancements:**
+Planned features include audit trail logging (track who changed what roles when with timestamps), bulk user operations (CSV import/export for initial setup), role templates (save common tag combinations like "shift supervisor" = worker+manager), and permission group management for enterprise scaling.
+
+### 5. Internationalization (i18n)
+
+**Overview:**
+The application supports multiple languages with full internationalization infrastructure. Users can switch languages dynamically via a dropdown in the header, with their preference persisted to localStorage. The system includes automatic RTL (right-to-left) support for Hebrew, locale-aware date formatting, and comprehensive translation coverage for the LUZ system. Translation expansion is ongoing for remaining pages.
+
+**Core Implementation Files:**
+- **Configuration**: [src/i18n/config.ts](../src/i18n/config.ts) - i18next setup, language detection, RTL configuration
+- **Custom Hook**: [src/hooks/useLanguage.ts](../src/hooks/useLanguage.ts) - Provides `t()`, `isRTL`, `currentLanguage`, `changeLanguage()`
+- **Language Switcher**: [src/components/LanguageSwitcher.tsx](../src/components/LanguageSwitcher.tsx) - Language selection dropdown
+- **Translation Files**: [public/locales/](../public/locales/) - 6 namespaces (common, auth, shifts, tools, courses, roles)
+
+**Supported Languages:**
+- **Hebrew (עברית)**: Primary working language, 85% complete with full RTL support
+- **English**: Default fallback language, source of truth for all translations (100% complete)
+- **Russian (Русский)**: Structure in place, marked "Coming Soon"
+- **French (Français)**: Structure in place, marked "Coming Soon"
+- **Arabic (العربية)**: Planned RTL language for future implementation
+
+**Translation Coverage:**
+
+**Fully Translated (100%):**
+- **LUZ System**: Complete translation of all components, views, and 7 modals with locale-aware date formatting
+- **Home Page**: Guest, customer, and staff dashboard views
+- **Navigation**: Header menu, sign-in/out buttons, language switcher
+- **Authentication**: Sign-in flows and access control messages
+
+**Remaining Work (15%):**
+- **Tools Page** ([src/routes/tools.tsx](../src/routes/tools.tsx)): Tool rental interface and modals
+- **Educational Page** ([src/routes/educational.tsx](../src/routes/educational.tsx)): Course management and enrollment
+- **Roles Page** ([src/routes/roles.tsx](../src/routes/roles.tsx)): User and role management interface
+
+**Key Features:**
+
+**Dynamic Language Switching**
+Users select their preferred language from a dropdown showing flag icons and native language names. The selection applies immediately without page reload, updating all UI text, date formats, and text direction. The choice persists to localStorage (`i18nextLng` key) and is restored on subsequent visits. The system auto-detects user language on first visit using browser preferences.
+
+**RTL (Right-to-Left) Support**
+Hebrew triggers automatic RTL mode, updating the HTML `dir` attribute to `"rtl"`. All text flows right-to-left, navigation elements mirror horizontally, and layouts adapt using CSS logical properties. The LUZ system was specifically designed with RTL in mind - timeline views, modals, and forms all render correctly in both directions without layout breaks. Arabic will use the same RTL infrastructure when implemented.
+
+**Locale-Aware Date Formatting**
+All date displays use `toLocaleDateString(currentLanguage)` for proper localization. Hebrew dates format as day/month/year, English as month/day/year, following each locale's conventions. Time displays use 24-hour format for Hebrew, 12-hour for English. The LUZ timeline components pass the current language to all date formatting functions ensuring consistency throughout.
+
+**Namespace Organization**
+Translations are organized into logical namespaces to avoid conflicts and improve maintainability. The `common` namespace contains shared UI elements (actions, navigation, time units). Feature-specific namespaces (`shifts`, `tools`, `courses`, `roles`) contain domain-specific terminology. The `auth` namespace handles authentication and access control messages. This structure allows parallel translation work on different features.
+
+**Implementation Guidelines:**
+For detailed translation workflow, best practices, and implementation patterns, see the Internationalization section in [CLAUDE.md](../CLAUDE.md#internationalization-i18next). The LUZ system provides a reference implementation for proper i18n integration.
+
+**Future Enhancements:**
+Complete translation of Tools, Educational, and Roles pages to achieve 100% coverage. Add Russian, French, and Arabic translations when needed. Implement translation management workflow for non-technical translators (potential integration with translation services or spreadsheet-based workflow).
 
 **Supported Languages:**
 - **Hebrew (עברית)** - Primary working language, complete with RTL support
@@ -147,198 +344,103 @@ public/locales/
       └── [same structure]
 ```
 
-## 🏗️ Technical Architecture
+**Future Enhancements:**
+Complete translation of Tools, Educational, and Roles pages to achieve 100% coverage. Add Russian, French, and Arabic translations when needed. Implement translation management workflow for non-technical translators (potential integration with translation services or spreadsheet-based workflow).
 
-### Frontend Stack
-- **Framework**: React 19 + Vite for modern development experience
-- **Routing**: TanStack Router with type-safe, role-based navigation
-- **State**: TanStack Query + Convex for real-time data synchronization
-- **Styling**: Tailwind CSS 4 + daisyUI 5 with custom themes
-- **Forms**: TanStack Form + Zod v4 for robust validation
-- **Auth**: Clerk integration with role-based access control
+## 🎯 Current Status & Future Work
 
-### Backend Stack
-- **Database**: Convex real-time database with automatic synchronization
-- **API**: Convex functions (queries, mutations, actions) with type safety
-- **Authentication**: Integrated Clerk + Convex auth with JWT validation
-- **File Storage**: Convex file storage for documents and images
-- **Real-time**: Live updates across all connected clients
+### Production Deployment Status
 
-## Current Development Status & Next Phase Requirements
+**Live URL**: https://kastel.code-bloom.app
+**Deployment Date**: October 16, 2025
+**Status**: Deployed and operational
 
-### 🚨 **PRIORITY 1: Workflow Implementation** ✅ COMPLETED
+**Environment**:
+- **Frontend**: Vercel (production)
+- **Backend**: Convex (production deployment)
+- **Authentication**: Clerk (production instance)
+- **Domain**: Custom domain configured, DNS propagation complete
 
-#### **LUZ System Workflow Requirements** ✅ COMPLETED
-- ✅ **Modal Dialogs**: Complete 7-modal system (ShiftDetailsModal, CreateEditShiftModal, RequestJoinShiftModal, AssignWorkerModal, EditAssignmentModal, ApproveAssignmentModal, ReviewRequestModal)
-- ✅ **Assignment Workflows**: Dual approval system implemented (manager↔worker, worker↔manager) with assignment editing capability
-- ✅ **Date Integration**: Timeline views connected to real scheduling with date-aware click handlers (Session 32)
-- ✅ **Date Navigation**: Smart date button with context-aware picker/jump functionality (Session 32)
-- ✅ **Week View Fix**: Shifts now correctly update selectedDate to clicked day instead of current date (Session 32)
-- ✅ **Conflict Detection**: Comprehensive validation and real-time conflict prevention
-- ✅ **Real-time Updates**: Live backend integration with Convex and proper state management
-- ✅ **Assignment Editing**: Workers can edit existing assignments with role-based approval workflows
+### What's Working in Production
 
-#### **Role Management Workflow Requirements**
-- **Edit User Interface**: Implement modal forms for role tag modification
-- **Promotion Workflows**: Build customer-to-staff conversion interfaces
-- **Bulk Operations**: Add mass user import/export functionality
-- **Change Tracking**: Implement audit trail for all role modifications
+**LUZ Shift Management System**
+Three timeline views (Day/Week/Month) with date navigation, 7-modal workflow system for shift management, dual approval workflows (manager↔worker), worker assignment display, conflict detection, and real-time backend synchronization. Managers can create shift templates and assign workers. Workers can request assignments and view their schedules.
 
-### 🔧 **PRIORITY 2: Production-Ready Features**
+**Tool Rental System**
+Inventory management, customer rental requests with approval workflow, manual rental creation for walk-in customers, availability tracking, and basic calendar integration.
 
-#### **Data Validation & Security**
-- **Input Sanitization**: Validate all user inputs on server side
-- **Error Handling**: Comprehensive error states and user feedback
-- **Performance Optimization**: Query optimization and caching strategies
-- **Backup & Recovery**: Data backup procedures and rollback capabilities
+**Educational Courses System**
+Single-session and multi-meeting course creation, 3-step wizard, enrollment requests with instructor approval, multi-instructor support, and calendar integration.
 
-#### **Advanced Functionality**
-- **Search & Filtering**: Real backend search across users, shifts, and assignments
-- **Bulk Operations**: Mass import/export of staff data and role assignments
-- **Audit Logging**: Track all role changes and system modifications
-- **Notification System**: Email/SMS alerts for shift changes and approvals
+**Role Management System**
+User search and filtering, permission tag assignment via modal interface, staff promotion/demotion workflows, business rule validation, and development role emulator.
 
-### 📊 **PRIORITY 3: Analytics & Reporting**
-- **Usage Metrics**: Track system usage and identify optimization opportunities
-- **Operational Reports**: Generate staffing reports and shift analysis
-- **Performance Dashboards**: Real-time system health and user activity monitoring
-- **Business Intelligence**: Data insights for operational decision making
+**Internationalization (85%)**
+Hebrew and English support with RTL layout, dynamic language switching, locale-aware date formatting. LUZ system fully translated. Tools, Educational, and Roles pages need translation completion.
 
-## 🚀 Immediate Development Roadmap
+### Unfinished Past Work
 
-### **Week 1-2: Workflow Implementation**
-1. **Modal Dialog System**: Implement create/edit forms for shifts and user management
-2. **Assignment Pipeline**: Build worker request submission and manager approval workflows
-3. **Form Validation**: Add comprehensive input validation and error handling
-4. **Date Integration**: Connect timeline views to real scheduling logic
+**i18n Translation Completion (85% → 100%)**
+Three pages remaining to translate: Tools ([src/routes/tools.tsx](../src/routes/tools.tsx)), Educational ([src/routes/educational.tsx](../src/routes/educational.tsx)), and Roles ([src/routes/roles.tsx](../src/routes/roles.tsx)). Follow the pattern established in LUZ system translation.
 
-### **Week 3-4: Advanced Features**
-1. **Drag-and-Drop**: Implement interactive assignment management interface
-2. **Conflict Detection**: Add scheduling validation and double-booking prevention
-3. **Real-time Collaboration**: Ensure live updates across all connected clients
-4. **Mobile Optimization**: Improve responsive design for tablet/mobile interfaces
+### Known Limitations
 
-### **Month 2: Advanced Features**
-1. **Workflow Implementation**: Customer-to-staff promotion and approval workflows
-2. **Notification System**: Email/SMS alerts for critical system events
-3. **Audit Trail**: Complete change tracking and modification history
-4. **Performance Optimization**: Query optimization and caching implementation
+**Mobile UI Issues**
+Mobile layout tested at 375px width shows usability problems. Timeline components, modals, and navigation need responsive design improvements for touch interactions and small screens.
 
-### **Month 3+: Production Readiness**
-1. **Load Testing**: Performance testing under realistic usage scenarios
-2. **Backup Systems**: Automated backup and disaster recovery procedures
-3. **Monitoring**: System health monitoring and alerting infrastructure
-4. **Documentation**: Complete API documentation and user guides
+**RTL Layout Issues**
+Hebrew RTL mode has layout inconsistencies. Some components don't properly mirror, margins and padding need CSS logical properties, and certain UI elements break in right-to-left direction.
 
-## 🚨 Critical Technical Debt and Unresolved Issues
+**No Notification System**
+Users must manually check the LUZ interface for shift assignments, approval requests, and schedule changes. No email or SMS notifications are implemented.
 
-### **Calendar System Problems (Session 27 - September 21, 2025)**
-- ❌ **User-Reported vs Technical Reality Mismatch**: User claimed calendar dates were wrong, but technical investigation showed correct calculations
-- ❌ **Architecture Instability**: Horizontal timeline view removed mid-development due to complexity, indicating unstable design decisions
-- ❌ **Date Calculation Complexity**: Multiple overlapping functions (getWeekDates, getMonthDates, generateMonthGrid) with potential synchronization issues
-- ❌ **No Calendar Library Integration**: System uses custom JavaScript Date logic, limiting configuration options and increasing maintenance burden
-- ❌ **Timezone/Locale Testing Gaps**: No validation tools for different browser/OS environments that might affect date display
+**Incomplete i18n Coverage**
+Tools, Educational, and Roles pages display only in English. Translation completion required for full multilingual support.
 
-### **LUZ System Implementation Gaps - RESOLVED**
-- ✅ **Timeline View Reduction**: Originally planned 4 views (vertical, horizontal, week, month) reduced to 3 due to complexity - system now stable with 3 views
-- ✅ **Worker Assignment Visualization**: Fixed display of individual workers in week view containers and timeline views
-- ✅ **Hourly Capacity Calculation**: Fixed multiple time slot support and cross-shift capacity bleeding in timeline displays
-- ✅ **Week View Date Selection**: Fixed shifts opening with wrong date - now correctly updates selectedDate to clicked day (Session 32)
-- ✅ **Date Navigation UX**: Added smart date button with context-aware picker/jump functionality (Session 32)
-- **Testing Infrastructure**: Comprehensive date/calendar validation testing still needed
+**Limited Testing Coverage**
+83 unit tests cover utility functions and core timeline components. Modal workflows, backend mutations, and integration testing remain gaps. See [TEST_DESIGN.md](TEST_DESIGN.md) for testing expansion roadmap.
 
-### **Development Process Issues**
-- **User Feedback Reliability**: Difficulty reproducing user-reported problems during technical investigation
-- **Architecture Decision Instability**: Major component removal (horizontal timeline) indicates poor initial planning
-- **Complex Calendar Logic**: Multiple interdependent date calculation functions prone to edge cases
-- **Limited Configuration Options**: Week start day changes require code modifications rather than settings
+**No Audit Trail**
+Role changes and system modifications are not logged. No history tracking for permission assignments or administrative actions.
 
-### **Current Implementation Status (Post-Backend Integration Testing)**
-- ✅ **Real Data Integration**: LUZ and Role Management connected to live database
-- ✅ **Permission Enforcement**: Server-side role validation working correctly
-- ✅ **Real-time Updates**: Live data synchronization functional
-- ⚠️ **Calendar System**: Functional but with unresolved user experience issues
-- 🚧 **User Workflows**: Modal dialogs and form interactions need implementation
-- ⏳ **Mobile Responsiveness**: Tablet/mobile optimization pending
-- ⏳ **Error Handling**: Comprehensive error boundaries and user feedback needed
+**Manual Backup Procedures**
+No automated backup system. Database backups rely on Convex platform defaults.
 
-### **Future Testing Requirements (After Workflow Implementation)**
-- **Enhanced Calendar Testing**: Comprehensive date validation across different environments and edge cases
-- **User Environment Investigation**: Browser/OS locale settings impact on date display
-- **End-to-End Workflow Testing**: Full assignment request/approval cycles
-- **Concurrent User Testing**: Multi-user assignment conflicts and real-time updates
-- **Mobile Interface Testing**: Touch interactions and responsive behavior validation
-- **Performance Load Testing**: Database performance under realistic usage scenarios
-- **Data Migration Testing**: Validate system behavior during database schema changes
+## 🚀 Future Tasks
 
-## 📋 Current Priority Tasks
+### Immediate Priority
 
-### 🎉 **PRODUCTION DEPLOYMENT COMPLETE** (Session 37 - October 16, 2025)
+**Complete i18n Translation**
+Translate Tools, Educational, and Roles pages to achieve 100% coverage. Estimated 2-3 hours following LUZ system pattern.
 
-**Deployment Status**: ✅ Application deployed and awaiting DNS propagation
+**Fix Mobile UI Issues**
+Address responsive design problems at 375px width. Timeline components, modals, and navigation need touch-friendly improvements.
 
-**Pre-Deployment Checklist**:
-1. **Environment Configuration** ✅ COMPLETE
-   - [x] All environment variables properly configured
-   - [x] Production Convex deployment created and configured
-   - [x] Clerk JWT issuer domain set for production
-   - [x] Environment variables secured in Vercel
+**Fix RTL Layout Issues**
+Resolve Hebrew RTL inconsistencies. Apply CSS logical properties, fix component mirroring, and test all layouts in RTL mode.
 
-2. **Testing & Quality Assurance** ✅ COMPLETE
-   - [x] Unit tests passing (83/83 tests)
-   - [x] TypeScript compilation clean (zero errors)
-   - [x] Comprehensive Playwright testing (8 scenarios, 2 viewports)
-   - [x] Desktop testing complete (1200x800)
-   - [x] Mobile responsiveness verified (375x667)
-   - [x] Language switching tested (Hebrew ↔ English with RTL)
-   - [x] All 3 LUZ calendar views tested (Day/Week/Month)
-   - [x] Authentication flow verified with Clerk
+**Production User Feedback**
+Collect initial feedback from staff users on live system. Document usability issues and prioritize fixes based on operational impact.
 
-3. **Production Deployment** ✅ COMPLETE
-   - [x] Production build successful (511.60 kB main bundle, gzipped: 155.45 kB)
-   - [x] Merged feature branch to main (273 commits)
-   - [x] Pushed to GitHub remote repository
-   - [x] Vercel deployment completed
-   - [x] Custom domain configured: `kastel.code-bloom.app`
+### Later Scope Work
 
-4. **Security & Performance** ✅ IMPROVED
-   - [x] Environment files removed from Git tracking
-   - [x] `.gitignore` enhanced with explicit patterns
-   - [x] Production/development secrets separated
-   - [ ] Input validation on all forms (future enhancement)
-   - [ ] Rate limiting on API endpoints (future enhancement)
+**Notification System**
+Implement email/SMS alerts for shift changes, approval requests, rental reminders, and course enrollments. Integrate with third-party service (e.g., Twilio, SendGrid).
 
-5. **Pending Final Steps** ⏳ WAITING
-   - ⏳ DNS propagation (5-60 minutes, awaiting admin)
-   - ⏳ SSL certificate auto-provisioning (after DNS)
-   - ⏳ Production URL verification at `https://kastel.code-bloom.app`
+**Audit Trail System**
+Track all role changes, shift modifications, and administrative actions with timestamps and user attribution. Compliance and security reporting.
 
-### 🎯 Next Session Priority: Production Verification
-**Goal**: Verify production deployment and address any production-specific issues
+**Analytics Dashboard**
+Usage metrics, system health monitoring, staffing reports, and operational insights. Business intelligence for decision-making.
 
-**Immediate Tasks** (After DNS propagates):
-1. **Production Verification**:
-   - [ ] Test authentication on production URL
-   - [ ] Verify all features work on live site
-   - [ ] Test language switching on production
-   - [ ] Verify LUZ calendar on production
-   - [ ] Check for any production-only issues
-   - [ ] Test mobile responsiveness on real devices
+**Testing Expansion**
+Expand test coverage to include modal workflows, backend mutations, integration tests, and E2E scenarios. See [TEST_DESIGN.md](TEST_DESIGN.md).
 
-2. **Post-Deployment Monitoring**:
-   - [ ] Monitor Convex production logs for errors
-   - [ ] Check Vercel deployment logs
-   - [ ] Verify SSL certificate provisioned correctly
-   - [ ] Test performance under production environment
+**Performance & Monitoring**
+Implement error tracking (Sentry), performance monitoring, automated backups, and load testing under realistic usage.
 
-### Short-term (Next 2 Weeks)
-1. **User Training**: Create documentation and train staff users
-2. **Production Monitoring**: Implement error tracking and performance monitoring
-3. **User Feedback**: Collect feedback from initial production users
-4. **Bug Fixes**: Address any issues discovered in production
+**User Training Materials**
+Create documentation, video walkthroughs, and quick reference guides for staff users.
 
-### Medium-term (Next Month)
-1. **Feature Enhancements**: Based on user feedback from production
-2. **Analytics Dashboard**: Usage metrics and operational reporting
-3. **Notification System**: Email/SMS integration for shift changes and approvals
-4. **Remaining i18n**: Complete translation for Tools, Educational, and Roles pages
+**Additional Languages**
+Add Russian, French, and Arabic translations when needed. Implement translation management workflow for non-technical translators.
