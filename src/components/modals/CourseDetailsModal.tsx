@@ -3,6 +3,7 @@ import { api } from "../../../convex/_generated/api";
 import { Id } from "../../../convex/_generated/dataModel";
 import { X, Calendar, Clock, MapPin, Users, BookOpen, CheckCircle, XCircle } from "lucide-react";
 import { useState } from "react";
+import { useLanguage } from "@/hooks/useLanguage";
 
 interface CourseDetailsModalProps {
   isOpen: boolean;
@@ -12,6 +13,7 @@ interface CourseDetailsModalProps {
 }
 
 export function CourseDetailsModal({ isOpen, onClose, courseId, onEnroll }: CourseDetailsModalProps) {
+  const { t } = useLanguage();
   const courseDetails = useQuery(api.courses_v2.getCourseDetailsV2, { courseId });
   const updateEnrollmentStatus = useMutation(api.courses_v2.updateEnrollmentStatusV2);
 
@@ -85,7 +87,7 @@ export function CourseDetailsModal({ isOpen, onClose, courseId, onEnroll }: Cour
               </div>
               <div className="badge badge-secondary">{courseDetails.category}</div>
               <div className={`badge ${courseDetails.isActive ? 'badge-success' : 'badge-neutral'}`}>
-                {courseDetails.isActive ? 'Active' : 'Inactive'}
+                {courseDetails.isActive ? t('common:status.active') : t('common:status.inactive')}
               </div>
             </div>
           </div>
@@ -102,7 +104,7 @@ export function CourseDetailsModal({ isOpen, onClose, courseId, onEnroll }: Cour
             <div className="flex items-center gap-2">
               <Calendar className="w-4 h-4 opacity-70" />
               <div className="text-sm">
-                <div className="font-semibold">Start</div>
+                <div className="font-semibold">{t('tools:rental.startDate')}</div>
                 <div className="opacity-70">{courseDetails.startDate}</div>
               </div>
             </div>
@@ -110,7 +112,7 @@ export function CourseDetailsModal({ isOpen, onClose, courseId, onEnroll }: Cour
             <div className="flex items-center gap-2">
               <Calendar className="w-4 h-4 opacity-70" />
               <div className="text-sm">
-                <div className="font-semibold">End</div>
+                <div className="font-semibold">{t('tools:rental.endDate')}</div>
                 <div className="opacity-70">{courseDetails.endDate}</div>
               </div>
             </div>
@@ -118,7 +120,7 @@ export function CourseDetailsModal({ isOpen, onClose, courseId, onEnroll }: Cour
             <div className="flex items-center gap-2">
               <Clock className="w-4 h-4 opacity-70" />
               <div className="text-sm">
-                <div className="font-semibold">Time</div>
+                <div className="font-semibold">{t('common:time.time')}</div>
                 <div className="opacity-70">
                   {courseDetails.startTime} - {courseDetails.endTime}
                 </div>
@@ -128,7 +130,7 @@ export function CourseDetailsModal({ isOpen, onClose, courseId, onEnroll }: Cour
             <div className="flex items-center gap-2">
               <MapPin className="w-4 h-4 opacity-70" />
               <div className="text-sm">
-                <div className="font-semibold">Location</div>
+                <div className="font-semibold">{t('tools:fields.location')}</div>
                 <div className="opacity-70">{courseDetails.location}</div>
               </div>
             </div>
@@ -138,21 +140,21 @@ export function CourseDetailsModal({ isOpen, onClose, courseId, onEnroll }: Cour
             <div className="stat-figure text-secondary">
               <Users className="w-8 h-8" />
             </div>
-            <div className="stat-title">Participants</div>
+            <div className="stat-title">{t('staffing:students')}</div>
             <div className="stat-value text-2xl">
               {courseDetails.currentParticipants}/{courseDetails.maxParticipants}
             </div>
-            <div className="stat-desc">{courseDetails.spotsAvailable} spots left</div>
+            <div className="stat-desc">{courseDetails.spotsAvailable} {t('courses:enrollment.spotsAvailable')}</div>
           </div>
 
           {/* Instructor Info */}
           {courseDetails.instructor && (
             <div className="p-4 bg-base-200 rounded-lg">
-              <div className="font-semibold mb-1">Instructor</div>
+              <div className="font-semibold mb-1">{t('courses:instructor.instructor')}</div>
               <div className="text-sm opacity-70">{courseDetails.instructor.name}</div>
               {"helperInstructors" in courseDetails && courseDetails.helperInstructors && courseDetails.helperInstructors.length > 0 && (
                 <div className="mt-2">
-                  <div className="text-xs font-semibold mb-1">Helper Instructors:</div>
+                  <div className="text-xs font-semibold mb-1">{t('courses:instructor.instructors')}:</div>
                   <div className="flex gap-2 flex-wrap">
                     {courseDetails.helperInstructors.map((helper: any) => (
                       <div key={helper._id} className="badge badge-sm">{helper.name}</div>
@@ -168,7 +170,7 @@ export function CourseDetailsModal({ isOpen, onClose, courseId, onEnroll }: Cour
             <div>
               <h4 className="font-semibold mb-2 flex items-center gap-2">
                 <BookOpen className="w-4 h-4" />
-                Syllabus
+{t('courses:details.courseName')}
               </h4>
               <ul className="list-disc list-inside space-y-1">
                 {courseDetails.syllabus.map((topic: string, index: number) => (
@@ -181,7 +183,7 @@ export function CourseDetailsModal({ isOpen, onClose, courseId, onEnroll }: Cour
           {/* Materials */}
           {courseDetails.materials && courseDetails.materials.length > 0 && (
             <div>
-              <h4 className="font-semibold mb-2">Materials Provided</h4>
+              <h4 className="font-semibold mb-2">{t('courses:details.materialsIncluded')}</h4>
               <ul className="list-disc list-inside space-y-1">
                 {courseDetails.materials.map((material: string, index: number) => (
                   <li key={index} className="text-sm opacity-80">{material}</li>
@@ -193,15 +195,15 @@ export function CourseDetailsModal({ isOpen, onClose, courseId, onEnroll }: Cour
           {/* Enrollments (Instructor/Manager view) */}
           {("enrollments" in courseDetails ? courseDetails.enrollments : []) && ("enrollments" in courseDetails ? courseDetails.enrollments : []).length > 0 && (
             <div>
-              <h4 className="font-semibold mb-3">Enrolled Students</h4>
+              <h4 className="font-semibold mb-3">{t('courses:enrollment.enrolledStudents')}</h4>
               <div className="overflow-x-auto">
                 <table className="table table-sm">
                   <thead>
                     <tr>
-                      <th>Student</th>
-                      <th>Enrollment Date</th>
-                      <th>Status</th>
-                      <th>Actions</th>
+                      <th>{t('staffing:students')}</th>
+                      <th>{t('shift:date')}</th>
+                      <th>{t('common:status.active')}</th>
+                      <th>{t('roles:actions')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -225,7 +227,7 @@ export function CourseDetailsModal({ isOpen, onClose, courseId, onEnroll }: Cour
                                   onClick={() => handleApproveEnrollment(enrollment._id)}
                                   className="btn btn-xs btn-success"
                                   disabled={isUpdating}
-                                  title="Approve"
+                                  title={t('shift:approve')}
                                 >
                                   <CheckCircle className="w-3 h-3" />
                                 </button>
@@ -233,7 +235,7 @@ export function CourseDetailsModal({ isOpen, onClose, courseId, onEnroll }: Cour
                                   onClick={() => handleRejectEnrollment(enrollment._id)}
                                   className="btn btn-xs btn-error"
                                   disabled={isUpdating}
-                                  title="Reject"
+                                  title={t('assignment:rejectAssignment')}
                                 >
                                   <XCircle className="w-3 h-3" />
                                 </button>
@@ -245,7 +247,7 @@ export function CourseDetailsModal({ isOpen, onClose, courseId, onEnroll }: Cour
                                 className="btn btn-xs btn-info"
                                 disabled={isUpdating}
                               >
-                                Confirm
+{t('common:actions.confirm')}
                               </button>
                             )}
                           </div>
@@ -262,7 +264,7 @@ export function CourseDetailsModal({ isOpen, onClose, courseId, onEnroll }: Cour
           {("userEnrollment" in courseDetails ? courseDetails.userEnrollment : null) && (
             <div className="alert alert-info">
               <div>
-                <div className="font-semibold">Your Enrollment Status</div>
+                <div className="font-semibold">{t('courses:enrollment.enrollmentStatus')}</div>
                 <div className="flex gap-2 mt-2">
                   <div className={`badge ${getStatusBadgeClass(("userEnrollment" in courseDetails ? courseDetails.userEnrollment : null)?.status || "pending")}`}>
                     {("userEnrollment" in courseDetails ? courseDetails.userEnrollment : null)?.status || "pending"}
@@ -277,11 +279,11 @@ export function CourseDetailsModal({ isOpen, onClose, courseId, onEnroll }: Cour
         <div className="flex justify-end gap-2 mt-6">
           {!("userEnrollment" in courseDetails ? courseDetails.userEnrollment : null) && !("canManage" in courseDetails ? courseDetails.canManage : false) && courseDetails.spotsAvailable > 0 && (
             <button onClick={onEnroll} className="btn btn-primary">
-              Enroll Now
+{t('courses:enrollment.enroll')}
             </button>
           )}
           <button onClick={onClose} className="btn">
-            Close
+            {t('common:actions.close')}
           </button>
         </div>
       </div>
