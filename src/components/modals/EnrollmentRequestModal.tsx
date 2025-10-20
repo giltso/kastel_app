@@ -3,6 +3,7 @@ import { useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { Id } from "../../../convex/_generated/dataModel";
 import { X, Calendar, Clock, MapPin } from "lucide-react";
+import { useLanguage } from "@/hooks/useLanguage";
 
 interface EnrollmentRequestModalProps {
   isOpen: boolean;
@@ -12,6 +13,7 @@ interface EnrollmentRequestModalProps {
 }
 
 export function EnrollmentRequestModal({ isOpen, onClose, course, onSuccess }: EnrollmentRequestModalProps) {
+  const { t } = useLanguage();
   const requestEnrollment = useMutation(api.courses_v2.requestEnrollmentV2);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -38,7 +40,7 @@ export function EnrollmentRequestModal({ isOpen, onClose, course, onSuccess }: E
     <dialog open className="modal modal-open">
       <div className="modal-box max-w-2xl">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="font-bold text-2xl">Request Course Enrollment</h3>
+          <h3 className="font-bold text-2xl">{t('courses:enrollment.enrollmentRequest')}</h3>
           <button onClick={onClose} className="btn btn-sm btn-circle btn-ghost">
             <X className="w-5 h-5" />
           </button>
@@ -61,7 +63,7 @@ export function EnrollmentRequestModal({ isOpen, onClose, course, onSuccess }: E
                 <div className="flex items-center gap-2 text-sm">
                   <Calendar className="w-4 h-4 opacity-60" />
                   <div>
-                    <div className="font-semibold">Duration</div>
+                    <div className="font-semibold">{t('courses:details.duration')}</div>
                     <div className="opacity-70">{course.startDate} - {course.endDate}</div>
                   </div>
                 </div>
@@ -69,7 +71,7 @@ export function EnrollmentRequestModal({ isOpen, onClose, course, onSuccess }: E
                 <div className="flex items-center gap-2 text-sm">
                   <Clock className="w-4 h-4 opacity-60" />
                   <div>
-                    <div className="font-semibold">Time</div>
+                    <div className="font-semibold">{t('common:time.time')}</div>
                     <div className="opacity-70">{course.startTime} - {course.endTime}</div>
                   </div>
                 </div>
@@ -77,7 +79,7 @@ export function EnrollmentRequestModal({ isOpen, onClose, course, onSuccess }: E
                 <div className="flex items-center gap-2 text-sm">
                   <MapPin className="w-4 h-4 opacity-60" />
                   <div>
-                    <div className="font-semibold">Location</div>
+                    <div className="font-semibold">{t('tools:fields.location')}</div>
                     <div className="opacity-70">{course.location}</div>
                   </div>
                 </div>
@@ -89,7 +91,7 @@ export function EnrollmentRequestModal({ isOpen, onClose, course, onSuccess }: E
               </div>
 
               <div className="mt-2 text-sm">
-                <span className="font-semibold">Available Spots:</span>{" "}
+                <span className="font-semibold">{t('courses:enrollment.spotsAvailable')}:</span>{" "}
                 <span className="opacity-70">{course.spotsAvailable || 0}</span>
               </div>
             </div>
@@ -115,14 +117,14 @@ export function EnrollmentRequestModal({ isOpen, onClose, course, onSuccess }: E
               className="btn"
               disabled={isSubmitting}
             >
-              Cancel
+              {t('common:actions.cancel')}
             </button>
             <button
               type="submit"
               className="btn btn-primary"
               disabled={isSubmitting}
             >
-              {isSubmitting ? <span className="loading loading-spinner"></span> : "Request Enrollment"}
+              {isSubmitting ? <span className="loading loading-spinner"></span> : t('courses:enrollment.enrollmentRequest')}
             </button>
           </div>
         </form>
