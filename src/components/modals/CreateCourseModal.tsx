@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { X, Plus, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
+import { useLanguage } from "@/hooks/useLanguage";
 
 interface CreateCourseModalProps {
   isOpen: boolean;
@@ -21,6 +22,7 @@ interface Session {
 type SessionType = "single" | "multi-meeting" | "recurring-template";
 
 export function CreateCourseModal({ isOpen, onClose, onSuccess }: CreateCourseModalProps) {
+  const { t } = useLanguage();
   const createCourse = useMutation(api.courses_v2.createCourseV2);
 
   const [step, setStep] = useState(1); // 1: Basic Info, 2: Sessions, 3: Materials
@@ -219,7 +221,7 @@ export function CreateCourseModal({ isOpen, onClose, onSuccess }: CreateCourseMo
     <dialog open className="modal modal-open">
       <div className="modal-box max-w-3xl max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="font-bold text-2xl">Create New Course</h3>
+          <h3 className="font-bold text-2xl">{t('courses:createCourse')}</h3>
           <button onClick={onClose} className="btn btn-sm btn-circle btn-ghost">
             <X className="w-5 h-5" />
           </button>
@@ -231,7 +233,7 @@ export function CreateCourseModal({ isOpen, onClose, onSuccess }: CreateCourseMo
             <div className={`w-8 h-8 rounded-full flex items-center justify-center ${step >= 1 ? 'bg-primary text-primary-content' : 'bg-base-300'}`}>
               1
             </div>
-            <span className="text-sm font-medium">Basic Info</span>
+            <span className="text-sm font-medium">{t('form:basicInformation')}</span>
           </div>
           <div className="flex-1 h-0.5 mx-2 bg-base-300">
             <div className={`h-full transition-all ${step >= 2 ? 'bg-primary w-full' : 'w-0'}`} />
@@ -240,7 +242,7 @@ export function CreateCourseModal({ isOpen, onClose, onSuccess }: CreateCourseMo
             <div className={`w-8 h-8 rounded-full flex items-center justify-center ${step >= 2 ? 'bg-primary text-primary-content' : 'bg-base-300'}`}>
               2
             </div>
-            <span className="text-sm font-medium">Sessions</span>
+            <span className="text-sm font-medium">{t('courses:session.sessions')}</span>
           </div>
           <div className="flex-1 h-0.5 mx-2 bg-base-300">
             <div className={`h-full transition-all ${step >= 3 ? 'bg-primary w-full' : 'w-0'}`} />
@@ -249,7 +251,7 @@ export function CreateCourseModal({ isOpen, onClose, onSuccess }: CreateCourseMo
             <div className={`w-8 h-8 rounded-full flex items-center justify-center ${step >= 3 ? 'bg-primary text-primary-content' : 'bg-base-300'}`}>
               3
             </div>
-            <span className="text-sm font-medium">Materials</span>
+            <span className="text-sm font-medium">{t('courses:details.materials')}</span>
           </div>
         </div>
 
@@ -266,7 +268,7 @@ export function CreateCourseModal({ isOpen, onClose, onSuccess }: CreateCourseMo
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="form-control">
                   <label className="label">
-                    <span className="label-text">Course Title *</span>
+                    <span className="label-text">{t('courses:details.courseName')} *</span>
                   </label>
                   <input
                     type="text"
@@ -280,7 +282,7 @@ export function CreateCourseModal({ isOpen, onClose, onSuccess }: CreateCourseMo
 
                 <div className="form-control">
                   <label className="label">
-                    <span className="label-text">Category *</span>
+                    <span className="label-text">{t('tools:fields.category')} *</span>
                   </label>
                   <input
                     type="text"
@@ -295,7 +297,7 @@ export function CreateCourseModal({ isOpen, onClose, onSuccess }: CreateCourseMo
 
               <div className="form-control">
                 <label className="label">
-                  <span className="label-text">Description *</span>
+                  <span className="label-text">{t('tools:fields.description')} *</span>
                 </label>
                 <textarea
                   className="textarea textarea-bordered h-24"
@@ -309,7 +311,7 @@ export function CreateCourseModal({ isOpen, onClose, onSuccess }: CreateCourseMo
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="form-control">
                   <label className="label">
-                    <span className="label-text">Skill Level *</span>
+                    <span className="label-text">{t('courses:details.level')} *</span>
                   </label>
                   <select
                     className="select select-bordered"
@@ -319,15 +321,15 @@ export function CreateCourseModal({ isOpen, onClose, onSuccess }: CreateCourseMo
                       skillLevel: e.target.value as "beginner" | "intermediate" | "advanced",
                     }))}
                   >
-                    <option value="beginner">Beginner</option>
-                    <option value="intermediate">Intermediate</option>
-                    <option value="advanced">Advanced</option>
+                    <option value="beginner">{t('courses:details.beginner')}</option>
+                    <option value="intermediate">{t('courses:details.intermediate')}</option>
+                    <option value="advanced">{t('courses:details.advanced')}</option>
                   </select>
                 </div>
 
                 <div className="form-control">
                   <label className="label">
-                    <span className="label-text">Max Participants *</span>
+                    <span className="label-text">{t('courses:enrollment.capacity')} *</span>
                   </label>
                   <input
                     type="number"
@@ -341,7 +343,7 @@ export function CreateCourseModal({ isOpen, onClose, onSuccess }: CreateCourseMo
 
                 <div className="form-control">
                   <label className="label">
-                    <span className="label-text">Default Location *</span>
+                    <span className="label-text">{t('tools:fields.location')} *</span>
                   </label>
                   <input
                     type="text"
@@ -361,7 +363,7 @@ export function CreateCourseModal({ isOpen, onClose, onSuccess }: CreateCourseMo
             <div className="space-y-4">
               <div className="form-control">
                 <label className="label">
-                  <span className="label-text font-semibold">Session Type</span>
+                  <span className="label-text font-semibold">{t('courses:session.sessions')}</span>
                 </label>
                 <div className="space-y-2">
                   <label className="flex items-start gap-3 p-3 border rounded-lg cursor-pointer hover:bg-base-200 transition-colors">
@@ -374,8 +376,8 @@ export function CreateCourseModal({ isOpen, onClose, onSuccess }: CreateCourseMo
                       className="radio radio-primary mt-1"
                     />
                     <div>
-                      <div className="font-medium">Single Session Course</div>
-                      <div className="text-sm text-base-content/70">One-time course happening on a single date</div>
+                      <div className="font-medium">{t('courses:session.singleSession')}</div>
+                      <div className="text-sm text-base-content/70">{t('courses:session.singleSession')}</div>
                     </div>
                   </label>
 
@@ -389,7 +391,7 @@ export function CreateCourseModal({ isOpen, onClose, onSuccess }: CreateCourseMo
                       className="radio radio-primary mt-1"
                     />
                     <div>
-                      <div className="font-medium">Multi-Meeting Course</div>
+                      <div className="font-medium">{t('courses:session.multiSession')}</div>
                       <div className="text-sm text-base-content/70">Course with multiple sessions (e.g., Session 1, Session 2, Session 3)</div>
                       <div className="text-sm text-base-content/70">Students enroll once for all sessions</div>
                     </div>
@@ -419,7 +421,7 @@ export function CreateCourseModal({ isOpen, onClose, onSuccess }: CreateCourseMo
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div className="form-control">
                         <label className="label">
-                          <span className="label-text">Date *</span>
+                          <span className="label-text">{t('shift:date')} *</span>
                         </label>
                         <input
                           type="date"
@@ -431,7 +433,7 @@ export function CreateCourseModal({ isOpen, onClose, onSuccess }: CreateCourseMo
                       </div>
                       <div className="form-control">
                         <label className="label">
-                          <span className="label-text">Start Time *</span>
+                          <span className="label-text">{t('assignment:startTime')} *</span>
                         </label>
                         <input
                           type="time"
@@ -443,7 +445,7 @@ export function CreateCourseModal({ isOpen, onClose, onSuccess }: CreateCourseMo
                       </div>
                       <div className="form-control">
                         <label className="label">
-                          <span className="label-text">End Time *</span>
+                          <span className="label-text">{t('assignment:endTime')} *</span>
                         </label>
                         <input
                           type="time"
@@ -479,7 +481,7 @@ export function CreateCourseModal({ isOpen, onClose, onSuccess }: CreateCourseMo
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                           <div className="form-control">
                             <label className="label">
-                              <span className="label-text">Date *</span>
+                              <span className="label-text">{t('shift:date')} *</span>
                             </label>
                             <input
                               type="date"
@@ -491,7 +493,7 @@ export function CreateCourseModal({ isOpen, onClose, onSuccess }: CreateCourseMo
                           </div>
                           <div className="form-control">
                             <label className="label">
-                              <span className="label-text">Start Time *</span>
+                              <span className="label-text">{t('assignment:startTime')} *</span>
                             </label>
                             <input
                               type="time"
@@ -503,7 +505,7 @@ export function CreateCourseModal({ isOpen, onClose, onSuccess }: CreateCourseMo
                           </div>
                           <div className="form-control">
                             <label className="label">
-                              <span className="label-text">End Time *</span>
+                              <span className="label-text">{t('assignment:endTime')} *</span>
                             </label>
                             <input
                               type="time"
@@ -646,7 +648,7 @@ export function CreateCourseModal({ isOpen, onClose, onSuccess }: CreateCourseMo
                   disabled={isSubmitting}
                 >
                   <ChevronLeft className="w-4 h-4" />
-                  Previous
+                  {t('common:actions.previous')}
                 </button>
               )}
             </div>
@@ -657,7 +659,7 @@ export function CreateCourseModal({ isOpen, onClose, onSuccess }: CreateCourseMo
                 className="btn"
                 disabled={isSubmitting}
               >
-                Cancel
+                {t('common:actions.cancel')}
               </button>
               {step < 3 ? (
                 <button
@@ -666,7 +668,7 @@ export function CreateCourseModal({ isOpen, onClose, onSuccess }: CreateCourseMo
                   className="btn btn-primary"
                   disabled={!canProceedToNextStep()}
                 >
-                  Next
+                  {t('common:actions.next')}
                   <ChevronRight className="w-4 h-4" />
                 </button>
               ) : (
@@ -675,7 +677,7 @@ export function CreateCourseModal({ isOpen, onClose, onSuccess }: CreateCourseMo
                   className="btn btn-primary"
                   disabled={isSubmitting}
                 >
-                  {isSubmitting ? <span className="loading loading-spinner"></span> : "Create Course"}
+                  {isSubmitting ? <span className="loading loading-spinner"></span> : t('courses:createCourse')}
                 </button>
               )}
             </div>
