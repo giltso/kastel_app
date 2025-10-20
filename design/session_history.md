@@ -2,6 +2,73 @@
 
 detailed history of all sessions. to be updated on new session
 
+### Session 38 - October 20, 2025 (i18n Translation Completion - 100%)
+
+**Goal**: Complete Hebrew translation for all remaining pages and modals (Tools, Educational, Roles)
+
+**Major Achievements**:
+- ✅ **Hebrew Translation Complete (100%)**: All user-facing components now fully translated
+  - ✅ Fixed "Kastel" translation in common.json (קסטל with ק, not כ)
+  - ✅ Fixed word order in app name: "קסטל חומרי בניין" (Kastel first)
+  - ✅ Translated roles.tsx (100+ hardcoded strings discovered and fixed)
+  - ✅ Translated CourseDetailsModal.tsx
+  - ✅ Translated CreateCourseModal.tsx (690 lines)
+  - ✅ Translated EnrollmentRequestModal.tsx
+  - ✅ Translated CreateManualRentalModal.tsx (final modal)
+- ✅ **Documentation Updates**: Updated PROJECT_OVERVIEW.md to reflect 100% completion and testing phase
+- ✅ **Deployed to Production**: All translations pushed and live on production
+
+**Translation Statistics**:
+- **Files Translated**: 5 major components (1 route page + 4 modals)
+- **i18n Completion**: 100% (up from 85%)
+- **Lines of Code Translated**: ~1,200 lines across all components
+- **Commits Made**: 7 commits (one per component + documentation update)
+- **Production Status**: Live and in user acceptance testing
+
+**Technical Implementation**:
+- **roles.tsx**: [src/routes/roles.tsx](../src/routes/roles.tsx)
+  - Had zero i18n support - all hardcoded English strings
+  - Added useLanguage hook and translated 100+ strings
+  - All tabs, filters, badges, error messages, and actions translated
+- **CourseDetailsModal**: [src/components/modals/CourseDetailsModal.tsx](../src/components/modals/CourseDetailsModal.tsx)
+  - Translated all labels, status indicators, enrollment actions
+- **CreateCourseModal**: [src/components/modals/CreateCourseModal.tsx](../src/components/modals/CreateCourseModal.tsx)
+  - 690-line file with multi-step wizard
+  - Translated step titles, form fields, validation messages, buttons
+  - Used replace_all for efficiency on repeated patterns
+- **EnrollmentRequestModal**: [src/components/modals/EnrollmentRequestModal.tsx](../src/components/modals/EnrollmentRequestModal.tsx)
+  - 135 lines - fully translated
+  - All labels, course details, buttons
+- **CreateManualRentalModal**: [src/components/modals/CreateManualRentalModal.tsx](../src/components/modals/CreateManualRentalModal.tsx)
+  - Final remaining modal (283 lines)
+  - Translated all form fields, placeholders, info alerts, buttons
+
+**Pattern Used**:
+1. Import `useLanguage` hook from `@/hooks/useLanguage`
+2. Add `const { t } = useLanguage();` to component
+3. Replace hardcoded strings with `t('namespace:key')`
+4. Use existing translation files (already complete)
+5. Commit after each component completion
+
+**Commits Made**:
+- `fix: correct Hebrew translation of Kastel (קסטל with ק) and word order`
+- `i18n: complete Hebrew translation for roles page (100+ strings)`
+- `i18n: complete Hebrew translation for CourseDetailsModal`
+- `i18n: complete Hebrew translation for CreateCourseModal`
+- `i18n: complete Hebrew translation for EnrollmentRequestModal`
+- `i18n: complete Hebrew translation for CreateManualRentalModal`
+- `docs: update PROJECT_OVERVIEW to reflect i18n completion (100%, testing phase)`
+
+**Current Status**:
+- ✅ **Translation**: 100% complete - all pages and modals translated
+- ✅ **Deployment**: Pushed to production via GitHub → Vercel pipeline
+- 🧪 **Testing**: Now in user acceptance testing phase
+- 📋 **Next Steps**: Address any discovered translation issues or missing strings from user feedback
+
+**Next Session Priority**: Monitor user feedback on Hebrew translations, fix any RTL layout issues discovered during testing, address any missing or incorrect translations.
+
+**Status**: All committed features are complete and in production testing. i18n translation work is done pending user feedback.
+
 ### Session 37 - October 16, 2025 (Comprehensive Testing & Production Deployment)
 
 **Goal**: Complete comprehensive testing with Playwright and deploy application to production
