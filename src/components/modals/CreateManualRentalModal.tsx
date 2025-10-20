@@ -5,6 +5,7 @@ import { X } from "lucide-react";
 import { useForm } from "@tanstack/react-form";
 import { z } from "zod";
 import type { Id } from "../../../convex/_generated/dataModel";
+import { useLanguage } from "@/hooks/useLanguage";
 
 interface CreateManualRentalModalProps {
   isOpen: boolean;
@@ -21,6 +22,7 @@ const manualRentalSchema = z.object({
 });
 
 export function CreateManualRentalModal({ isOpen, onClose }: CreateManualRentalModalProps) {
+  const { t } = useLanguage();
   const tools = useQuery(api.tools.listTools);
   const createManualRental = useMutation(api.tools.createManualRental);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -66,7 +68,7 @@ export function CreateManualRentalModal({ isOpen, onClose }: CreateManualRentalM
     <dialog open className="modal modal-open">
       <div className="modal-box max-w-2xl">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="font-bold text-lg">Create Manual Rental</h3>
+          <h3 className="font-bold text-lg">{t('tools:rental.createManualRental')}</h3>
           <button
             onClick={onClose}
             className="btn btn-sm btn-circle btn-ghost"
@@ -78,10 +80,9 @@ export function CreateManualRentalModal({ isOpen, onClose }: CreateManualRentalM
 
         <div className="alert alert-info mb-4">
           <div className="text-sm">
-            <p className="font-semibold">Manual Rental for Non-Registered Customers</p>
+            <p className="font-semibold">{t('tools:rental.manualRentalTitle')}</p>
             <p className="mt-1">
-              Create a rental for walk-in customers who don't have an account.
-              The rental will be pre-approved and the tool will be marked as unavailable.
+              {t('tools:rental.manualRentalDescription')}
             </p>
           </div>
         </div>
@@ -103,7 +104,7 @@ export function CreateManualRentalModal({ isOpen, onClose }: CreateManualRentalM
             {(field) => (
               <div className="form-control mb-4">
                 <label className="label">
-                  <span className="label-text font-semibold">Tool *</span>
+                  <span className="label-text font-semibold">{t('tools:fields.tool')} *</span>
                 </label>
                 <select
                   className="select select-bordered w-full"
@@ -113,7 +114,7 @@ export function CreateManualRentalModal({ isOpen, onClose }: CreateManualRentalM
                   disabled={!availableTools.length}
                 >
                   <option value="">
-                    {availableTools.length === 0 ? "No available tools" : "Select a tool"}
+                    {availableTools.length === 0 ? t('tools:noAvailableTools') : t('tools:selectTool')}
                   </option>
                   {availableTools.map((tool) => (
                     <option key={tool._id} value={tool._id}>
@@ -138,12 +139,12 @@ export function CreateManualRentalModal({ isOpen, onClose }: CreateManualRentalM
             {(field) => (
               <div className="form-control mb-4">
                 <label className="label">
-                  <span className="label-text font-semibold">Customer Name *</span>
+                  <span className="label-text font-semibold">{t('tools:rental.customerName')} *</span>
                 </label>
                 <input
                   type="text"
                   className="input input-bordered w-full"
-                  placeholder="Enter customer's full name"
+                  placeholder={t('tools:rental.enterCustomerName')}
                   value={field.state.value}
                   onChange={(e) => field.handleChange(e.target.value)}
                   onBlur={field.handleBlur}
@@ -164,13 +165,13 @@ export function CreateManualRentalModal({ isOpen, onClose }: CreateManualRentalM
             {(field) => (
               <div className="form-control mb-4">
                 <label className="label">
-                  <span className="label-text font-semibold">Contact Information *</span>
-                  <span className="label-text-alt">Phone or Email</span>
+                  <span className="label-text font-semibold">{t('tools:rental.contactInformation')} *</span>
+                  <span className="label-text-alt">{t('tools:rental.phoneOrEmail')}</span>
                 </label>
                 <input
                   type="text"
                   className="input input-bordered w-full"
-                  placeholder="555-1234 or customer@email.com"
+                  placeholder={t('tools:rental.contactPlaceholder')}
                   value={field.state.value}
                   onChange={(e) => field.handleChange(e.target.value)}
                   onBlur={field.handleBlur}
@@ -192,7 +193,7 @@ export function CreateManualRentalModal({ isOpen, onClose }: CreateManualRentalM
               {(field) => (
                 <div className="form-control">
                   <label className="label">
-                    <span className="label-text font-semibold">Start Date *</span>
+                    <span className="label-text font-semibold">{t('tools:rental.startDate')} *</span>
                   </label>
                   <input
                     type="date"
@@ -216,7 +217,7 @@ export function CreateManualRentalModal({ isOpen, onClose }: CreateManualRentalM
               {(field) => (
                 <div className="form-control">
                   <label className="label">
-                    <span className="label-text font-semibold">End Date *</span>
+                    <span className="label-text font-semibold">{t('tools:rental.endDate')} *</span>
                   </label>
                   <input
                     type="date"
@@ -242,11 +243,11 @@ export function CreateManualRentalModal({ isOpen, onClose }: CreateManualRentalM
             {(field) => (
               <div className="form-control mb-4">
                 <label className="label">
-                  <span className="label-text font-semibold">Notes (Optional)</span>
+                  <span className="label-text font-semibold">{t('tools:rental.notes')}</span>
                 </label>
                 <textarea
                   className="textarea textarea-bordered w-full h-24"
-                  placeholder="Any additional information or special requirements"
+                  placeholder={t('tools:rental.notesPlaceholder')}
                   value={field.state.value}
                   onChange={(e) => field.handleChange(e.target.value)}
                   onBlur={field.handleBlur}
@@ -263,14 +264,14 @@ export function CreateManualRentalModal({ isOpen, onClose }: CreateManualRentalM
               className="btn"
               disabled={isSubmitting}
             >
-              Cancel
+              {t('common:actions.cancel')}
             </button>
             <button
               type="submit"
               className="btn btn-primary"
               disabled={!form.state.canSubmit || isSubmitting}
             >
-              {isSubmitting ? "Creating..." : "Create Rental"}
+              {isSubmitting ? t('tools:rental.creating') : t('tools:rental.createRental')}
             </button>
           </div>
         </form>
