@@ -117,8 +117,8 @@ function RolesPage() {
   if (!isAuthenticated) {
     return (
       <div className="text-center py-12">
-        <h1 className="text-2xl font-bold mb-4">Access Denied</h1>
-        <p>Please sign in to access role management.</p>
+        <h1 className="text-2xl font-bold mb-4">{t('auth:accessDenied')}</h1>
+        <p>{t('auth:signInToAccess')}</p>
       </div>
     );
   }
@@ -126,8 +126,8 @@ function RolesPage() {
   if (!checkPermission("manage_staff_roles")) {
     return (
       <div className="text-center py-12">
-        <h1 className="text-2xl font-bold mb-4">Manager Access Required</h1>
-        <p>Role management is only accessible to staff members with manager permissions.</p>
+        <h1 className="text-2xl font-bold mb-4">{t('auth:staffAccessRequired')}</h1>
+        <p>{t('auth:staffOnly')}</p>
       </div>
     );
   }
@@ -230,36 +230,36 @@ function RolesPage() {
                 <div className="stat-figure text-primary">
                   <Users className="w-8 h-8" />
                 </div>
-                <div className="stat-title">Total Customers</div>
+                <div className="stat-title">{t('roles:customerManagement')}</div>
                 <div className="stat-value text-primary">{userStats?.customers.total || 0}</div>
-                <div className="stat-desc">Registered users</div>
+                <div className="stat-desc">{t('roles:activeMembers')}</div>
               </div>
 
               <div className="stat bg-base-100 rounded-lg border border-base-300">
                 <div className="stat-figure text-success">
                   <Shield className="w-8 h-8" />
                 </div>
-                <div className="stat-title">Rental Approved</div>
+                <div className="stat-title">{t('roles:tags.rentalApproved')}</div>
                 <div className="stat-value text-success">{userStats?.customers.rentalApproved || 0}</div>
-                <div className="stat-desc">Can rent tools</div>
+                <div className="stat-desc">{t('roles:descriptions.rentalApprovedDescription')}</div>
               </div>
 
               <div className="stat bg-base-100 rounded-lg border border-base-300">
                 <div className="stat-figure text-info">
                   <Users className="w-8 h-8" />
                 </div>
-                <div className="stat-title">Active</div>
+                <div className="stat-title">{t('common:status.active')}</div>
                 <div className="stat-value text-info">{userStats?.customers.active || 0}</div>
-                <div className="stat-desc">Last 30 days</div>
+                <div className="stat-desc">{t('roles:activeMembers')}</div>
               </div>
 
               <div className="stat bg-base-100 rounded-lg border border-base-300">
                 <div className="stat-figure text-warning">
                   <Settings className="w-8 h-8" />
                 </div>
-                <div className="stat-title">Pending</div>
+                <div className="stat-title">{t('common:status.pending')}</div>
                 <div className="stat-value text-warning">{userStats?.customers.pending || 0}</div>
-                <div className="stat-desc">Awaiting approval</div>
+                <div className="stat-desc">{t('courses:stats.awaitingReview')}</div>
               </div>
             </>
           )}
@@ -304,7 +304,7 @@ function RolesPage() {
                           setRoleFilters(prev => ({ ...prev, worker: e.target.checked }))
                         }
                       />
-                      <span className="text-sm font-medium">Worker</span>
+                      <span className="text-sm font-medium">{t('roles:tags.worker')}</span>
                     </label>
 
                     <label className="flex items-center gap-2 cursor-pointer hover:bg-base-200 px-3 py-2 rounded-lg transition-colors">
@@ -316,7 +316,7 @@ function RolesPage() {
                           setRoleFilters(prev => ({ ...prev, manager: e.target.checked }))
                         }
                       />
-                      <span className="text-sm font-medium">Manager</span>
+                      <span className="text-sm font-medium">{t('roles:tags.manager')}</span>
                     </label>
 
                     <label className="flex items-center gap-2 cursor-pointer hover:bg-base-200 px-3 py-2 rounded-lg transition-colors">
@@ -328,7 +328,7 @@ function RolesPage() {
                           setRoleFilters(prev => ({ ...prev, instructor: e.target.checked }))
                         }
                       />
-                      <span className="text-sm font-medium">Instructor</span>
+                      <span className="text-sm font-medium">{t('roles:tags.instructor')}</span>
                     </label>
 
                     <label className="flex items-center gap-2 cursor-pointer hover:bg-base-200 px-3 py-2 rounded-lg transition-colors">
@@ -340,7 +340,7 @@ function RolesPage() {
                           setRoleFilters(prev => ({ ...prev, toolHandler: e.target.checked }))
                         }
                       />
-                      <span className="text-sm font-medium">Tool Handler</span>
+                      <span className="text-sm font-medium">{t('roles:tags.toolHandler')}</span>
                     </label>
                   </div>
                 </div>
@@ -361,7 +361,7 @@ function RolesPage() {
                       {staffUsers.length === 0 ? (
                         <tr>
                           <td colSpan={5} className="text-center py-8 text-base-content/60">
-                            No staff members found.
+                            {t('common:messages.noResults')}
                           </td>
                         </tr>
                       ) : (
@@ -457,7 +457,7 @@ function RolesPage() {
                   <div className="p-4 border-b border-base-300">
                     <h2 className="text-xl font-semibold flex items-center gap-2">
                       <Users className="w-5 h-5" />
-                      Customer Accounts
+                      {t('roles:customerManagement')}
                     </h2>
                   </div>
                   <div className="p-4">
@@ -468,7 +468,7 @@ function RolesPage() {
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-base-content/50" />
                         <input
                           type="text"
-                          placeholder="Search customers by name or email..."
+                          placeholder={t('roles:search.searchUsers')}
                           className="input input-bordered w-full pl-10"
                           value={searchQuery}
                           onChange={(e) => setSearchQuery(e.target.value)}
@@ -486,7 +486,7 @@ function RolesPage() {
                               setRoleFilters(prev => ({ ...prev, rentalApproved: e.target.checked }))
                             }
                           />
-                          <span className="text-sm font-medium">Rental Approved</span>
+                          <span className="text-sm font-medium">{t('roles:tags.rentalApproved')}</span>
                         </label>
 
                         <label className="flex items-center gap-2 cursor-pointer hover:bg-base-200 px-3 py-2 rounded-lg transition-colors">
@@ -498,7 +498,7 @@ function RolesPage() {
                               setRoleFilters(prev => ({ ...prev, enrolled: e.target.checked }))
                             }
                           />
-                          <span className="text-sm font-medium">Enrolled in Courses</span>
+                          <span className="text-sm font-medium">{t('courses:enrollment.enrolledStudents')}</span>
                         </label>
                       </div>
                     </div>
@@ -508,18 +508,18 @@ function RolesPage() {
                       <table className="table table-zebra w-full">
                         <thead>
                           <tr>
-                            <th>Name</th>
-                            <th>Email</th>
-                            <th>Status</th>
-                            <th>Last Active</th>
-                            <th>Actions</th>
+                            <th>{t('roles:name')}</th>
+                            <th>{t('roles:email')}</th>
+                            <th>{t('roles:status')}</th>
+                            <th>{t('common:status.active')}</th>
+                            <th>{t('roles:actions')}</th>
                           </tr>
                         </thead>
                         <tbody>
                           {customerUsers.length === 0 ? (
                             <tr>
                               <td colSpan={5} className="text-center py-8 text-base-content/60">
-                                No customers found.
+                                {t('common:messages.noResults')}
                               </td>
                             </tr>
                           ) : (
@@ -533,15 +533,15 @@ function RolesPage() {
                                 </td>
                                 <td>
                                   {user.effectiveRole.rentalApprovedTag ? (
-                                    <span className="badge badge-success">Rental Approved</span>
+                                    <span className="badge badge-success">{t('roles:tags.rentalApproved')}</span>
                                   ) : (
-                                    <span className="badge badge-secondary">Registered</span>
+                                    <span className="badge badge-secondary">{t('roles:tags.customer')}</span>
                                   )}
                                 </td>
                                 <td>
                                   <div className="text-sm text-base-content/70">
                                     {/* TODO: Implement last active tracking */}
-                                    Recent
+                                    {t('common:time.today')}
                                   </div>
                                 </td>
                                 <td>
@@ -570,35 +570,35 @@ function RolesPage() {
                   <div className="p-4 border-b border-base-300">
                     <h2 className="text-xl font-semibold flex items-center gap-2">
                       <Shield className="w-5 h-5" />
-                      Customer Status Guide
+                      {t('roles:roleInformation')}
                     </h2>
                   </div>
                   <div className="p-4 space-y-4">
                     <div className="card bg-primary/10 border border-primary/20">
                       <div className="card-body p-4">
-                        <h3 className="card-title text-primary text-sm">Registered Customer</h3>
-                        <p className="text-sm">Basic account with access to course browsing and tool viewing.</p>
+                        <h3 className="card-title text-primary text-sm">{t('roles:tags.customer')}</h3>
+                        <p className="text-sm">{t('roles:descriptions.staffDescription')}</p>
                       </div>
                     </div>
 
                     <div className="card bg-success/10 border border-success/20">
                       <div className="card-body p-4">
-                        <h3 className="card-title text-success text-sm">Rental Approved</h3>
-                        <p className="text-sm">Can request and rent tools after approval process.</p>
+                        <h3 className="card-title text-success text-sm">{t('roles:tags.rentalApproved')}</h3>
+                        <p className="text-sm">{t('roles:descriptions.rentalApprovedDescription')}</p>
                       </div>
                     </div>
 
                     <div className="card bg-warning/10 border border-warning/20">
                       <div className="card-body p-4">
-                        <h3 className="card-title text-warning text-sm">Pending Approval</h3>
-                        <p className="text-sm">Waiting for rental approval from management.</p>
+                        <h3 className="card-title text-warning text-sm">{t('common:status.pending')}</h3>
+                        <p className="text-sm">{t('courses:stats.awaitingReview')}</p>
                       </div>
                     </div>
 
                     <div className="card bg-error/10 border border-error/20">
                       <div className="card-body p-4">
-                        <h3 className="card-title text-error text-sm">Inactive</h3>
-                        <p className="text-sm">Account suspended or deactivated.</p>
+                        <h3 className="card-title text-error text-sm">{t('common:status.inactive')}</h3>
+                        <p className="text-sm">{t('common:status.inactive')}</p>
                       </div>
                     </div>
                   </div>
