@@ -421,6 +421,9 @@ Collect initial feedback from staff users on live system. Document usability iss
 
 ### Later Scope Work
 
+**Browser Text Editing Feature** (Design Complete - Ready for Implementation)
+In-browser content management system allowing managers to edit UI content (banners, help text, instructions) directly in the interface. Database-driven with multilingual support and translation tracking. Enables non-technical content updates without code changes. See [BROWSER_TEXT_EDITING.md](BROWSER_TEXT_EDITING.md) for complete design. Estimated: 11 hours implementation.
+
 **Notification System**
 Implement email/SMS alerts for shift changes, approval requests, rental reminders, and course enrollments. Integrate with third-party service (e.g., Twilio, SendGrid).
 

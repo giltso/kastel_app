@@ -2,6 +2,14 @@
 
 detailed history of all sessions. to be updated on new session
 
+### Session 38 - October 20, 2025 (i18n Translation Completion + Browser Text Editing Design)
+
+**Goals**:
+1. Complete Hebrew translation for all remaining pages and modals
+2. Design browser text editing feature for UI content management
+
+**Part 1: i18n Translation Completion**
+
 ### Session 38 - October 20, 2025 (i18n Translation Completion - 100%)
 
 **Goal**: Complete Hebrew translation for all remaining pages and modals (Tools, Educational, Roles)
@@ -65,9 +73,66 @@ detailed history of all sessions. to be updated on new session
 - 🧪 **Testing**: Now in user acceptance testing phase
 - 📋 **Next Steps**: Address any discovered translation issues or missing strings from user feedback
 
-**Next Session Priority**: Monitor user feedback on Hebrew translations, fix any RTL layout issues discovered during testing, address any missing or incorrect translations.
+**Part 2: Browser Text Editing Feature Design**
 
-**Status**: All committed features are complete and in production testing. i18n translation work is done pending user feedback.
+**Major Achievements**:
+- ✅ **Feature Design Complete**: Created comprehensive design document for browser-based content editing
+  - ✅ Researched industry best practices (Contentful, Sanity, Strapi)
+  - ✅ Designed database schema (`ui_content` table with multilingual support)
+  - ✅ Designed component architecture (EditableText wrapper, inline editing)
+  - ✅ Designed migration strategy (prevent file conflicts)
+  - ✅ Planned 4-phase implementation (~11 hours total)
+- ✅ **Created Feature Branch**: `feature/browser-text-editing`
+- ✅ **Documentation**: Complete design doc at [design/BROWSER_TEXT_EDITING.md](BROWSER_TEXT_EDITING.md)
+
+**Feature Overview**:
+Browser-based text editing system allowing managers to edit UI content (banners, help text, instructions) directly in the interface with multilingual support and translation tracking.
+
+**Key Design Decisions**:
+1. **Database storage** (industry standard - Convex `ui_content` table)
+2. **Inline editing** with double-click activation (no modal)
+3. **Global edit mode toggle** (manager-only, persists across pages)
+4. **Multilingual support** (separate fields per language: `content_en`, `content_he`, etc.)
+5. **Translation tracking** (auto-flag other languages as "needs translation" when one is edited)
+6. **Single source of truth** (content lives in `ui_content.json` OR old files, never both)
+7. **Click outside to save**, Escape to cancel
+8. **Optimistic updates** for instant feedback
+
+**Architecture Components**:
+- **Database**: New `ui_content` table with multilingual fields and translation flags
+- **Backend**: `convex/ui_content.ts` (saveUIContent, getUIContent mutations/queries)
+- **Context**: `EditModeContext` for global edit mode state
+- **Component**: `EditableText` wrapper with inline editing
+- **Hook**: `useEditableContent` for database + fallback loading
+- **Files**: New `public/locales/{lang}/ui_content.json` for defaults
+
+**Implementation Phases** (11 hours total):
+- Phase 1: Infrastructure (3h) - Database, backend, translation files, migration
+- Phase 2: UI Components (4h) - EditableText component, edit mode toggle
+- Phase 3: Integration (2h) - Wrap target UI elements across all pages
+- Phase 4: Testing & Polish (2h) - Comprehensive testing, UX improvements
+
+**Target Content** (editable UI elements):
+- Info banners, help text, instructions
+- Welcome messages, about sections
+- Empty states, instructional text
+- NOT business data (shift names, tool descriptions)
+
+**Migration Strategy**:
+- Move editable content from existing translation files to new `ui_content.json`
+- Remove from old location to prevent conflicts
+- Clear code distinction: `<EditableText>` = editable, `{t(...)}` = static
+
+**Commits Made**:
+- `docs: add comprehensive browser text editing feature design document`
+
+**Branch Status**:
+- ✅ Design complete
+- ⏳ Implementation pending (future session)
+
+**Next Session Priority**: Monitor user feedback on Hebrew translations, fix any RTL layout issues discovered during testing, or begin implementation of browser text editing feature.
+
+**Status**: i18n translation work complete and in production testing. Browser text editing feature fully designed and ready for implementation.
 
 ### Session 37 - October 16, 2025 (Comprehensive Testing & Production Deployment)
 
