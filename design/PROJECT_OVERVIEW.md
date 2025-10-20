@@ -277,7 +277,7 @@ The application supports multiple languages with full internationalization infra
 - **Translation Files**: [public/locales/](../public/locales/) - 6 namespaces (common, auth, shifts, tools, courses, roles)
 
 **Supported Languages:**
-- **Hebrew (עברית)**: Primary working language, 85% complete with full RTL support
+- **Hebrew (עברית)**: Primary working language, **100% complete** with full RTL support - now in testing phase
 - **English**: Default fallback language, source of truth for all translations (100% complete)
 - **Russian (Русский)**: Structure in place, marked "Coming Soon"
 - **French (Français)**: Structure in place, marked "Coming Soon"
@@ -286,15 +286,16 @@ The application supports multiple languages with full internationalization infra
 **Translation Coverage:**
 
 **Fully Translated (100%):**
-- **LUZ System**: Complete translation of all components, views, and 7 modals with locale-aware date formatting
+- **LUZ System**: All components, views, and 7 modals with locale-aware date formatting
 - **Home Page**: Guest, customer, and staff dashboard views
 - **Navigation**: Header menu, sign-in/out buttons, language switcher
 - **Authentication**: Sign-in flows and access control messages
+- **Tools Page**: Tool rental interface and all rental modals (CreateManualRentalModal, etc.)
+- **Educational Page**: Course management, enrollment workflows, all course modals
+- **Roles Page**: User and role management interface, all filters and actions
 
-**Remaining Work (15%):**
-- **Tools Page** ([src/routes/tools.tsx](../src/routes/tools.tsx)): Tool rental interface and modals
-- **Educational Page** ([src/routes/educational.tsx](../src/routes/educational.tsx)): Course management and enrollment
-- **Roles Page** ([src/routes/roles.tsx](../src/routes/roles.tsx)): User and role management interface
+**Testing Phase:**
+All user-facing strings have been translated to Hebrew. Currently deployed to production and undergoing user acceptance testing. Any discovered issues or missing translations will be addressed as they arise.
 
 **Key Features:**
 
@@ -375,13 +376,12 @@ Single-session and multi-meeting course creation, 3-step wizard, enrollment requ
 **Role Management System**
 User search and filtering, permission tag assignment via modal interface, staff promotion/demotion workflows, business rule validation, and development role emulator.
 
-**Internationalization (85%)**
-Hebrew and English support with RTL layout, dynamic language switching, locale-aware date formatting. LUZ system fully translated. Tools, Educational, and Roles pages need translation completion.
+**Internationalization (100% - Testing Phase)**
+Complete Hebrew translation with RTL layout, dynamic language switching, and locale-aware date formatting. All pages (LUZ, Tools, Educational, Roles) and modals fully translated. Currently deployed to production for user acceptance testing.
 
 ### Unfinished Past Work
 
-**i18n Translation Completion (85% → 100%)**
-Three pages remaining to translate: Tools ([src/routes/tools.tsx](../src/routes/tools.tsx)), Educational ([src/routes/educational.tsx](../src/routes/educational.tsx)), and Roles ([src/routes/roles.tsx](../src/routes/roles.tsx)). Follow the pattern established in LUZ system translation.
+None currently - all committed features are complete and in production testing.
 
 ### Known Limitations
 
@@ -393,9 +393,6 @@ Hebrew RTL mode has layout inconsistencies. Some components don't properly mirro
 
 **No Notification System**
 Users must manually check the LUZ interface for shift assignments, approval requests, and schedule changes. No email or SMS notifications are implemented.
-
-**Incomplete i18n Coverage**
-Tools, Educational, and Roles pages display only in English. Translation completion required for full multilingual support.
 
 **Limited Testing Coverage**
 83 unit tests cover utility functions and core timeline components. Modal workflows, backend mutations, and integration testing remain gaps. See [TEST_DESIGN.md](TEST_DESIGN.md) for testing expansion roadmap.
@@ -410,8 +407,8 @@ No automated backup system. Database backups rely on Convex platform defaults.
 
 ### Immediate Priority
 
-**Complete i18n Translation**
-Translate Tools, Educational, and Roles pages to achieve 100% coverage. Estimated 2-3 hours following LUZ system pattern.
+**User Acceptance Testing (i18n)**
+Test Hebrew translation across all pages on production. Verify RTL layout, check for missing translations, validate date/time formatting, and collect user feedback on translation quality.
 
 **Fix Mobile UI Issues**
 Address responsive design problems at 375px width. Timeline components, modals, and navigation need touch-friendly improvements.
