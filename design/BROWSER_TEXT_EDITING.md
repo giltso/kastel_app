@@ -6,10 +6,33 @@
 
 **Purpose**: Complete implementation plan for in-browser text editing system allowing managers to edit UI content (banners, help text, instructions) with multilingual support and translation tracking.
 
-**Status**: Design complete, implementation pending
+**Status**: ✅ Proof-of-concept implemented (October 21, 2025)
 
 **Created**: October 20, 2025
+**Implemented**: October 21, 2025
 **Branch**: `feature/browser-text-editing`
+
+---
+
+## Implementation Status
+
+**✅ Completed Features:**
+- Database schema (`ui_content` table with multilingual fields)
+- Backend mutations (`saveUIContent`, `getUIContent`, `getAllUIContent`)
+- Edit mode context and global state management
+- `EditableText` wrapper component with inline editing
+- `useEditableContent` hook with DB-first fallback
+- Edit Mode toggle in header (manager-only)
+- Empty content validation
+- "Needs Translation" badge for outdated content
+- Smart translation flag clearing workflow
+- Proof-of-concept: "About Us" field on home page
+
+**📋 Future Expansion:**
+- Expand to additional editable fields throughout app
+- Translation management dashboard
+- Rich text editing support
+- Enhanced approval workflow with visual feedback
 
 ---
 
@@ -1117,11 +1140,80 @@ public/locales/
 
 ---
 
+## Implementation Decisions & Changes
+
+### Decision 1: Smart Translation Flag Clearing (October 21, 2025)
+
+**Problem:** Initial design had translation flags automatically set whenever ANY language was edited, causing a ping-pong effect:
+- Edit Hebrew → English flagged
+- Edit English (translate) → Hebrew re-flagged
+- Edit Hebrew again → English re-flagged again
+
+**Solution Implemented:** Content change detection in backend
+- Frontend always calls save (removed early return for no-change)
+- Backend checks if content actually changed: `currentContent !== args.content`
+- Only flags other languages when content **changes**
+- If no change (open/close without edit), clears flag without re-flagging others
+
+**Workflow:**
+```
+Start: heb="היי", en="hey" (both no flag)
+Action 1: Edit Hebrew → "שלום לכם" (content changed)
+  → English flagged ✓
+Action 2: Edit English → "hey there" (content changed)
+  → Hebrew NOT re-flagged ✓ (was recently translated)
+Action 3: Open Hebrew, close without edit (no content change)
+  → Hebrew flag cleared ✓, English NOT flagged ✓
+```
+
+**Benefits:**
+- Prevents translation ping-pong
+- Allows "review and approve" workflow (open/close = approval)
+- No time-based logic (simpler, more predictable)
+
+**Tradeoffs:**
+- No visual feedback when flag cleared (could add toast notification in future)
+- Possible accidental "approvals" if user double-clicks by mistake (minor issue)
+
+**Files Changed:**
+- [src/components/EditableText.tsx](../src/components/EditableText.tsx) - Removed early return in `handleSave()`
+- [convex/ui_content.ts](../convex/ui_content.ts) - Added content change check (lines 58-61, 75-81)
+
+**Future Improvement (Low Priority):**
+Add explicit "Mark as Translated" button or visual confirmation toast when flags are cleared via no-change save.
+
+### Decision 2: Empty Content Validation
+
+**Implementation:** Backend validation prevents saving empty strings
+- Validation: `args.content.trim().length === 0`
+- Frontend also prevents empty save as fallback
+- Throws `ConvexError` with user-friendly message
+
+**Rationale:** Prevents accidental content deletion while editing
+
+### Decision 3: "Needs Translation" Badge Display
+
+**Implementation:** Visual badge shows when content is outdated
+- Only visible when edit mode is ON (manager context)
+- Yellow warning badge: `badge badge-warning badge-sm`
+- Text: "Needs Translation"
+- Inline with content (uses `ml-2` spacing)
+
+**Design Choice:** Show badge in edit mode only (not distracting for regular users)
+
+---
+
 ## Status
 
 **Design**: ✅ Complete
-**Implementation**: ⏳ Pending
-**Testing**: ⏳ Pending
-**Deployment**: ⏳ Pending
+**Implementation**: ✅ Proof-of-concept complete (October 21, 2025)
+**Testing**: ⏳ Manual testing complete, automated tests pending
+**Deployment**: ⏳ Ready for merge to main
 
-**Next Steps**: Begin Phase 1 implementation when ready
+**Commits:**
+- `feat: implement browser text editing system with 'About Us' example` (0a77be34)
+- `fix: update navigation to support new staff home page access` (5dcbe399)
+- `feat: add empty content validation and 'Needs Translation' badge` (6db11f0e)
+- `feat: implement smart translation flag clearing on no-change saves` (801684a2)
+
+**Next Steps:** Expand to additional editable fields throughout the application

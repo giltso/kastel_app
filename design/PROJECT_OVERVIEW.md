@@ -268,44 +268,18 @@ Planned features include audit trail logging (track who changed what roles when 
 ### 5. Browser Text Editing
 
 **Overview:**
-The browser text editing feature is an in-place content management system that allows managers to edit UI text elements (banners, help text, instructional content) directly within the application interface without requiring code deployments. Managers toggle an "Edit Mode" in the header, double-click any editable text element, make changes inline, and save to the database. The system supports multilingual content with automatic translation tracking.
+In-browser content management system allowing managers to edit UI text elements (banners, help text, instructions) directly in the interface without code deployments. Managers toggle edit mode, double-click text to edit inline, and changes save to database with multilingual support and translation tracking.
 
-**Core Implementation Files:**
-- **Database Schema**: [convex/schema.ts](../convex/schema.ts) - `ui_content` table with multilingual fields
-- **Backend**: [convex/ui_content.ts](../convex/ui_content.ts) - Content save/retrieve mutations with permission checks
-- **Edit Mode Context**: [src/contexts/EditModeContext.tsx](../src/contexts/EditModeContext.tsx) - Global state for edit mode toggle
-- **Hook**: [src/hooks/useEditableContent.ts](../src/hooks/useEditableContent.ts) - Load content with DB-first fallback to translation files
-- **Component**: [src/components/EditableText.tsx](../src/components/EditableText.tsx) - Wrapper component for inline editing
-- **Integration**: [src/routes/__root.tsx](../src/routes/__root.tsx) - Edit Mode toggle button in header
+**Current Status:**
+Proof-of-concept complete with "About Us" field demonstrating full workflow. Database-first architecture with translation file fallbacks, manager-only permissions, and "Needs Translation" badge for outdated content.
 
-**Key Features:**
+**Future Work:**
+- Expand to additional editable fields (LUZ help text, course descriptions, tool instructions, error messages)
+- Translation management dashboard showing all content needing updates
+- Rich text editing support (formatting, links, lists)
+- Enhanced translation approval workflow with visual feedback (low priority)
 
-**Database-First Content Management**
-Editable content is stored in the `ui_content` table with separate fields for each language (content_en, content_he, content_ru, content_fr). When content is edited, it's saved to the database and takes priority over the default translation file values. This allows non-technical staff to update UI text without touching code or translation files. The system falls back to translation file defaults when no database override exists, ensuring graceful degradation.
-
-**Edit Mode Toggle**
-Managers see an "Edit Mode" button in the header (Edit/Check icon). Clicking toggles edit mode on/off for the entire application. When edit mode is active, the button displays green with a check icon and "Edit Mode" label. When inactive, it shows as a ghost button with a pencil icon. Only users with the manager tag see this button - workers and customers never see edit mode controls.
-
-**Inline Editing Workflow**
-When edit mode is active, hovering over editable text elements displays a pencil icon indicator. Double-clicking the text activates inline editing, replacing the display with an input field (single-line) or textarea (multi-line). Users type their changes and click outside the field to save automatically. Pressing Escape cancels the edit and restores the original value. The component shows a loading state during save operations.
-
-**Multilingual Support with Translation Tracking**
-Each piece of content can be customized per language independently. When a manager edits content in one language (e.g., Hebrew), the system automatically marks other languages as "needing translation" by setting `needsTranslation_en`, `needsTranslation_ru`, etc. This prevents outdated translations from appearing after content changes. The audit trail tracks which user edited the content, when, and in which language.
-
-**Permission-Based Access Control**
-Only managers can enter edit mode and save content changes. The backend enforces this with permission checks in the `saveUIContent` mutation, rejecting requests from non-managers. Workers and customers see normal read-only text even when edit mode UI is visible (though in practice, they won't see the toggle button at all). This ensures content integrity while allowing trusted staff to make updates.
-
-**Visual Design**
-Editable elements in edit mode show a subtle yellow background highlight on hover, indicating interactivity. The pencil icon appears in the top-right corner of the hover area. During editing, the input field has a white background with border highlighting. After successful save, the element briefly flashes to indicate the operation completed. RTL support is built-in - the pencil icon and layouts adapt correctly for Hebrew.
-
-**Implementation Example (About Us Field):**
-The "About Us" banner on the customer home page serves as the proof-of-concept implementation. It demonstrates the complete workflow from toggle activation through inline editing to database persistence and cross-language synchronization. This field is wrapped with `<EditableText contentKey="home.aboutUs">` and uses the `useEditableContent("home.aboutUs")` hook to load content.
-
-**Future Enhancements:**
-Expand to additional editable fields across LUZ help text, course descriptions, tool rental instructions, and error messages. Create a translation management dashboard where managers can see all content requiring translation updates. Implement rich text editing for formatted content (bold, links, lists).
-
-**Translation Flag Workflow Improvement (Low Priority):**
-Current system uses "open/close without changes" to clear translation flags, which works but has UX limitations (no visual feedback, accidental approvals possible). Future enhancement could add explicit "Mark as Translated" button or more sophisticated translation approval workflow with visual confirmation. Current approach is functional for MVP and can be refined based on user feedback.
+**Documentation:** See [BROWSER_TEXT_EDITING.md](BROWSER_TEXT_EDITING.md) for complete design, implementation details, and technical decisions.
 
 ### 6. Internationalization (i18n)
 
