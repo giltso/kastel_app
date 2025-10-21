@@ -59,13 +59,8 @@ export const EditableText = ({
 
   // Handle save (click outside)
   const handleSave = async () => {
-    if (editedValue.trim() === currentText.trim()) {
-      setIsEditing(false);
-      return;
-    }
-
+    // Don't allow empty content
     if (editedValue.trim().length === 0) {
-      // Don't allow empty content
       setEditedValue(currentText);
       setIsEditing(false);
       return;
@@ -73,6 +68,8 @@ export const EditableText = ({
 
     setIsSaving(true);
     try {
+      // Always save, even if content didn't change
+      // Backend will clear "needs translation" flag if no change
       await saveContent({
         key: contentKey,
         content: editedValue.trim(),

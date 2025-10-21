@@ -55,24 +55,32 @@ export const saveUIContent = mutation({
       .withIndex("by_key", (q) => q.eq("key", args.key))
       .unique();
 
-    // 7. Build update object
+    // 7. Check if content actually changed
+    const contentKey = `content_${args.language}` as keyof typeof existing;
+    const currentContent = existing?.[contentKey] as string | undefined;
+    const contentChanged = currentContent !== args.content;
+
+    // 8. Build update object
     const updates: Record<string, any> = {
       [`content_${args.language}`]: args.content,
       lastEditedBy: user._id,
       lastEditedAt: Date.now(),
       lastEditedLanguage: args.language,
-      // Clear "needs translation" flag for the edited language
+      // Always clear "needs translation" flag for the edited language
       [`needsTranslation_${args.language}`]: false,
     };
 
-    // 8. Mark OTHER languages as needing translation
-    VALID_LANGUAGES.forEach(lang => {
-      if (lang !== args.language) {
-        updates[`needsTranslation_${lang}`] = true;
-      }
-    });
+    // 9. Mark OTHER languages as needing translation ONLY if content changed
+    // If content didn't change (open/close without edit), this clears the flag without re-flagging others
+    if (contentChanged) {
+      VALID_LANGUAGES.forEach(lang => {
+        if (lang !== args.language) {
+          updates[`needsTranslation_${lang}`] = true;
+        }
+      });
+    }
 
-    // 9. Save to database
+    // 10. Save to database
     if (existing) {
       await ctx.db.patch(existing._id, updates);
       return { success: true, updated: true };

@@ -302,7 +302,10 @@ Editable elements in edit mode show a subtle yellow background highlight on hove
 The "About Us" banner on the customer home page serves as the proof-of-concept implementation. It demonstrates the complete workflow from toggle activation through inline editing to database persistence and cross-language synchronization. This field is wrapped with `<EditableText contentKey="home.aboutUs">` and uses the `useEditableContent("home.aboutUs")` hook to load content.
 
 **Future Enhancements:**
-Expand to additional editable fields across LUZ help text, course descriptions, tool rental instructions, and error messages. Add "Needs Translation" visual badges to highlight outdated translations. Create a translation management dashboard where managers can see all content requiring translation updates. Implement rich text editing for formatted content (bold, links, lists).
+Expand to additional editable fields across LUZ help text, course descriptions, tool rental instructions, and error messages. Create a translation management dashboard where managers can see all content requiring translation updates. Implement rich text editing for formatted content (bold, links, lists).
+
+**Translation Flag Workflow Improvement (Low Priority):**
+Current system uses "open/close without changes" to clear translation flags, which works but has UX limitations (no visual feedback, accidental approvals possible). Future enhancement could add explicit "Mark as Translated" button or more sophisticated translation approval workflow with visual confirmation. Current approach is functional for MVP and can be refined based on user feedback.
 
 ### 6. Internationalization (i18n)
 
