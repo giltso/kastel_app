@@ -10,6 +10,59 @@ export const Route = createFileRoute("/")({
   component: V2HomePage,
 });
 
+// Store Information Section Component (calls all hooks at top level)
+function StoreInfoSection() {
+  const storeInfo = useEditableContent("home.storeInformationTitle");
+  const hoursTitle = useEditableContent("home.hoursTitle");
+  const mondayFriday = useEditableContent("home.mondayFridayHours");
+  const saturday = useEditableContent("home.saturdayHours");
+  const sunday = useEditableContent("home.sundayHours");
+  const contactTitle = useEditableContent("home.contactTitle");
+  const phone = useEditableContent("home.phone");
+  const email = useEditableContent("home.email");
+  const address = useEditableContent("home.address");
+
+  return (
+    <div className="card bg-base-100 shadow-xl">
+      <div className="card-body">
+        <EditableText contentKey="home.storeInformationTitle" as="h2" className="card-title" needsTranslation={storeInfo.needsTranslation}>
+          {storeInfo.text}
+        </EditableText>
+        <div className="grid md:grid-cols-2 gap-6">
+          <div>
+            <EditableText contentKey="home.hoursTitle" as="h3" className="font-semibold mb-2" needsTranslation={hoursTitle.needsTranslation}>
+              {hoursTitle.text}
+            </EditableText>
+            <EditableText contentKey="home.mondayFridayHours" as="p" needsTranslation={mondayFriday.needsTranslation}>
+              {mondayFriday.text}
+            </EditableText>
+            <EditableText contentKey="home.saturdayHours" as="p" needsTranslation={saturday.needsTranslation}>
+              {saturday.text}
+            </EditableText>
+            <EditableText contentKey="home.sundayHours" as="p" needsTranslation={sunday.needsTranslation}>
+              {sunday.text}
+            </EditableText>
+          </div>
+          <div>
+            <EditableText contentKey="home.contactTitle" as="h3" className="font-semibold mb-2" needsTranslation={contactTitle.needsTranslation}>
+              {contactTitle.text}
+            </EditableText>
+            <EditableText contentKey="home.phone" as="p" needsTranslation={phone.needsTranslation}>
+              {phone.text}
+            </EditableText>
+            <EditableText contentKey="home.email" as="p" needsTranslation={email.needsTranslation}>
+              {email.text}
+            </EditableText>
+            <EditableText contentKey="home.address" as="p" needsTranslation={address.needsTranslation}>
+              {address.text}
+            </EditableText>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function V2HomePage() {
   const {
     user,
@@ -61,6 +114,13 @@ function V2HomePage() {
 function GuestHomePage() {
   const { t } = useLanguage();
 
+  // Call all hooks at top level (React Rules of Hooks)
+  const welcomeTitle = useEditableContent("home.welcomeTitle");
+  const welcomeDescription = useEditableContent("home.welcomeDescription");
+  const toolRentalDescription = useEditableContent("home.toolRentalDescription");
+  const educationalDescription = useEditableContent("home.educationalDescription");
+  const aboutUs = useEditableContent("home.aboutUs");
+
   return (
     <div className="max-w-4xl mx-auto">
       {/* Hero Section */}
@@ -70,22 +130,12 @@ function GuestHomePage() {
             <div className="flex justify-center mb-6">
               <KastelLogo size={120} className="drop-shadow-lg" />
             </div>
-            {(() => {
-              const { text, needsTranslation } = useEditableContent("home.welcomeTitle");
-              return (
-                <EditableText contentKey="home.welcomeTitle" as="h1" className="text-5xl font-bold" needsTranslation={needsTranslation}>
-                  {text}
-                </EditableText>
-              );
-            })()}
-            {(() => {
-              const { text, needsTranslation } = useEditableContent("home.welcomeDescription");
-              return (
-                <EditableText contentKey="home.welcomeDescription" as="p" className="py-6 text-lg" needsTranslation={needsTranslation} multiline>
-                  {text}
-                </EditableText>
-              );
-            })()}
+            <EditableText contentKey="home.welcomeTitle" as="h1" className="text-5xl font-bold" needsTranslation={welcomeTitle.needsTranslation}>
+              {welcomeTitle.text}
+            </EditableText>
+            <EditableText contentKey="home.welcomeDescription" as="p" className="py-6 text-lg" needsTranslation={welcomeDescription.needsTranslation} multiline>
+              {welcomeDescription.text}
+            </EditableText>
             <div className="not-prose space-x-4">
               <Link to="/tools" className="btn btn-primary">
                 {t("common:home.browseTools")}
@@ -103,14 +153,9 @@ function GuestHomePage() {
         <div className="card bg-base-100 shadow-xl">
           <div className="card-body text-center">
             <h2 className="card-title justify-center">🔧 {t("common:home.toolRentalTitle")}</h2>
-            {(() => {
-              const { text, needsTranslation } = useEditableContent("home.toolRentalDescription");
-              return (
-                <EditableText contentKey="home.toolRentalDescription" as="p" needsTranslation={needsTranslation}>
-                  {text}
-                </EditableText>
-              );
-            })()}
+            <EditableText contentKey="home.toolRentalDescription" as="p" needsTranslation={toolRentalDescription.needsTranslation}>
+              {toolRentalDescription.text}
+            </EditableText>
             <div className="card-actions justify-center">
               <Link to="/tools" className="btn btn-primary btn-sm">{t("common:home.browseTools")}</Link>
             </div>
@@ -120,14 +165,9 @@ function GuestHomePage() {
         <div className="card bg-base-100 shadow-xl">
           <div className="card-body text-center">
             <h2 className="card-title justify-center">📚 {t("common:home.educationalTitle")}</h2>
-            {(() => {
-              const { text, needsTranslation } = useEditableContent("home.educationalDescription");
-              return (
-                <EditableText contentKey="home.educationalDescription" as="p" needsTranslation={needsTranslation}>
-                  {text}
-                </EditableText>
-              );
-            })()}
+            <EditableText contentKey="home.educationalDescription" as="p" needsTranslation={educationalDescription.needsTranslation}>
+              {educationalDescription.text}
+            </EditableText>
             <div className="card-actions justify-center">
               <Link to="/educational" className="btn btn-secondary btn-sm">{t("common:home.viewCourses")}</Link>
             </div>
@@ -137,14 +177,9 @@ function GuestHomePage() {
         <div className="card bg-base-100 shadow-xl">
           <div className="card-body text-center">
             <h2 className="card-title justify-center">🏪 {t("common:home.aboutUsTitle")}</h2>
-            {(() => {
-              const { text, needsTranslation } = useEditableContent("home.aboutUs");
-              return (
-                <EditableText contentKey="home.aboutUs" as="p" needsTranslation={needsTranslation}>
-                  {text}
-                </EditableText>
-              );
-            })()}
+            <EditableText contentKey="home.aboutUs" as="p" needsTranslation={aboutUs.needsTranslation}>
+              {aboutUs.text}
+            </EditableText>
             <div className="card-actions justify-center">
               <button className="btn btn-accent btn-sm" disabled>{t("common:home.learnMore")}</button>
             </div>
@@ -153,88 +188,7 @@ function GuestHomePage() {
       </div>
 
       {/* Business Information */}
-      <div className="card bg-base-100 shadow-xl">
-        <div className="card-body">
-          {(() => {
-            const { text, needsTranslation } = useEditableContent("home.storeInformationTitle");
-            return (
-              <EditableText contentKey="home.storeInformationTitle" as="h2" className="card-title" needsTranslation={needsTranslation}>
-                {text}
-              </EditableText>
-            );
-          })()}
-          <div className="grid md:grid-cols-2 gap-6">
-            <div>
-              {(() => {
-                const { text, needsTranslation } = useEditableContent("home.hoursTitle");
-                return (
-                  <EditableText contentKey="home.hoursTitle" as="h3" className="font-semibold mb-2" needsTranslation={needsTranslation}>
-                    {text}
-                  </EditableText>
-                );
-              })()}
-              {(() => {
-                const { text, needsTranslation } = useEditableContent("home.mondayFridayHours");
-                return (
-                  <EditableText contentKey="home.mondayFridayHours" as="p" needsTranslation={needsTranslation}>
-                    {text}
-                  </EditableText>
-                );
-              })()}
-              {(() => {
-                const { text, needsTranslation } = useEditableContent("home.saturdayHours");
-                return (
-                  <EditableText contentKey="home.saturdayHours" as="p" needsTranslation={needsTranslation}>
-                    {text}
-                  </EditableText>
-                );
-              })()}
-              {(() => {
-                const { text, needsTranslation } = useEditableContent("home.sundayHours");
-                return (
-                  <EditableText contentKey="home.sundayHours" as="p" needsTranslation={needsTranslation}>
-                    {text}
-                  </EditableText>
-                );
-              })()}
-            </div>
-            <div>
-              {(() => {
-                const { text, needsTranslation } = useEditableContent("home.contactTitle");
-                return (
-                  <EditableText contentKey="home.contactTitle" as="h3" className="font-semibold mb-2" needsTranslation={needsTranslation}>
-                    {text}
-                  </EditableText>
-                );
-              })()}
-              {(() => {
-                const { text, needsTranslation } = useEditableContent("home.phone");
-                return (
-                  <EditableText contentKey="home.phone" as="p" needsTranslation={needsTranslation}>
-                    {text}
-                  </EditableText>
-                );
-              })()}
-              {(() => {
-                const { text, needsTranslation } = useEditableContent("home.email");
-                return (
-                  <EditableText contentKey="home.email" as="p" needsTranslation={needsTranslation}>
-                    {text}
-                  </EditableText>
-                );
-              })()}
-              {(() => {
-                const { text, needsTranslation } = useEditableContent("home.address");
-                return (
-                  <EditableText contentKey="home.address" as="p" needsTranslation={needsTranslation}>
-                    {text}
-                  </EditableText>
-                );
-              })()}
-            </div>
-          </div>
-        </div>
-      </div>
+      <StoreInfoSection />
     </div>
   );
 }
@@ -365,6 +319,13 @@ function StaffHomePage({ user, hasPermission }: { user: any, hasPermission: (p: 
 function CustomerHomePage({ user, hasPermission }: { user: any, hasPermission: (p: string) => boolean }) {
   const { t } = useLanguage();
 
+  // Call all hooks at top level (React Rules of Hooks)
+  const welcomeTitle = useEditableContent("home.welcomeTitle");
+  const welcomeDescription = useEditableContent("home.welcomeDescription");
+  const toolRentalDescription = useEditableContent("home.toolRentalDescription");
+  const educationalDescription = useEditableContent("home.educationalDescription");
+  const aboutUs = useEditableContent("home.aboutUs");
+
   return (
     <div className="max-w-4xl mx-auto">
       {/* Hero Section */}
@@ -407,14 +368,9 @@ function CustomerHomePage({ user, hasPermission }: { user: any, hasPermission: (
         <div className="card bg-base-100 shadow-xl">
           <div className="card-body text-center">
             <h2 className="card-title justify-center">🔧 {t("common:home.toolRentalTitle")}</h2>
-            {(() => {
-              const { text, needsTranslation } = useEditableContent("home.toolRentalDescription");
-              return (
-                <EditableText contentKey="home.toolRentalDescription" as="p" needsTranslation={needsTranslation}>
-                  {text}
-                </EditableText>
-              );
-            })()}
+            <EditableText contentKey="home.toolRentalDescription" as="p" needsTranslation={toolRentalDescription.needsTranslation}>
+              {toolRentalDescription.text}
+            </EditableText>
             <div className="card-actions justify-center">
               <Link to="/tools" className="btn btn-primary btn-sm">{t("common:home.browseTools")}</Link>
             </div>
@@ -424,14 +380,9 @@ function CustomerHomePage({ user, hasPermission }: { user: any, hasPermission: (
         <div className="card bg-base-100 shadow-xl">
           <div className="card-body text-center">
             <h2 className="card-title justify-center">📚 {t("common:home.educationalTitle")}</h2>
-            {(() => {
-              const { text, needsTranslation } = useEditableContent("home.educationalDescription");
-              return (
-                <EditableText contentKey="home.educationalDescription" as="p" needsTranslation={needsTranslation}>
-                  {text}
-                </EditableText>
-              );
-            })()}
+            <EditableText contentKey="home.educationalDescription" as="p" needsTranslation={educationalDescription.needsTranslation}>
+              {educationalDescription.text}
+            </EditableText>
             <div className="card-actions justify-center">
               <Link to="/educational" className="btn btn-secondary btn-sm">{t("common:home.viewCourses")}</Link>
             </div>
@@ -441,14 +392,9 @@ function CustomerHomePage({ user, hasPermission }: { user: any, hasPermission: (
         <div className="card bg-base-100 shadow-xl">
           <div className="card-body text-center">
             <h2 className="card-title justify-center">🏪 {t("common:home.aboutUsTitle")}</h2>
-            {(() => {
-              const { text, needsTranslation } = useEditableContent("home.aboutUs");
-              return (
-                <EditableText contentKey="home.aboutUs" as="p" needsTranslation={needsTranslation}>
-                  {text}
-                </EditableText>
-              );
-            })()}
+            <EditableText contentKey="home.aboutUs" as="p" needsTranslation={aboutUs.needsTranslation}>
+              {aboutUs.text}
+            </EditableText>
             <div className="card-actions justify-center">
               <button className="btn btn-accent btn-sm" disabled>{t("common:home.learnMore")}</button>
             </div>
@@ -457,88 +403,7 @@ function CustomerHomePage({ user, hasPermission }: { user: any, hasPermission: (
       </div>
 
       {/* Business Information */}
-      <div className="card bg-base-100 shadow-xl">
-        <div className="card-body">
-          {(() => {
-            const { text, needsTranslation } = useEditableContent("home.storeInformationTitle");
-            return (
-              <EditableText contentKey="home.storeInformationTitle" as="h2" className="card-title" needsTranslation={needsTranslation}>
-                {text}
-              </EditableText>
-            );
-          })()}
-          <div className="grid md:grid-cols-2 gap-6">
-            <div>
-              {(() => {
-                const { text, needsTranslation } = useEditableContent("home.hoursTitle");
-                return (
-                  <EditableText contentKey="home.hoursTitle" as="h3" className="font-semibold mb-2" needsTranslation={needsTranslation}>
-                    {text}
-                  </EditableText>
-                );
-              })()}
-              {(() => {
-                const { text, needsTranslation } = useEditableContent("home.mondayFridayHours");
-                return (
-                  <EditableText contentKey="home.mondayFridayHours" as="p" needsTranslation={needsTranslation}>
-                    {text}
-                  </EditableText>
-                );
-              })()}
-              {(() => {
-                const { text, needsTranslation } = useEditableContent("home.saturdayHours");
-                return (
-                  <EditableText contentKey="home.saturdayHours" as="p" needsTranslation={needsTranslation}>
-                    {text}
-                  </EditableText>
-                );
-              })()}
-              {(() => {
-                const { text, needsTranslation } = useEditableContent("home.sundayHours");
-                return (
-                  <EditableText contentKey="home.sundayHours" as="p" needsTranslation={needsTranslation}>
-                    {text}
-                  </EditableText>
-                );
-              })()}
-            </div>
-            <div>
-              {(() => {
-                const { text, needsTranslation } = useEditableContent("home.contactTitle");
-                return (
-                  <EditableText contentKey="home.contactTitle" as="h3" className="font-semibold mb-2" needsTranslation={needsTranslation}>
-                    {text}
-                  </EditableText>
-                );
-              })()}
-              {(() => {
-                const { text, needsTranslation } = useEditableContent("home.phone");
-                return (
-                  <EditableText contentKey="home.phone" as="p" needsTranslation={needsTranslation}>
-                    {text}
-                  </EditableText>
-                );
-              })()}
-              {(() => {
-                const { text, needsTranslation } = useEditableContent("home.email");
-                return (
-                  <EditableText contentKey="home.email" as="p" needsTranslation={needsTranslation}>
-                    {text}
-                  </EditableText>
-                );
-              })()}
-              {(() => {
-                const { text, needsTranslation } = useEditableContent("home.address");
-                return (
-                  <EditableText contentKey="home.address" as="p" needsTranslation={needsTranslation}>
-                    {text}
-                  </EditableText>
-                );
-              })()}
-            </div>
-          </div>
-        </div>
-      </div>
+      <StoreInfoSection />
     </div>
   );
 }
