@@ -71,9 +71,14 @@ function GuestHomePage() {
               <KastelLogo size={120} className="drop-shadow-lg" />
             </div>
             <h1 className="text-5xl font-bold">{t("common:home.welcome")}</h1>
-            <p className="py-6 text-lg">
-              {t("common:home.welcomeDescription")}
-            </p>
+            {(() => {
+              const { text, needsTranslation } = useEditableContent("home.welcomeDescription");
+              return (
+                <EditableText contentKey="home.welcomeDescription" as="p" className="py-6 text-lg" needsTranslation={needsTranslation} multiline>
+                  {text}
+                </EditableText>
+              );
+            })()}
             <div className="not-prose space-x-4">
               <Link to="/tools" className="btn btn-primary">
                 {t("common:home.browseTools")}
@@ -91,7 +96,14 @@ function GuestHomePage() {
         <div className="card bg-base-100 shadow-xl">
           <div className="card-body text-center">
             <h2 className="card-title justify-center">🔧 {t("common:home.toolRentalTitle")}</h2>
-            <p>{t("common:home.toolRentalDescription")}</p>
+            {(() => {
+              const { text, needsTranslation } = useEditableContent("home.toolRentalDescription");
+              return (
+                <EditableText contentKey="home.toolRentalDescription" as="p" needsTranslation={needsTranslation}>
+                  {text}
+                </EditableText>
+              );
+            })()}
             <div className="card-actions justify-center">
               <Link to="/tools" className="btn btn-primary btn-sm">{t("common:home.browseTools")}</Link>
             </div>
@@ -101,7 +113,14 @@ function GuestHomePage() {
         <div className="card bg-base-100 shadow-xl">
           <div className="card-body text-center">
             <h2 className="card-title justify-center">📚 {t("common:home.educationalTitle")}</h2>
-            <p>{t("common:home.educationalDescription")}</p>
+            {(() => {
+              const { text, needsTranslation } = useEditableContent("home.educationalDescription");
+              return (
+                <EditableText contentKey="home.educationalDescription" as="p" needsTranslation={needsTranslation}>
+                  {text}
+                </EditableText>
+              );
+            })()}
             <div className="card-actions justify-center">
               <Link to="/educational" className="btn btn-secondary btn-sm">{t("common:home.viewCourses")}</Link>
             </div>
@@ -286,9 +305,14 @@ function CustomerHomePage({ user, hasPermission }: { user: any, hasPermission: (
               <KastelLogo size={120} className="drop-shadow-lg" />
             </div>
             <h1 className="text-5xl font-bold">{t("common:home.welcome")}</h1>
-            <p className="py-6 text-lg">
-              {t("common:home.welcomeDescription")}
-            </p>
+            {(() => {
+              const { text, needsTranslation } = useEditableContent("home.welcomeDescription");
+              return (
+                <EditableText contentKey="home.welcomeDescription" as="p" className="py-6 text-lg" needsTranslation={needsTranslation} multiline>
+                  {text}
+                </EditableText>
+              );
+            })()}
             <div className="not-prose space-x-4">
               <Link to="/tools" className="btn btn-primary">
                 {t("common:home.browseTools")}
@@ -306,7 +330,14 @@ function CustomerHomePage({ user, hasPermission }: { user: any, hasPermission: (
         <div className="card bg-base-100 shadow-xl">
           <div className="card-body text-center">
             <h2 className="card-title justify-center">🔧 {t("common:home.toolRentalTitle")}</h2>
-            <p>{t("common:home.toolRentalDescription")}</p>
+            {(() => {
+              const { text, needsTranslation } = useEditableContent("home.toolRentalDescription");
+              return (
+                <EditableText contentKey="home.toolRentalDescription" as="p" needsTranslation={needsTranslation}>
+                  {text}
+                </EditableText>
+              );
+            })()}
             <div className="card-actions justify-center">
               <Link to="/tools" className="btn btn-primary btn-sm">{t("common:home.browseTools")}</Link>
             </div>
@@ -316,7 +347,14 @@ function CustomerHomePage({ user, hasPermission }: { user: any, hasPermission: (
         <div className="card bg-base-100 shadow-xl">
           <div className="card-body text-center">
             <h2 className="card-title justify-center">📚 {t("common:home.educationalTitle")}</h2>
-            <p>{t("common:home.educationalDescription")}</p>
+            {(() => {
+              const { text, needsTranslation } = useEditableContent("home.educationalDescription");
+              return (
+                <EditableText contentKey="home.educationalDescription" as="p" needsTranslation={needsTranslation}>
+                  {text}
+                </EditableText>
+              );
+            })()}
             <div className="card-actions justify-center">
               <Link to="/educational" className="btn btn-secondary btn-sm">{t("common:home.viewCourses")}</Link>
             </div>

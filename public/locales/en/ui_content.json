@@ -1,5 +1,8 @@
 {
   "home": {
+    "welcomeDescription": "Your trusted partner for professional tools, educational workshops, and expert services. Discover quality tools, learn new skills, and grow your expertise with us.",
+    "toolRentalDescription": "Professional-grade tools for your projects. From basic hand tools to specialized equipment.",
+    "educationalDescription": "Learn from experts with hands-on workshops covering woodworking, electrical, and more.",
     "aboutUs": "Family-owned hardware shop serving the community with quality tools and knowledge."
   }
 }
