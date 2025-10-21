@@ -111,9 +111,14 @@ function GuestHomePage() {
         <div className="card bg-base-100 shadow-xl">
           <div className="card-body text-center">
             <h2 className="card-title justify-center">🏪 {t("common:home.aboutUsTitle")}</h2>
-            <EditableText contentKey="home.aboutUs" as="p">
-              {useEditableContent("home.aboutUs").text}
-            </EditableText>
+            {(() => {
+              const { text, needsTranslation } = useEditableContent("home.aboutUs");
+              return (
+                <EditableText contentKey="home.aboutUs" as="p" needsTranslation={needsTranslation}>
+                  {text}
+                </EditableText>
+              );
+            })()}
             <div className="card-actions justify-center">
               <button className="btn btn-accent btn-sm" disabled>{t("common:home.learnMore")}</button>
             </div>
@@ -321,9 +326,14 @@ function CustomerHomePage({ user, hasPermission }: { user: any, hasPermission: (
         <div className="card bg-base-100 shadow-xl">
           <div className="card-body text-center">
             <h2 className="card-title justify-center">🏪 {t("common:home.aboutUsTitle")}</h2>
-            <EditableText contentKey="home.aboutUs" as="p">
-              {useEditableContent("home.aboutUs").text}
-            </EditableText>
+            {(() => {
+              const { text, needsTranslation } = useEditableContent("home.aboutUs");
+              return (
+                <EditableText contentKey="home.aboutUs" as="p" needsTranslation={needsTranslation}>
+                  {text}
+                </EditableText>
+              );
+            })()}
             <div className="card-actions justify-center">
               <button className="btn btn-accent btn-sm" disabled>{t("common:home.learnMore")}</button>
             </div>

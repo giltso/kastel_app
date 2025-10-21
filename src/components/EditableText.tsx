@@ -14,6 +14,7 @@ interface EditableTextProps {
   className?: string;          // Pass-through styling
   as?: 'div' | 'p' | 'h1' | 'h2' | 'h3' | 'h4' | 'span'; // HTML element type
   multiline?: boolean;         // Use textarea (multi-line) vs input (single-line)
+  needsTranslation?: boolean;  // Show "Needs Translation" badge
 }
 
 export const EditableText = ({
@@ -23,6 +24,7 @@ export const EditableText = ({
   className,
   as: Component = 'div',
   multiline = false,
+  needsTranslation = false,
 }: EditableTextProps) => {
   const { editMode } = useEditMode();
   const { currentLanguage } = useLanguage();
@@ -129,13 +131,18 @@ export const EditableText = ({
   return (
     <Component
       className={cn(
-        "relative group",
+        "relative group inline-block",
         canEdit && "cursor-pointer hover:bg-base-200/50 transition-colors rounded px-2 -mx-2",
         className
       )}
       onDoubleClick={handleDoubleClick}
     >
       {children}
+      {needsTranslation && editMode && (
+        <span className="badge badge-warning badge-sm ml-2 text-xs font-normal align-middle">
+          Needs Translation
+        </span>
+      )}
       {canEdit && (
         <Pencil
           className="absolute top-1 right-1 w-4 h-4 opacity-0 group-hover:opacity-50 transition-opacity pointer-events-none"
