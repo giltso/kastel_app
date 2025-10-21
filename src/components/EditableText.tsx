@@ -125,10 +125,14 @@ export const EditableText = ({
   }
 
   // Not editing - show regular text with pencil icon on hover
+  // Use block display for block-level elements (p, div, h1, h2, h3, h4), inline-block for span
+  const isBlockElement = Component === 'p' || Component === 'div' || Component === 'h1' || Component === 'h2' || Component === 'h3' || Component === 'h4';
+
   return (
     <Component
       className={cn(
-        "relative group inline-block",
+        "relative group",
+        isBlockElement ? "block" : "inline-block",
         canEdit && "cursor-pointer hover:bg-base-200/50 transition-colors rounded px-2 -mx-2",
         className
       )}
