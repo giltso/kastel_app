@@ -1,8 +1,18 @@
 {
   "home": {
+    "welcomeTitle": "ברוכים הבאים לקסטל חומרי בניין",
     "welcomeDescription": "השותף המהימן שלך לכלים מקצועיים, סדנאות לימודיות ושירותים מומחים. גלה כלים איכותיים, למד מיומנויות חדשות והתפתח איתנו.",
     "toolRentalDescription": "כלים ברמה מקצועית לפרויקטים שלך. מכלי יד בסיסיים ועד ציוד מיוחד.",
     "educationalDescription": "למד ממומחים בסדנאות מעשיות הכוללות עבודות עץ, חשמל ועוד.",
-    "aboutUs": "חנות חומרי בניין משפחתית המשרתת את הקהילה בכלים איכותיים וידע מקצועי."
+    "aboutUs": "חנות חומרי בניין משפחתית המשרתת את הקהילה בכלים איכותיים וידע מקצועי.",
+    "storeInformationTitle": "מידע על החנות",
+    "hoursTitle": "שעות פעילות",
+    "mondayFridayHours": "ראשון - חמישי: 8:00 - 18:00",
+    "saturdayHours": "שישי: 9:00 - 16:00",
+    "sundayHours": "שבת: סגור",
+    "contactTitle": "יצירת קשר",
+    "phone": "📞 (555) 123-4567",
+    "email": "📧 info@kastelhardware.com",
+    "address": "📍 רחוב הראשי 123, עיר החומרה"
   }
 }

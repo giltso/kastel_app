@@ -70,7 +70,14 @@ function GuestHomePage() {
             <div className="flex justify-center mb-6">
               <KastelLogo size={120} className="drop-shadow-lg" />
             </div>
-            <h1 className="text-5xl font-bold">{t("common:home.welcome")}</h1>
+            {(() => {
+              const { text, needsTranslation } = useEditableContent("home.welcomeTitle");
+              return (
+                <EditableText contentKey="home.welcomeTitle" as="h1" className="text-5xl font-bold" needsTranslation={needsTranslation}>
+                  {text}
+                </EditableText>
+              );
+            })()}
             {(() => {
               const { text, needsTranslation } = useEditableContent("home.welcomeDescription");
               return (
@@ -148,19 +155,82 @@ function GuestHomePage() {
       {/* Business Information */}
       <div className="card bg-base-100 shadow-xl">
         <div className="card-body">
-          <h2 className="card-title">{t("common:home.storeInformation")}</h2>
+          {(() => {
+            const { text, needsTranslation } = useEditableContent("home.storeInformationTitle");
+            return (
+              <EditableText contentKey="home.storeInformationTitle" as="h2" className="card-title" needsTranslation={needsTranslation}>
+                {text}
+              </EditableText>
+            );
+          })()}
           <div className="grid md:grid-cols-2 gap-6">
             <div>
-              <h3 className="font-semibold mb-2">{t("common:home.hours")}</h3>
-              <p>{t("common:home.mondayFriday")}</p>
-              <p>{t("common:home.saturday")}</p>
-              <p>{t("common:home.sunday")}</p>
+              {(() => {
+                const { text, needsTranslation } = useEditableContent("home.hoursTitle");
+                return (
+                  <EditableText contentKey="home.hoursTitle" as="h3" className="font-semibold mb-2" needsTranslation={needsTranslation}>
+                    {text}
+                  </EditableText>
+                );
+              })()}
+              {(() => {
+                const { text, needsTranslation } = useEditableContent("home.mondayFridayHours");
+                return (
+                  <EditableText contentKey="home.mondayFridayHours" as="p" needsTranslation={needsTranslation}>
+                    {text}
+                  </EditableText>
+                );
+              })()}
+              {(() => {
+                const { text, needsTranslation } = useEditableContent("home.saturdayHours");
+                return (
+                  <EditableText contentKey="home.saturdayHours" as="p" needsTranslation={needsTranslation}>
+                    {text}
+                  </EditableText>
+                );
+              })()}
+              {(() => {
+                const { text, needsTranslation } = useEditableContent("home.sundayHours");
+                return (
+                  <EditableText contentKey="home.sundayHours" as="p" needsTranslation={needsTranslation}>
+                    {text}
+                  </EditableText>
+                );
+              })()}
             </div>
             <div>
-              <h3 className="font-semibold mb-2">{t("common:home.contact")}</h3>
-              <p>📞 (555) 123-4567</p>
-              <p>📧 info@kastelhardware.com</p>
-              <p>📍 123 Main Street, Hardware City</p>
+              {(() => {
+                const { text, needsTranslation } = useEditableContent("home.contactTitle");
+                return (
+                  <EditableText contentKey="home.contactTitle" as="h3" className="font-semibold mb-2" needsTranslation={needsTranslation}>
+                    {text}
+                  </EditableText>
+                );
+              })()}
+              {(() => {
+                const { text, needsTranslation } = useEditableContent("home.phone");
+                return (
+                  <EditableText contentKey="home.phone" as="p" needsTranslation={needsTranslation}>
+                    {text}
+                  </EditableText>
+                );
+              })()}
+              {(() => {
+                const { text, needsTranslation } = useEditableContent("home.email");
+                return (
+                  <EditableText contentKey="home.email" as="p" needsTranslation={needsTranslation}>
+                    {text}
+                  </EditableText>
+                );
+              })()}
+              {(() => {
+                const { text, needsTranslation } = useEditableContent("home.address");
+                return (
+                  <EditableText contentKey="home.address" as="p" needsTranslation={needsTranslation}>
+                    {text}
+                  </EditableText>
+                );
+              })()}
             </div>
           </div>
         </div>
@@ -304,7 +374,14 @@ function CustomerHomePage({ user, hasPermission }: { user: any, hasPermission: (
             <div className="flex justify-center mb-6">
               <KastelLogo size={120} className="drop-shadow-lg" />
             </div>
-            <h1 className="text-5xl font-bold">{t("common:home.welcome")}</h1>
+            {(() => {
+              const { text, needsTranslation } = useEditableContent("home.welcomeTitle");
+              return (
+                <EditableText contentKey="home.welcomeTitle" as="h1" className="text-5xl font-bold" needsTranslation={needsTranslation}>
+                  {text}
+                </EditableText>
+              );
+            })()}
             {(() => {
               const { text, needsTranslation } = useEditableContent("home.welcomeDescription");
               return (
@@ -382,19 +459,82 @@ function CustomerHomePage({ user, hasPermission }: { user: any, hasPermission: (
       {/* Business Information */}
       <div className="card bg-base-100 shadow-xl">
         <div className="card-body">
-          <h2 className="card-title">{t("common:home.storeInformation")}</h2>
+          {(() => {
+            const { text, needsTranslation } = useEditableContent("home.storeInformationTitle");
+            return (
+              <EditableText contentKey="home.storeInformationTitle" as="h2" className="card-title" needsTranslation={needsTranslation}>
+                {text}
+              </EditableText>
+            );
+          })()}
           <div className="grid md:grid-cols-2 gap-6">
             <div>
-              <h3 className="font-semibold mb-2">{t("common:home.hours")}</h3>
-              <p>{t("common:home.mondayFriday")}</p>
-              <p>{t("common:home.saturday")}</p>
-              <p>{t("common:home.sunday")}</p>
+              {(() => {
+                const { text, needsTranslation } = useEditableContent("home.hoursTitle");
+                return (
+                  <EditableText contentKey="home.hoursTitle" as="h3" className="font-semibold mb-2" needsTranslation={needsTranslation}>
+                    {text}
+                  </EditableText>
+                );
+              })()}
+              {(() => {
+                const { text, needsTranslation } = useEditableContent("home.mondayFridayHours");
+                return (
+                  <EditableText contentKey="home.mondayFridayHours" as="p" needsTranslation={needsTranslation}>
+                    {text}
+                  </EditableText>
+                );
+              })()}
+              {(() => {
+                const { text, needsTranslation } = useEditableContent("home.saturdayHours");
+                return (
+                  <EditableText contentKey="home.saturdayHours" as="p" needsTranslation={needsTranslation}>
+                    {text}
+                  </EditableText>
+                );
+              })()}
+              {(() => {
+                const { text, needsTranslation } = useEditableContent("home.sundayHours");
+                return (
+                  <EditableText contentKey="home.sundayHours" as="p" needsTranslation={needsTranslation}>
+                    {text}
+                  </EditableText>
+                );
+              })()}
             </div>
             <div>
-              <h3 className="font-semibold mb-2">{t("common:home.contact")}</h3>
-              <p>📞 (555) 123-4567</p>
-              <p>📧 info@kastelhardware.com</p>
-              <p>📍 123 Main Street, Hardware City</p>
+              {(() => {
+                const { text, needsTranslation } = useEditableContent("home.contactTitle");
+                return (
+                  <EditableText contentKey="home.contactTitle" as="h3" className="font-semibold mb-2" needsTranslation={needsTranslation}>
+                    {text}
+                  </EditableText>
+                );
+              })()}
+              {(() => {
+                const { text, needsTranslation } = useEditableContent("home.phone");
+                return (
+                  <EditableText contentKey="home.phone" as="p" needsTranslation={needsTranslation}>
+                    {text}
+                  </EditableText>
+                );
+              })()}
+              {(() => {
+                const { text, needsTranslation } = useEditableContent("home.email");
+                return (
+                  <EditableText contentKey="home.email" as="p" needsTranslation={needsTranslation}>
+                    {text}
+                  </EditableText>
+                );
+              })()}
+              {(() => {
+                const { text, needsTranslation } = useEditableContent("home.address");
+                return (
+                  <EditableText contentKey="home.address" as="p" needsTranslation={needsTranslation}>
+                    {text}
+                  </EditableText>
+                );
+              })()}
             </div>
           </div>
         </div>
