@@ -265,7 +265,46 @@ The role emulator dropdown (visible only in development environments) allows dev
 **Future Enhancements:**
 Planned features include audit trail logging (track who changed what roles when with timestamps), bulk user operations (CSV import/export for initial setup), role templates (save common tag combinations like "shift supervisor" = worker+manager), and permission group management for enterprise scaling.
 
-### 5. Internationalization (i18n)
+### 5. Browser Text Editing
+
+**Overview:**
+The browser text editing feature is an in-place content management system that allows managers to edit UI text elements (banners, help text, instructional content) directly within the application interface without requiring code deployments. Managers toggle an "Edit Mode" in the header, double-click any editable text element, make changes inline, and save to the database. The system supports multilingual content with automatic translation tracking.
+
+**Core Implementation Files:**
+- **Database Schema**: [convex/schema.ts](../convex/schema.ts) - `ui_content` table with multilingual fields
+- **Backend**: [convex/ui_content.ts](../convex/ui_content.ts) - Content save/retrieve mutations with permission checks
+- **Edit Mode Context**: [src/contexts/EditModeContext.tsx](../src/contexts/EditModeContext.tsx) - Global state for edit mode toggle
+- **Hook**: [src/hooks/useEditableContent.ts](../src/hooks/useEditableContent.ts) - Load content with DB-first fallback to translation files
+- **Component**: [src/components/EditableText.tsx](../src/components/EditableText.tsx) - Wrapper component for inline editing
+- **Integration**: [src/routes/__root.tsx](../src/routes/__root.tsx) - Edit Mode toggle button in header
+
+**Key Features:**
+
+**Database-First Content Management**
+Editable content is stored in the `ui_content` table with separate fields for each language (content_en, content_he, content_ru, content_fr). When content is edited, it's saved to the database and takes priority over the default translation file values. This allows non-technical staff to update UI text without touching code or translation files. The system falls back to translation file defaults when no database override exists, ensuring graceful degradation.
+
+**Edit Mode Toggle**
+Managers see an "Edit Mode" button in the header (Edit/Check icon). Clicking toggles edit mode on/off for the entire application. When edit mode is active, the button displays green with a check icon and "Edit Mode" label. When inactive, it shows as a ghost button with a pencil icon. Only users with the manager tag see this button - workers and customers never see edit mode controls.
+
+**Inline Editing Workflow**
+When edit mode is active, hovering over editable text elements displays a pencil icon indicator. Double-clicking the text activates inline editing, replacing the display with an input field (single-line) or textarea (multi-line). Users type their changes and click outside the field to save automatically. Pressing Escape cancels the edit and restores the original value. The component shows a loading state during save operations.
+
+**Multilingual Support with Translation Tracking**
+Each piece of content can be customized per language independently. When a manager edits content in one language (e.g., Hebrew), the system automatically marks other languages as "needing translation" by setting `needsTranslation_en`, `needsTranslation_ru`, etc. This prevents outdated translations from appearing after content changes. The audit trail tracks which user edited the content, when, and in which language.
+
+**Permission-Based Access Control**
+Only managers can enter edit mode and save content changes. The backend enforces this with permission checks in the `saveUIContent` mutation, rejecting requests from non-managers. Workers and customers see normal read-only text even when edit mode UI is visible (though in practice, they won't see the toggle button at all). This ensures content integrity while allowing trusted staff to make updates.
+
+**Visual Design**
+Editable elements in edit mode show a subtle yellow background highlight on hover, indicating interactivity. The pencil icon appears in the top-right corner of the hover area. During editing, the input field has a white background with border highlighting. After successful save, the element briefly flashes to indicate the operation completed. RTL support is built-in - the pencil icon and layouts adapt correctly for Hebrew.
+
+**Implementation Example (About Us Field):**
+The "About Us" banner on the customer home page serves as the proof-of-concept implementation. It demonstrates the complete workflow from toggle activation through inline editing to database persistence and cross-language synchronization. This field is wrapped with `<EditableText contentKey="home.aboutUs">` and uses the `useEditableContent("home.aboutUs")` hook to load content.
+
+**Future Enhancements:**
+Expand to additional editable fields across LUZ help text, course descriptions, tool rental instructions, and error messages. Add "Needs Translation" visual badges to highlight outdated translations. Create a translation management dashboard where managers can see all content requiring translation updates. Implement rich text editing for formatted content (bold, links, lists).
+
+### 6. Internationalization (i18n)
 
 **Overview:**
 The application supports multiple languages with full internationalization infrastructure. Users can switch languages dynamically via a dropdown in the header, with their preference persisted to localStorage. The system includes automatic RTL (right-to-left) support for Hebrew, locale-aware date formatting, and comprehensive translation coverage for the LUZ system. Translation expansion is ongoing for remaining pages.
@@ -309,7 +348,7 @@ Hebrew triggers automatic RTL mode, updating the HTML `dir` attribute to `"rtl"`
 All date displays use `toLocaleDateString(currentLanguage)` for proper localization. Hebrew dates format as day/month/year, English as month/day/year, following each locale's conventions. Time displays use 24-hour format for Hebrew, 12-hour for English. The LUZ timeline components pass the current language to all date formatting functions ensuring consistency throughout.
 
 **Namespace Organization**
-Translations are organized into logical namespaces to avoid conflicts and improve maintainability. The `common` namespace contains shared UI elements (actions, navigation, time units). Feature-specific namespaces (`shifts`, `tools`, `courses`, `roles`) contain domain-specific terminology. The `auth` namespace handles authentication and access control messages. This structure allows parallel translation work on different features.
+Translations are organized into logical namespaces to avoid conflicts and improve maintainability. The `common` namespace contains shared UI elements (actions, navigation, time units). Feature-specific namespaces (`shifts`, `tools`, `courses`, `roles`) contain domain-specific terminology. The `auth` namespace handles authentication and access control messages. The `ui_content` namespace stores editable UI content managed through the browser text editing feature. This structure allows parallel translation work on different features.
 
 **Implementation Guidelines:**
 For detailed translation workflow, best practices, and implementation patterns, see the Internationalization section in [CLAUDE.md](../CLAUDE.md#internationalization-i18next). The LUZ system provides a reference implementation for proper i18n integration.
@@ -340,7 +379,8 @@ public/locales/
   │   ├── shifts.json        # LUZ calendar, shift management, assignments
   │   ├── tools.json         # Tool rentals, inventory, customer management
   │   ├── courses.json       # Educational courses, instructors, enrollment
-  │   └── roles.json         # Role management, permissions, tags
+  │   ├── roles.json         # Role management, permissions, tags
+  │   └── ui_content.json    # Editable UI content (banners, help text)
   └── he/                    # Hebrew (production-ready)
       └── [same structure]
 ```
@@ -412,8 +452,23 @@ Collect initial feedback from staff users on live system. Document usability iss
 
 ### Later Scope Work
 
-**Browser Text Editing Feature** (Design Complete - Ready for Implementation)
-In-browser content management system allowing managers to edit UI content (banners, help text, instructions) directly in the interface. Database-driven with multilingual support and translation tracking. Enables non-technical content updates without code changes. See [BROWSER_TEXT_EDITING.md](BROWSER_TEXT_EDITING.md) for complete design. Estimated: 11 hours implementation.
+**Browser Text Editing Feature** ✅ **IMPLEMENTED**
+In-browser content management system allowing managers to edit UI content (banners, help text, instructions) directly in the interface. Database-driven with multilingual support and translation tracking. Enables non-technical content updates without code changes.
+
+**Implementation Status:**
+- ✅ Complete workflow implemented with "About Us" field as proof-of-concept
+- ✅ Database schema (`ui_content` table with multilingual fields and translation tracking)
+- ✅ Backend API (`convex/ui_content.ts` with permission checks)
+- ✅ Edit mode toggle in header (manager-only feature)
+- ✅ Inline editing with double-click activation
+- ✅ Click-outside-to-save pattern
+- ✅ Visual indicators (pencil icon on hover, edit mode highlight)
+- ✅ Multilingual support (separate content per language)
+- ✅ Translation tracking (needsTranslation flags)
+- ✅ Navigation updated (staff can access home page for content editing)
+
+**Next Steps:**
+Expand feature to additional editable fields across the application. See [BROWSER_TEXT_EDITING.md](BROWSER_TEXT_EDITING.md) for complete design and implementation reference.
 
 **Notification System**
 Implement email/SMS alerts for shift changes, approval requests, rental reminders, and course enrollments. Integrate with third-party service (e.g., Twilio, SendGrid).
