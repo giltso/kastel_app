@@ -2,6 +2,37 @@
 
 detailed history of all sessions. to be updated on new session
 
+### Session 39 - October 21, 2025 (Mobile UI & RTL Optimization)
+
+**Goal**: Fix mobile responsive issues and RTL layout inconsistencies identified in testing
+
+**Major Achievements**:
+- ✅ **Mobile UI Fixed**: Responsive layouts tested and optimized at 375px width
+  - ✅ Tools page: Converted tables to card layout on mobile (inventory & rentals)
+  - ✅ Week view: Added scroll indicators and swipe hint with translation support
+  - ✅ Modal layouts: Fixed grid stacking for proper mobile display
+- ✅ **RTL Verification**: Hebrew layout tested and confirmed working correctly
+  - ✅ Text alignment, navigation mirroring, calendar rendering all verified
+- ✅ **Playwright Testing**: Comprehensive mobile and RTL testing with screenshots
+- ✅ **Production Ready**: Mobile and RTL both ready for production deployment
+
+**Technical Implementation**:
+- Modified [src/routes/tools.tsx](../src/routes/tools.tsx): Added responsive card layouts with `md:hidden` and `hidden md:block` classes
+- Modified [src/components/LUZWeekView.tsx](../src/components/LUZWeekView.tsx): Enhanced scroll shadows and added swipe indicator badge
+- Modified [src/components/modals/ShiftDetailsModal.tsx](../src/components/modals/ShiftDetailsModal.tsx): Fixed mobile grid stacking
+- Added translations: `common.actions.swipe` in English ("Swipe to scroll") and Hebrew ("החלק לגלילה")
+
+**Testing Results**:
+- Mobile (375px): 9/10 - Fully functional with excellent UX
+- RTL (Hebrew): 9.5/10 - Nearly flawless implementation
+
+**Commit Made**:
+```
+fix(mobile): improve responsive UI for mobile devices at 375px width
+```
+
+**Current Status**: Mobile UI and RTL layout are production-ready and awaiting real-world validation.
+
 ### Session 38 - October 20, 2025 (i18n Translation Completion + Browser Text Editing Design)
 
 **Goals**:

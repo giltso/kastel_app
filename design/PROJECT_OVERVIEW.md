@@ -277,7 +277,7 @@ The application supports multiple languages with full internationalization infra
 - **Translation Files**: [public/locales/](../public/locales/) - 6 namespaces (common, auth, shifts, tools, courses, roles)
 
 **Supported Languages:**
-- **Hebrew (עברית)**: Primary working language, **100% complete** with full RTL support - now in testing phase
+- **Hebrew (עברית)**: Primary working language, **100% complete** with full RTL support - production-ready
 - **English**: Default fallback language, source of truth for all translations (100% complete)
 - **Russian (Русский)**: Structure in place, marked "Coming Soon"
 - **French (Français)**: Structure in place, marked "Coming Soon"
@@ -294,8 +294,8 @@ The application supports multiple languages with full internationalization infra
 - **Educational Page**: Course management, enrollment workflows, all course modals
 - **Roles Page**: User and role management interface, all filters and actions
 
-**Testing Phase:**
-All user-facing strings have been translated to Hebrew. Currently deployed to production and undergoing user acceptance testing. Any discovered issues or missing translations will be addressed as they arise.
+**Mobile & RTL Status:**
+Mobile UI tested and optimized at 375px width with responsive card layouts for tables, scroll indicators for week view, and proper modal stacking. RTL layout verified in Hebrew with correct text alignment, mirrored navigation, and proper calendar rendering. Both are production-ready and awaiting real-world validation.
 
 **Key Features:**
 
@@ -407,17 +407,8 @@ No automated backup system. Database backups rely on Convex platform defaults.
 
 ### Immediate Priority
 
-**User Acceptance Testing (i18n)**
-Test Hebrew translation across all pages on production. Verify RTL layout, check for missing translations, validate date/time formatting, and collect user feedback on translation quality.
-
-**Fix Mobile UI Issues**
-Address responsive design problems at 375px width. Timeline components, modals, and navigation need touch-friendly improvements.
-
-**Fix RTL Layout Issues**
-Resolve Hebrew RTL inconsistencies. Apply CSS logical properties, fix component mirroring, and test all layouts in RTL mode.
-
 **Production User Feedback**
-Collect initial feedback from staff users on live system. Document usability issues and prioritize fixes based on operational impact.
+Collect initial feedback from staff users on live system. Document usability issues and prioritize fixes based on operational impact. Hebrew translation and mobile UI are production-ready and awaiting real-world validation.
 
 ### Later Scope Work
 
