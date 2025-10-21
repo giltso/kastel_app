@@ -1,9 +1,10 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { usePermissionsV2 } from "@/hooks/usePermissionsV2";
 import { EnsureUserV2 } from "@/components/EnsureUserV2";
-import { useEffect } from "react";
 import { KastelLogo } from "@/components/KastelLogo";
 import { useLanguage } from "@/hooks/useLanguage";
+import { EditableText } from "@/components/EditableText";
+import { useEditableContent } from "@/hooks/useEditableContent";
 
 export const Route = createFileRoute("/")({
   component: V2HomePage,
@@ -18,14 +19,6 @@ function V2HomePage() {
     isStaff,
     isCustomer
   } = usePermissionsV2();
-  const navigate = useNavigate();
-
-  // Automatically redirect staff users to LUZ system
-  useEffect(() => {
-    if (!isLoading && isStaff) {
-      navigate({ to: "/luz" });
-    }
-  }, [isLoading, isStaff, navigate]);
 
   if (isLoading) {
     return (
@@ -40,13 +33,13 @@ function V2HomePage() {
     return <GuestHomePage />;
   }
 
-  // Staff members should be automatically redirected via useEffect above
-  // This fallback should rarely be reached for staff users
+  // Staff home page - same as customer page (can access when needed, e.g., for content editing)
   if (isStaff) {
     return (
-      <div className="flex items-center justify-center min-h-64">
-        <span className="loading loading-spinner loading-lg"></span>
-      </div>
+      <>
+        <EnsureUserV2 />
+        <CustomerHomePage user={user} hasPermission={hasPermission as any} />
+      </>
     );
   }
 
@@ -118,7 +111,9 @@ function GuestHomePage() {
         <div className="card bg-base-100 shadow-xl">
           <div className="card-body text-center">
             <h2 className="card-title justify-center">🏪 {t("common:home.aboutUsTitle")}</h2>
-            <p>{t("common:home.aboutUsDescription")}</p>
+            <EditableText contentKey="home.aboutUs" as="p">
+              {useEditableContent("home.aboutUs").text}
+            </EditableText>
             <div className="card-actions justify-center">
               <button className="btn btn-accent btn-sm" disabled>{t("common:home.learnMore")}</button>
             </div>
@@ -326,7 +321,9 @@ function CustomerHomePage({ user, hasPermission }: { user: any, hasPermission: (
         <div className="card bg-base-100 shadow-xl">
           <div className="card-body text-center">
             <h2 className="card-title justify-center">🏪 {t("common:home.aboutUsTitle")}</h2>
-            <p>{t("common:home.aboutUsDescription")}</p>
+            <EditableText contentKey="home.aboutUs" as="p">
+              {useEditableContent("home.aboutUs").text}
+            </EditableText>
             <div className="card-actions justify-center">
               <button className="btn btn-accent btn-sm" disabled>{t("common:home.learnMore")}</button>
             </div>

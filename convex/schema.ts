@@ -289,4 +289,29 @@ export default defineSchema({
   .index("by_studentId", ["studentId"])
   .index("by_status", ["status"])
   .index("by_approvedBy", ["approvedBy"]),
+
+  // UI Content - Editable content management system
+  ui_content: defineTable({
+    key: v.string(),                    // "home.welcomeBanner", "luz.helpText"
+    namespace: v.string(),              // "ui_content" (for organization)
+
+    // Multilingual content fields
+    content_en: v.optional(v.string()),
+    content_he: v.optional(v.string()),
+    content_ru: v.optional(v.string()),
+    content_fr: v.optional(v.string()),
+
+    // Translation tracking (which languages are outdated)
+    needsTranslation_en: v.optional(v.boolean()),
+    needsTranslation_he: v.optional(v.boolean()),
+    needsTranslation_ru: v.optional(v.boolean()),
+    needsTranslation_fr: v.optional(v.boolean()),
+
+    // Audit trail
+    lastEditedBy: v.id("users"),        // Who made the last edit
+    lastEditedAt: v.number(),           // Timestamp
+    lastEditedLanguage: v.string(),     // "he", "en", "ru", "fr"
+  })
+  .index("by_key", ["key"])
+  .index("by_namespace", ["namespace"]),
 });
