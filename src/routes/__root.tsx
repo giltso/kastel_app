@@ -75,7 +75,7 @@ function NavigationLinks({ onLinkClick }: { onLinkClick: () => void }) {
   return (
     <>
       <Link
-        to={isStaff ? "/luz" : "/"}
+        to="/"
         className="btn btn-ghost"
         activeProps={{
           className: "btn btn-ghost btn-active",
@@ -84,6 +84,18 @@ function NavigationLinks({ onLinkClick }: { onLinkClick: () => void }) {
       >
         {t("common:nav.home")}
       </Link>
+      {isStaff && (
+        <Link
+          to="/luz"
+          className="btn btn-ghost"
+          activeProps={{
+            className: "btn btn-ghost btn-active",
+          }}
+          onClick={onLinkClick}
+        >
+          {t("shifts:luz.title")}
+        </Link>
+      )}
       {checkPermission("request_tool_rentals") && (
         <Link
           to="/tools"
@@ -132,7 +144,7 @@ function MobileNavigationLinks({ onLinkClick }: { onLinkClick: () => void }) {
     <>
       <li>
         <Link
-          to={isStaff ? "/luz" : "/"}
+          to="/"
           onClick={onLinkClick}
           activeProps={{
             className: "active",
@@ -142,6 +154,20 @@ function MobileNavigationLinks({ onLinkClick }: { onLinkClick: () => void }) {
           {t("common:nav.home")}
         </Link>
       </li>
+      {isStaff && (
+        <li>
+          <Link
+            to="/luz"
+            onClick={onLinkClick}
+            activeProps={{
+              className: "active",
+            }}
+            className="flex items-center justify-end p-2"
+          >
+            {t("shifts:luz.title")}
+          </Link>
+        </li>
+      )}
       {checkPermission("request_tool_rentals") && (
         <li>
           <Link
