@@ -19,7 +19,7 @@ interface EditableTextProps {
 
 export const EditableText = ({
   contentKey,
-  namespace = "ui_content",
+  namespace: _namespace = "ui_content",
   children,
   className,
   as: Component = 'div',
@@ -37,7 +37,7 @@ export const EditableText = ({
   const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement>(null);
 
   // Extract text from children
-  const currentText = typeof children === 'string' ? children : String(children);
+  const currentText = typeof children === 'string' ? children : (children?.toString() ?? '');
 
   // Only show edit capabilities if: edit mode ON + user is manager
   const canEdit = editMode && hasManagerTag;
@@ -111,7 +111,7 @@ export const EditableText = ({
         ref={inputRef as any}
         value={editedValue}
         onChange={(e) => setEditedValue(e.target.value)}
-        onBlur={handleSave}
+        onBlur={() => void handleSave()}
         onKeyDown={handleKeyDown}
         className={cn(
           "w-full",
