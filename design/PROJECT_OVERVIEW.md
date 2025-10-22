@@ -265,7 +265,23 @@ The role emulator dropdown (visible only in development environments) allows dev
 **Future Enhancements:**
 Planned features include audit trail logging (track who changed what roles when with timestamps), bulk user operations (CSV import/export for initial setup), role templates (save common tag combinations like "shift supervisor" = worker+manager), and permission group management for enterprise scaling.
 
-### 5. Internationalization (i18n)
+### 5. Browser Text Editing
+
+**Overview:**
+In-browser content management system allowing managers to edit UI text elements (banners, help text, instructions) directly in the interface without code deployments. Managers toggle edit mode, double-click text to edit inline, and changes save to database with multilingual support and translation tracking.
+
+**Current Status:**
+Proof-of-concept complete with "About Us" field demonstrating full workflow. Database-first architecture with translation file fallbacks, manager-only permissions, and "Needs Translation" badge for outdated content.
+
+**Future Work:**
+- Expand to additional editable fields (LUZ help text, course descriptions, tool instructions, error messages)
+- Translation management dashboard showing all content needing updates
+- Rich text editing support (formatting, links, lists)
+- Enhanced translation approval workflow with visual feedback (low priority)
+
+**Documentation:** See [BROWSER_TEXT_EDITING.md](BROWSER_TEXT_EDITING.md) for complete design, implementation details, and technical decisions.
+
+### 6. Internationalization (i18n)
 
 **Overview:**
 The application supports multiple languages with full internationalization infrastructure. Users can switch languages dynamically via a dropdown in the header, with their preference persisted to localStorage. The system includes automatic RTL (right-to-left) support for Hebrew, locale-aware date formatting, and comprehensive translation coverage for the LUZ system. Translation expansion is ongoing for remaining pages.
@@ -277,7 +293,7 @@ The application supports multiple languages with full internationalization infra
 - **Translation Files**: [public/locales/](../public/locales/) - 6 namespaces (common, auth, shifts, tools, courses, roles)
 
 **Supported Languages:**
-- **Hebrew (עברית)**: Primary working language, **100% complete** with full RTL support - now in testing phase
+- **Hebrew (עברית)**: Primary working language, **100% complete** with full RTL support - production-ready
 - **English**: Default fallback language, source of truth for all translations (100% complete)
 - **Russian (Русский)**: Structure in place, marked "Coming Soon"
 - **French (Français)**: Structure in place, marked "Coming Soon"
@@ -294,8 +310,8 @@ The application supports multiple languages with full internationalization infra
 - **Educational Page**: Course management, enrollment workflows, all course modals
 - **Roles Page**: User and role management interface, all filters and actions
 
-**Testing Phase:**
-All user-facing strings have been translated to Hebrew. Currently deployed to production and undergoing user acceptance testing. Any discovered issues or missing translations will be addressed as they arise.
+**Mobile & RTL Status:**
+Mobile UI tested and optimized at 375px width with responsive card layouts for tables, scroll indicators for week view, and proper modal stacking. RTL layout verified in Hebrew with correct text alignment, mirrored navigation, and proper calendar rendering. Both are production-ready and awaiting real-world validation.
 
 **Key Features:**
 
@@ -309,7 +325,7 @@ Hebrew triggers automatic RTL mode, updating the HTML `dir` attribute to `"rtl"`
 All date displays use `toLocaleDateString(currentLanguage)` for proper localization. Hebrew dates format as day/month/year, English as month/day/year, following each locale's conventions. Time displays use 24-hour format for Hebrew, 12-hour for English. The LUZ timeline components pass the current language to all date formatting functions ensuring consistency throughout.
 
 **Namespace Organization**
-Translations are organized into logical namespaces to avoid conflicts and improve maintainability. The `common` namespace contains shared UI elements (actions, navigation, time units). Feature-specific namespaces (`shifts`, `tools`, `courses`, `roles`) contain domain-specific terminology. The `auth` namespace handles authentication and access control messages. This structure allows parallel translation work on different features.
+Translations are organized into logical namespaces to avoid conflicts and improve maintainability. The `common` namespace contains shared UI elements (actions, navigation, time units). Feature-specific namespaces (`shifts`, `tools`, `courses`, `roles`) contain domain-specific terminology. The `auth` namespace handles authentication and access control messages. The `ui_content` namespace stores editable UI content managed through the browser text editing feature. This structure allows parallel translation work on different features.
 
 **Implementation Guidelines:**
 For detailed translation workflow, best practices, and implementation patterns, see the Internationalization section in [CLAUDE.md](../CLAUDE.md#internationalization-i18next). The LUZ system provides a reference implementation for proper i18n integration.
@@ -340,7 +356,8 @@ public/locales/
   │   ├── shifts.json        # LUZ calendar, shift management, assignments
   │   ├── tools.json         # Tool rentals, inventory, customer management
   │   ├── courses.json       # Educational courses, instructors, enrollment
-  │   └── roles.json         # Role management, permissions, tags
+  │   ├── roles.json         # Role management, permissions, tags
+  │   └── ui_content.json    # Editable UI content (banners, help text)
   └── he/                    # Hebrew (production-ready)
       └── [same structure]
 ```
@@ -407,19 +424,28 @@ No automated backup system. Database backups rely on Convex platform defaults.
 
 ### Immediate Priority
 
-**User Acceptance Testing (i18n)**
-Test Hebrew translation across all pages on production. Verify RTL layout, check for missing translations, validate date/time formatting, and collect user feedback on translation quality.
-
-**Fix Mobile UI Issues**
-Address responsive design problems at 375px width. Timeline components, modals, and navigation need touch-friendly improvements.
-
-**Fix RTL Layout Issues**
-Resolve Hebrew RTL inconsistencies. Apply CSS logical properties, fix component mirroring, and test all layouts in RTL mode.
-
 **Production User Feedback**
-Collect initial feedback from staff users on live system. Document usability issues and prioritize fixes based on operational impact.
+Collect initial feedback from staff users on live system. Document usability issues and prioritize fixes based on operational impact. Hebrew translation and mobile UI are production-ready and awaiting real-world validation.
 
 ### Later Scope Work
+
+**Browser Text Editing Feature** ✅ **IMPLEMENTED**
+In-browser content management system allowing managers to edit UI content (banners, help text, instructions) directly in the interface. Database-driven with multilingual support and translation tracking. Enables non-technical content updates without code changes.
+
+**Implementation Status:**
+- ✅ Complete workflow implemented with "About Us" field as proof-of-concept
+- ✅ Database schema (`ui_content` table with multilingual fields and translation tracking)
+- ✅ Backend API (`convex/ui_content.ts` with permission checks)
+- ✅ Edit mode toggle in header (manager-only feature)
+- ✅ Inline editing with double-click activation
+- ✅ Click-outside-to-save pattern
+- ✅ Visual indicators (pencil icon on hover, edit mode highlight)
+- ✅ Multilingual support (separate content per language)
+- ✅ Translation tracking (needsTranslation flags)
+- ✅ Navigation updated (staff can access home page for content editing)
+
+**Next Steps:**
+Expand feature to additional editable fields across the application. See [BROWSER_TEXT_EDITING.md](BROWSER_TEXT_EDITING.md) for complete design and implementation reference.
 
 **Notification System**
 Implement email/SMS alerts for shift changes, approval requests, rental reminders, and course enrollments. Integrate with third-party service (e.g., Twilio, SendGrid).

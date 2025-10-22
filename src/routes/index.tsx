@@ -1,13 +1,67 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { usePermissionsV2 } from "@/hooks/usePermissionsV2";
 import { EnsureUserV2 } from "@/components/EnsureUserV2";
-import { useEffect } from "react";
 import { KastelLogo } from "@/components/KastelLogo";
 import { useLanguage } from "@/hooks/useLanguage";
+import { EditableText } from "@/components/EditableText";
+import { useEditableContent } from "@/hooks/useEditableContent";
 
 export const Route = createFileRoute("/")({
   component: V2HomePage,
 });
+
+// Store Information Section Component (calls all hooks at top level)
+function StoreInfoSection() {
+  const storeInfo = useEditableContent("home.storeInformationTitle");
+  const hoursTitle = useEditableContent("home.hoursTitle");
+  const mondayFriday = useEditableContent("home.mondayFridayHours");
+  const saturday = useEditableContent("home.saturdayHours");
+  const sunday = useEditableContent("home.sundayHours");
+  const contactTitle = useEditableContent("home.contactTitle");
+  const phone = useEditableContent("home.phone");
+  const email = useEditableContent("home.email");
+  const address = useEditableContent("home.address");
+
+  return (
+    <div className="card bg-base-100 shadow-xl">
+      <div className="card-body">
+        <EditableText contentKey="home.storeInformationTitle" as="h2" className="card-title" needsTranslation={storeInfo.needsTranslation}>
+          {storeInfo.text}
+        </EditableText>
+        <div className="grid md:grid-cols-2 gap-6">
+          <div>
+            <EditableText contentKey="home.hoursTitle" as="h3" className="font-semibold mb-2" needsTranslation={hoursTitle.needsTranslation}>
+              {hoursTitle.text}
+            </EditableText>
+            <EditableText contentKey="home.mondayFridayHours" as="p" needsTranslation={mondayFriday.needsTranslation}>
+              {mondayFriday.text}
+            </EditableText>
+            <EditableText contentKey="home.saturdayHours" as="p" needsTranslation={saturday.needsTranslation}>
+              {saturday.text}
+            </EditableText>
+            <EditableText contentKey="home.sundayHours" as="p" needsTranslation={sunday.needsTranslation}>
+              {sunday.text}
+            </EditableText>
+          </div>
+          <div>
+            <EditableText contentKey="home.contactTitle" as="h3" className="font-semibold mb-2" needsTranslation={contactTitle.needsTranslation}>
+              {contactTitle.text}
+            </EditableText>
+            <EditableText contentKey="home.phone" as="p" needsTranslation={phone.needsTranslation}>
+              {phone.text}
+            </EditableText>
+            <EditableText contentKey="home.email" as="p" needsTranslation={email.needsTranslation}>
+              {email.text}
+            </EditableText>
+            <EditableText contentKey="home.address" as="p" needsTranslation={address.needsTranslation}>
+              {address.text}
+            </EditableText>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function V2HomePage() {
   const {
@@ -18,14 +72,6 @@ function V2HomePage() {
     isStaff,
     isCustomer
   } = usePermissionsV2();
-  const navigate = useNavigate();
-
-  // Automatically redirect staff users to LUZ system
-  useEffect(() => {
-    if (!isLoading && isStaff) {
-      navigate({ to: "/luz" });
-    }
-  }, [isLoading, isStaff, navigate]);
 
   if (isLoading) {
     return (
@@ -40,13 +86,13 @@ function V2HomePage() {
     return <GuestHomePage />;
   }
 
-  // Staff members should be automatically redirected via useEffect above
-  // This fallback should rarely be reached for staff users
+  // Staff home page - same as customer page (can access when needed, e.g., for content editing)
   if (isStaff) {
     return (
-      <div className="flex items-center justify-center min-h-64">
-        <span className="loading loading-spinner loading-lg"></span>
-      </div>
+      <>
+        <EnsureUserV2 />
+        <CustomerHomePage user={user} hasPermission={hasPermission as any} />
+      </>
     );
   }
 
@@ -68,6 +114,13 @@ function V2HomePage() {
 function GuestHomePage() {
   const { t } = useLanguage();
 
+  // Call all hooks at top level (React Rules of Hooks)
+  const welcomeTitle = useEditableContent("home.welcomeTitle");
+  const welcomeDescription = useEditableContent("home.welcomeDescription");
+  const toolRentalDescription = useEditableContent("home.toolRentalDescription");
+  const educationalDescription = useEditableContent("home.educationalDescription");
+  const aboutUs = useEditableContent("home.aboutUs");
+
   return (
     <div className="max-w-4xl mx-auto">
       {/* Hero Section */}
@@ -77,10 +130,12 @@ function GuestHomePage() {
             <div className="flex justify-center mb-6">
               <KastelLogo size={120} className="drop-shadow-lg" />
             </div>
-            <h1 className="text-5xl font-bold">{t("common:home.welcome")}</h1>
-            <p className="py-6 text-lg">
-              {t("common:home.welcomeDescription")}
-            </p>
+            <EditableText contentKey="home.welcomeTitle" as="h1" className="text-5xl font-bold" needsTranslation={welcomeTitle.needsTranslation}>
+              {welcomeTitle.text}
+            </EditableText>
+            <EditableText contentKey="home.welcomeDescription" as="p" className="py-6 text-lg" needsTranslation={welcomeDescription.needsTranslation} multiline>
+              {welcomeDescription.text}
+            </EditableText>
             <div className="not-prose space-x-4">
               <Link to="/tools" className="btn btn-primary">
                 {t("common:home.browseTools")}
@@ -98,7 +153,9 @@ function GuestHomePage() {
         <div className="card bg-base-100 shadow-xl">
           <div className="card-body text-center">
             <h2 className="card-title justify-center">🔧 {t("common:home.toolRentalTitle")}</h2>
-            <p>{t("common:home.toolRentalDescription")}</p>
+            <EditableText contentKey="home.toolRentalDescription" as="p" needsTranslation={toolRentalDescription.needsTranslation}>
+              {toolRentalDescription.text}
+            </EditableText>
             <div className="card-actions justify-center">
               <Link to="/tools" className="btn btn-primary btn-sm">{t("common:home.browseTools")}</Link>
             </div>
@@ -108,7 +165,9 @@ function GuestHomePage() {
         <div className="card bg-base-100 shadow-xl">
           <div className="card-body text-center">
             <h2 className="card-title justify-center">📚 {t("common:home.educationalTitle")}</h2>
-            <p>{t("common:home.educationalDescription")}</p>
+            <EditableText contentKey="home.educationalDescription" as="p" needsTranslation={educationalDescription.needsTranslation}>
+              {educationalDescription.text}
+            </EditableText>
             <div className="card-actions justify-center">
               <Link to="/educational" className="btn btn-secondary btn-sm">{t("common:home.viewCourses")}</Link>
             </div>
@@ -118,7 +177,9 @@ function GuestHomePage() {
         <div className="card bg-base-100 shadow-xl">
           <div className="card-body text-center">
             <h2 className="card-title justify-center">🏪 {t("common:home.aboutUsTitle")}</h2>
-            <p>{t("common:home.aboutUsDescription")}</p>
+            <EditableText contentKey="home.aboutUs" as="p" needsTranslation={aboutUs.needsTranslation}>
+              {aboutUs.text}
+            </EditableText>
             <div className="card-actions justify-center">
               <button className="btn btn-accent btn-sm" disabled>{t("common:home.learnMore")}</button>
             </div>
@@ -127,25 +188,7 @@ function GuestHomePage() {
       </div>
 
       {/* Business Information */}
-      <div className="card bg-base-100 shadow-xl">
-        <div className="card-body">
-          <h2 className="card-title">{t("common:home.storeInformation")}</h2>
-          <div className="grid md:grid-cols-2 gap-6">
-            <div>
-              <h3 className="font-semibold mb-2">{t("common:home.hours")}</h3>
-              <p>{t("common:home.mondayFriday")}</p>
-              <p>{t("common:home.saturday")}</p>
-              <p>{t("common:home.sunday")}</p>
-            </div>
-            <div>
-              <h3 className="font-semibold mb-2">{t("common:home.contact")}</h3>
-              <p>📞 (555) 123-4567</p>
-              <p>📧 info@kastelhardware.com</p>
-              <p>📍 123 Main Street, Hardware City</p>
-            </div>
-          </div>
-        </div>
-      </div>
+      <StoreInfoSection />
     </div>
   );
 }
@@ -276,6 +319,13 @@ function StaffHomePage({ user, hasPermission }: { user: any, hasPermission: (p: 
 function CustomerHomePage({ user, hasPermission }: { user: any, hasPermission: (p: string) => boolean }) {
   const { t } = useLanguage();
 
+  // Call all hooks at top level (React Rules of Hooks)
+  const welcomeTitle = useEditableContent("home.welcomeTitle");
+  const welcomeDescription = useEditableContent("home.welcomeDescription");
+  const toolRentalDescription = useEditableContent("home.toolRentalDescription");
+  const educationalDescription = useEditableContent("home.educationalDescription");
+  const aboutUs = useEditableContent("home.aboutUs");
+
   return (
     <div className="max-w-4xl mx-auto">
       {/* Hero Section */}
@@ -285,10 +335,22 @@ function CustomerHomePage({ user, hasPermission }: { user: any, hasPermission: (
             <div className="flex justify-center mb-6">
               <KastelLogo size={120} className="drop-shadow-lg" />
             </div>
-            <h1 className="text-5xl font-bold">{t("common:home.welcome")}</h1>
-            <p className="py-6 text-lg">
-              {t("common:home.welcomeDescription")}
-            </p>
+            {(() => {
+              const { text, needsTranslation } = useEditableContent("home.welcomeTitle");
+              return (
+                <EditableText contentKey="home.welcomeTitle" as="h1" className="text-5xl font-bold" needsTranslation={needsTranslation}>
+                  {text}
+                </EditableText>
+              );
+            })()}
+            {(() => {
+              const { text, needsTranslation } = useEditableContent("home.welcomeDescription");
+              return (
+                <EditableText contentKey="home.welcomeDescription" as="p" className="py-6 text-lg" needsTranslation={needsTranslation} multiline>
+                  {text}
+                </EditableText>
+              );
+            })()}
             <div className="not-prose space-x-4">
               <Link to="/tools" className="btn btn-primary">
                 {t("common:home.browseTools")}
@@ -306,7 +368,9 @@ function CustomerHomePage({ user, hasPermission }: { user: any, hasPermission: (
         <div className="card bg-base-100 shadow-xl">
           <div className="card-body text-center">
             <h2 className="card-title justify-center">🔧 {t("common:home.toolRentalTitle")}</h2>
-            <p>{t("common:home.toolRentalDescription")}</p>
+            <EditableText contentKey="home.toolRentalDescription" as="p" needsTranslation={toolRentalDescription.needsTranslation}>
+              {toolRentalDescription.text}
+            </EditableText>
             <div className="card-actions justify-center">
               <Link to="/tools" className="btn btn-primary btn-sm">{t("common:home.browseTools")}</Link>
             </div>
@@ -316,7 +380,9 @@ function CustomerHomePage({ user, hasPermission }: { user: any, hasPermission: (
         <div className="card bg-base-100 shadow-xl">
           <div className="card-body text-center">
             <h2 className="card-title justify-center">📚 {t("common:home.educationalTitle")}</h2>
-            <p>{t("common:home.educationalDescription")}</p>
+            <EditableText contentKey="home.educationalDescription" as="p" needsTranslation={educationalDescription.needsTranslation}>
+              {educationalDescription.text}
+            </EditableText>
             <div className="card-actions justify-center">
               <Link to="/educational" className="btn btn-secondary btn-sm">{t("common:home.viewCourses")}</Link>
             </div>
@@ -326,7 +392,9 @@ function CustomerHomePage({ user, hasPermission }: { user: any, hasPermission: (
         <div className="card bg-base-100 shadow-xl">
           <div className="card-body text-center">
             <h2 className="card-title justify-center">🏪 {t("common:home.aboutUsTitle")}</h2>
-            <p>{t("common:home.aboutUsDescription")}</p>
+            <EditableText contentKey="home.aboutUs" as="p" needsTranslation={aboutUs.needsTranslation}>
+              {aboutUs.text}
+            </EditableText>
             <div className="card-actions justify-center">
               <button className="btn btn-accent btn-sm" disabled>{t("common:home.learnMore")}</button>
             </div>
@@ -335,25 +403,7 @@ function CustomerHomePage({ user, hasPermission }: { user: any, hasPermission: (
       </div>
 
       {/* Business Information */}
-      <div className="card bg-base-100 shadow-xl">
-        <div className="card-body">
-          <h2 className="card-title">{t("common:home.storeInformation")}</h2>
-          <div className="grid md:grid-cols-2 gap-6">
-            <div>
-              <h3 className="font-semibold mb-2">{t("common:home.hours")}</h3>
-              <p>{t("common:home.mondayFriday")}</p>
-              <p>{t("common:home.saturday")}</p>
-              <p>{t("common:home.sunday")}</p>
-            </div>
-            <div>
-              <h3 className="font-semibold mb-2">{t("common:home.contact")}</h3>
-              <p>📞 (555) 123-4567</p>
-              <p>📧 info@kastelhardware.com</p>
-              <p>📍 123 Main Street, Hardware City</p>
-            </div>
-          </div>
-        </div>
-      </div>
+      <StoreInfoSection />
     </div>
   );
 }

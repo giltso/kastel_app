@@ -33,7 +33,8 @@
     "apply": "Apply",
     "reset": "Reset",
     "loading": "Loading...",
-    "comingSoon": "Coming Soon"
+    "comingSoon": "Coming Soon",
+    "swipe": "Swipe to scroll"
   },
   "time": {
     "today": "Today",

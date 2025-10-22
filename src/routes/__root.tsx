@@ -21,7 +21,7 @@ import {
   useMutation,
 } from "convex/react";
 import { ConvexProviderWithClerk } from "convex/react-clerk";
-import { Menu } from "lucide-react";
+import { Menu, Edit, Check } from "lucide-react";
 import { useEffect, useState } from "react";
 import { api } from "../../convex/_generated/api";
 import { RoleEmulator } from "@/components/RoleEmulator";
@@ -31,6 +31,7 @@ import { KastelLogo } from "@/components/KastelLogo";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { usePermissionsV2 } from "@/hooks/usePermissionsV2";
 import { useLanguage } from "@/hooks/useLanguage";
+import { EditModeProvider, useEditMode } from "@/contexts/EditModeContext";
 
 export const Route = createRootRouteWithContext<{
   queryClient: QueryClient;
@@ -39,6 +40,34 @@ export const Route = createRootRouteWithContext<{
   component: RootComponent,
 });
 
+function EditModeToggle() {
+  const { hasManagerTag } = usePermissionsV2();
+  const { editMode, setEditMode } = useEditMode();
+
+  if (!hasManagerTag) return null;
+
+  return (
+    <button
+      onClick={() => setEditMode(!editMode)}
+      className={editMode ? "btn btn-sm btn-primary" : "btn btn-sm btn-ghost"}
+      aria-label={editMode ? "Exit Edit Mode" : "Enter Edit Mode"}
+      title={editMode ? "Exit Edit Mode" : "Enter Edit Mode"}
+    >
+      {editMode ? (
+        <>
+          <Check className="w-4 h-4" />
+          <span className="hidden sm:inline ml-1">Edit Mode</span>
+        </>
+      ) : (
+        <>
+          <Edit className="w-4 h-4" />
+          <span className="hidden sm:inline ml-1">Edit</span>
+        </>
+      )}
+    </button>
+  );
+}
+
 function NavigationLinks({ onLinkClick }: { onLinkClick: () => void }) {
   const { checkPermission, isStaff } = usePermissionsV2();
   const { t } = useLanguage();
@@ -46,7 +75,7 @@ function NavigationLinks({ onLinkClick }: { onLinkClick: () => void }) {
   return (
     <>
       <Link
-        to={isStaff ? "/luz" : "/"}
+        to="/"
         className="btn btn-ghost"
         activeProps={{
           className: "btn btn-ghost btn-active",
@@ -55,6 +84,18 @@ function NavigationLinks({ onLinkClick }: { onLinkClick: () => void }) {
       >
         {t("common:nav.home")}
       </Link>
+      {isStaff && (
+        <Link
+          to="/luz"
+          className="btn btn-ghost"
+          activeProps={{
+            className: "btn btn-ghost btn-active",
+          }}
+          onClick={onLinkClick}
+        >
+          {t("shifts:luz.title")}
+        </Link>
+      )}
       {checkPermission("request_tool_rentals") && (
         <Link
           to="/tools"
@@ -103,7 +144,7 @@ function MobileNavigationLinks({ onLinkClick }: { onLinkClick: () => void }) {
     <>
       <li>
         <Link
-          to={isStaff ? "/luz" : "/"}
+          to="/"
           onClick={onLinkClick}
           activeProps={{
             className: "active",
@@ -113,6 +154,20 @@ function MobileNavigationLinks({ onLinkClick }: { onLinkClick: () => void }) {
           {t("common:nav.home")}
         </Link>
       </li>
+      {isStaff && (
+        <li>
+          <Link
+            to="/luz"
+            onClick={onLinkClick}
+            activeProps={{
+              className: "active",
+            }}
+            className="flex items-center justify-end p-2"
+          >
+            {t("shifts:luz.title")}
+          </Link>
+        </li>
+      )}
       {checkPermission("request_tool_rentals") && (
         <li>
           <Link
@@ -175,7 +230,8 @@ function RootComponent() {
     >
       <ConvexProviderWithClerk client={convex} useAuth={useClerkAuth}>
         <QueryClientProvider client={queryClient}>
-          <div className="min-h-screen flex flex-col">
+          <EditModeProvider>
+            <div className="min-h-screen flex flex-col">
             <Authenticated>
               <EnsureUser />
               {/* Mobile sidebar drawer */}
@@ -212,6 +268,7 @@ function RootComponent() {
                     </div>
                     <div className="navbar-end gap-2">
                       {import.meta.env.DEV && <ViewportTester />}
+                      <EditModeToggle />
                       <LanguageSwitcher />
                       <ThemeToggle />
                       <RoleEmulator />
@@ -298,7 +355,8 @@ function RootComponent() {
             </Unauthenticated>
           </div>
           {import.meta.env.DEV && <TanStackRouterDevtools />}
-        </QueryClientProvider>
+        </EditModeProvider>
+      </QueryClientProvider>
       </ConvexProviderWithClerk>
     </ClerkProvider>
   );

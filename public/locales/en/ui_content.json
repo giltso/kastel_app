@@ -1,0 +1,18 @@
+{
+  "home": {
+    "welcomeTitle": "Welcome to Kastel Hardware",
+    "welcomeDescription": "Your trusted partner for professional tools, educational workshops, and expert services. Discover quality tools, learn new skills, and grow your expertise with us.",
+    "toolRentalDescription": "Professional-grade tools for your projects. From basic hand tools to specialized equipment.",
+    "educationalDescription": "Learn from experts with hands-on workshops covering woodworking, electrical, and more.",
+    "aboutUs": "Family-owned hardware shop serving the community with quality tools and knowledge.",
+    "storeInformationTitle": "Store Information",
+    "hoursTitle": "Hours",
+    "mondayFridayHours": "Monday - Friday: 8:00 AM - 6:00 PM",
+    "saturdayHours": "Saturday: 9:00 AM - 4:00 PM",
+    "sundayHours": "Sunday: Closed",
+    "contactTitle": "Contact",
+    "phone": "📞 (555) 123-4567",
+    "email": "📧 info@kastelhardware.com",
+    "address": "📍 123 Main Street, Hardware City"
+  }
+}

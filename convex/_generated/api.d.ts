@@ -18,6 +18,7 @@ import type * as dev_helpers from "../dev_helpers.js";
 import type * as shift_assignments from "../shift_assignments.js";
 import type * as shifts from "../shifts.js";
 import type * as tools from "../tools.js";
+import type * as ui_content from "../ui_content.js";
 import type * as users_v2 from "../users_v2.js";
 
 /**
@@ -34,6 +35,7 @@ declare const fullApi: ApiFromModules<{
   shift_assignments: typeof shift_assignments;
   shifts: typeof shifts;
   tools: typeof tools;
+  ui_content: typeof ui_content;
   users_v2: typeof users_v2;
 }>;
 export declare const api: FilterApi<

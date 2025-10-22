@@ -56,10 +56,19 @@ export function LUZWeekView({
       </h2>
 
       {/* Week Grid Container - Enhanced for mobile scrolling */}
-      <div className="relative overflow-x-auto overflow-y-hidden">
+      <div className="relative overflow-x-auto overflow-y-hidden scroll-smooth">
         {/* Scroll shadow indicators for mobile */}
-        <div className="absolute left-16 top-0 bottom-0 w-4 bg-gradient-to-r from-base-100 to-transparent pointer-events-none z-20 md:hidden"></div>
-        <div className="absolute right-0 top-0 bottom-0 w-4 bg-gradient-to-l from-base-100 to-transparent pointer-events-none z-20 md:hidden"></div>
+        <div className="absolute left-12 sm:left-16 top-0 bottom-0 w-6 bg-gradient-to-r from-base-100 via-base-100/50 to-transparent pointer-events-none z-20 md:hidden"></div>
+        <div className="absolute right-0 top-0 bottom-0 w-6 bg-gradient-to-l from-base-100 via-base-100/50 to-transparent pointer-events-none z-20 md:hidden"></div>
+
+        {/* Mobile scroll hint - shown initially, fades on scroll */}
+        <div className="md:hidden absolute left-1/2 -translate-x-1/2 bottom-4 z-30 pointer-events-none">
+          <div className="flex items-center gap-1 px-3 py-1.5 bg-base-200/90 backdrop-blur-sm rounded-full text-xs text-base-content/70 shadow-lg border border-base-300">
+            <span className="animate-pulse">←</span>
+            <span>{t("common:actions.swipe")}</span>
+            <span className="animate-pulse">→</span>
+          </div>
+        </div>
 
         {/* Combined Header and Content Structure */}
         <div className="relative" style={{ minHeight: '600px', minWidth: '768px' }}> {/* Ensure minimum width for 7 columns */}

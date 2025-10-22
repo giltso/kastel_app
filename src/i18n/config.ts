@@ -44,7 +44,7 @@ i18n
     // Debug mode (set to false in production)
     debug: import.meta.env.DEV,
     // Namespace organization
-    ns: ['common', 'auth', 'shifts', 'tools', 'courses', 'roles'],
+    ns: ['common', 'auth', 'shifts', 'tools', 'courses', 'roles', 'ui_content'],
     defaultNS: 'common',
     // React options
     react: {

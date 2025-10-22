@@ -2,6 +2,154 @@
 
 detailed history of all sessions. to be updated on new session
 
+### Session 40 - October 21, 2025 (Browser Text Editing Implementation)
+
+**Goal**: Implement browser text editing feature with complete workflow demonstrated on "About Us" field
+
+**Major Achievements**:
+- ✅ **Complete Feature Implementation**: Full workflow from edit mode toggle to database persistence
+  - ✅ Database schema (`ui_content` table with multilingual fields and translation tracking)
+  - ✅ Backend API (`convex/ui_content.ts` with `saveUIContent` and `getUIContent`)
+  - ✅ Edit mode context (`EditModeContext`) for global state management
+  - ✅ Custom hook (`useEditableContent`) with DB-first fallback to translation files
+  - ✅ Editable wrapper component (`EditableText`) with inline editing
+  - ✅ Edit Mode toggle in header (manager-only, Edit/Check icon)
+- ✅ **Proof-of-Concept**: "About Us" field on customer home page fully functional
+  - ✅ Double-click activation with visual indicators (pencil icon, yellow hover)
+  - ✅ Click-outside-to-save, Escape-to-cancel
+  - ✅ Multilingual support (separate content per language)
+  - ✅ Translation tracking (needsTranslation flags)
+  - ✅ RTL support verified (works correctly in Hebrew)
+- ✅ **Navigation Fix**: Staff can now access home page for content editing
+  - ✅ Removed auto-redirect from "/" to "/luz" for staff
+  - ✅ Added separate "LUZ" navigation link for staff
+  - ✅ Home link always points to "/" for all users
+- ✅ **Documentation Updated**: PROJECT_OVERVIEW.md reflects implementation status
+
+**Technical Implementation**:
+
+**Backend (Convex)**:
+- Created [convex/ui_content.ts](../convex/ui_content.ts):
+  - `saveUIContent` mutation with manager permission check
+  - `getUIContent` query for retrieving content
+  - Automatic translation tracking (marks other languages as needing translation)
+  - Audit trail (lastEditedBy, lastEditedAt, lastEditedLanguage)
+- Updated [convex/schema.ts](../convex/schema.ts):
+  - Added `ui_content` table with multilingual fields (content_en, content_he, content_ru, content_fr)
+  - Translation tracking flags (needsTranslation_en, needsTranslation_he, etc.)
+  - Indexes on `key` and `namespace` for efficient lookups
+
+**Frontend Infrastructure**:
+- Created [src/contexts/EditModeContext.tsx](../src/contexts/EditModeContext.tsx):
+  - Global edit mode state (editMode boolean)
+  - React Context Provider for app-wide access
+- Created [src/hooks/useEditableContent.ts](../src/hooks/useEditableContent.ts):
+  - Loads content with priority: Database override > Translation file default
+  - Returns text, needsTranslation flag, isOverridden flag, isLoading state
+- Created [src/components/EditableText.tsx](../src/components/EditableText.tsx):
+  - Wrapper component for making text editable
+  - Double-click activation, inline editing, auto-save on blur
+  - Visual indicators (pencil icon, yellow hover, loading state)
+  - Supports both single-line (input) and multiline (textarea)
+- Created [src/lib/utils.ts](../src/lib/utils.ts):
+  - `cn()` utility for merging Tailwind CSS classes (used by EditableText)
+  - Installed dependencies: `clsx`, `tailwind-merge`
+
+**UI Integration**:
+- Modified [src/routes/__root.tsx](../src/routes/__root.tsx):
+  - Wrapped app with `EditModeProvider`
+  - Created `EditModeToggle` component for header (Edit/Check icon)
+  - Fixed navigation: Home always "/" + separate LUZ link for staff
+- Modified [src/routes/index.tsx](../src/routes/index.tsx):
+  - Removed auto-redirect for staff (now see CustomerHomePage)
+  - Wrapped "About Us" field with `<EditableText contentKey="home.aboutUs">`
+
+**Translation Files**:
+- Created [public/locales/en/ui_content.json](../public/locales/en/ui_content.json):
+  - Default English content for "About Us" field
+- Created [public/locales/he/ui_content.json](../public/locales/he/ui_content.json):
+  - Default Hebrew content for "About Us" field
+- Modified [src/i18n/config.ts](../src/i18n/config.ts):
+  - Added 'ui_content' to namespaces array
+
+**Errors Fixed**:
+1. **Missing utils module**: Created `src/lib/utils.ts` with `cn()` function, installed `clsx` and `tailwind-merge`
+2. **Translation namespace not loading**: Added 'ui_content' to i18n config namespaces
+3. **require() in ES6 module**: Changed from `require()` to proper ES6 `import` in EditModeToggle
+4. **JSX closing tag mismatch**: Fixed indentation when wrapping app with EditModeProvider
+
+**Problem Solving**:
+- **Manager Access Issue**: Managers couldn't edit customer-only content because staff were auto-redirected
+  - Solution: Allow staff to access home page, add separate LUZ link in navigation
+  - User choice: "Allow staff to access home page as well, but keep the default direction to LUZ"
+- **Navigation Misalignment**: Tab buttons still had conditional logic after removing redirect
+  - Solution: Updated NavigationLinks to always point Home to "/" and added dedicated LUZ link
+
+**Testing**:
+- ✅ Edit mode toggle (ON/OFF state, visual feedback)
+- ✅ Double-click activation (pencil icon, inline editing)
+- ✅ Save workflow (click outside, content persists)
+- ✅ Escape to cancel (restores original value)
+- ✅ Multilingual support (edit in Hebrew, edit in English, both persist independently)
+- ✅ Navigation (staff can access both "/" and "/luz", tabs highlight correctly)
+- ✅ RTL layout (works correctly in Hebrew with proper mirroring)
+
+**Commits Made**:
+```
+feat: implement browser text editing system with 'About Us' example
+fix: update navigation to support new staff home page access
+docs: update PROJECT_OVERVIEW with browser text editing feature implementation status
+docs: add Session 40 to session history - browser text editing implementation
+```
+
+**Current Status**:
+- ✅ **Implementation**: Complete proof-of-concept with full workflow demonstrated
+- ✅ **Testing**: Manually tested in browser - all features working
+- ✅ **Documentation**: PROJECT_OVERVIEW.md and session_history.md updated
+- 📋 **Next Steps**: Expand to additional editable fields across the application
+
+**Future Expansion**:
+Extend editable content to LUZ help text, course descriptions, tool rental instructions, error messages, and other UI text elements throughout the application.
+
+### Session 39 - October 21, 2025 (Mobile UI & RTL Optimization)
+
+**Goal**: Fix mobile responsive issues and RTL layout inconsistencies identified in testing
+
+**Major Achievements**:
+- ✅ **Mobile UI Fixed**: Responsive layouts tested and optimized at 375px width
+  - ✅ Tools page: Converted tables to card layout on mobile (inventory & rentals)
+  - ✅ Week view: Added scroll indicators and swipe hint with translation support
+  - ✅ Modal layouts: Fixed grid stacking for proper mobile display
+- ✅ **RTL Verification**: Hebrew layout tested and confirmed working correctly
+  - ✅ Text alignment, navigation mirroring, calendar rendering all verified
+- ✅ **Playwright Testing**: Comprehensive mobile and RTL testing with screenshots
+- ✅ **Production Ready**: Mobile and RTL both ready for production deployment
+
+**Technical Implementation**:
+- Modified [src/routes/tools.tsx](../src/routes/tools.tsx): Added responsive card layouts with `md:hidden` and `hidden md:block` classes
+- Modified [src/components/LUZWeekView.tsx](../src/components/LUZWeekView.tsx): Enhanced scroll shadows and added swipe indicator badge
+- Modified [src/components/modals/ShiftDetailsModal.tsx](../src/components/modals/ShiftDetailsModal.tsx): Fixed mobile grid stacking
+- Added translations: `common.actions.swipe` in English ("Swipe to scroll") and Hebrew ("החלק לגלילה")
+
+**Testing Results**:
+- Mobile (375px): 9/10 - Fully functional with excellent UX
+- RTL (Hebrew): 9.5/10 - Nearly flawless implementation
+
+**Commit Made**:
+```
+fix(mobile): improve responsive UI for mobile devices at 375px width
+```
+
+**Current Status**: Mobile UI and RTL layout are production-ready and awaiting real-world validation.
+
+### Session 38 - October 20, 2025 (i18n Translation Completion + Browser Text Editing Design)
+
+**Goals**:
+1. Complete Hebrew translation for all remaining pages and modals
+2. Design browser text editing feature for UI content management
+
+**Part 1: i18n Translation Completion**
+
 ### Session 38 - October 20, 2025 (i18n Translation Completion - 100%)
 
 **Goal**: Complete Hebrew translation for all remaining pages and modals (Tools, Educational, Roles)
@@ -65,9 +213,66 @@ detailed history of all sessions. to be updated on new session
 - 🧪 **Testing**: Now in user acceptance testing phase
 - 📋 **Next Steps**: Address any discovered translation issues or missing strings from user feedback
 
-**Next Session Priority**: Monitor user feedback on Hebrew translations, fix any RTL layout issues discovered during testing, address any missing or incorrect translations.
+**Part 2: Browser Text Editing Feature Design**
 
-**Status**: All committed features are complete and in production testing. i18n translation work is done pending user feedback.
+**Major Achievements**:
+- ✅ **Feature Design Complete**: Created comprehensive design document for browser-based content editing
+  - ✅ Researched industry best practices (Contentful, Sanity, Strapi)
+  - ✅ Designed database schema (`ui_content` table with multilingual support)
+  - ✅ Designed component architecture (EditableText wrapper, inline editing)
+  - ✅ Designed migration strategy (prevent file conflicts)
+  - ✅ Planned 4-phase implementation (~11 hours total)
+- ✅ **Created Feature Branch**: `feature/browser-text-editing`
+- ✅ **Documentation**: Complete design doc at [design/BROWSER_TEXT_EDITING.md](BROWSER_TEXT_EDITING.md)
+
+**Feature Overview**:
+Browser-based text editing system allowing managers to edit UI content (banners, help text, instructions) directly in the interface with multilingual support and translation tracking.
+
+**Key Design Decisions**:
+1. **Database storage** (industry standard - Convex `ui_content` table)
+2. **Inline editing** with double-click activation (no modal)
+3. **Global edit mode toggle** (manager-only, persists across pages)
+4. **Multilingual support** (separate fields per language: `content_en`, `content_he`, etc.)
+5. **Translation tracking** (auto-flag other languages as "needs translation" when one is edited)
+6. **Single source of truth** (content lives in `ui_content.json` OR old files, never both)
+7. **Click outside to save**, Escape to cancel
+8. **Optimistic updates** for instant feedback
+
+**Architecture Components**:
+- **Database**: New `ui_content` table with multilingual fields and translation flags
+- **Backend**: `convex/ui_content.ts` (saveUIContent, getUIContent mutations/queries)
+- **Context**: `EditModeContext` for global edit mode state
+- **Component**: `EditableText` wrapper with inline editing
+- **Hook**: `useEditableContent` for database + fallback loading
+- **Files**: New `public/locales/{lang}/ui_content.json` for defaults
+
+**Implementation Phases** (11 hours total):
+- Phase 1: Infrastructure (3h) - Database, backend, translation files, migration
+- Phase 2: UI Components (4h) - EditableText component, edit mode toggle
+- Phase 3: Integration (2h) - Wrap target UI elements across all pages
+- Phase 4: Testing & Polish (2h) - Comprehensive testing, UX improvements
+
+**Target Content** (editable UI elements):
+- Info banners, help text, instructions
+- Welcome messages, about sections
+- Empty states, instructional text
+- NOT business data (shift names, tool descriptions)
+
+**Migration Strategy**:
+- Move editable content from existing translation files to new `ui_content.json`
+- Remove from old location to prevent conflicts
+- Clear code distinction: `<EditableText>` = editable, `{t(...)}` = static
+
+**Commits Made**:
+- `docs: add comprehensive browser text editing feature design document`
+
+**Branch Status**:
+- ✅ Design complete
+- ⏳ Implementation pending (future session)
+
+**Next Session Priority**: Monitor user feedback on Hebrew translations, fix any RTL layout issues discovered during testing, or begin implementation of browser text editing feature.
+
+**Status**: i18n translation work complete and in production testing. Browser text editing feature fully designed and ready for implementation.
 
 ### Session 37 - October 16, 2025 (Comprehensive Testing & Production Deployment)
 

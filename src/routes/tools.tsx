@@ -359,7 +359,8 @@ function InventoryTable({ tools }: { tools: any[] }) {
   return (
     <div className="card bg-base-100 shadow-sm">
       <div className="card-body">
-        <div className="overflow-x-auto">
+        {/* Desktop Table View - hidden on mobile */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="table">
             <thead>
               <tr>
@@ -413,6 +414,67 @@ function InventoryTable({ tools }: { tools: any[] }) {
             </tbody>
           </table>
         </div>
+
+        {/* Mobile Card View - shown only on mobile */}
+        <div className="md:hidden space-y-4">
+          {tools.map((tool) => (
+            <div key={tool._id} className="card bg-base-200 shadow-sm">
+              <div className="card-body p-4">
+                {/* Tool Name and Brand */}
+                <div className="flex justify-between items-start mb-3">
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-base">{tool.name}</h3>
+                    {tool.brand && tool.model && (
+                      <p className="text-sm text-base-content/60">
+                        {tool.brand} {tool.model}
+                      </p>
+                    )}
+                  </div>
+                  <div className={`badge ${tool.isAvailable ? "badge-success" : "badge-error"}`}>
+                    {tool.isAvailable ? t("tools:inventory.available") : t("tools:rented")}
+                  </div>
+                </div>
+
+                {/* Tool Details */}
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-base-content/60">{t("tools:fields.category")}:</span>
+                    <span className="font-medium">{tool.category}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-base-content/60">{t("tools:fields.condition")}:</span>
+                    <div className={`badge badge-sm ${getConditionBadgeColor(tool.condition)}`}>
+                      {t(`tools:condition.${tool.condition}`)}
+                    </div>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-base-content/60">{t("tools:pricePerDay")}:</span>
+                    <span className="font-semibold">
+                      {tool.rentalPricePerDay === 0 ? t("tools:free") : `$${tool.rentalPricePerDay}`}
+                    </span>
+                  </div>
+                  {tool.location && (
+                    <div className="flex justify-between">
+                      <span className="text-base-content/60">{t("tools:fields.location")}:</span>
+                      <span>{tool.location}</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Actions */}
+                <div className="flex gap-2 mt-4 pt-3 border-t border-base-300">
+                  <button className="btn btn-ghost btn-sm flex-1">
+                    <Edit className="w-4 h-4" />
+                    {t("common:actions.edit")}
+                  </button>
+                  <button className="btn btn-ghost btn-sm text-error">
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -424,9 +486,9 @@ function RentalsTable({ rentals }: { rentals: any[] }) {
 
   const handleStatusUpdate = async (rentalId: string, status: string) => {
     try {
-      await approveRental({ 
+      await approveRental({
         rentalId: rentalId as any,
-        status: status as any 
+        status: status as any
       });
     } catch (error) {
       console.error("Failed to update rental status:", error);
@@ -436,7 +498,8 @@ function RentalsTable({ rentals }: { rentals: any[] }) {
   return (
     <div className="card bg-base-100 shadow-sm">
       <div className="card-body">
-        <div className="overflow-x-auto">
+        {/* Desktop Table View - hidden on mobile */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="table">
             <thead>
               <tr>
@@ -517,6 +580,94 @@ function RentalsTable({ rentals }: { rentals: any[] }) {
               ))}
             </tbody>
           </table>
+        </div>
+
+        {/* Mobile Card View - shown only on mobile */}
+        <div className="md:hidden space-y-4">
+          {rentals.map((rental) => (
+            <div key={rental._id} className="card bg-base-200 shadow-sm">
+              <div className="card-body p-4">
+                {/* Tool Name and Status */}
+                <div className="flex justify-between items-start mb-3">
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-base">
+                      {rental.tool?.name || t("tools:fields.unknownTool")}
+                    </h3>
+                  </div>
+                  <div className={`badge ${getStatusBadgeColor(rental.status)}`}>
+                    {t(`tools:rental.${rental.status}`)}
+                  </div>
+                </div>
+
+                {/* Renter Info */}
+                <div className="mb-3">
+                  <p className="text-xs text-base-content/60 mb-1">{t("tools:rental.renter")}</p>
+                  {rental.isManualRental ? (
+                    <div>
+                      <p className="font-medium text-sm">{rental.nonUserRenterName}</p>
+                      <p className="text-xs text-base-content/60">{rental.nonUserRenterContact}</p>
+                      <div className="badge badge-sm badge-outline mt-1">{t("tools:rental.walkIn")}</div>
+                    </div>
+                  ) : (
+                    <p className="font-medium text-sm">{rental.renterUser?.name || t("tools:fields.unknownUser")}</p>
+                  )}
+                </div>
+
+                {/* Rental Details */}
+                <div className="space-y-2 text-sm">
+                  <div>
+                    <p className="text-xs text-base-content/60">{t("tools:rental.rentalPeriod")}</p>
+                    <p>{rental.rentalStartDate} to {rental.rentalEndDate}</p>
+                    {rental.actualReturnDate && (
+                      <p className="text-success text-xs">Returned: {rental.actualReturnDate}</p>
+                    )}
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-base-content/60">{t("tools:rental.totalCost")}:</span>
+                    <span className="font-semibold">${rental.totalCost.toFixed(2)}</span>
+                  </div>
+                </div>
+
+                {/* Actions */}
+                {(rental.status === "pending" || rental.status === "approved" || rental.status === "active") && (
+                  <div className="flex gap-2 mt-4 pt-3 border-t border-base-300">
+                    {rental.status === "pending" && (
+                      <>
+                        <button
+                          onClick={() => handleStatusUpdate(rental._id, "approved")}
+                          className="btn btn-success btn-sm flex-1"
+                        >
+                          {t("tools:rental.approve")}
+                        </button>
+                        <button
+                          onClick={() => handleStatusUpdate(rental._id, "cancelled")}
+                          className="btn btn-error btn-sm flex-1"
+                        >
+                          {t("tools:rental.reject")}
+                        </button>
+                      </>
+                    )}
+                    {rental.status === "approved" && (
+                      <button
+                        onClick={() => handleStatusUpdate(rental._id, "active")}
+                        className="btn btn-primary btn-sm w-full"
+                      >
+                        {t("tools:rental.startRental")}
+                      </button>
+                    )}
+                    {rental.status === "active" && (
+                      <button
+                        onClick={() => handleStatusUpdate(rental._id, "returned")}
+                        className="btn btn-success btn-sm w-full"
+                      >
+                        {t("tools:rental.markReturned")}
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </div>

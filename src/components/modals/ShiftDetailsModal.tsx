@@ -107,8 +107,8 @@ export function ShiftDetailsModal({
           </button>
         </div>
 
-        {/* Main 2-Column Layout */}
-        <div className="grid lg:grid-cols-2 gap-6 mb-6">
+        {/* Main 2-Column Layout - Stacks on mobile */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6 mb-6">
 
           {/* LEFT COLUMN: Schedule Details & Staffing Status */}
           <div className="space-y-4">
