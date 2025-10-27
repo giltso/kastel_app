@@ -1,6 +1,6 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
-import type { Doc, Id } from "./_generated/dataModel";
+import type { Doc } from "./_generated/dataModel";
 
 // V2 Role System - Tag-based permissions from REDESIGN_V2.md
 
@@ -155,13 +155,13 @@ export const createOrUpdateUserV2 = mutation({
         clerkId: args.clerkId,
         name: args.name,
         email: args.email,
-        role: args.role || "dev",
-        isStaff: args.isStaff,
-        workerTag: args.workerTag,
-        instructorTag: args.instructorTag,
-        toolHandlerTag: args.toolHandlerTag,
-        managerTag: args.managerTag,
-        rentalApprovedTag: args.rentalApprovedTag,
+        role: args.role, // No default - undefined unless explicitly set to "dev"
+        isStaff: args.isStaff ?? false, // Default to customer (not staff)
+        workerTag: args.workerTag ?? false,
+        instructorTag: args.instructorTag ?? false,
+        toolHandlerTag: args.toolHandlerTag ?? false,
+        managerTag: args.managerTag ?? false,
+        rentalApprovedTag: args.rentalApprovedTag ?? false,
       });
     }
   },
@@ -528,5 +528,137 @@ export const makeCurrentUserDev = mutation({
     });
 
     return { success: true, message: "User converted to dev with manager permissions" };
+  },
+});
+
+// Admin utility: List all users with dev role
+export const listDevUsers = query({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return [];
+
+    const currentUser = await ctx.db
+      .query("users")
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+
+    // Only dev users can see this
+    if (!currentUser || currentUser.role !== "dev") return [];
+
+    const devUsers = await ctx.db
+      .query("users")
+      .collect();
+
+    return devUsers
+      .filter(user => user.role === "dev")
+      .map(user => ({
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      }));
+  },
+});
+
+// Admin utility: Remove dev role from specific user
+export const removeDevRole = mutation({
+  args: {
+    userId: v.id("users"),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
+    const currentUser = await ctx.db
+      .query("users")
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+
+    // Only dev users can remove dev role
+    if (!currentUser || currentUser.role !== "dev") {
+      throw new Error("Only dev users can remove dev role");
+    }
+
+    const targetUser = await ctx.db.get(args.userId);
+    if (!targetUser) {
+      throw new Error("User not found");
+    }
+
+    // Prevent removing dev role from yourself
+    if (targetUser._id === currentUser._id) {
+      throw new Error("Cannot remove dev role from yourself");
+    }
+
+    await ctx.db.patch(args.userId, {
+      role: undefined,
+      // Clear emulation state
+      emulatingIsStaff: undefined,
+      emulatingWorkerTag: undefined,
+      emulatingManagerTag: undefined,
+      emulatingInstructorTag: undefined,
+      emulatingToolHandlerTag: undefined,
+      emulatingRentalApprovedTag: undefined,
+    });
+
+    return {
+      success: true,
+      message: `Removed dev role from ${targetUser.name}`,
+      userName: targetUser.name,
+    };
+  },
+});
+
+// Admin utility: Remove dev role from ALL users except Gil Tsoran
+export const cleanupDevRoles = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
+    const currentUser = await ctx.db
+      .query("users")
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+
+    // Only dev users can cleanup dev roles
+    if (!currentUser || currentUser.role !== "dev") {
+      throw new Error("Only dev users can cleanup dev roles");
+    }
+
+    const allUsers = await ctx.db.query("users").collect();
+    const devUsers = allUsers.filter(user => user.role === "dev");
+
+    const gilTsoranNames = ["גיל צורן", "Gil Tsoran", "Gil Tzoran"];
+    const usersToClean = devUsers.filter(user =>
+      !gilTsoranNames.some(name =>
+        user.name?.includes(name) || name.includes(user.name || "")
+      )
+    );
+
+    const cleaned: string[] = [];
+    for (const user of usersToClean) {
+      await ctx.db.patch(user._id, {
+        role: undefined,
+        emulatingIsStaff: undefined,
+        emulatingWorkerTag: undefined,
+        emulatingManagerTag: undefined,
+        emulatingInstructorTag: undefined,
+        emulatingToolHandlerTag: undefined,
+        emulatingRentalApprovedTag: undefined,
+      });
+      cleaned.push(user.name || user.email || "Unknown");
+    }
+
+    return {
+      success: true,
+      message: `Removed dev role from ${cleaned.length} user(s)`,
+      cleanedUsers: cleaned,
+      remainingDevUsers: devUsers.length - cleaned.length,
+    };
   },
 });

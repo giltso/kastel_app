@@ -52,6 +52,15 @@ Public unauthenticated visitors who can browse the public-facing site. Accessed 
 
 **Implementation**: Public home page at [src/routes/index.tsx](../src/routes/index.tsx) with service previews and business information.
 
+**Dev Role** (`role: "dev"`)
+Special development-only role that grants access to debug tools and bypasses permission checks for testing. This role requires direct database access to assign.
+
+**Debug Tools** (only visible when `role === "dev"`):
+- [RoleEmulator](../src/components/RoleEmulator.tsx): Toggle between role combinations for testing
+- Backend bypass: View all users, modify any role, bypass course ownership checks
+
+**Environment Separation**: Development tools are gated by database role, not environment variables. Only the system owner (גיל צורן) has dev role in both development and production for administrative access. Regular staff should never have dev role.
+
 ---
 
 ### Staff Permission Tags (Additive & Combinable)
