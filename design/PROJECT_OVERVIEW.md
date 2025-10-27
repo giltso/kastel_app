@@ -476,3 +476,14 @@ Create documentation, video walkthroughs, and quick reference guides for staff u
 
 **Additional Languages**
 Add Russian, French, and Arabic translations when needed. Implement translation management workflow for non-technical translators.
+
+### Technical Debt / Future Refactoring
+
+**Role System Schema Cleanup**
+Current implementation uses confusing field naming and duplicate data storage:
+- `role: "dev"` should be `isDev: boolean` for clarity and consistency with other flags
+- `emulating*` fields are redundant - if `isDev === true`, treat all tags as emulation; if `false`, treat as real permissions
+- Current design: 12 fields per user (role + 5 real tags + 6 emulating tags)
+- Proposed design: 7 fields per user (isDev + 6 tags that change meaning based on isDev)
+- Benefits: Simpler schema, clearer intent, less storage, easier to reason about
+- Migration required: Update schema, refactor ~15-20 code references, migrate existing users
