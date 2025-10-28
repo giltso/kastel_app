@@ -280,13 +280,13 @@ Planned features include audit trail logging (track who changed what roles when 
 In-browser content management system allowing managers to edit UI text elements (banners, help text, instructions) directly in the interface without code deployments. Managers toggle edit mode, double-click text to edit inline, and changes save to database with multilingual support and translation tracking.
 
 **Current Status:**
-Proof-of-concept complete with "About Us" field demonstrating full workflow. Database-first architecture with translation file fallbacks, manager-only permissions, and "Needs Translation" badge for outdated content.
+Tech demo level - 3 editable fields on home page (About Us, Welcome title, Store Information). Infrastructure complete and functional but minimal coverage.
 
-**Future Work:**
-- Expand to additional editable fields (LUZ help text, course descriptions, tool instructions, error messages)
-- Translation management dashboard showing all content needing updates
-- Rich text editing support (formatting, links, lists)
-- Enhanced translation approval workflow with visual feedback (low priority)
+**Future Work (Medium Priority):**
+- Expand to additional editable fields (LUZ help text, course descriptions, tool instructions)
+- Translation management dashboard
+- Rich text editing support
+- Content versioning
 
 **Documentation:** See [BROWSER_TEXT_EDITING.md](BROWSER_TEXT_EDITING.md) for complete design, implementation details, and technical decisions.
 

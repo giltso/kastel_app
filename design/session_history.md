@@ -2,6 +2,46 @@
 
 detailed history of all sessions. to be updated on new session
 
+### Session 41 - October 27, 2025 (Dev Role Security Fix)
+
+**Problem**: Critical security vulnerability - all new users defaulting to dev role with full system access.
+
+**Work Done**:
+- Fixed `createOrUpdateUserV2` and `ensureUser` to default new users as customers (not dev)
+- Added utility functions: `listDevUsers`, `removeDevRole`, `cleanupDevRoles`
+- Documented dev role should only be for system owner (גיל צורן)
+
+**Remaining Issues**:
+- **Role System Schema Cleanup Needed**: Current design uses confusing field naming
+  - `role: "dev"` should be `isDev: boolean` for clarity
+  - Duplicate `emulating*` fields are redundant - if `isDev` is true, all tags are emulation
+  - Would reduce 12 fields to 7 fields per user
+  - Migration required - affects ~15-20 code references
+- **No Audit Trail**: Dev role assignments and removals are not logged
+- **Manual Database Access Required**: No UI for managing dev role assignments
+
+**Commits**: `fix: change default new user role to customer`, `docs: document role system schema cleanup as future technical debt`
+
+### Session 40 (Continued) - October 21-22, 2025 (Browser Text Editing Expansion)
+
+**Work Done**:
+- Expanded editable fields: Hebrew welcome title, Store Information section
+- Added empty content validation and "Needs Translation" badge
+- Fixed React Hooks violations, block element display issues, linting errors
+- Merged `feature/browser-text-editing` → `main`
+
+**Remaining Work**:
+- **Limited Coverage**: Only 3 editable fields on home page - most UI text still hardcoded
+- **No Translation Management Dashboard**: No view showing all content needing translation across languages
+- **No Rich Text Support**: Only plain text - no formatting, links, or lists
+- **No Approval Workflow**: Managers can edit content directly with no review process
+- **No Content History**: Cannot see previous versions or undo changes
+- **No Bulk Operations**: Must edit each language separately for same content
+
+**Target Expansion**: LUZ help text, course descriptions, tool rental instructions, error messages, modal instructions
+
+**Commits**: 8 commits from `feat: add empty content validation` through `Merge branch 'feature/browser-text-editing'`
+
 ### Session 40 - October 21, 2025 (Browser Text Editing Implementation)
 
 **Goal**: Implement browser text editing feature with complete workflow demonstrated on "About Us" field
