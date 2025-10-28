@@ -180,11 +180,11 @@ This project follows a structured multi-session development approach with emphas
 
 #### Session Start Protocol
 1. **Always read these design files at session start**:
-   - `design/PROJECT_OVERVIEW.md` - Read always, update after major changes
+   - `design/PROJECT_STATUS.md` - Read always, update after major changes
    - `design/session_history.md` - Read last 2 sessions for context, update current session when complete
    - Feature-specific docs (e.g., `design/SHIFTS_IMPLEMENTATION.md`) - Read all if working on that feature
 
-2. **If approaching 5-hour limit**: Update documentation before doing anything else, add current todo list to PROJECT_OVERVIEW.md
+2. **If approaching 5-hour limit**: Update documentation before doing anything else, add current todo list to PROJECT_STATUS.md
 
 #### Context Compacting Before Big Features
 
@@ -198,7 +198,7 @@ This project follows a structured multi-session development approach with emphas
 Ask the user: "This looks like a major feature. Should I initiate a context compact before we begin? This will create a clean summary of current state while preserving relevant history."
 
 **What gets preserved:**
-- Current implementation status from PROJECT_OVERVIEW.md
+- Current implementation status from PROJECT_STATUS.md
 - Recent session history (last 1-2 sessions)
 - Pending tasks and known issues
 - Key architectural decisions
@@ -231,11 +231,11 @@ For major tasks, follow this systematic approach:
    - Run `pnpm typecheck` to verify all TypeScript types compile
    - Report completion status in terminal, focusing on problems and unfinished tasks
    - Update feature documentation with changes made
-   - Update PROJECT_OVERVIEW.md implementation status
+   - Update PROJECT_STATUS.md implementation status
    - Mark TodoWrite tasks as completed
 
 #### Documentation Standards
-- **PROJECT_OVERVIEW.md**: Central project state, update after major feature completion
+- **PROJECT_STATUS.md**: Central project state, update after major feature completion
 - **session_history.md**: Historical context, update at end of each session with achievements and issues
 - **Feature docs**: Detailed implementation notes, update during development
 - **CLAUDE.md**: Technical guidelines (this file), update when adding new patterns or practices
@@ -248,7 +248,7 @@ When creating feature-specific documentation, use `design/SHIFTS_IMPLEMENTATION.
 **Document Hierarchy:**
 ```
 CLAUDE.md (Technical Guidelines) ← You are here
-    └── design/PROJECT_OVERVIEW.md (Project State & Implementation Status)
+    └── design/PROJECT_STATUS.md (Project State & Implementation Status)
         └── design/REDESIGN_V2.md (Main V2 Architecture & Role System)
             ├── design/SHIFT_REDESIGN.md (Shift Philosophy & Database Schema)
             │   ├── design/SHIFTS_IMPLEMENTATION.md (Code Implementation & Modals)
@@ -258,7 +258,7 @@ CLAUDE.md (Technical Guidelines) ← You are here
 
 **Quick Navigation:**
 - **Technical Guidelines**: CLAUDE.md (this file) - Coding standards, Git workflow, TDD, testing
-- **Project Status**: [design/PROJECT_OVERVIEW.md](design/PROJECT_OVERVIEW.md) - Current implementation, priorities, roadmap
+- **Project Status**: [design/PROJECT_STATUS.md](design/PROJECT_STATUS.md) - Current implementation, priorities, roadmap
 - **Session History**: [design/session_history.md](design/session_history.md) - Development timeline (read last 2 sessions)
 - **V2 Architecture**: [design/REDESIGN_V2.md](design/REDESIGN_V2.md) - Role system, high-level design
 - **Shift System**: [design/SHIFT_REDESIGN.md](design/SHIFT_REDESIGN.md) - Population-based architecture
@@ -270,7 +270,7 @@ CLAUDE.md (Technical Guidelines) ← You are here
 | Document | Purpose | Update Frequency |
 |----------|---------|------------------|
 | CLAUDE.md | Technical standards & workflows | When patterns change |
-| PROJECT_OVERVIEW.md | Current status & priorities | After major milestones |
+| PROJECT_STATUS.md | Current status & priorities | After major milestones |
 | session_history.md | Development history | End of each session |
 | REDESIGN_V2.md | V2 architecture & roles | During design changes |
 | SHIFT_REDESIGN.md | Shift system design philosophy | When architecture evolves |

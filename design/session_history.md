@@ -64,7 +64,7 @@ detailed history of all sessions. to be updated on new session
   - ✅ Removed auto-redirect from "/" to "/luz" for staff
   - ✅ Added separate "LUZ" navigation link for staff
   - ✅ Home link always points to "/" for all users
-- ✅ **Documentation Updated**: PROJECT_OVERVIEW.md reflects implementation status
+- ✅ **Documentation Updated**: PROJECT_STATUS.md reflects implementation status
 
 **Technical Implementation**:
 
@@ -145,7 +145,7 @@ docs: add Session 40 to session history - browser text editing implementation
 **Current Status**:
 - ✅ **Implementation**: Complete proof-of-concept with full workflow demonstrated
 - ✅ **Testing**: Manually tested in browser - all features working
-- ✅ **Documentation**: PROJECT_OVERVIEW.md and session_history.md updated
+- ✅ **Documentation**: PROJECT_STATUS.md and session_history.md updated
 - 📋 **Next Steps**: Expand to additional editable fields across the application
 
 **Future Expansion**:
@@ -203,7 +203,7 @@ fix(mobile): improve responsive UI for mobile devices at 375px width
   - ✅ Translated CreateCourseModal.tsx (690 lines)
   - ✅ Translated EnrollmentRequestModal.tsx
   - ✅ Translated CreateManualRentalModal.tsx (final modal)
-- ✅ **Documentation Updates**: Updated PROJECT_OVERVIEW.md to reflect 100% completion and testing phase
+- ✅ **Documentation Updates**: Updated PROJECT_STATUS.md to reflect 100% completion and testing phase
 - ✅ **Deployed to Production**: All translations pushed and live on production
 
 **Translation Statistics**:
@@ -437,7 +437,7 @@ Browser-based text editing system allowing managers to edit UI content (banners,
 - ✅ **LUZ System i18n Complete (7/7 Modals)**: All shift management modals fully translated
   - ✅ ShiftDetailsModal, CreateEditShiftModal, RequestJoinShiftModal, AssignWorkerModal
   - ✅ EditAssignmentModal, ReviewRequestModal, ApproveAssignmentModal
-- ✅ **Documentation Updates**: Updated PROJECT_OVERVIEW.md to reflect 85% i18n completion
+- ✅ **Documentation Updates**: Updated PROJECT_STATUS.md to reflect 85% i18n completion
 
 **Translation Statistics**:
 - **Total Translation Keys**: 500+ across 6 namespaces (Hebrew + English)
@@ -506,7 +506,7 @@ Browser-based text editing system allowing managers to edit UI content (banners,
   - ✅ Consolidated SHIFTS_IMPLEMENTATION.md (removed schema and authorization duplicates)
   - ✅ Updated LUZ_CALENDAR_REDESIGN.md (added parent document references)
 - ✅ **Navigation System Implementation**: Complete bidirectional navigation across all documentation
-  - ✅ Added navigation sections to PROJECT_OVERVIEW.md, ARCHITECTURE.md, SHIFT_REDESIGN.md, SHIFTS_IMPLEMENTATION.md
+  - ✅ Added navigation sections to PROJECT_STATUS.md, ARCHITECTURE.md, SHIFT_REDESIGN.md, SHIFTS_IMPLEMENTATION.md
   - ✅ Added comprehensive "Documentation Navigation" section to CLAUDE.md with hierarchy and quick links
   - ✅ Added design doc references to key code files (src/routes/luz.tsx, convex/shifts.ts, convex/shift_assignments.ts)
   - ✅ Created NAVIGATION_PLAN.md → Implemented → Deleted (temporary implementation guide)
@@ -866,7 +866,7 @@ Tests: 83 passed (83)
 - **Playwright Context**: Handled execution context destruction during navigation
 
 **Documentation Updates**:
-- ✅ **PROJECT_OVERVIEW.md**: Updated LUZ system status from "MIXED STATUS WITH CRITICAL ISSUES" to "PRODUCTION READY - SHIFT ACTIONS COMPLETE"
+- ✅ **PROJECT_STATUS.md**: Updated LUZ system status from "MIXED STATUS WITH CRITICAL ISSUES" to "PRODUCTION READY - SHIFT ACTIONS COMPLETE"
 - ✅ **SHIFTS_IMPLEMENTATION.md**: Added comprehensive modal system architecture documentation
 - ✅ **Session History**: Added current session achievements and technical details
 
@@ -953,7 +953,7 @@ Tests: 83 passed (83)
   - ✅ Role management showing real user statistics and live database queries
   - ✅ Real-time permission updates across all interfaces
 - ✅ **Documentation Updates**: Updated project status across all design documents
-  - ✅ PROJECT_OVERVIEW.md updated with realistic implementation status
+  - ✅ PROJECT_STATUS.md updated with realistic implementation status
   - ✅ ARCHITECTURE.md updated with backend integration test results
   - ✅ Removed overly optimistic language, added future testing requirements
 
@@ -982,7 +982,7 @@ Tests: 83 passed (83)
   - ✅ Complete shift system as cohesive unit (no segmentation)
 - ✅ **Documentation Updates**: Updated all design documents to reflect Phase 2 decisions
   - ✅ PROPOSED_WORKFLOW.md updated with strategic decisions and revised priorities
-  - ✅ PROJECT_OVERVIEW.md updated with V2 role system status and Phase 2 readiness
+  - ✅ PROJECT_STATUS.md updated with V2 role system status and Phase 2 readiness
   - ✅ session_history.md updated with current session achievements
 
 **Technical Decisions Made**:
@@ -1205,7 +1205,7 @@ Tests: 83 passed (83)
 - **Clean Data Structure**: All demo data removed, empty states ready for backend integration
 
 **Documentation Updates - Focus on Future Implementation**:
-- **PROJECT_OVERVIEW.md**: Restructured to highlight critical backend integration gaps and production blockers
+- **PROJECT_STATUS.md**: Restructured to highlight critical backend integration gaps and production blockers
 - **ARCHITECTURE.md**: Added comprehensive "Current Status & Critical Implementation Gaps" section
 - **Implementation Priorities**: Defined immediate roadmap focusing on backend data integration requirements
 - **Technical Debt Documentation**: Identified current issues requiring attention (mock data dependencies, missing error boundaries, security gaps)
@@ -1289,7 +1289,7 @@ Tests: 83 passed (83)
 - **Positioning Logic Mastery**: Corrected fundamental misunderstanding of overlap-based column assignment
 - **User Experience Fix**: Shifts now display intuitively with proper time-based stacking behavior
 - **Code Quality**: Removed all debug console logs and cleaned up implementation for production readiness
-- **Documentation Maintenance**: Comprehensive updates to PROJECT_OVERVIEW.md and session planning files
+- **Documentation Maintenance**: Comprehensive updates to PROJECT_STATUS.md and session planning files
 
 **Current State**: Calendar display layer is now fully functional and correct. Next session should focus on interaction layer (assignment workflows).
 
@@ -1389,7 +1389,7 @@ Tests: 83 passed (83)
   - **Performance**: 70% API improvement maintained with unified calendar system
 - ✅ **Documentation Organization**: 
   - Updated CALENDAR_CENTRIC_REDESIGN.md with completion status
-  - Cleaned up PROJECT_OVERVIEW.md with prioritized TODO list
+  - Cleaned up PROJECT_STATUS.md with prioritized TODO list
   - Organized remaining tasks into UI/UX Enhancement Phase
 
 **Technical Achievements**:
@@ -1778,7 +1778,7 @@ Tests: 83 passed (83)
 - ✅ **Workflow Architecture**: Designed three distinct item types (Requests/Events/Tickets) with proper approval flows
 - ✅ **Portal Structure**: Planned role-based interfaces with appropriate permissions
 - ✅ **Authorization Framework**: Detailed approval workflows and notification systems
-- ✅ **Documentation**: Updated PROJECT_OVERVIEW.md with complete role and workflow specifications
+- ✅ **Documentation**: Updated PROJECT_STATUS.md with complete role and workflow specifications
 
 **Key Design Decisions**:
 - Role-based portals: Guest/Customer share portal vs Worker/Manager operational interface

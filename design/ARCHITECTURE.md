@@ -1,7 +1,7 @@
 # System Architecture
 
 📍 **Navigation:**
-- **Parent**: [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) - Current project status
+- **Parent**: [PROJECT_STATUS.md](PROJECT_STATUS.md) - Current project status
 - **Technical**: [../CLAUDE.md](../CLAUDE.md) - Coding standards
 
 **Feature Documentation:**

@@ -2,7 +2,7 @@
 
 📍 **Navigation:**
 - **Parent**: [../ARCHITECTURE.md](../ARCHITECTURE.md) - V2 architecture
-- **Project Status**: [../PROJECT_OVERVIEW.md](../PROJECT_OVERVIEW.md)
+- **Project Status**: [../PROJECT_STATUS.md](../PROJECT_STATUS.md)
 
 **Purpose**: Documentation of LUZ shift scheduling - what works, what doesn't, what's missing.
 

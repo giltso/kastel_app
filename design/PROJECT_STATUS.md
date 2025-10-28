@@ -1,11 +1,11 @@
-# Kastel App - Project Overview
+# Kastel App - Project Status
 
 📍 **Navigation:**
 - **Technical Guidelines**: [../CLAUDE.md](../CLAUDE.md) - Coding standards, workflows, testing protocols
-- **Design Architecture**: [ARCHITECTURE.md](ARCHITECTURE.md) - Complete V2 architecture and role system
+- **Design Architecture**: [ARCHITECTURE.md](ARCHITECTURE.md) - System design, role patterns, integration
 - **Session History**: [session_history.md](session_history.md) - Development timeline and historical context
 
-**Purpose**: This document tracks current implementation status, feature progress, and priority tasks. Update after major milestones.
+**Purpose**: Current implementation status, feature progress, and priority tasks. Update after major milestones.
 
 ---
 
