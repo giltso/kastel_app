@@ -174,7 +174,7 @@ Managers can create shifts by clicking empty timeline slots in day or week views
 **Testing Coverage:**
 The LUZ system has a budding test suite with 83 passing unit tests covering core timeline components and utility functions. Current coverage includes date helper functions ([src/utils/dateHelpers.test.ts](../src/utils/dateHelpers.test.ts)), positioning algorithms ([src/utils/timelinePositioning.test.ts](../src/utils/timelinePositioning.test.ts)), and component behavior tests ([src/components/LUZVerticalTimeline.test.tsx](../src/components/LUZVerticalTimeline.test.tsx), [src/components/LUZWeekView.test.tsx](../src/components/LUZWeekView.test.tsx)). Pre-deployment Playwright testing validated critical workflows on desktop and mobile viewports.
 
-**Testing Strategy**: The project is in early stages of building comprehensive test coverage. Current focus is on unit testing utility functions and complex business logic. Future expansion planned for integration tests, API endpoint testing, and expanded E2E coverage. See [TEST_DESIGN.md](TEST_DESIGN.md) for testing strategy and expansion roadmap.
+**Testing Strategy**: The project is in early stages of building comprehensive test coverage. Current focus is on unit testing utility functions and complex business logic. Future expansion planned for integration tests, API endpoint testing, and expanded E2E coverage. See [features/TEST_DESIGN.md](features/TEST_DESIGN.md) for testing strategy and expansion roadmap.
 
 ### 2. Tool Rental System
 
@@ -288,7 +288,7 @@ Tech demo level - 3 editable fields on home page (About Us, Welcome title, Store
 - Rich text editing support
 - Content versioning
 
-**Documentation:** See [BROWSER_TEXT_EDITING.md](BROWSER_TEXT_EDITING.md) for complete design, implementation details, and technical decisions.
+**Documentation:** See [features/BROWSER_TEXT_EDITING.md](features/BROWSER_TEXT_EDITING.md) for complete design, implementation details, and technical decisions.
 
 ### 6. Internationalization (i18n)
 
@@ -421,7 +421,7 @@ Hebrew RTL mode has layout inconsistencies. Some components don't properly mirro
 Users must manually check the LUZ interface for shift assignments, approval requests, and schedule changes. No email or SMS notifications are implemented.
 
 **Limited Testing Coverage**
-83 unit tests cover utility functions and core timeline components. Modal workflows, backend mutations, and integration testing remain gaps. See [TEST_DESIGN.md](TEST_DESIGN.md) for testing expansion roadmap.
+83 unit tests cover utility functions and core timeline components. Modal workflows, backend mutations, and integration testing remain gaps. See [features/TEST_DESIGN.md](features/TEST_DESIGN.md) for testing expansion roadmap.
 
 **No Audit Trail**
 Role changes and system modifications are not logged. No history tracking for permission assignments or administrative actions.
@@ -454,7 +454,7 @@ In-browser content management system allowing managers to edit UI content (banne
 - ✅ Navigation updated (staff can access home page for content editing)
 
 **Next Steps:**
-Expand feature to additional editable fields across the application. See [BROWSER_TEXT_EDITING.md](BROWSER_TEXT_EDITING.md) for complete design and implementation reference.
+Expand feature to additional editable fields across the application. See [features/BROWSER_TEXT_EDITING.md](features/BROWSER_TEXT_EDITING.md) for complete design and implementation reference.
 
 **Notification System**
 Implement email/SMS alerts for shift changes, approval requests, rental reminders, and course enrollments. Integrate with third-party service (e.g., Twilio, SendGrid).
@@ -466,7 +466,7 @@ Track all role changes, shift modifications, and administrative actions with tim
 Usage metrics, system health monitoring, staffing reports, and operational insights. Business intelligence for decision-making.
 
 **Testing Expansion**
-Expand test coverage to include modal workflows, backend mutations, integration tests, and E2E scenarios. See [TEST_DESIGN.md](TEST_DESIGN.md).
+Expand test coverage to include modal workflows, backend mutations, integration tests, and E2E scenarios. See [features/TEST_DESIGN.md](features/TEST_DESIGN.md).
 
 **Performance & Monitoring**
 Implement error tracking (Sentry), performance monitoring, automated backups, and load testing under realistic usage.

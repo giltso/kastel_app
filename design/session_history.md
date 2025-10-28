@@ -263,7 +263,7 @@ fix(mobile): improve responsive UI for mobile devices at 375px width
   - ✅ Designed migration strategy (prevent file conflicts)
   - ✅ Planned 4-phase implementation (~11 hours total)
 - ✅ **Created Feature Branch**: `feature/browser-text-editing`
-- ✅ **Documentation**: Complete design doc at [design/BROWSER_TEXT_EDITING.md](BROWSER_TEXT_EDITING.md)
+- ✅ **Documentation**: Complete design doc at [design/features/BROWSER_TEXT_EDITING.md](features/BROWSER_TEXT_EDITING.md)
 
 **Feature Overview**:
 Browser-based text editing system allowing managers to edit UI content (banners, help text, instructions) directly in the interface with multilingual support and translation tracking.
