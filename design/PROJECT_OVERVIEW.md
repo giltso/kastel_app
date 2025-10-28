@@ -22,107 +22,18 @@
 
 ## 👥 User Roles & Permissions
 
-### V2 Tag-Based Role System (CURRENT)
+**System Architecture**: Tag-based additive permission model (Staff/Customer base + permission tags). See [ARCHITECTURE.md](ARCHITECTURE.md) for complete role system design, permission matrix, and business rules.
 
-**Core Implementation:**
-The V2 system uses an additive tag-based permission model where staff members have a base `isStaff` role combined with specific permission tags that unlock functionality. This design allows flexible permission combinations (e.g., Staff+Worker+Manager) without rigid hierarchical roles.
+**Implementation Files**:
+- Backend: [convex/users_v2.ts](../convex/users_v2.ts) - User management, role validation
+- Frontend: [src/hooks/usePermissionsV2.ts](../src/hooks/usePermissionsV2.ts) - Permission checking hook
+- Schema: [convex/schema.ts](../convex/schema.ts) - Database fields (`isStaff`, `workerTag`, `managerTag`, etc.)
+- Dev Tools: [src/components/RoleEmulator.tsx](../src/components/RoleEmulator.tsx) - Role testing
 
-**Key Implementation Files:**
-- **Backend**: [convex/users_v2.ts](../convex/users_v2.ts) - User management queries, role validation, and permission enforcement
-- **Frontend**: [src/hooks/usePermissionsV2.ts](../src/hooks/usePermissionsV2.ts) - React hook providing `hasWorkerTag`, `hasManagerTag`, etc. for UI permission checks
-- **Schema**: [convex/schema.ts](../convex/schema.ts) - Database schema with `isStaff`, `workerTag`, `managerTag`, `instructorTag`, `toolHandlerTag` fields
-- **Dev Tools**: [src/components/RoleEmulator.tsx](../src/components/RoleEmulator.tsx) - Role emulation dropdown for testing different permission combinations
-
----
-
-### Base Roles
-
-**Staff** (`isStaff: true`)
-Internal employees who can be granted permission tags to access various operational features. The base staff role alone provides access to authenticated areas but no specific operational permissions.
-
-**Implementation**: Staff status check in [convex/users_v2.ts](../convex/users_v2.ts) via `isStaffUser()` function. Navigation routing handled in [src/routes/_authenticated.tsx](../src/routes/_authenticated.tsx).
-
-**Customer**
-External authenticated users who interact with the business for services (tool rentals, course enrollment). Customers have limited permissions and see consumer-focused interfaces.
-
-**Implementation**: Customer interface routing in [src/routes/_authenticated.tsx](../src/routes/_authenticated.tsx). Can be promoted to staff via role management system.
-
-**Guest**
-Public unauthenticated visitors who can browse the public-facing site. Accessed by logging out of the system.
-
-**Implementation**: Public home page at [src/routes/index.tsx](../src/routes/index.tsx) with service previews and business information.
-
-**Dev Role** (`role: "dev"`)
-Special development-only role that grants access to debug tools and bypasses permission checks for testing. This role requires direct database access to assign.
-
-**Debug Tools** (only visible when `role === "dev"`):
-- [RoleEmulator](../src/components/RoleEmulator.tsx): Toggle between role combinations for testing
-- Backend bypass: View all users, modify any role, bypass course ownership checks
-
-**Environment Separation**: Development tools are gated by database role, not environment variables. Only the system owner (גיל צורן) has dev role in both development and production for administrative access. Regular staff should never have dev role.
-
----
-
-### Staff Permission Tags (Additive & Combinable)
-
-**Worker Tag** (`workerTag`)
-Grants access to the LUZ scheduling system where workers can view shifts, request assignments, and manage their own schedule. Workers see shift availability and can submit join requests that require manager approval.
-
-**Implementation:**
-- **Permission Hook**: `usePermissionsV2().hasWorkerTag` checks in components
-- **LUZ Interface**: [src/routes/luz.tsx](../src/routes/luz.tsx) - Main scheduling hub with timeline views (Day/Week/Month)
-- **Backend Logic**: [convex/shift_assignments.ts](../convex/shift_assignments.ts) - Worker self-assignment and request submission
-- **UI Components**: [src/components/modals/RequestJoinShiftModal.tsx](../src/components/modals/RequestJoinShiftModal.tsx) for shift requests
-
-**Manager Tag** (`managerTag`)
-Enables approval workflows, shift template creation, and worker assignment capabilities. Managers inherit all worker permissions and gain additional administrative controls. **Business Rule**: Manager tag requires Worker tag (enforced at database level).
-
-**Implementation:**
-- **Permission Hook**: `usePermissionsV2().hasManagerTag` for UI permission checks
-- **Shift Management**: [convex/shifts.ts](../convex/shifts.ts) - Create/edit shift templates with capacity settings
-- **Approval Workflows**: [src/components/modals/ReviewRequestModal.tsx](../src/components/modals/ReviewRequestModal.tsx) (review worker requests), [src/components/modals/ApproveAssignmentModal.tsx](../src/components/modals/ApproveAssignmentModal.tsx) (approve manager-initiated assignments)
-- **Worker Assignment**: [src/components/modals/AssignWorkerModal.tsx](../src/components/modals/AssignWorkerModal.tsx) for direct assignment
-
-**Instructor Tag** (`instructorTag`)
-Allows creation and management of educational courses, approval of student enrollments, and access to course administration features. Instructors can create both single-session and multi-meeting courses.
-
-**Implementation:**
-- **Permission Hook**: `usePermissionsV2().hasInstructorTag`
-- **Course System**: [convex/courses_v2.ts](../convex/courses_v2.ts) - Course creation, session management, and enrollment approval
-- **UI Interface**: [src/routes/educational.tsx](../src/routes/educational.tsx) - Course management dashboard with student tracking
-
-**Tool Handler Tag** (`toolHandlerTag`)
-Grants access to tool inventory management and rental approval system. Tool handlers can approve customer rental requests and create manual rentals for walk-in customers who don't have app accounts.
-
-**Implementation:**
-- **Permission Hook**: `usePermissionsV2().hasToolHandlerTag`
-- **Rental System**: [convex/tools.ts](../convex/tools.ts) - Tool management, rental approval, and manual rental creation
-- **Manual Rentals**: [src/components/modals/CreateManualRentalModal.tsx](../src/components/modals/CreateManualRentalModal.tsx) - Special feature for pre-approved walk-in customer rentals
-- **UI Interface**: [src/routes/tools.tsx](../src/routes/tools.tsx) - Tool handler operational view
-
----
-
-### Customer Permission Tags (Item-Specific)
-
-**Rental Approved Tag** (`rentalApprovedTag`)
-Customers with this tag can submit tool rental requests through the app. Approval is granted by staff after verifying customer eligibility (e.g., valid ID, deposit paid).
-
-**Implementation**: Rental request validation in [convex/tools.ts](../convex/tools.ts). Customer rental interface in [src/routes/tools.tsx](../src/routes/tools.tsx).
-
-**Student Tag** (Per-Course, Temporary)
-Granted automatically when a customer enrolls in a course and instructor approves. Tag is course-specific and provides access to course materials and session information.
-
-**Implementation**: Enrollment management in [convex/courses_v2.ts](../convex/courses_v2.ts).
-
----
-
-### V2 Permission System Features
-
-- **Unified LUZ System**: Staff with Worker tag access the LUZ (scheduling hub) interface at [src/routes/luz.tsx](../src/routes/luz.tsx), providing day/week/month calendar views with shift management
-- **Role Emulation**: Development testing interface ([src/components/RoleEmulator.tsx](../src/components/RoleEmulator.tsx)) allows toggling between 7 role combinations (Guest, Customer, Staff, Staff+Worker, Staff+Manager, etc.)
-- **Dynamic Navigation**: Header menu ([src/components/Header.tsx](../src/components/Header.tsx)) adapts based on user permissions - Workers see "LUZ" tab, Tool Handlers see "Tool Rental" tab, etc.
-- **Business Rule Enforcement**: Manager tag requires Worker tag, enforced in [convex/users_v2.ts](../convex/users_v2.ts) via validation logic
-- **Additive Permission Model**: Multiple tags combine naturally - a user with Worker+Manager+ToolHandler tags has all three sets of permissions simultaneously
+**Quick Reference**:
+- **Staff Tags**: Worker (LUZ access), Manager (approvals, requires Worker), Instructor (courses), Tool Handler (rentals)
+- **Customer Tags**: Rental Approved (can request rentals), Student (per-course enrollment)
+- **Dev Role**: System owner only - full access, emulation, debug tools
 
 ## 🔧 Core Features & Workflows
 

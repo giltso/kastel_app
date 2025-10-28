@@ -90,6 +90,53 @@ Course Mgmt      | ✗     | ✗     | ✗       | ✓           | ✗      | �
 - Staff+Tool Handler: Home, Tools, Courses
 - Staff+Manager: All tabs (requires Worker tag)
 
+### Role Definitions
+
+**Implementation**: [convex/users_v2.ts](../convex/users_v2.ts), [src/hooks/usePermissionsV2.ts](../src/hooks/usePermissionsV2.ts), [convex/schema.ts](../convex/schema.ts)
+
+#### Base Roles
+
+**Staff** (`isStaff: true`) - Internal employees. Base role provides authenticated access but no operational permissions until tags granted.
+
+**Customer** - External users. Default authenticated role. Limited permissions, consumer-focused interfaces.
+
+**Guest** - Unauthenticated public visitors. Home page access only.
+
+**Dev** (`role: "dev"`) - System owner only (גיל צורן). Full access, debug tools, permission bypass. Never assigned to regular staff.
+
+#### Staff Permission Tags
+
+**Worker Tag** (`workerTag`) - LUZ scheduling access. View shifts, request assignments, manage personal schedule.
+
+**Manager Tag** (`managerTag`) - Approval workflows, shift creation, worker assignment. **Requires Worker tag** (business rule).
+
+**Instructor Tag** (`instructorTag`) - Create courses, approve enrollments, manage single-session and multi-meeting courses.
+
+**Tool Handler Tag** (`toolHandlerTag`) - Tool inventory management, rental approval, manual rentals for walk-ins.
+
+#### Customer Permission Tags
+
+**Rental Approved Tag** (`rentalApprovedTag`) - Can submit rental requests. Granted after eligibility verification.
+
+**Student Tag** (per-course) - Granted after enrollment approval for specific course. Not global.
+
+### Business Rules
+
+**Requirement Chains**:
+- Manager requires Worker (enforced in UI, not backend)
+- Instructor/Tool Handler require Staff
+- Student/Rental require Customer
+
+**Permission Composition**:
+- Tags additive - no conflicts
+- Staff + Worker + Manager + Tool Handler = all four permission sets
+- Future: Staff + Customer would merge both (not implemented)
+
+**Dev Role Separation**:
+- Dev role only for system owner
+- Gated by database role (not environment)
+- Grants emulation and permission bypass
+
 ---
 
 ## System Integration
