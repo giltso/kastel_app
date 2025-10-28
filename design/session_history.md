@@ -2,6 +2,62 @@
 
 detailed history of all sessions. to be updated on new session
 
+### Session 42 - October 28, 2025 (Documentation Reorganization)
+
+**Goal**: Reorganize and consolidate design documentation for clarity and maintainability.
+
+**Work Done**:
+- **Documented Sessions 40-41**: Updated session_history.md with undocumented work (browser text editing expansion, dev role security fix)
+- **Consolidated Shift Docs**: Merged 3 docs (SHIFT_REDESIGN, SHIFTS_IMPLEMENTATION, LUZ_CALENDAR_REDESIGN) → 1 unified doc (1,822 lines → 344 lines)
+- **Created features/ Folder**: Organized feature-specific docs separate from architectural docs
+- **Refactored REDESIGN_V2 → architecture.md**: Removed obsolete V1→V2 migration content, focused on system design (543 → 372 lines)
+- **Separated Architecture from Status**: Moved role system architecture to architecture.md, trimmed duplicate content from status.md (1,031 → 771 lines total)
+- **Renamed PROJECT_OVERVIEW → status.md**: More accurate name reflecting current implementation tracking
+- **Standardized Naming**: All docs now lowercase kebab-case (architecture.md, status.md, luz-shift-system.md, etc.)
+- **Added Feature Planning Docs**: Created 4 new planning frameworks (request-tab, whatsapp-integration, notifications, color-picker)
+
+**Final Documentation Structure**:
+```
+design/
+├── status.md              (what exists now, current state)
+├── architecture.md        (how system works, design principles)
+├── session_history.md     (development timeline)
+└── features/
+    ├── luz-shift-system.md
+    ├── browser-text-editing.md
+    ├── test-design.md
+    ├── request-tab.md          (NEW - planning)
+    ├── whatsapp-integration.md (NEW - planning)
+    ├── notifications.md        (NEW - planning)
+    └── color-picker.md         (NEW - planning)
+```
+
+**Clear Document Purposes**:
+- **status.md**: Current implementation status, what works/doesn't, file references, roadmap
+- **architecture.md**: System design, role patterns, integration philosophy, business rules
+- **session_history.md**: Development timeline, what was done when
+- **features/*.md**: Deep dives into specific features (existing) or planning frameworks (new)
+
+**Key Improvements**:
+- Removed 260+ lines of duplicate content
+- Clear separation: architecture vs status vs timeline
+- Conventional naming (lowercase kebab-case)
+- Feature planning docs ready for requirements gathering
+
+**Commits**: 8 commits total
+1. `docs: document Sessions 40-41`
+2. `docs: consolidate 3 shift docs into single luz-shift-system.md`
+3. `docs: organize feature docs into design/features/ folder`
+4. `docs: refactor REDESIGN_V2.md into architecture.md`
+5. `docs: separate architecture from implementation status`
+6. `docs: rename PROJECT_OVERVIEW.md to status.md`
+7. `docs: standardize all documentation filenames to lowercase kebab-case`
+8. `docs: add planning docs for 4 new features`
+
+**How to Use New Feature Docs**:
+- **Existing features** (luz-shift-system, browser-text-editing, test-design): Reference for understanding current implementation
+- **Planning features** (request-tab, whatsapp-integration, notifications, color-picker): Start with open questions, research APIs, gather requirements before coding
+
 ### Session 41 - October 27, 2025 (Dev Role Security Fix)
 
 **Problem**: Critical security vulnerability - all new users defaulting to dev role with full system access.

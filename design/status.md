@@ -4,8 +4,13 @@
 - **Technical Guidelines**: [../CLAUDE.md](../CLAUDE.md) - Coding standards, workflows, testing protocols
 - **Design Architecture**: [architecture.md](architecture.md) - System design, role patterns, integration
 - **Session History**: [session_history.md](session_history.md) - Development timeline and historical context
+- **Feature Docs**: [features/](features/) - Implementation details and planning frameworks
 
 **Purpose**: Current implementation status, feature progress, and priority tasks. Update after major milestones.
+
+**Using Feature Docs**:
+- **Existing features** (luz-shift-system, browser-text-editing, test-design): Reference for understanding current implementation
+- **Planning features** (request-tab, whatsapp-integration, notifications, color-picker): Start with open questions section, research APIs/requirements before coding
 
 ---
 
