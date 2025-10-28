@@ -2,7 +2,7 @@
 
 📍 **Navigation:**
 - **Technical Guidelines**: [../CLAUDE.md](../CLAUDE.md) - Coding standards, workflows, testing protocols
-- **Design Architecture**: [REDESIGN_V2.md](REDESIGN_V2.md) - Complete V2 architecture and role system
+- **Design Architecture**: [ARCHITECTURE.md](ARCHITECTURE.md) - Complete V2 architecture and role system
 - **Session History**: [session_history.md](session_history.md) - Development timeline and historical context
 
 **Purpose**: This document tracks current implementation status, feature progress, and priority tasks. Update after major milestones.

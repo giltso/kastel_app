@@ -1130,7 +1130,7 @@ public/locales/
 ### Related Documentation
 - [../PROJECT_OVERVIEW.md](../PROJECT_OVERVIEW.md) - Current implementation status
 - [CLAUDE.md](../CLAUDE.md) - i18n implementation guidelines
-- [../REDESIGN_V2.md](../REDESIGN_V2.md) - Permission system (managerTag)
+- [../ARCHITECTURE.md](../ARCHITECTURE.md) - Permission system (managerTag)
 
 ### Technology Stack
 - **Convex**: Real-time database with reactive queries

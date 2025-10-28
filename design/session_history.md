@@ -501,12 +501,12 @@ Browser-based text editing system allowing managers to edit UI content (banners,
 **Major Achievements**:
 - ✅ **Documentation Consolidation**: Eliminated duplicate content across 4 design documents
   - ✅ Deleted outdated claude-workflow.md (content migrated to CLAUDE.md)
-  - ✅ Consolidated REDESIGN_V2.md (removed LUZ/shift duplicates, added references)
+  - ✅ Consolidated ARCHITECTURE.md (removed LUZ/shift duplicates, added references)
   - ✅ Consolidated SHIFT_REDESIGN.md (removed LUZ interface and role system duplicates)
   - ✅ Consolidated SHIFTS_IMPLEMENTATION.md (removed schema and authorization duplicates)
   - ✅ Updated LUZ_CALENDAR_REDESIGN.md (added parent document references)
 - ✅ **Navigation System Implementation**: Complete bidirectional navigation across all documentation
-  - ✅ Added navigation sections to PROJECT_OVERVIEW.md, REDESIGN_V2.md, SHIFT_REDESIGN.md, SHIFTS_IMPLEMENTATION.md
+  - ✅ Added navigation sections to PROJECT_OVERVIEW.md, ARCHITECTURE.md, SHIFT_REDESIGN.md, SHIFTS_IMPLEMENTATION.md
   - ✅ Added comprehensive "Documentation Navigation" section to CLAUDE.md with hierarchy and quick links
   - ✅ Added design doc references to key code files (src/routes/luz.tsx, convex/shifts.ts, convex/shift_assignments.ts)
   - ✅ Created NAVIGATION_PLAN.md → Implemented → Deleted (temporary implementation guide)
@@ -517,7 +517,7 @@ Browser-based text editing system allowing managers to edit UI content (banners,
 
 **Technical Implementation**:
 - **Single Source of Truth**: Each topic now has one authoritative document
-  - REDESIGN_V2.md: Role system and high-level architecture
+  - ARCHITECTURE.md: Role system and high-level architecture
   - SHIFT_REDESIGN.md: Shift philosophy and database schema
   - SHIFTS_IMPLEMENTATION.md: Code implementation details
   - LUZ_CALENDAR_REDESIGN.md: Complete LUZ interface specifications
@@ -527,12 +527,12 @@ Browser-based text editing system allowing managers to edit UI content (banners,
 
 **Files Modified**:
 - **Deleted**: design/claude-workflow.md (content moved to CLAUDE.md)
-- **Consolidated**: design/REDESIGN_V2.md (3 edits), design/SHIFT_REDESIGN.md (2 edits), design/SHIFTS_IMPLEMENTATION.md (2 edits)
+- **Consolidated**: design/ARCHITECTURE.md (3 edits), design/SHIFT_REDESIGN.md (2 edits), design/SHIFTS_IMPLEMENTATION.md (2 edits)
 - **Enhanced**: design/LUZ_CALENDAR_REDESIGN.md (navigation added), CLAUDE.md (navigation + context compacting sections)
 - **Code References**: src/routes/luz.tsx, convex/shifts.ts, convex/shift_assignments.ts (design doc header comments)
 
 **Documentation Quality Improvements**:
-- Eliminated duplicate role system specifications (now only in REDESIGN_V2.md)
+- Eliminated duplicate role system specifications (now only in ARCHITECTURE.md)
 - Eliminated duplicate database schema details (now only in SHIFT_REDESIGN.md)
 - Eliminated duplicate LUZ interface specs (now only in LUZ_CALENDAR_REDESIGN.md)
 - Added clear "👉 See [DOCUMENT.md] for..." references throughout
@@ -954,7 +954,7 @@ Tests: 83 passed (83)
   - ✅ Real-time permission updates across all interfaces
 - ✅ **Documentation Updates**: Updated project status across all design documents
   - ✅ PROJECT_OVERVIEW.md updated with realistic implementation status
-  - ✅ REDESIGN_V2.md updated with backend integration test results
+  - ✅ ARCHITECTURE.md updated with backend integration test results
   - ✅ Removed overly optimistic language, added future testing requirements
 
 **Current Implementation Status**:
@@ -1013,7 +1013,7 @@ Tests: 83 passed (83)
   - Permission-based UI rendering (Quick Actions appear based on capabilities)
   - Badge system displays correctly for all combinations
   - Guest/Customer/Staff differentiation works perfectly
-- ✅ **REDESIGN_V2.md Documentation Update**: Complete Phase 1 status update
+- ✅ **ARCHITECTURE.md Documentation Update**: Complete Phase 1 status update
   - Updated Phase 1 from "PARTIAL COMPLETION WITH ISSUES" to "COMPLETED"
   - Added comprehensive testing results table with all 7 role combinations
   - Updated permission matrix to reflect accurate Tool Handler and Customer implementation
@@ -1206,7 +1206,7 @@ Tests: 83 passed (83)
 
 **Documentation Updates - Focus on Future Implementation**:
 - **PROJECT_OVERVIEW.md**: Restructured to highlight critical backend integration gaps and production blockers
-- **REDESIGN_V2.md**: Added comprehensive "Current Status & Critical Implementation Gaps" section
+- **ARCHITECTURE.md**: Added comprehensive "Current Status & Critical Implementation Gaps" section
 - **Implementation Priorities**: Defined immediate roadmap focusing on backend data integration requirements
 - **Technical Debt Documentation**: Identified current issues requiring attention (mock data dependencies, missing error boundaries, security gaps)
 
@@ -1238,7 +1238,7 @@ Tests: 83 passed (83)
 **Goals**: V2 Redesign planning and comprehensive design documentation
 
 **Major Achievement: V2 Redesign Design Phase Complete**
-- ✅ **REDESIGN_V2.md Created**: Comprehensive 383-line design document with detailed specifications
+- ✅ **ARCHITECTURE.md Created**: Comprehensive 383-line design document with detailed specifications
 - ✅ **LUZ System Architecture**: Designed unified scheduling hub with filter/overview/calendar components
 - ✅ **Role System Redesign**: Staff + tags (Worker, Instructor, Manager) and Customer + tags (Rental Approved) architecture
 - ✅ **Three Core Systems Defined**: Shift Management (rebuilt), Tool Rentals (refined), Courses (refined)
