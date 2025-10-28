@@ -5,9 +5,9 @@
 - **Technical Guidelines**: [../CLAUDE.md](../CLAUDE.md) - Coding standards and workflows
 
 **Child Design Documents:**
-- **Shift System Design**: [SHIFT_REDESIGN.md](SHIFT_REDESIGN.md) - Population-based architecture and database schema
-- **LUZ Interface**: [LUZ_CALENDAR_REDESIGN.md](LUZ_CALENDAR_REDESIGN.md) - Complete UI specifications
-- **Implementation Details**: [SHIFTS_IMPLEMENTATION.md](SHIFTS_IMPLEMENTATION.md) - Code-level architecture
+- **Shift System Design**: [LUZ_SHIFT_SYSTEM.md](LUZ_SHIFT_SYSTEM.md) - Population-based architecture and database schema
+- **LUZ Interface**: [LUZ_SHIFT_SYSTEM.md](LUZ_SHIFT_SYSTEM.md) - Complete UI specifications
+- **Implementation Details**: [LUZ_SHIFT_SYSTEM.md](LUZ_SHIFT_SYSTEM.md) - Code-level architecture
 
 **Purpose**: Main V2 architecture document defining role system, high-level design, and system integration.
 
@@ -107,7 +107,7 @@
 
 #### **LUZ Interface Specifications**
 
-**Complete LUZ interface specifications documented in [LUZ_CALENDAR_REDESIGN.md](LUZ_CALENDAR_REDESIGN.md)**
+**Complete LUZ interface specifications documented in [LUZ_SHIFT_SYSTEM.md](LUZ_SHIFT_SYSTEM.md)**
 
 **High-Level Overview:**
 - **70/30 Split Layout**: Overview section (left 30%) + Calendar timeline (right 70%)
@@ -121,7 +121,7 @@
 - Unified calendar for shifts, courses, and tool rentals
 - Mobile-responsive with touch-friendly interactions
 
-👉 **See [LUZ_CALENDAR_REDESIGN.md](LUZ_CALENDAR_REDESIGN.md) for complete specifications including:**
+👉 **See [LUZ_SHIFT_SYSTEM.md](LUZ_SHIFT_SYSTEM.md) for complete specifications including:**
 - Detailed drag-and-drop logic
 - Timeline rendering algorithms
 - Mobile responsiveness specs
@@ -138,7 +138,7 @@
 
 #### **Core Shift System Functionality**
 
-**Complete shift system design documented in [SHIFT_REDESIGN.md](SHIFT_REDESIGN.md)**
+**Complete shift system design documented in [LUZ_SHIFT_SYSTEM.md](LUZ_SHIFT_SYSTEM.md)**
 
 **High-Level Summary:**
 - **Population-Based Framework**: Hourly staffing requirements (not fixed shift slots)
@@ -147,14 +147,14 @@
 - **Worker Self-Service**: Request additional hours, time off, schedule changes
 - **Shift Swapping**: Worker-to-worker swap requests with manager final approval
 
-👉 **See [SHIFT_REDESIGN.md](SHIFT_REDESIGN.md) for complete specifications including:**
+👉 **See [LUZ_SHIFT_SYSTEM.md](LUZ_SHIFT_SYSTEM.md) for complete specifications including:**
 - Detailed workflow diagrams
 - Database schema (shifts_v2, shift_assignments_v2, worker_hour_requests_v2)
 - Assignment algorithms and validation logic
 - Reporting specifications
 - Success metrics and future enhancements
 
-**Code implementation details in [SHIFTS_IMPLEMENTATION.md](SHIFTS_IMPLEMENTATION.md)**
+**Code implementation details in [LUZ_SHIFT_SYSTEM.md](LUZ_SHIFT_SYSTEM.md)**
 
 ---
 
@@ -326,7 +326,7 @@ Legend: H=Home, C=Courses, L=LUZ, T=Tool Rental
 
 ## 🗂️ Database Schema V2
 
-**Complete database schema documented in [SHIFT_REDESIGN.md](SHIFT_REDESIGN.md) and implemented in [convex/schema.ts](../convex/schema.ts)**
+**Complete database schema documented in [LUZ_SHIFT_SYSTEM.md](LUZ_SHIFT_SYSTEM.md) and implemented in [convex/schema.ts](../convex/schema.ts)**
 
 ### **Core V2 Tables (Implemented)**
 - ✅ **users**: V2 tag-based role system (`isStaff`, `workerTag`, `instructorTag`, `toolHandlerTag`, `managerTag`, `rentalApprovedTag`)
@@ -343,7 +343,7 @@ Legend: H=Home, C=Courses, L=LUZ, T=Tool Rental
 - ❌ **Suggestions**: Complete removal
 - ❌ **Professional Services**: Complete removal
 
-👉 **See [SHIFT_REDESIGN.md](SHIFT_REDESIGN.md) for detailed schema specifications and [convex/schema.ts](../convex/schema.ts) for implementation**
+👉 **See [LUZ_SHIFT_SYSTEM.md](LUZ_SHIFT_SYSTEM.md) for detailed schema specifications and [convex/schema.ts](../convex/schema.ts) for implementation**
 
 ---
 
