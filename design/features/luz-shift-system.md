@@ -1,8 +1,8 @@
 # LUZ Shift System
 
 📍 **Navigation:**
-- **Parent**: [../ARCHITECTURE.md](../ARCHITECTURE.md) - V2 architecture
-- **Project Status**: [../PROJECT_STATUS.md](../PROJECT_STATUS.md)
+- **Parent**: [../architecture.md](../architecture.md) - V2 architecture
+- **Project Status**: [../status.md](../status.md)
 
 **Purpose**: Documentation of LUZ shift scheduling - what works, what doesn't, what's missing.
 

@@ -1,7 +1,7 @@
 # Browser Text Editing Feature - Design Document
 
 📍 **Navigation:**
-- **Parent**: [../PROJECT_STATUS.md](../PROJECT_STATUS.md) - Current project status
+- **Parent**: [../status.md](../status.md) - Current project status
 - **Technical Guidelines**: [../CLAUDE.md](../CLAUDE.md) - Coding standards
 
 **Purpose**: Complete implementation plan for in-browser text editing system allowing managers to edit UI content (banners, help text, instructions) with multilingual support and translation tracking.
@@ -1128,9 +1128,9 @@ public/locales/
 - Hybrid approach (DB for content, files for defaults) is common pattern
 
 ### Related Documentation
-- [../PROJECT_STATUS.md](../PROJECT_STATUS.md) - Current implementation status
+- [../status.md](../status.md) - Current implementation status
 - [CLAUDE.md](../CLAUDE.md) - i18n implementation guidelines
-- [../ARCHITECTURE.md](../ARCHITECTURE.md) - Permission system (managerTag)
+- [../architecture.md](../architecture.md) - Permission system (managerTag)
 
 ### Technology Stack
 - **Convex**: Real-time database with reactive queries

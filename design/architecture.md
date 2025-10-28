@@ -1,13 +1,13 @@
 # System Architecture
 
 📍 **Navigation:**
-- **Parent**: [PROJECT_STATUS.md](PROJECT_STATUS.md) - Current project status
+- **Parent**: [status.md](status.md) - Current project status
 - **Technical**: [../CLAUDE.md](../CLAUDE.md) - Coding standards
 
 **Feature Documentation:**
-- [features/LUZ_SHIFT_SYSTEM.md](features/LUZ_SHIFT_SYSTEM.md) - Shift scheduling system
-- [features/BROWSER_TEXT_EDITING.md](features/BROWSER_TEXT_EDITING.md) - Content management
-- [features/TEST_DESIGN.md](features/TEST_DESIGN.md) - Testing strategy
+- [features/luz-shift-system.md](features/luz-shift-system.md) - Shift scheduling system
+- [features/browser-text-editing.md](features/browser-text-editing.md) - Content management
+- [features/test-design.md](features/test-design.md) - Testing strategy
 
 **Purpose**: System design principles, role architecture, and integration patterns.
 
@@ -182,7 +182,7 @@ Course Mgmt      | ✗     | ✗     | ✗       | ✓           | ✗      | �
 - **Worker requests**: Creates request → status: pending_manager_approval → manager approves → confirmed
 - **Worker switching**: Worker A → Worker B (external notification) → if B approves → manager approval → confirmed
 
-**See** [features/LUZ_SHIFT_SYSTEM.md](features/LUZ_SHIFT_SYSTEM.md) for complete specifications.
+**See** [features/luz-shift-system.md](features/luz-shift-system.md) for complete specifications.
 
 ### Tool Rental Integration
 
