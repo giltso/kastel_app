@@ -99,30 +99,48 @@ export function LUZOverview({
         <div className="mb-6">
           <h3 className="font-medium mb-3 text-warning">{t("shifts:assignment.pending")} ({pendingAssignments.length})</h3>
           <div className="space-y-2">
-            {pendingAssignments.slice(0, 3).map((assignment) => (
-              <div key={assignment._id} className="p-3 bg-warning/10 border border-warning/20 rounded-lg">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <div className="font-medium">{assignment.worker?.name}</div>
-                    <div className="text-sm text-base-content/70">{assignment.shift?.name}</div>
-                  </div>
-                  <div className="flex gap-1">
-                    <button
-                      className="btn btn-xs btn-success"
-                      onClick={() => onApproveAssignment?.(assignment._id)}
-                    >
-                      {t("shifts:assignment.approved")}
-                    </button>
-                    <button
-                      className="btn btn-xs btn-error"
-                      onClick={() => onRejectAssignment?.(assignment._id)}
-                    >
-                      {t("shifts:assignment.rejected")}
-                    </button>
+            {pendingAssignments.slice(0, 3).map((assignment) => {
+              // Determine if current user can approve this assignment
+              const isAssignedWorker = user?._id === assignment.workerId;
+              const canApprove = (
+                (assignment.status === "pending_worker_approval" && isAssignedWorker) ||
+                (assignment.status === "pending_manager_approval" && hasManagerTag)
+              );
+
+              return (
+                <div key={assignment._id} className="p-3 bg-warning/10 border border-warning/20 rounded-lg">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <div className="font-medium">{assignment.worker?.name}</div>
+                      <div className="text-sm text-base-content/70">{assignment.shift?.name}</div>
+                    </div>
+                    {canApprove ? (
+                      <div className="flex gap-1">
+                        <button
+                          className="btn btn-xs btn-success"
+                          onClick={() => onApproveAssignment?.(assignment._id)}
+                        >
+                          {t("shifts:assignment.approved")}
+                        </button>
+                        <button
+                          className="btn btn-xs btn-error"
+                          onClick={() => onRejectAssignment?.(assignment._id)}
+                        >
+                          {t("shifts:assignment.rejected")}
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="badge badge-warning badge-sm">
+                        {assignment.status === "pending_worker_approval"
+                          ? t("shifts:assignment.awaitingWorkerApproval")
+                          : t("shifts:assignment.awaitingManagerApproval")
+                        }
+                      </div>
+                    )}
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
             {pendingAssignments.length > 3 && (
               <div className="text-center">
                 <button

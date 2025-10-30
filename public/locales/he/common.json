@@ -47,7 +47,8 @@
     "hours": "שעות",
     "minutes": "דקות",
     "time": "שעה",
-    "timeLabel": "⏱"
+    "timeLabel": "⏱",
+    "to": "עד"
   },
   "days": {
     "monday": "יום שני",
@@ -84,7 +85,9 @@
     "networkError": "שגיאת רשת. אנא בדוק את החיבור שלך.",
     "unauthorized": "אין לך הרשאה לבצע פעולה זו",
     "notFound": "המשאב לא נמצא",
-    "serverError": "שגיאת שרת. אנא נסה שנית מאוחר יותר."
+    "serverError": "שגיאת שרת. אנא נסה שנית מאוחר יותר.",
+    "approvalFailed": "אישור נכשל",
+    "rejectionFailed": "דחייה נכשלה"
   },
   "messages": {
     "success": "הצלחה!",

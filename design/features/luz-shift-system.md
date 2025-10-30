@@ -14,7 +14,7 @@
 
 - ✅ Shift templates with recurring days
 - ✅ Shift template editing (update name, time, days, capacity)
-- ✅ Worker assignments with dual approval
+- ✅ Worker assignments with dual approval and time-based auto-approval
 - ✅ 7-modal workflow system
 - ✅ Day/Week/Month timeline views
 - ✅ Real-time Convex backend
@@ -107,12 +107,19 @@ Worker assignments to specific shift instances on specific dates.
 #### Assignment Management
 
 **`assignWorkerToShift`** (manager only)
-- Creates assignment: status "pending_worker_approval", type "manager_assigned"
+- Auto-approves if >48h before shift OR manager self-assignment
+- Otherwise: status "pending_worker_approval"
 - No conflict/capacity validation
 
 **`requestJoinShift`** (worker)
-- Creates assignment: status "pending_manager_approval", type "worker_requested"
+- Auto-approves if >120h before shift OR manager making request
+- Otherwise: status "pending_manager_approval"
 - No validation
+
+**`editAssignment`** (worker or manager)
+- Manager edits: Always auto-approved
+- Worker edits >48h before: Requires manager approval
+- Worker edits ≤48h before: Blocked with error
 
 **`approveAssignment`** (worker or manager depending on status)
 - Changes status to "confirmed"
@@ -261,17 +268,24 @@ Manager reviews worker requests in bulk.
 
 ### Dual Approval Workflow
 
-Two assignment flows, both require both parties to consent:
+Two assignment flows with time-based auto-approval logic:
 
-**Manager-Initiated**:
-1. Manager assigns worker → status: pending_worker_approval
-2. Worker approves → status: confirmed
+**Manager-Initiated** (`assignWorkerToShift` in [convex/shift_assignments.ts](../../convex/shift_assignments.ts)):
+1. Manager assigns worker >48h before shift → status: confirmed (auto-approved)
+2. Manager assigns worker ≤48h before shift → status: pending_worker_approval
+3. Worker approves → status: confirmed
 
-**Worker-Initiated**:
-1. Worker requests shift → status: pending_manager_approval
-2. Manager approves → status: confirmed
+**Worker-Initiated** (`requestJoinShift` in [convex/shift_assignments.ts](../../convex/shift_assignments.ts)):
+1. Worker requests shift >120h (5 days) before → status: confirmed (auto-approved)
+2. Worker requests shift ≤120h before → status: pending_manager_approval
+3. Manager approves → status: confirmed
 
-Both flows create identical assignment records, just different initial status.
+**Assignment Edits** (`editAssignment` in [convex/shift_assignments.ts](../../convex/shift_assignments.ts)):
+- Manager edits any assignment → Auto-approved (no worker approval needed)
+- Worker edits own assignment >48h before → Requires manager approval
+- Worker edits ≤48h before shift → **Blocked** with error message
+
+**Time Calculation**: Helper function `getHoursUntilShift(date, startTime)` in [convex/shift_assignments.ts](../../convex/shift_assignments.ts) calculates hours between now and shift start time using first assigned hour slot. Logic is tested via [src/utils/shiftTimeCalculations.test.ts](../../src/utils/shiftTimeCalculations.test.ts) with 39 comprehensive tests covering edge cases, boundaries, and time thresholds.
 
 ---
 
@@ -330,5 +344,6 @@ Both flows create identical assignment records, just different initial status.
 
 ---
 
-**Last Updated**: October 28, 2025
+**Last Updated**: October 30, 2025
 **Replaces**: SHIFT_REDESIGN.md, SHIFTS_IMPLEMENTATION.md, LUZ_CALENDAR_REDESIGN.md
+**Session 43**: Added time-based approval system (48h/120h thresholds)

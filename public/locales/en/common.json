@@ -47,7 +47,8 @@
     "hours": "Hours",
     "minutes": "Minutes",
     "time": "Time",
-    "timeLabel": "⏱"
+    "timeLabel": "⏱",
+    "to": "to"
   },
   "days": {
     "monday": "Monday",
@@ -84,7 +85,9 @@
     "networkError": "Network error. Please check your connection.",
     "unauthorized": "You are not authorized to perform this action",
     "notFound": "Resource not found",
-    "serverError": "Server error. Please try again later."
+    "serverError": "Server error. Please try again later.",
+    "approvalFailed": "Approval failed",
+    "rejectionFailed": "Rejection failed"
   },
   "messages": {
     "success": "Success!",

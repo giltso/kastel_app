@@ -384,8 +384,12 @@ function LUZPage() {
     try {
       await approveAssignment({ assignmentId });
       console.log("Assignment approved successfully");
+      // TODO: Add success toast notification when toast system is implemented
     } catch (error) {
       console.error("Failed to approve assignment:", error);
+      // Show user-facing error message
+      const errorMessage = error instanceof Error ? error.message : "Failed to approve assignment";
+      alert(`${t("common:errors.approvalFailed")}: ${errorMessage}`);
     }
   };
 
@@ -393,8 +397,12 @@ function LUZPage() {
     try {
       await rejectAssignment({ assignmentId });
       console.log("Assignment rejected successfully");
+      // TODO: Add success toast notification when toast system is implemented
     } catch (error) {
       console.error("Failed to reject assignment:", error);
+      // Show user-facing error message
+      const errorMessage = error instanceof Error ? error.message : "Failed to reject assignment";
+      alert(`${t("common:errors.rejectionFailed")}: ${errorMessage}`);
     }
   };
 

@@ -7,6 +7,11 @@
  * - LUZ Interface: design/LUZ_CALENDAR_REDESIGN.md (how assignments display in UI)
  *
  * Frontend: src/routes/luz.tsx, src/components/modals/AssignWorkerModal.tsx, ApproveAssignmentModal.tsx
+ *
+ * Time-Based Approval Logic:
+ * - Tested via: src/utils/shiftTimeCalculations.test.ts (39 tests)
+ * - Reference implementation: src/utils/shiftTimeCalculations.ts
+ * - NOTE: Logic duplicated here because Convex cannot import from src/
  */
 
 import { ConvexError, v } from "convex/values";
@@ -46,6 +51,23 @@ async function validateWorkerPermissions(ctx: any, userId: Id<"users">) {
   }
 
   return user;
+}
+
+// Helper function to calculate hours until shift start
+function getHoursUntilShift(shiftDate: string, shiftStartTime: string): number {
+  // Parse shift date (YYYY-MM-DD format) and start time (HH:MM format)
+  const [year, month, day] = shiftDate.split('-').map(Number);
+  const [hours, minutes] = shiftStartTime.split(':').map(Number);
+
+  // Create Date object for shift start (month is 0-indexed in JS)
+  const shiftStartDateTime = new Date(year, month - 1, day, hours, minutes);
+
+  // Calculate milliseconds until shift start
+  const now = Date.now();
+  const millisecondsUntilShift = shiftStartDateTime.getTime() - now;
+
+  // Convert to hours
+  return millisecondsUntilShift / (1000 * 60 * 60);
 }
 
 // Query: Get assignments for a specific date (excludes rejected assignments)
@@ -276,6 +298,15 @@ export const assignWorkerToShift = mutation({
 
     // Check if manager is assigning themselves (auto-approval case)
     const isManagerSelfAssignment = user._id === args.workerId;
+
+    // Calculate hours until shift start (use first assigned hour slot's start time)
+    const firstStartTime = args.assignedHours[0].startTime;
+    const hoursUntilShift = getHoursUntilShift(args.date, firstStartTime);
+
+    // Auto-approve if:
+    // 1. Manager assigning themselves, OR
+    // 2. More than 48 hours until shift start (managers can schedule without approval if not last-minute)
+    const shouldAutoApprove = isManagerSelfAssignment || hoursUntilShift > 48;
     const now = Date.now();
 
     // Create assignment with appropriate status
@@ -287,9 +318,9 @@ export const assignWorkerToShift = mutation({
       breakPeriods: args.breakPeriods,
       assignedBy: user._id,
       assignedAt: now,
-      status: isManagerSelfAssignment ? "confirmed" : "pending_worker_approval",
+      status: shouldAutoApprove ? "confirmed" : "pending_worker_approval",
       managerApprovedAt: now, // Manager already approved by assigning
-      workerApprovedAt: isManagerSelfAssignment ? now : undefined, // Auto-approve if self-assignment
+      workerApprovedAt: shouldAutoApprove ? now : undefined, // Auto-approve if conditions met
       assignmentNotes: args.assignmentNotes,
     });
   },
@@ -513,6 +544,15 @@ export const requestJoinShift = mutation({
     const hasWorkerTag = user.emulatingWorkerTag ?? user.workerTag ?? false;
     const hasManagerTag = user.emulatingManagerTag ?? user.managerTag ?? false;
     const isManagerRequest = isStaff && hasWorkerTag && hasManagerTag;
+
+    // Calculate hours until shift start (use first assigned hour slot's start time)
+    const firstStartTime = assignedHours[0].startTime;
+    const hoursUntilShift = getHoursUntilShift(args.date, firstStartTime);
+
+    // Auto-approve if:
+    // 1. Manager making the request, OR
+    // 2. More than 120 hours (5 days) until shift start
+    const shouldAutoApprove = isManagerRequest || hoursUntilShift > 120;
     const now = Date.now();
 
     // Create assignment with appropriate status
@@ -523,8 +563,8 @@ export const requestJoinShift = mutation({
       assignedHours: assignedHours,
       assignedBy: user._id, // Worker assigned themselves
       assignedAt: now,
-      status: isManagerRequest ? "confirmed" : "pending_manager_approval",
-      managerApprovedAt: isManagerRequest ? now : undefined, // Auto-approve if manager request
+      status: shouldAutoApprove ? "confirmed" : "pending_manager_approval",
+      managerApprovedAt: shouldAutoApprove ? now : undefined,
       workerApprovedAt: now, // Worker already approved by requesting
       assignmentNotes: args.requestNotes,
     });
@@ -598,6 +638,15 @@ export const editAssignment = mutation({
       }
     }
 
+    // Calculate hours until shift start
+    const firstStartTime = assignedHours[0].startTime;
+    const hoursUntilShift = getHoursUntilShift(originalAssignment.date, firstStartTime);
+
+    // Worker edits can only happen up to 48 hours before shift start
+    if (isOwnAssignment && !isManager && hoursUntilShift <= 48) {
+      throw new ConvexError("Workers can only edit assignments up to 48 hours before the shift start time");
+    }
+
     const now = Date.now();
 
     // Determine approval workflow based on who is editing
@@ -611,10 +660,10 @@ export const editAssignment = mutation({
       managerApprovedAt = now;
       workerApprovedAt = now;
     } else if (isManager && !isOwnAssignment) {
-      // Manager editing someone else's assignment - needs worker approval
-      status = "pending_worker_approval";
+      // Manager editing someone else's assignment - no approval needed
+      status = "confirmed";
       managerApprovedAt = now;
-      workerApprovedAt = undefined;
+      workerApprovedAt = now;
     } else if (isOwnAssignment) {
       // Worker editing their own assignment - needs manager approval
       status = "pending_manager_approval";
