@@ -329,8 +329,8 @@ export const createCourseV2 = mutation({
 
     if (!currentUser) throw new Error("User not found");
 
-    const effectiveRole = getEffectiveV2Role(currentUser);
-    if (!effectiveRole.instructorTag && currentUser.role !== "dev") {
+    // Check instructor permission
+    if (!hasV2Permission(currentUser, "instructor") && !currentUser.isDev) {
       throw new Error("Instructor tag required to create courses");
     }
 
