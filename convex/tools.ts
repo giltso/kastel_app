@@ -1,18 +1,7 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { Doc, Id } from "./_generated/dataModel";
-
-// Helper: Get effective V2 role for user
-function getEffectiveRole(user: Doc<"users">) {
-  return {
-    isStaff: user.emulatingIsStaff ?? user.isStaff ?? false,
-    workerTag: user.emulatingWorkerTag ?? user.workerTag ?? false,
-    managerTag: user.emulatingManagerTag ?? user.managerTag ?? false,
-    instructorTag: user.emulatingInstructorTag ?? user.instructorTag ?? false,
-    rentalApprovedTag: user.emulatingRentalApprovedTag ?? user.rentalApprovedTag ?? false,
-    toolHandlerTag: user.emulatingToolHandlerTag ?? user.toolHandlerTag ?? false,
-  };
-}
+import { hasV2Permission } from "./users_v2";
 
 // Query: List all tools (role-based filtering)
 export const listTools = query({
@@ -59,10 +48,8 @@ export const listToolRentals = query({
 
     if (!user) return [];
 
-    const effectiveRole = getEffectiveRole(user);
-
     // Staff with tool handler tag see all rentals
-    if (effectiveRole.isStaff && effectiveRole.toolHandlerTag) {
+    if (hasV2Permission(user, "tool_handler")) {
       const rentals = await ctx.db.query("tool_rentals").collect();
 
       // Enrich with tool and user data
@@ -115,10 +102,8 @@ export const listRentalHistory = query({
 
     if (!user) return [];
 
-    const effectiveRole = getEffectiveRole(user);
-
-    // Only staff can view rental history
-    if (!effectiveRole.isStaff || !effectiveRole.workerTag) {
+    // Only staff workers can view rental history
+    if (!hasV2Permission(user, "worker")) {
       return [];
     }
 
@@ -195,10 +180,8 @@ export const addTool = mutation({
       throw new Error("User not found");
     }
 
-    const effectiveRole = getEffectiveRole(user);
-
     // Only staff with worker tag can add tools
-    if (!effectiveRole.isStaff || !effectiveRole.workerTag) {
+    if (!hasV2Permission(user, "worker")) {
       throw new Error("Only staff members can add tools to inventory");
     }
 
@@ -245,10 +228,8 @@ export const createRentalRequest = mutation({
       throw new Error("User not found");
     }
 
-    const effectiveRole = getEffectiveRole(user);
-
-    // Check if user has rental approval
-    if (effectiveRole.isStaff || !effectiveRole.rentalApprovedTag) {
+    // Check if user has rental approval (must be customer with rental approved tag)
+    if (!hasV2Permission(user, "rental_approved")) {
       throw new Error("Only approved customers can request tool rentals");
     }
 
@@ -318,10 +299,8 @@ export const updateRentalStatus = mutation({
       throw new Error("User not found");
     }
 
-    const effectiveRole = getEffectiveRole(user);
-
     // Only staff with tool handler tag can update rental status
-    if (!effectiveRole.isStaff || !effectiveRole.toolHandlerTag) {
+    if (!hasV2Permission(user, "tool_handler")) {
       throw new Error("Only tool handlers can update rental status");
     }
 
@@ -397,10 +376,8 @@ export const getToolRentalsForDate = query({
       return [];
     }
 
-    const effectiveRole = getEffectiveRole(user);
-
     // Staff see all rentals with enriched data
-    if (effectiveRole.isStaff && effectiveRole.workerTag) {
+    if (hasV2Permission(user, "worker")) {
       return await Promise.all(
         rentalsOnDate.map(async (rental) => {
           const tool = await ctx.db.get(rental.toolId);
@@ -454,10 +431,8 @@ export const createManualRental = mutation({
       throw new Error("User not found");
     }
 
-    const effectiveRole = getEffectiveRole(user);
-
     // Only tool handlers can create manual rentals
-    if (!effectiveRole.isStaff || !effectiveRole.toolHandlerTag) {
+    if (!hasV2Permission(user, "tool_handler")) {
       throw new Error("Only tool handlers can create manual rentals");
     }
 

@@ -20,9 +20,9 @@ async function validateManagerPermissions(ctx: any, userId: Id<"users">) {
     throw new ConvexError("User not found");
   }
 
-  const isStaff = user.emulatingIsStaff ?? user.isStaff ?? false;
-  const hasWorkerTag = user.emulatingWorkerTag ?? user.workerTag ?? false;
-  const hasManagerTag = user.emulatingManagerTag ?? user.managerTag ?? false;
+  const isStaff = user.isStaff ?? false;
+  const hasWorkerTag = user.workerTag ?? false;
+  const hasManagerTag = user.managerTag ?? false;
 
   if (!isStaff || !hasWorkerTag || !hasManagerTag) {
     throw new ConvexError("Only managers can perform this action");
@@ -38,8 +38,8 @@ async function validateWorkerPermissions(ctx: any, userId: Id<"users">) {
     throw new ConvexError("User not found");
   }
 
-  const isStaff = user.emulatingIsStaff ?? user.isStaff ?? false;
-  const hasWorkerTag = user.emulatingWorkerTag ?? user.workerTag ?? false;
+  const isStaff = user.isStaff ?? false;
+  const hasWorkerTag = user.workerTag ?? false;
 
   if (!isStaff || !hasWorkerTag) {
     throw new ConvexError("Only workers can perform this action");

@@ -10,7 +10,7 @@ export const createSampleAssignments = mutation({
 
     // Get all staff users with worker tag
     const users = await ctx.db.query("users").collect();
-    const workers = users.filter(user => user.workerTag === true || user.emulatingWorkerTag === true);
+    const workers = users.filter(user => user.workerTag === true);
 
     if (shifts.length === 0 || workers.length === 0) {
       return { error: "No shifts or workers found", shifts: shifts.length, workers: workers.length };
@@ -88,7 +88,7 @@ export const checkDataStatus = mutation({
     const users = await ctx.db.query("users").collect();
     const assignments = await ctx.db.query("shift_assignments").collect();
 
-    const workers = users.filter(user => user.workerTag === true || user.emulatingWorkerTag === true);
+    const workers = users.filter(user => user.workerTag === true);
 
     return {
       shifts: shifts.length,
@@ -96,7 +96,7 @@ export const checkDataStatus = mutation({
       workers: workers.length,
       assignments: assignments.length,
       shiftsData: shifts.map(s => ({ name: s.name, isActive: s.isActive })),
-      workersData: workers.map(u => ({ name: u.name, workerTag: u.workerTag, emulatingWorkerTag: u.emulatingWorkerTag })),
+      workersData: workers.map(u => ({ name: u.name, workerTag: u.workerTag, isDev: u.isDev })),
       assignmentsData: assignments.map(a => ({ status: a.status, date: a.date, shiftTemplateId: a.shiftTemplateId, workerId: a.workerId }))
     };
   },

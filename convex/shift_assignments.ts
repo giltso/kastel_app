@@ -25,9 +25,9 @@ async function validateManagerPermissions(ctx: any, userId: Id<"users">) {
     throw new ConvexError("User not found");
   }
 
-  const isStaff = user.emulatingIsStaff ?? user.isStaff ?? false;
-  const hasWorkerTag = user.emulatingWorkerTag ?? user.workerTag ?? false;
-  const hasManagerTag = user.emulatingManagerTag ?? user.managerTag ?? false;
+  const isStaff = user.isStaff ?? false;
+  const hasWorkerTag = user.workerTag ?? false;
+  const hasManagerTag = user.managerTag ?? false;
 
   if (!isStaff || !hasWorkerTag || !hasManagerTag) {
     throw new ConvexError("Only managers can perform this action");
@@ -43,8 +43,8 @@ async function validateWorkerPermissions(ctx: any, userId: Id<"users">) {
     throw new ConvexError("User not found");
   }
 
-  const isStaff = user.emulatingIsStaff ?? user.isStaff ?? false;
-  const hasWorkerTag = user.emulatingWorkerTag ?? user.workerTag ?? false;
+  const isStaff = user.isStaff ?? false;
+  const hasWorkerTag = user.workerTag ?? false;
 
   if (!isStaff || !hasWorkerTag) {
     throw new ConvexError("Only workers can perform this action");
@@ -169,9 +169,9 @@ export const getPendingAssignments = query({
       throw new ConvexError("User not found");
     }
 
-    const isStaff = user.emulatingIsStaff ?? user.isStaff ?? false;
-    const hasWorkerTag = user.emulatingWorkerTag ?? user.workerTag ?? false;
-    const hasManagerTag = user.emulatingManagerTag ?? user.managerTag ?? false;
+    const isStaff = user.isStaff ?? false;
+    const hasWorkerTag = user.workerTag ?? false;
+    const hasManagerTag = user.managerTag ?? false;
 
     let assignments;
 
@@ -350,9 +350,9 @@ export const approveAssignment = mutation({
     }
 
     // Check if user is the assigned worker or a manager
-    const isStaff = user.emulatingIsStaff ?? user.isStaff ?? false;
-    const hasWorkerTag = user.emulatingWorkerTag ?? user.workerTag ?? false;
-    const hasManagerTag = user.emulatingManagerTag ?? user.managerTag ?? false;
+    const isStaff = user.isStaff ?? false;
+    const hasWorkerTag = user.workerTag ?? false;
+    const hasManagerTag = user.managerTag ?? false;
     const isAssignedWorker = assignment.workerId === user._id;
     const isManager = isStaff && hasWorkerTag && hasManagerTag;
 
@@ -405,9 +405,9 @@ export const rejectAssignment = mutation({
     }
 
     // Check if user is the assigned worker or a manager
-    const isStaff = user.emulatingIsStaff ?? user.isStaff ?? false;
-    const hasWorkerTag = user.emulatingWorkerTag ?? user.workerTag ?? false;
-    const hasManagerTag = user.emulatingManagerTag ?? user.managerTag ?? false;
+    const isStaff = user.isStaff ?? false;
+    const hasWorkerTag = user.workerTag ?? false;
+    const hasManagerTag = user.managerTag ?? false;
     const isAssignedWorker = assignment.workerId === user._id;
     const isManager = isStaff && hasWorkerTag && hasManagerTag;
 
@@ -540,9 +540,9 @@ export const requestJoinShift = mutation({
     }
 
     // Check if requesting user is a manager (auto-approval case)
-    const isStaff = user.emulatingIsStaff ?? user.isStaff ?? false;
-    const hasWorkerTag = user.emulatingWorkerTag ?? user.workerTag ?? false;
-    const hasManagerTag = user.emulatingManagerTag ?? user.managerTag ?? false;
+    const isStaff = user.isStaff ?? false;
+    const hasWorkerTag = user.workerTag ?? false;
+    const hasManagerTag = user.managerTag ?? false;
     const isManagerRequest = isStaff && hasWorkerTag && hasManagerTag;
 
     // Calculate hours until shift start (use first assigned hour slot's start time)
@@ -609,9 +609,9 @@ export const editAssignment = mutation({
     }
 
     // Check permissions - user can edit their own assignment or manager can edit any
-    const isStaff = user.emulatingIsStaff ?? user.isStaff ?? false;
-    const hasWorkerTag = user.emulatingWorkerTag ?? user.workerTag ?? false;
-    const hasManagerTag = user.emulatingManagerTag ?? user.managerTag ?? false;
+    const isStaff = user.isStaff ?? false;
+    const hasWorkerTag = user.workerTag ?? false;
+    const hasManagerTag = user.managerTag ?? false;
 
     const isOwnAssignment = originalAssignment.workerId === user._id;
     const isManager = isStaff && hasWorkerTag && hasManagerTag;
@@ -727,9 +727,9 @@ export const requestDeleteAssignment = mutation({
     }
 
     // Check permissions - user can delete their own assignment or manager can delete any
-    const isStaff = user.emulatingIsStaff ?? user.isStaff ?? false;
-    const hasWorkerTag = user.emulatingWorkerTag ?? user.workerTag ?? false;
-    const hasManagerTag = user.emulatingManagerTag ?? user.managerTag ?? false;
+    const isStaff = user.isStaff ?? false;
+    const hasWorkerTag = user.workerTag ?? false;
+    const hasManagerTag = user.managerTag ?? false;
 
     const isOwnAssignment = assignment.workerId === user._id;
     const isManager = isStaff && hasWorkerTag && hasManagerTag;

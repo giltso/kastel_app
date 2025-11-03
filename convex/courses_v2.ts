@@ -57,8 +57,7 @@ export const getAllCoursesV2 = query({
 
     if (!currentUser) return [];
 
-    const effectiveRole = getEffectiveV2Role(currentUser);
-    const isInstructor = effectiveRole.instructorTag;
+    const isInstructor = hasV2Permission(currentUser, "instructor");
     const isManager = hasV2Permission(currentUser, "manager");
 
     // Managers see all courses (active and inactive)
@@ -154,8 +153,7 @@ export const getCourseDetailsV2 = query({
       .filter((q) => q.eq(q.field("studentId"), currentUser._id))
       .unique();
 
-    const effectiveRole = getEffectiveV2Role(currentUser);
-    const isInstructor = effectiveRole.instructorTag;
+    const isInstructor = hasV2Permission(currentUser, "instructor");
     const isManager = hasV2Permission(currentUser, "manager");
     const isCourseInstructorFlag = await isCourseInstructor(ctx, args.courseId, currentUser._id);
 
@@ -243,8 +241,7 @@ export const getCourseStatisticsV2 = query({
 
     if (!currentUser) return null;
 
-    const effectiveRole = getEffectiveV2Role(currentUser);
-    const isInstructor = effectiveRole.instructorTag;
+    const isInstructor = hasV2Permission(currentUser, "instructor");
     const isManager = hasV2Permission(currentUser, "manager");
 
     if (!isInstructor && !isManager) return null;
@@ -506,8 +503,7 @@ export const addHelperInstructorV2 = mutation({
     const targetUser = await ctx.db.get(args.instructorId);
     if (!targetUser) throw new Error("Instructor not found");
 
-    const targetRole = getEffectiveV2Role(targetUser);
-    if (!targetRole.instructorTag && targetUser.role !== "dev") {
+    if (!hasV2Permission(targetUser, "instructor") && !targetUser.isDev) {
       throw new Error("Target user must have instructor tag");
     }
 
@@ -952,8 +948,7 @@ export const getCoursesForDate = query({
       }));
     }
 
-    // Get users role for permission checking
-    const effectiveRole = getEffectiveV2Role(user);
+    // User permissions already available via user object
 
     return Promise.all(
       coursesOnDate.map(async (course) => {
