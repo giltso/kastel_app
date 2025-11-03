@@ -1,6 +1,6 @@
 import { mutation, query } from "./_generated/server";
 import { v, ConvexError } from "convex/values";
-import { getEffectiveV2Role } from "./users_v2";
+import { hasV2Permission } from "./users_v2";
 
 // Valid languages supported by the system
 const VALID_LANGUAGES = ["en", "he", "ru", "fr"] as const;
@@ -33,9 +33,8 @@ export const saveUIContent = mutation({
       throw new ConvexError("User not found");
     }
 
-    // 3. Check manager permissions
-    const effective = getEffectiveV2Role(user);
-    if (!effective.managerTag || !effective.isStaff) {
+    // 3. Check manager permissions (requires both isStaff and managerTag)
+    if (!hasV2Permission(user, "manager")) {
       throw new ConvexError("Only managers can edit content");
     }
 
@@ -146,8 +145,8 @@ export const getAllUIContent = query({
       throw new ConvexError("User not found");
     }
 
-    const effective = getEffectiveV2Role(user);
-    if (!effective.managerTag || !effective.isStaff) {
+    // Check manager permissions (requires both isStaff and managerTag)
+    if (!hasV2Permission(user, "manager")) {
       throw new ConvexError("Only managers can view all content");
     }
 

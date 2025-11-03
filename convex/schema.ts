@@ -17,14 +17,18 @@ export default defineSchema({
     managerTag: v.optional(v.boolean()), // Staff + Manager tag: approvals (requires workerTag)
     rentalApprovedTag: v.optional(v.boolean()), // Customer + Rental Approved: can request tool rentals
 
-    // Dev role emulation for V2 system
-    role: v.optional(v.literal("dev")), // Only dev role for testing
-    emulatingIsStaff: v.optional(v.boolean()),
-    emulatingWorkerTag: v.optional(v.boolean()),
-    emulatingInstructorTag: v.optional(v.boolean()),
-    emulatingToolHandlerTag: v.optional(v.boolean()),
-    emulatingManagerTag: v.optional(v.boolean()),
-    emulatingRentalApprovedTag: v.optional(v.boolean()),
+    // Dev role flag - enables RoleEmulator UI and permission management
+    isDev: v.optional(v.boolean()), // Dev users can toggle their own permissions for testing
+
+    // DEPRECATED: Old dev role emulation system (will be removed after migration)
+    // Migration: run migrateToIsDev mutation to convert role: "dev" → isDev: true
+    role: v.optional(v.literal("dev")), // DEPRECATED - use isDev instead
+    emulatingIsStaff: v.optional(v.boolean()), // DEPRECATED
+    emulatingWorkerTag: v.optional(v.boolean()), // DEPRECATED
+    emulatingInstructorTag: v.optional(v.boolean()), // DEPRECATED
+    emulatingToolHandlerTag: v.optional(v.boolean()), // DEPRECATED
+    emulatingManagerTag: v.optional(v.boolean()), // DEPRECATED
+    emulatingRentalApprovedTag: v.optional(v.boolean()), // DEPRECATED
   }).index("by_clerkId", ["clerkId"]),
 
   // V2 Shift Templates - Population-based from SHIFT_REDESIGN.md

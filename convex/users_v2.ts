@@ -4,52 +4,32 @@ import type { Doc } from "./_generated/dataModel";
 
 // V2 Role System - Tag-based permissions from REDESIGN_V2.md
 
-// Helper function to get effective role for V2 system
-export function getEffectiveV2Role(user: Doc<"users">) {
-  // Dev role emulation
-  if (user.role === "dev") {
-    return {
-      isStaff: user.emulatingIsStaff ?? false,
-      workerTag: user.emulatingWorkerTag ?? false,
-      instructorTag: user.emulatingInstructorTag ?? false,
-      toolHandlerTag: user.emulatingToolHandlerTag ?? false,
-      managerTag: user.emulatingManagerTag ?? false,
-      rentalApprovedTag: user.emulatingRentalApprovedTag ?? false,
-    };
-  }
-
-  // Regular user V2 permissions
-  return {
-    isStaff: user.isStaff ?? false,
-    workerTag: user.workerTag ?? false,
-    instructorTag: user.instructorTag ?? false,
-    toolHandlerTag: user.toolHandlerTag ?? false,
-    managerTag: user.managerTag ?? false,
-    rentalApprovedTag: user.rentalApprovedTag ?? false,
-  };
-}
-
 // Helper function to check if user has specific permission
+// Note: Dev users (isDev: true) use the same permission fields as regular users
 export function hasV2Permission(user: Doc<"users">, permission: string): boolean {
-  const effective = getEffectiveV2Role(user);
+  const isStaff = user.isStaff ?? false;
+  const workerTag = user.workerTag ?? false;
+  const instructorTag = user.instructorTag ?? false;
+  const toolHandlerTag = user.toolHandlerTag ?? false;
+  const managerTag = user.managerTag ?? false;
+  const rentalApprovedTag = user.rentalApprovedTag ?? false;
 
   switch (permission) {
     case "staff":
-      return effective.isStaff;
+      return isStaff;
     case "worker":
-      return effective.isStaff && effective.workerTag;
+      return isStaff && workerTag;
     case "instructor":
-      return effective.isStaff && effective.instructorTag;
+      return isStaff && instructorTag;
     case "tool_handler":
-      return effective.isStaff && effective.toolHandlerTag;
+      return isStaff && toolHandlerTag;
     case "manager":
-      return effective.isStaff && effective.workerTag && effective.managerTag;
+      return isStaff && workerTag && managerTag;
     case "rental_approved":
-      return !effective.isStaff && effective.rentalApprovedTag;
+      return !isStaff && rentalApprovedTag;
     case "tool_rentals":
       // Tool rental access: Staff+ToolHandler OR Customer+RentalApproved
-      return (effective.isStaff && effective.toolHandlerTag) ||
-             (!effective.isStaff && effective.rentalApprovedTag);
+      return (isStaff && toolHandlerTag) || (!isStaff && rentalApprovedTag);
     default:
       return false;
   }
@@ -67,19 +47,13 @@ export const getCurrentUserV2 = query({
       .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
       .unique();
 
-    if (!user) return null;
-
-    const effective = getEffectiveV2Role(user);
-
-    return {
-      ...user,
-      effectiveRole: effective,
-    };
+    return user;
   },
 });
 
-// Switch role emulation for dev users (V2 system)
-export const switchV2Role = mutation({
+// Update own permissions (for dev users via RoleEmulator)
+// Dev users can toggle their own permissions for testing different role combinations
+export const updateOwnPermissions = mutation({
   args: {
     isStaff: v.optional(v.boolean()),
     workerTag: v.optional(v.boolean()),
@@ -97,8 +71,8 @@ export const switchV2Role = mutation({
       .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
       .unique();
 
-    if (!user || user.role !== "dev") {
-      throw new Error("Only dev users can switch roles");
+    if (!user || !user.isDev) {
+      throw new Error("Only dev users can update their own permissions");
     }
 
     // Validate manager tag requires worker tag
@@ -106,16 +80,20 @@ export const switchV2Role = mutation({
       throw new Error("Manager tag requires worker tag");
     }
 
+    // Update real permission fields (not emulating fields anymore)
     await ctx.db.patch(user._id, {
-      emulatingIsStaff: args.isStaff,
-      emulatingWorkerTag: args.workerTag,
-      emulatingInstructorTag: args.instructorTag,
-      emulatingToolHandlerTag: args.toolHandlerTag,
-      emulatingManagerTag: args.managerTag,
-      emulatingRentalApprovedTag: args.rentalApprovedTag,
+      isStaff: args.isStaff,
+      workerTag: args.workerTag,
+      instructorTag: args.instructorTag,
+      toolHandlerTag: args.toolHandlerTag,
+      managerTag: args.managerTag,
+      rentalApprovedTag: args.rentalApprovedTag,
     });
   },
 });
+
+// Legacy alias for backward compatibility during transition
+export const switchV2Role = updateOwnPermissions;
 
 // Create or update user for V2 system
 export const createOrUpdateUserV2 = mutation({
@@ -123,7 +101,7 @@ export const createOrUpdateUserV2 = mutation({
     clerkId: v.string(),
     name: v.string(),
     email: v.optional(v.string()),
-    role: v.optional(v.literal("dev")),
+    isDev: v.optional(v.boolean()),
     isStaff: v.optional(v.boolean()),
     workerTag: v.optional(v.boolean()),
     instructorTag: v.optional(v.boolean()),
@@ -141,7 +119,7 @@ export const createOrUpdateUserV2 = mutation({
       await ctx.db.patch(existingUser._id, {
         name: args.name,
         email: args.email,
-        role: args.role,
+        isDev: args.isDev,
         isStaff: args.isStaff,
         workerTag: args.workerTag,
         instructorTag: args.instructorTag,
@@ -155,7 +133,7 @@ export const createOrUpdateUserV2 = mutation({
         clerkId: args.clerkId,
         name: args.name,
         email: args.email,
-        role: args.role, // No default - undefined unless explicitly set to "dev"
+        isDev: args.isDev, // No default - undefined unless explicitly set
         isStaff: args.isStaff ?? false, // Default to customer (not staff)
         workerTag: args.workerTag ?? false,
         instructorTag: args.instructorTag ?? false,
@@ -214,14 +192,10 @@ export const getAllUsersV2 = query({
     if (!currentUser) return [];
 
     // Only dev or managers can see all users
-    const canViewAll = currentUser.role === "dev" || hasV2Permission(currentUser, "manager");
+    const canViewAll = currentUser.isDev || hasV2Permission(currentUser, "manager");
     if (!canViewAll) return [];
 
-    const users = await ctx.db.query("users").collect();
-    return users.map(user => ({
-      ...user,
-      effectiveRole: getEffectiveV2Role(user),
-    }));
+    return await ctx.db.query("users").collect();
   },
 });
 
@@ -253,7 +227,7 @@ export const updateUserRole = mutation({
     }
 
     // Only dev or managers can modify roles
-    const canModifyRoles = currentUser.role === "dev" || hasV2Permission(currentUser, "manager");
+    const canModifyRoles = currentUser.isDev || hasV2Permission(currentUser, "manager");
     if (!canModifyRoles) {
       throw new Error("Only managers can modify user roles");
     }
@@ -277,16 +251,6 @@ export const updateUserRole = mutation({
     if (args.toolHandlerTag !== undefined) updateFields.toolHandlerTag = args.toolHandlerTag;
     if (args.managerTag !== undefined) updateFields.managerTag = args.managerTag;
     if (args.rentalApprovedTag !== undefined) updateFields.rentalApprovedTag = args.rentalApprovedTag;
-
-    // If target user is a dev, also update their emulation fields to match
-    if (targetUser.role === "dev") {
-      if (args.isStaff !== undefined) updateFields.emulatingIsStaff = args.isStaff;
-      if (args.workerTag !== undefined) updateFields.emulatingWorkerTag = args.workerTag;
-      if (args.instructorTag !== undefined) updateFields.emulatingInstructorTag = args.instructorTag;
-      if (args.toolHandlerTag !== undefined) updateFields.emulatingToolHandlerTag = args.toolHandlerTag;
-      if (args.managerTag !== undefined) updateFields.emulatingManagerTag = args.managerTag;
-      if (args.rentalApprovedTag !== undefined) updateFields.emulatingRentalApprovedTag = args.rentalApprovedTag;
-    }
 
     await ctx.db.patch(args.userId, updateFields);
 
@@ -320,7 +284,7 @@ export const promoteToStaff = mutation({
     }
 
     // Only dev or managers can promote users
-    const canPromote = currentUser.role === "dev" || hasV2Permission(currentUser, "manager");
+    const canPromote = currentUser.isDev || hasV2Permission(currentUser, "manager");
     if (!canPromote) {
       throw new Error("Only managers can promote users to staff");
     }
@@ -336,27 +300,15 @@ export const promoteToStaff = mutation({
       throw new Error("Manager tag requires worker tag");
     }
 
-    // Set actual role fields
-    const updateFields: any = {
+    // Set role fields
+    await ctx.db.patch(args.userId, {
       isStaff: true,
       workerTag: args.workerTag ?? false,
       instructorTag: args.instructorTag ?? false,
       toolHandlerTag: args.toolHandlerTag ?? false,
       managerTag: args.managerTag ?? false,
       rentalApprovedTag: false, // Clear customer permissions when promoting to staff
-    };
-
-    // If target user is a dev, also update their emulation fields
-    if (targetUser.role === "dev") {
-      updateFields.emulatingIsStaff = true;
-      updateFields.emulatingWorkerTag = args.workerTag ?? false;
-      updateFields.emulatingInstructorTag = args.instructorTag ?? false;
-      updateFields.emulatingToolHandlerTag = args.toolHandlerTag ?? false;
-      updateFields.emulatingManagerTag = args.managerTag ?? false;
-      updateFields.emulatingRentalApprovedTag = false;
-    }
-
-    await ctx.db.patch(args.userId, updateFields);
+    });
 
     return { success: true };
   },
@@ -377,23 +329,23 @@ export const getUserStatistics = query({
     if (!currentUser) return null;
 
     // Only dev or managers can see statistics
-    const canViewStats = currentUser.role === "dev" || hasV2Permission(currentUser, "manager");
+    const canViewStats = currentUser.isDev || hasV2Permission(currentUser, "manager");
     if (!canViewStats) return null;
 
     const allUsers = await ctx.db.query("users").collect();
 
     // Calculate staff statistics
-    const staffUsers = allUsers.filter(user => getEffectiveV2Role(user).isStaff);
+    const staffUsers = allUsers.filter(user => user.isStaff);
     const totalStaff = staffUsers.length;
-    const managers = staffUsers.filter(user => getEffectiveV2Role(user).managerTag).length;
-    const workers = staffUsers.filter(user => getEffectiveV2Role(user).workerTag).length;
-    const instructors = staffUsers.filter(user => getEffectiveV2Role(user).instructorTag).length;
-    const toolHandlers = staffUsers.filter(user => getEffectiveV2Role(user).toolHandlerTag).length;
+    const managers = staffUsers.filter(user => user.managerTag).length;
+    const workers = staffUsers.filter(user => user.workerTag).length;
+    const instructors = staffUsers.filter(user => user.instructorTag).length;
+    const toolHandlers = staffUsers.filter(user => user.toolHandlerTag).length;
 
     // Calculate customer statistics
-    const customerUsers = allUsers.filter(user => !getEffectiveV2Role(user).isStaff);
+    const customerUsers = allUsers.filter(user => !user.isStaff);
     const totalCustomers = customerUsers.length;
-    const rentalApproved = customerUsers.filter(user => getEffectiveV2Role(user).rentalApprovedTag).length;
+    const rentalApproved = customerUsers.filter(user => user.rentalApprovedTag).length;
 
     // Calculate active users (placeholder - would need actual activity tracking)
     const activeCustomers = 0; // TODO: Implement based on recent activity
@@ -439,7 +391,7 @@ export const demoteToCustomer = mutation({
     }
 
     // Only dev or managers can demote users
-    const canDemote = currentUser.role === "dev" || hasV2Permission(currentUser, "manager");
+    const canDemote = currentUser.isDev || hasV2Permission(currentUser, "manager");
     if (!canDemote) {
       throw new Error("Only managers can demote users to customer");
     }
@@ -450,27 +402,15 @@ export const demoteToCustomer = mutation({
       throw new Error("Target user not found");
     }
 
-    // Clear actual role fields
-    const updateFields: any = {
+    // Clear role fields
+    await ctx.db.patch(args.userId, {
       isStaff: false,
       workerTag: false,
       instructorTag: false,
       toolHandlerTag: false,
       managerTag: false,
       // Keep rentalApprovedTag as is (customer may still be rental approved)
-    };
-
-    // If target user is a dev, also clear their emulation fields
-    if (targetUser.role === "dev") {
-      updateFields.emulatingIsStaff = false;
-      updateFields.emulatingWorkerTag = false;
-      updateFields.emulatingInstructorTag = false;
-      updateFields.emulatingToolHandlerTag = false;
-      updateFields.emulatingManagerTag = false;
-      // Keep emulatingRentalApprovedTag as is
-    }
-
-    await ctx.db.patch(args.userId, updateFields);
+    });
 
     return { success: true };
   },
@@ -491,7 +431,7 @@ export const getAllEnrollments = query({
     if (!currentUser) return [];
 
     // Only dev or managers can see all enrollments
-    const canViewAll = currentUser.role === "dev" || hasV2Permission(currentUser, "manager");
+    const canViewAll = currentUser.isDev || hasV2Permission(currentUser, "manager");
     if (!canViewAll) return [];
 
     return await ctx.db.query("course_enrollments").collect();
@@ -517,14 +457,14 @@ export const makeCurrentUserDev = mutation({
     }
 
     await ctx.db.patch(user._id, {
-      role: "dev",
+      isDev: true,
       // Set up dev user with manager permissions for testing
-      emulatingIsStaff: true,
-      emulatingWorkerTag: true,
-      emulatingManagerTag: true,
-      emulatingInstructorTag: false,
-      emulatingToolHandlerTag: false,
-      emulatingRentalApprovedTag: false,
+      isStaff: true,
+      workerTag: true,
+      managerTag: true,
+      instructorTag: false,
+      toolHandlerTag: false,
+      rentalApprovedTag: false,
     });
 
     return { success: true, message: "User converted to dev with manager permissions" };
@@ -544,19 +484,17 @@ export const listDevUsers = query({
       .unique();
 
     // Only dev users can see this
-    if (!currentUser || currentUser.role !== "dev") return [];
+    if (!currentUser || !currentUser.isDev) return [];
 
-    const devUsers = await ctx.db
-      .query("users")
-      .collect();
+    const allUsers = await ctx.db.query("users").collect();
 
-    return devUsers
-      .filter(user => user.role === "dev")
+    return allUsers
+      .filter(user => user.isDev)
       .map(user => ({
         _id: user._id,
         name: user.name,
         email: user.email,
-        role: user.role,
+        isDev: user.isDev,
       }));
   },
 });
@@ -578,7 +516,7 @@ export const removeDevRole = mutation({
       .unique();
 
     // Only dev users can remove dev role
-    if (!currentUser || currentUser.role !== "dev") {
+    if (!currentUser || !currentUser.isDev) {
       throw new Error("Only dev users can remove dev role");
     }
 
@@ -593,14 +531,7 @@ export const removeDevRole = mutation({
     }
 
     await ctx.db.patch(args.userId, {
-      role: undefined,
-      // Clear emulation state
-      emulatingIsStaff: undefined,
-      emulatingWorkerTag: undefined,
-      emulatingManagerTag: undefined,
-      emulatingInstructorTag: undefined,
-      emulatingToolHandlerTag: undefined,
-      emulatingRentalApprovedTag: undefined,
+      isDev: undefined,
     });
 
     return {
@@ -626,12 +557,12 @@ export const cleanupDevRoles = mutation({
       .unique();
 
     // Only dev users can cleanup dev roles
-    if (!currentUser || currentUser.role !== "dev") {
+    if (!currentUser || !currentUser.isDev) {
       throw new Error("Only dev users can cleanup dev roles");
     }
 
     const allUsers = await ctx.db.query("users").collect();
-    const devUsers = allUsers.filter(user => user.role === "dev");
+    const devUsers = allUsers.filter(user => user.isDev);
 
     const gilTsoranNames = ["גיל צורן", "Gil Tsoran", "Gil Tzoran"];
     const usersToClean = devUsers.filter(user =>
@@ -643,13 +574,7 @@ export const cleanupDevRoles = mutation({
     const cleaned: string[] = [];
     for (const user of usersToClean) {
       await ctx.db.patch(user._id, {
-        role: undefined,
-        emulatingIsStaff: undefined,
-        emulatingWorkerTag: undefined,
-        emulatingManagerTag: undefined,
-        emulatingInstructorTag: undefined,
-        emulatingToolHandlerTag: undefined,
-        emulatingRentalApprovedTag: undefined,
+        isDev: undefined,
       });
       cleaned.push(user.name || user.email || "Unknown");
     }
@@ -659,6 +584,70 @@ export const cleanupDevRoles = mutation({
       message: `Removed dev role from ${cleaned.length} user(s)`,
       cleanedUsers: cleaned,
       remainingDevUsers: devUsers.length - cleaned.length,
+    };
+  },
+});
+
+// Migration: Convert role: "dev" + emulating* fields → isDev: boolean
+// This should be run ONCE before deploying schema changes
+export const migrateToIsDev = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
+    const currentUser = await ctx.db
+      .query("users")
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+
+    // Only dev users can run migration
+    if (!currentUser || currentUser.role !== "dev") {
+      throw new Error("Only dev users can run migration");
+    }
+
+    const allUsers = await ctx.db.query("users").collect();
+    const devUsers = allUsers.filter(u => u.role === "dev");
+
+    const migrated: Array<{ name: string; email?: string }> = [];
+
+    for (const user of devUsers) {
+      await ctx.db.patch(user._id, {
+        // Set new isDev flag
+        isDev: true,
+
+        // Copy emulating fields to real fields (preserving dev's current emulated state)
+        isStaff: user.emulatingIsStaff ?? user.isStaff ?? false,
+        workerTag: user.emulatingWorkerTag ?? user.workerTag ?? false,
+        instructorTag: user.emulatingInstructorTag ?? user.instructorTag ?? false,
+        toolHandlerTag: user.emulatingToolHandlerTag ?? user.toolHandlerTag ?? false,
+        managerTag: user.emulatingManagerTag ?? user.managerTag ?? false,
+        rentalApprovedTag: user.emulatingRentalApprovedTag ?? user.rentalApprovedTag ?? false,
+
+        // Clear old fields (set to undefined for deletion)
+        role: undefined as any,
+        emulatingIsStaff: undefined,
+        emulatingWorkerTag: undefined,
+        emulatingInstructorTag: undefined,
+        emulatingToolHandlerTag: undefined,
+        emulatingManagerTag: undefined,
+        emulatingRentalApprovedTag: undefined,
+      });
+
+      migrated.push({
+        name: user.name,
+        email: user.email,
+      });
+    }
+
+    return {
+      success: true,
+      message: `Migrated ${migrated.length} dev user(s) to isDev system`,
+      migratedUsers: migrated,
+      totalUsers: allUsers.length,
+      devUsers: devUsers.length,
     };
   },
 });

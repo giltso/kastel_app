@@ -1,7 +1,7 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { Doc, Id } from "./_generated/dataModel";
-import { getEffectiveV2Role, hasV2Permission } from "./users_v2";
+import { hasV2Permission } from "./users_v2";
 
 // Helper function to check if user is course instructor (owner or helper)
 async function isCourseInstructor(
