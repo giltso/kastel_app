@@ -108,7 +108,6 @@ export const createOrUpdateUserV2 = mutation({
     toolHandlerTag: v.optional(v.boolean()),
     managerTag: v.optional(v.boolean()),
     rentalApprovedTag: v.optional(v.boolean()),
-    role: v.optional(v.literal("dev")), // DEPRECATED: V1 field for migration compatibility
   },
   handler: async (ctx, args) => {
     const existingUser = await ctx.db
@@ -127,7 +126,6 @@ export const createOrUpdateUserV2 = mutation({
         toolHandlerTag: args.toolHandlerTag,
         managerTag: args.managerTag,
         rentalApprovedTag: args.rentalApprovedTag,
-        role: args.role, // DEPRECATED V1 field
       });
       return existingUser._id;
     } else {
@@ -142,7 +140,6 @@ export const createOrUpdateUserV2 = mutation({
         toolHandlerTag: args.toolHandlerTag ?? false,
         managerTag: args.managerTag ?? false,
         rentalApprovedTag: args.rentalApprovedTag ?? false,
-        role: args.role, // DEPRECATED V1 field
       });
     }
   },
@@ -587,70 +584,6 @@ export const cleanupDevRoles = mutation({
       message: `Removed dev role from ${cleaned.length} user(s)`,
       cleanedUsers: cleaned,
       remainingDevUsers: devUsers.length - cleaned.length,
-    };
-  },
-});
-
-// Migration: Convert role: "dev" + emulating* fields → isDev: boolean
-// This should be run ONCE before deploying schema changes
-export const migrateToIsDev = mutation({
-  args: {},
-  handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new Error("Not authenticated");
-    }
-
-    const currentUser = await ctx.db
-      .query("users")
-      .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
-      .unique();
-
-    // Only dev users can run migration
-    if (!currentUser || currentUser.role !== "dev") {
-      throw new Error("Only dev users can run migration");
-    }
-
-    const allUsers = await ctx.db.query("users").collect();
-    const devUsers = allUsers.filter(u => u.role === "dev");
-
-    const migrated: Array<{ name: string; email?: string }> = [];
-
-    for (const user of devUsers) {
-      await ctx.db.patch(user._id, {
-        // Set new isDev flag
-        isDev: true,
-
-        // Copy emulating fields to real fields (preserving dev's current emulated state)
-        isStaff: user.emulatingIsStaff ?? user.isStaff ?? false,
-        workerTag: user.emulatingWorkerTag ?? user.workerTag ?? false,
-        instructorTag: user.emulatingInstructorTag ?? user.instructorTag ?? false,
-        toolHandlerTag: user.emulatingToolHandlerTag ?? user.toolHandlerTag ?? false,
-        managerTag: user.emulatingManagerTag ?? user.managerTag ?? false,
-        rentalApprovedTag: user.emulatingRentalApprovedTag ?? user.rentalApprovedTag ?? false,
-
-        // Clear old fields (set to undefined for deletion)
-        role: undefined as any,
-        emulatingIsStaff: undefined,
-        emulatingWorkerTag: undefined,
-        emulatingInstructorTag: undefined,
-        emulatingToolHandlerTag: undefined,
-        emulatingManagerTag: undefined,
-        emulatingRentalApprovedTag: undefined,
-      });
-
-      migrated.push({
-        name: user.name,
-        email: user.email,
-      });
-    }
-
-    return {
-      success: true,
-      message: `Migrated ${migrated.length} dev user(s) to isDev system`,
-      migratedUsers: migrated,
-      totalUsers: allUsers.length,
-      devUsers: devUsers.length,
     };
   },
 });

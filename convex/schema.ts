@@ -19,16 +19,6 @@ export default defineSchema({
 
     // Dev role flag - enables RoleEmulator UI and permission management
     isDev: v.optional(v.boolean()), // Dev users can toggle their own permissions for testing
-
-    // DEPRECATED: Old dev role emulation system (will be removed after migration)
-    // Migration: run migrateToIsDev mutation to convert role: "dev" → isDev: true
-    role: v.optional(v.literal("dev")), // DEPRECATED - use isDev instead
-    emulatingIsStaff: v.optional(v.boolean()), // DEPRECATED
-    emulatingWorkerTag: v.optional(v.boolean()), // DEPRECATED
-    emulatingInstructorTag: v.optional(v.boolean()), // DEPRECATED
-    emulatingToolHandlerTag: v.optional(v.boolean()), // DEPRECATED
-    emulatingManagerTag: v.optional(v.boolean()), // DEPRECATED
-    emulatingRentalApprovedTag: v.optional(v.boolean()), // DEPRECATED
   }).index("by_clerkId", ["clerkId"]),
 
   // V2 Shift Templates - Population-based from SHIFT_REDESIGN.md

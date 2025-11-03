@@ -424,7 +424,7 @@ export const updateCourseV2 = mutation({
     if (!currentUser) throw new Error("User not found");
 
     const isOwner = await isCourseOwner(ctx, args.courseId, currentUser._id);
-    if (!isOwner && currentUser.role !== "dev") {
+    if (!isOwner && !currentUser.isDev) {
       throw new Error("Only course owner can edit course details");
     }
 
@@ -468,7 +468,7 @@ export const toggleCourseActiveV2 = mutation({
     const isOwner = await isCourseOwner(ctx, args.courseId, currentUser._id);
     const isManager = hasV2Permission(currentUser, "manager");
 
-    if (!isOwner && !isManager && currentUser.role !== "dev") {
+    if (!isOwner && !isManager && !currentUser.isDev) {
       throw new Error("Only course owner or manager can toggle course status");
     }
 
@@ -495,7 +495,7 @@ export const addHelperInstructorV2 = mutation({
     if (!currentUser) throw new Error("User not found");
 
     const isOwner = await isCourseOwner(ctx, args.courseId, currentUser._id);
-    if (!isOwner && currentUser.role !== "dev") {
+    if (!isOwner && !currentUser.isDev) {
       throw new Error("Only course owner can add helper instructors");
     }
 
@@ -541,7 +541,7 @@ export const removeHelperInstructorV2 = mutation({
     if (!currentUser) throw new Error("User not found");
 
     const isOwner = await isCourseOwner(ctx, args.courseId, currentUser._id);
-    if (!isOwner && currentUser.role !== "dev") {
+    if (!isOwner && !currentUser.isDev) {
       throw new Error("Only course owner can remove helper instructors");
     }
 
@@ -629,7 +629,7 @@ export const updateEnrollmentStatusV2 = mutation({
     const isCourseInstructorFlag = await isCourseInstructor(ctx, enrollment.courseId, currentUser._id);
     const isManager = hasV2Permission(currentUser, "manager");
 
-    if (!isCourseInstructorFlag && !isManager && currentUser.role !== "dev") {
+    if (!isCourseInstructorFlag && !isManager && !currentUser.isDev) {
       throw new Error("Only course instructors or managers can update enrollment status");
     }
 
@@ -679,7 +679,7 @@ export const updatePaymentStatusV2 = mutation({
     if (!currentUser) throw new Error("User not found");
 
     const isManager = hasV2Permission(currentUser, "manager");
-    if (!isManager && currentUser.role !== "dev") {
+    if (!isManager && !currentUser.isDev) {
       throw new Error("Only managers can update payment status");
     }
 
@@ -714,7 +714,7 @@ export const cancelEnrollmentV2 = mutation({
     const isCourseInstructorFlag = await isCourseInstructor(ctx, enrollment.courseId, currentUser._id);
     const isManager = hasV2Permission(currentUser, "manager");
 
-    if (!isStudent && !isCourseInstructorFlag && !isManager && currentUser.role !== "dev") {
+    if (!isStudent && !isCourseInstructorFlag && !isManager && !currentUser.isDev) {
       throw new Error("Only the student, course instructors, or managers can cancel enrollment");
     }
 
@@ -788,7 +788,7 @@ export const createCourseSession = mutation({
 
     // Check ownership
     const isOwner = course.instructorId === currentUser._id;
-    if (!isOwner && currentUser.role !== "dev") {
+    if (!isOwner && !currentUser.isDev) {
       throw new Error("Only course owner can add sessions");
     }
 
@@ -835,7 +835,7 @@ export const updateCourseSession = mutation({
 
     // Check ownership
     const isOwner = course.instructorId === currentUser._id;
-    if (!isOwner && currentUser.role !== "dev") {
+    if (!isOwner && !currentUser.isDev) {
       throw new Error("Only course owner can edit sessions");
     }
 
@@ -875,7 +875,7 @@ export const deleteCourseSession = mutation({
 
     // Check ownership
     const isOwner = course.instructorId === currentUser._id;
-    if (!isOwner && currentUser.role !== "dev") {
+    if (!isOwner && !currentUser.isDev) {
       throw new Error("Only course owner can delete sessions");
     }
 
