@@ -38,13 +38,13 @@ export function usePermissionsV2() {
   const checkPermission = (permission: V2Permission): boolean => {
     // Guest permissions (unauthenticated users OR Guest emulation)
     // Guest emulation = authenticated but no staff role AND no customer permissions
-    const isGuestMode = !isAuthenticated || (user?.effectiveRole &&
-      !user.effectiveRole.isStaff &&
-      !user.effectiveRole.rentalApprovedTag &&
-      !user.effectiveRole.workerTag &&
-      !user.effectiveRole.instructorTag &&
-      !user.effectiveRole.toolHandlerTag &&
-      !user.effectiveRole.managerTag);
+    const isGuestMode = !isAuthenticated || (user &&
+      !user.isStaff &&
+      !user.rentalApprovedTag &&
+      !user.workerTag &&
+      !user.instructorTag &&
+      !user.toolHandlerTag &&
+      !user.managerTag);
 
     if (isGuestMode) {
       switch (permission) {
@@ -58,8 +58,15 @@ export function usePermissionsV2() {
     }
 
     // Authenticated user permissions (non-Guest)
-    if (!user || !user.effectiveRole) return false;
-    const effective = user.effectiveRole;
+    if (!user) return false;
+    const effective = {
+      isStaff: user.isStaff ?? false,
+      workerTag: user.workerTag ?? false,
+      managerTag: user.managerTag ?? false,
+      instructorTag: user.instructorTag ?? false,
+      toolHandlerTag: user.toolHandlerTag ?? false,
+      rentalApprovedTag: user.rentalApprovedTag ?? false,
+    };
 
     switch (permission) {
       // Everyone including guests (handled above)
@@ -111,7 +118,7 @@ export function usePermissionsV2() {
         return effective.isStaff && effective.workerTag && effective.managerTag;
 
       case "emulate_roles":
-        return user.role === "dev";
+        return user.isDev ?? false;
 
       default:
         return false;
@@ -126,38 +133,38 @@ export function usePermissionsV2() {
     hasPermission: checkPermission,
     // V2 role helpers
     isGuest: !isAuthenticated,
-    isStaff: user?.effectiveRole?.isStaff ?? false,
-    isCustomer: isAuthenticated && !(user?.effectiveRole?.isStaff ?? false),
-    hasWorkerTag: user?.effectiveRole?.workerTag ?? false,
-    hasInstructorTag: user?.effectiveRole?.instructorTag ?? false,
-    hasToolHandlerTag: user?.effectiveRole?.toolHandlerTag ?? false,
-    hasManagerTag: user?.effectiveRole?.managerTag ?? false,
-    hasRentalApprovedTag: user?.effectiveRole?.rentalApprovedTag ?? false,
-    canEmulateRoles: user?.role === "dev",
+    isStaff: user?.isStaff ?? false,
+    isCustomer: isAuthenticated && !(user?.isStaff ?? false),
+    hasWorkerTag: user?.workerTag ?? false,
+    hasInstructorTag: user?.instructorTag ?? false,
+    hasToolHandlerTag: user?.toolHandlerTag ?? false,
+    hasManagerTag: user?.managerTag ?? false,
+    hasRentalApprovedTag: user?.rentalApprovedTag ?? false,
+    canEmulateRoles: user?.isDev ?? false,
+    isDev: user?.isDev ?? false,
     // Legacy compatibility
-    role: user?.role,
-    effectiveRole: getV2CompatibleRole(user?.effectiveRole, isAuthenticated),
+    effectiveRole: getV2CompatibleRole(user, isAuthenticated),
   };
 }
 
 // Convert V2 tag system to legacy role for compatibility
-function getV2CompatibleRole(effectiveRole: any, isAuthenticated: boolean): string {
+function getV2CompatibleRole(user: any, isAuthenticated: boolean): string {
   // Unauthenticated users are always guests
   if (!isAuthenticated) return "guest";
 
-  // Authenticated users without effectiveRole data
-  if (!effectiveRole) return "guest";
+  // Authenticated users without user data
+  if (!user) return "guest";
 
-  if (effectiveRole.isStaff) {
-    if (effectiveRole.workerTag && effectiveRole.managerTag) {
+  if (user.isStaff) {
+    if (user.workerTag && user.managerTag) {
       return "manager";
-    } else if (effectiveRole.workerTag) {
+    } else if (user.workerTag) {
       return "worker";
     } else {
       return "worker"; // Staff without tags defaults to worker
     }
   } else {
-    if (effectiveRole.rentalApprovedTag) {
+    if (user.rentalApprovedTag) {
       return "customer";
     } else {
       return "guest";
@@ -192,6 +199,6 @@ export function useHasToolHandlerTagV2() {
 }
 
 export function useIsDevV2() {
-  const { role } = usePermissionsV2();
-  return role === "dev";
+  const { isDev } = usePermissionsV2();
+  return isDev;
 }

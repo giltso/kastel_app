@@ -65,9 +65,9 @@ export function AssignWorkerModal({
 
   // Filter for workers only and apply search
   const availableWorkers = allUsers.filter(user => {
-    // Must have worker permissions (either real or emulated)
-    const isStaff = user.emulatingIsStaff ?? user.isStaff ?? false;
-    const hasWorkerTag = user.emulatingWorkerTag ?? user.workerTag ?? false;
+    // Must have worker permissions
+    const isStaff = user.isStaff ?? false;
+    const hasWorkerTag = user.workerTag ?? false;
 
     if (!isStaff || !hasWorkerTag) return false;
 

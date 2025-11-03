@@ -24,9 +24,17 @@ export function RoleEmulator() {
     }
   }, [isOpen]);
 
-  if (!canEmulateRoles || !user?.effectiveRole) return null;
+  if (!canEmulateRoles || !user) return null;
 
-  const effective = user.effectiveRole;
+  // Construct effective permissions from user's direct fields
+  const effective = {
+    isStaff: user.isStaff ?? false,
+    workerTag: user.workerTag ?? false,
+    instructorTag: user.instructorTag ?? false,
+    toolHandlerTag: user.toolHandlerTag ?? false,
+    managerTag: user.managerTag ?? false,
+    rentalApprovedTag: user.rentalApprovedTag ?? false,
+  };
 
   const handleToggle = async (field: string, value: boolean) => {
     // Start with current state to preserve other fields
