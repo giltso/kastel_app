@@ -15,7 +15,7 @@ export function EnsureUserV2() {
         name: user.fullName || user.primaryEmailAddress?.emailAddress || "Unknown",
         email: user.primaryEmailAddress?.emailAddress,
         // Default new users as dev for testing
-        role: "dev",
+        isDev: true,
         isStaff: true,
         workerTag: true,
         instructorTag: false,

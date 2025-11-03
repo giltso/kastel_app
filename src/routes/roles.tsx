@@ -57,7 +57,7 @@ function RolesPage() {
     if (!allUsers) return [];
 
     return allUsers
-      .filter(user => user.effectiveRole.isStaff)
+      .filter(user => user.isStaff ?? false)
       .filter(user => {
         // Search filter
         const matchesSearch =
@@ -71,10 +71,10 @@ function RolesPage() {
         if (activeFilters.length === 0) return true; // No filters = show all
 
         return activeFilters.some(([tag, _]) => {
-          if (tag === 'worker') return user.effectiveRole.workerTag;
-          if (tag === 'manager') return user.effectiveRole.managerTag;
-          if (tag === 'instructor') return user.effectiveRole.instructorTag;
-          if (tag === 'toolHandler') return user.effectiveRole.toolHandlerTag;
+          if (tag === 'worker') return user.workerTag ?? false;
+          if (tag === 'manager') return user.managerTag ?? false;
+          if (tag === 'instructor') return user.instructorTag ?? false;
+          if (tag === 'toolHandler') return user.toolHandlerTag ?? false;
           return false;
         });
       });
@@ -84,7 +84,7 @@ function RolesPage() {
     if (!allUsers) return [];
 
     return allUsers
-      .filter(user => !user.effectiveRole.isStaff)
+      .filter(user => !(user.isStaff ?? false))
       .filter(user => {
         // Search filter
         const matchesSearch =
@@ -98,7 +98,7 @@ function RolesPage() {
         if (activeFilters.length === 0) return true; // No filters = show all
 
         return activeFilters.some(([tag, _]) => {
-          if (tag === 'rentalApproved') return user.effectiveRole.rentalApprovedTag;
+          if (tag === 'rentalApproved') return user.rentalApprovedTag ?? false;
           if (tag === 'enrolled') return enrolledCustomerIds.has(user._id);
           return false;
         });
@@ -135,11 +135,11 @@ function RolesPage() {
   // Helper function to get role badges for a user
   const getRoleBadges = (user: any) => {
     const badges = [];
-    if (user.effectiveRole.workerTag) badges.push(t('roles:tags.worker'));
-    if (user.effectiveRole.managerTag) badges.push(t('roles:tags.manager'));
-    if (user.effectiveRole.instructorTag) badges.push(t('roles:tags.instructor'));
-    if (user.effectiveRole.toolHandlerTag) badges.push(t('roles:tags.toolHandler'));
-    if (user.effectiveRole.rentalApprovedTag) badges.push(t('roles:tags.rentalApproved'));
+    if (user.workerTag) badges.push(t('roles:tags.worker'));
+    if (user.managerTag) badges.push(t('roles:tags.manager'));
+    if (user.instructorTag) badges.push(t('roles:tags.instructor'));
+    if (user.toolHandlerTag) badges.push(t('roles:tags.toolHandler'));
+    if (user.rentalApprovedTag) badges.push(t('roles:tags.rentalApproved'));
     return badges;
   };
 
@@ -532,7 +532,7 @@ function RolesPage() {
                                   <div className="text-sm text-base-content/70">{user.email}</div>
                                 </td>
                                 <td>
-                                  {user.effectiveRole.rentalApprovedTag ? (
+                                  {user.rentalApprovedTag ? (
                                     <span className="badge badge-success">{t('roles:tags.rentalApproved')}</span>
                                   ) : (
                                     <span className="badge badge-secondary">{t('roles:tags.customer')}</span>

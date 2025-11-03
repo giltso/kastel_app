@@ -5,16 +5,15 @@ export function UserRoleDebugV2() {
 
   if (isLoading || !user) return null;
 
-  const effective = user.effectiveRole;
-
   return (
     <div className="text-xs opacity-60 font-mono">
       <div>V2 Debug:</div>
-      <div>Staff: {effective?.isStaff ? "✓" : "✗"}</div>
-      <div>Worker: {effective?.workerTag ? "✓" : "✗"}</div>
-      <div>Instructor: {effective?.instructorTag ? "✓" : "✗"}</div>
-      <div>Manager: {effective?.managerTag ? "✓" : "✗"}</div>
-      <div>Rental: {effective?.rentalApprovedTag ? "✓" : "✗"}</div>
+      <div>Staff: {user.isStaff ? "✓" : "✗"}</div>
+      <div>Worker: {user.workerTag ? "✓" : "✗"}</div>
+      <div>Instructor: {user.instructorTag ? "✓" : "✗"}</div>
+      <div>Manager: {user.managerTag ? "✓" : "✗"}</div>
+      <div>Rental: {user.rentalApprovedTag ? "✓" : "✗"}</div>
+      <div>Dev: {user.isDev ? "✓" : "✗"}</div>
     </div>
   );
 }
