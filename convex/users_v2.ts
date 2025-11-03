@@ -108,6 +108,7 @@ export const createOrUpdateUserV2 = mutation({
     toolHandlerTag: v.optional(v.boolean()),
     managerTag: v.optional(v.boolean()),
     rentalApprovedTag: v.optional(v.boolean()),
+    role: v.optional(v.literal("dev")), // DEPRECATED: V1 field for migration compatibility
   },
   handler: async (ctx, args) => {
     const existingUser = await ctx.db
@@ -126,6 +127,7 @@ export const createOrUpdateUserV2 = mutation({
         toolHandlerTag: args.toolHandlerTag,
         managerTag: args.managerTag,
         rentalApprovedTag: args.rentalApprovedTag,
+        role: args.role, // DEPRECATED V1 field
       });
       return existingUser._id;
     } else {
@@ -140,6 +142,7 @@ export const createOrUpdateUserV2 = mutation({
         toolHandlerTag: args.toolHandlerTag ?? false,
         managerTag: args.managerTag ?? false,
         rentalApprovedTag: args.rentalApprovedTag ?? false,
+        role: args.role, // DEPRECATED V1 field
       });
     }
   },

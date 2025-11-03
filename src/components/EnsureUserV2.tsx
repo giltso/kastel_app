@@ -21,6 +21,8 @@ export function EnsureUserV2() {
         instructorTag: false,
         managerTag: false,
         rentalApprovedTag: false,
+        // TEMPORARY: Set V1 role field for migration compatibility
+        role: "dev",
       });
     }
   }, [isLoaded, isSignedIn, user, ensureUser]);
