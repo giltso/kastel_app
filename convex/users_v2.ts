@@ -587,3 +587,68 @@ export const cleanupDevRoles = mutation({
     };
   },
 });
+
+// Migration: Clean up V1 fields from existing users
+// This converts users with old V1 fields (role, emulating*) to clean V2 format
+export const migrateToIsDev = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
+    const currentUser = await ctx.db
+      .query("users")
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+
+    // Only dev users can run migration
+    if (!currentUser || (!currentUser.isDev && currentUser.role !== "dev")) {
+      throw new Error("Only dev users can run migration");
+    }
+
+    const allUsers = await ctx.db.query("users").collect();
+
+    // Find all users with V1 fields to clean up
+    const usersToMigrate = allUsers.filter(u =>
+      u.role === "dev" ||
+      u.emulatingIsStaff !== undefined ||
+      u.emulatingWorkerTag !== undefined ||
+      u.emulatingInstructorTag !== undefined ||
+      u.emulatingToolHandlerTag !== undefined ||
+      u.emulatingManagerTag !== undefined ||
+      u.emulatingRentalApprovedTag !== undefined
+    );
+
+    const migrated: Array<{ name: string; email?: string }> = [];
+
+    for (const user of usersToMigrate) {
+      await ctx.db.patch(user._id, {
+        // Ensure isDev is set if they have role: "dev"
+        isDev: user.role === "dev" ? true : user.isDev,
+
+        // Remove old V1 fields (set to undefined for deletion)
+        role: undefined as any,
+        emulatingIsStaff: undefined,
+        emulatingWorkerTag: undefined,
+        emulatingInstructorTag: undefined,
+        emulatingToolHandlerTag: undefined,
+        emulatingManagerTag: undefined,
+        emulatingRentalApprovedTag: undefined,
+      });
+
+      migrated.push({
+        name: user.name,
+        email: user.email,
+      });
+    }
+
+    return {
+      success: true,
+      message: `Migrated ${migrated.length} user(s) - removed V1 fields`,
+      migratedUsers: migrated,
+      totalUsers: allUsers.length,
+    };
+  },
+});
