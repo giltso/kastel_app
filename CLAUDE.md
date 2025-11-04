@@ -359,6 +359,137 @@ Always use Convex's auth hooks (`useConvexAuth`) and components (`<Authenticated
 - **System tables**: Access `_scheduled_functions` and `_storage` with `ctx.db.system.get` and `ctx.db.system.query`
 - **Default query order**: Ascending by `_creationTime`
 
+### Database Migrations
+
+**When Migrations Are Needed:**
+- Removing fields from schema that exist in production data
+- Changing field types (e.g., `string` to `number`)
+- Renaming fields or tables
+- Adding new required fields to existing documents
+- Data cleanup operations (removing duplicate data, fixing malformed entries)
+
+**The Correct Migration Workflow:**
+
+**Real Example (Nov 4, 2025)**: The V2 schema cleanup attempted to remove V1 fields but production was never migrated, which would have crashed production. The `/prod-demo-testing` command caught this before deployment.
+
+1. **Write Migration Function**
+   - Use `internalMutation` for CLI execution (doesn't require auth)
+   - Include rollback logic if possible
+   - Log all changes for audit trail
+   ```typescript
+   export const migrateFieldName = internalMutation({
+     args: {},
+     handler: async (ctx) => {
+       const allDocs = await ctx.db.query("tableName").collect();
+       const toMigrate = allDocs.filter(doc => doc.oldField !== undefined);
+
+       for (const doc of toMigrate) {
+         await ctx.db.patch(doc._id, {
+           newField: doc.oldField,
+           oldField: undefined, // Remove old field
+         });
+       }
+
+       return {
+         success: true,
+         message: `Migrated ${toMigrate.length} documents`,
+         total: allDocs.length
+       };
+     }
+   });
+   ```
+
+2. **Add DEPRECATED Fields to Schema (Temporary)**
+   - Mark old fields as optional in schema
+   - Add comments: `// DEPRECATED - kept for migration, remove after migrateFieldName runs`
+   - This allows import/export operations during testing
+   ```typescript
+   users: defineTable({
+     newField: v.string(),
+     // DEPRECATED - kept for migration
+     oldField: v.optional(v.string()),
+   })
+   ```
+
+3. **Test Migration with Production Data Clone**
+   - Run `/prod-demo-testing` slash command
+   - This exports production data, imports to dev, runs migration
+   - Verifies no schema validation errors
+   - Confirms migration works on real production data
+   ```bash
+   # See .claude/commands/prod-demo-testing.md for full workflow
+   pnpx convex export --prod --path prod-data.zip
+   pnpx convex import --replace prod-data.zip
+   pnpx convex run tableName:migrateFieldName --admin-key dev
+   ```
+
+4. **Deploy Migration Code to Production**
+   - Commit migration function + DEPRECATED schema fields
+   - Deploy to production (code deployment)
+   - **DO NOT remove migration code yet**
+   - At this point, production schema accepts both old and new formats
+
+5. **Run Migration on Production**
+   - Execute migration explicitly with `--prod` flag
+   ```bash
+   pnpx convex run tableName:migrateFieldName --prod --admin-key prod
+   ```
+   - Verify output shows successful migration
+   - Check production data is clean (no old fields remaining)
+
+6. **Verify Migration Success**
+   ```bash
+   # Query production to verify old fields are gone
+   pnpx convex run tableName:getAllRecords --prod | grep "oldField"
+   # Should return nothing
+   ```
+
+7. **Deploy Cleanup (Remove DEPRECATED Fields)**
+   - Create new branch: `chore/remove-migration-code`
+   - Remove DEPRECATED fields from schema
+   - Remove migration function
+   - Commit and deploy final cleanup
+
+**Common Migration Mistakes:**
+
+❌ **Running migration on dev only, assuming it's "done"**
+- Dev database ≠ Production database
+- Always run migration on production explicitly with `--prod` flag
+
+❌ **Removing migration code before running on production**
+- Keep migration code in codebase through deployment
+- Remove only after production migration verified successful
+
+❌ **Deploying schema changes without migration function**
+- Leads to schema validation errors on production
+- All queries fail, application crashes
+
+❌ **Not testing with production data clone**
+- Production data may have edge cases dev doesn't
+- Use `/prod-demo-testing` to catch issues before deployment
+
+❌ **Not adding DEPRECATED fields temporarily**
+- Import/export operations fail during testing phase
+- Schema must accept both old and new formats during migration
+
+**Best Practices:**
+
+✅ **Use internalMutation for migrations** - Allows CLI execution without auth
+✅ **Test with production data first** - Run `/prod-demo-testing` before deploying
+✅ **Add DEPRECATED fields to schema temporarily** - Enables safe testing and gradual migration
+✅ **Always include success/failure reporting** - Return migrated count and total count
+✅ **Document migration in commit message** - Include "why", "what", and "next steps"
+✅ **Keep migration code through production deployment** - Remove only after verification
+
+**Migration Checklist:**
+- [ ] Migration function written as `internalMutation`
+- [ ] DEPRECATED fields added to schema (temporary)
+- [ ] Tested with `/prod-demo-testing` on production data clone
+- [ ] Migration code deployed to production
+- [ ] Migration run on production with `--prod --admin-key prod`
+- [ ] Production data verified clean (no old fields)
+- [ ] Cleanup deployed (DEPRECATED fields removed)
+
 ### File Uploads
 1. Generate upload URL in mutation: `ctx.storage.generateUploadUrl()`
 2. POST from client
