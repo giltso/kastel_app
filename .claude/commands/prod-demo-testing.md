@@ -10,11 +10,32 @@ This command creates a safe testing environment by:
 3. Running migrations and validation tests
 4. Generating a safety report
 
+## Why This Matters
+
+**Real Example (Nov 4, 2025):**
+The V2 schema cleanup branch removed DEPRECATED fields from the schema but production data still had those fields. Running this test caught the issue BEFORE deployment, preventing a production outage.
+
+**What would have happened without this test:**
+- Deploy would succeed (code deployment works fine)
+- First user query would fail (schema validation error)
+- Entire application would crash
+- All users locked out until rollback
+
+**What this test revealed:**
+- Migration code had been deleted too early
+- Production was never migrated (only dev was)
+- Schema couldn't accept production data
+- Migration needed to be restored and run on production first
+
+**Migration Best Practice (Lesson Learned):**
+1. Write migration → 2. Test in dev → 3. Deploy migration code to production (keep it) → 4. Run migration on production explicitly with `--prod` flag → 5. Verify clean → 6. ONLY THEN remove migration code
+
 ## Prerequisites
 
 - Production deployment must exist
 - User must have access to production deployment
 - Current changes should be committed to git
+- Migration code must exist in codebase BEFORE running this test
 
 ## Step 1: Backup Current Dev Data
 
@@ -52,7 +73,7 @@ echo "✅ Production data imported to dev environment"
 
 ```bash
 # Query users to check for V1 fields
-pnpx convex run users_v2:getAllUsers | grep -E "role|emulating"
+pnpx convex run users_v2:getAllUsersV2 | grep -E "role|emulating"
 ```
 
 ### 4.2 Run Migration (if needed)
@@ -60,16 +81,26 @@ pnpx convex run users_v2:getAllUsers | grep -E "role|emulating"
 If V1 users exist:
 
 ```bash
-# Run migration
-pnpx convex run users_v2:migrateToIsDev
-echo "Migration completed"
+# Run migration with admin key (internalMutation)
+pnpx convex run users_v2:migrateToIsDev --admin-key dev
+echo "Migration completed - check output for migrated user count"
+```
+
+**Expected output:**
+```json
+{
+  "success": true,
+  "message": "Migrated X user(s) - removed V1 fields",
+  "migratedUsers": [...],
+  "totalUsers": Y
+}
 ```
 
 ### 4.3 Verify Migration Results
 
 ```bash
 # Verify all users have clean V2 schema
-pnpx convex run users_v2:getAllUsers | grep -E "role|emulating" || echo "✅ No V1 fields found - migration successful"
+pnpx convex run users_v2:getAllUsersV2 | grep -E "role|emulating" || echo "✅ No V1 fields found - migration successful"
 ```
 
 ## Step 5: Run Validation Suite
